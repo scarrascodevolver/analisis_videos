@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('page_title', 'Dashboard') - Los Troncos</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- AdminLTE CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" rel="stylesheet">
+
+    <style>
+        .rugby-green {
+            background-color: #1e4d2b !important;
+            color: white;
+        }
+        
+        .text-rugby {
+            color: #1e4d2b !important;
+        }
+        
+        .btn-rugby {
+            background-color: #1e4d2b;
+            border-color: #1e4d2b;
+            color: white;
+        }
+        
+        .btn-rugby:hover {
+            background-color: #2d5a3a;
+            border-color: #2d5a3a;
+            color: white;
+        }
+
+        .main-header.navbar {
+            background-color: #1e4d2b !important;
+        }
+
+        .main-sidebar {
+            background-color: #343a40 !important;
+        }
+
+        .nav-sidebar .nav-link {
+            color: #c2c7d0;
+        }
+
+        .nav-sidebar .nav-link:hover {
+            background-color: #1e4d2b;
+            color: white;
+        }
+
+        .nav-sidebar .nav-link.active {
+            background-color: #1e4d2b !important;
+            color: white !important;
+        }
+
+        .brand-link {
+            background-color: #1e4d2b !important;
+            color: white !important;
+            border-bottom: 1px solid #2d5a3a;
+        }
+
+        .user-panel .info {
+            color: #c2c7d0;
+        }
+
+        .info-box-rugby {
+            background: linear-gradient(45deg, #1e4d2b, #2d5a3a);
+            color: white;
+        }
+
+        .info-box-rugby .info-box-text,
+        .info-box-rugby .info-box-number {
+            color: white;
+        }
+
+        .card-rugby {
+            border-top: 3px solid #1e4d2b;
+        }
+
+        .small-box .icon {
+            font-size: 70px;
+            top: 10px;
+            right: 15px;
+            position: absolute;
+            opacity: 0.3;
+        }
+
+        .content-wrapper {
+            background-color: #f4f6f9;
+        }
+
+        .video-card {
+            transition: all 0.3s;
+        }
+
+        .video-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        @yield('css')
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-dark">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+                        <i class="fas fa-bars"></i>
+                    </a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="{{ route('home') }}" class="nav-link">Inicio</a>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                        <i class="fas fa-user"></i> {{ Auth::user()->name }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user"></i> Perfil
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ route('logout') }}"
+                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a href="{{ route('home') }}" class="brand-link">
+                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" 
+                     class="brand-image img-circle elevation-3" 
+                     style="width: 33px; height: 33px; object-fit: cover;">
+                <span class="brand-text font-weight-light">Los Troncos</span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- User panel -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                    <div class="image">
+                        <i class="fas fa-user-circle fa-2x text-light"></i>
+                    </div>
+                    <div class="info">
+                        <div class="text-light">{{ Auth::user()->name }}</div>
+                        <small class="text-muted">{{ ucfirst(Auth::user()->role) }}</small>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                        <li class="nav-item">
+                            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+
+                        @if(Auth::user()->role === 'analista')
+                            <li class="nav-item">
+                                <a href="{{ route('videos.create') }}" class="nav-link {{ request()->routeIs('videos.create') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-video"></i>
+                                    <p>Subir Video</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('analyst.reports') }}" class="nav-link {{ request()->routeIs('analyst.reports') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-bar"></i>
+                                    <p>Reportes</p>
+                                </a>
+                            </li>
+                        @endif
+
+                        <li class="nav-item">
+                            <a href="{{ route('videos.index') }}" class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-video"></i>
+                                <p>Videos del Equipo</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('my-videos') }}" class="nav-link {{ request()->routeIs('my-videos') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-user-circle"></i>
+                                <p>Mis Videos</p>
+                                @if(auth()->user()->pendingAssignments()->count() > 0)
+                                    <span class="badge badge-warning navbar-badge">{{ auth()->user()->pendingAssignments()->count() }}</span>
+                                @endif
+                            </a>
+                        </li>
+
+                        @if(Auth::user()->role === 'jugador')
+                            <li class="nav-item">
+                                <a href="{{ route('player.videos') }}" class="nav-link {{ request()->routeIs('player.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-tasks"></i>
+                                    <p>Mis Asignaciones</p>
+                                </a>
+                            </li>
+                        @endif
+
+                        @if(Auth::user()->role === 'entrenador')
+                            <li class="nav-item">
+                                <a href="{{ route('coach.users') }}" class="nav-link {{ request()->routeIs('coach.users') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-users"></i>
+                                    <p>Jugadores</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('coach.reports.team') }}" class="nav-link {{ request()->routeIs('coach.reports.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-line"></i>
+                                    <p>Reportes Equipo</p>
+                                </a>
+                            </li>
+                        @endif
+
+                        <li class="nav-item">
+                            <a href="{{ route('teams.index') }}" class="nav-link {{ request()->routeIs('teams.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Equipos</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Content Header -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">@yield('page_title', 'Dashboard')</h1>
+                        </div>
+                        <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                                @yield('breadcrumbs')
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <section class="content">
+                <div class="container-fluid">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @yield('main_content')
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="main-footer">
+            <strong>Copyright &copy; {{ date('Y') }} <a href="#">Los Troncos Rugby</a>.</strong>
+            Sistema de Análisis de Video.
+            <div class="float-right d-none d-sm-inline-block">
+                <b>Versión</b> 1.0.0
+            </div>
+        </footer>
+    </div>
+
+    <!-- Logout Form -->
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    @yield('js')
+</body>
+</html>

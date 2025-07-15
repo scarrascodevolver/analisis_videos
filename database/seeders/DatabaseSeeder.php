@@ -13,11 +13,92 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            TeamSeeder::class,
+            CategorySeeder::class,
+            RugbySituationSeeder::class,
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Create sample users with different roles
+        $analyst = User::create([
+            'name' => 'Analista Principal',
+            'email' => 'analista@lostroncos.cl',
+            'password' => bcrypt('password'),
+            'phone' => '+56912345678',
+            'role' => 'analista',
+        ]);
+
+        $coach = User::create([
+            'name' => 'Entrenador Principal',
+            'email' => 'entrenador@lostroncos.cl',
+            'password' => bcrypt('password'),
+            'phone' => '+56987654321',
+            'role' => 'entrenador',
+        ]);
+
+        $player = User::create([
+            'name' => 'Jugador Ejemplo',
+            'email' => 'jugador@lostroncos.cl',
+            'password' => bcrypt('password'),
+            'phone' => '+56911111111',
+            'role' => 'jugador',
+        ]);
+
+        $analyst2 = User::create([
+            'name' => 'Analista Segundo',
+            'email' => 'analista2@lostroncos.cl',
+            'password' => bcrypt('password'),
+            'phone' => '+56922222222',
+            'role' => 'analista',
+        ]);
+
+        $player2 = User::create([
+            'name' => 'Jugador Segundo',
+            'email' => 'jugador2@lostroncos.cl',
+            'password' => bcrypt('password'),
+            'phone' => '+56933333333',
+            'role' => 'jugador',
+        ]);
+
+        // Create user profiles
+        \App\Models\UserProfile::create([
+            'user_id' => $analyst->id,
+            'experience_level' => 'profesional',
+            'position' => null,
+            'club_team_organization' => 'Los Troncos RC',
+            'division_category' => 'Primera División',
+        ]);
+
+        \App\Models\UserProfile::create([
+            'user_id' => $coach->id,
+            'experience_level' => 'profesional',
+            'position' => null,
+            'club_team_organization' => 'Los Troncos RC',
+            'division_category' => 'Primera División',
+        ]);
+
+        \App\Models\UserProfile::create([
+            'user_id' => $player->id,
+            'experience_level' => 'intermedio',
+            'position' => 'Centro',
+            'club_team_organization' => 'Los Troncos RC',
+            'division_category' => 'Primera División',
+        ]);
+
+        \App\Models\UserProfile::create([
+            'user_id' => $analyst2->id,
+            'experience_level' => 'avanzado',
+            'position' => null,
+            'club_team_organization' => 'Los Troncos RC',
+            'division_category' => 'Primera División',
+        ]);
+
+        \App\Models\UserProfile::create([
+            'user_id' => $player2->id,
+            'experience_level' => 'principiante',
+            'position' => 'Ala',
+            'club_team_organization' => 'Los Troncos RC',
+            'division_category' => 'Primera División',
         ]);
     }
 }

@@ -1,7 +1,75 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoCommentController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', function () {
+// Public route
+Route::get('/', function() {
+    if (auth()->check()) {
+        return redirect()->route('home');
+    }
     return view('welcome');
+});
+
+// Authentication Routes
+Auth::routes();
+
+// Protected Routes
+Route::middleware(['auth'])->group(function () {
+    // Main Dashboard
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+
+    // Video Routes
+    Route::resource('videos', VideoController::class);
+    Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
+    Route::get('videos/{video}/analytics', [VideoController::class, 'analytics'])->name('videos.analytics');
+    
+    // My Videos Routes
+    Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
+    Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
+    Route::get('assignments/{assignment}/video', [App\Http\Controllers\MyVideosController::class, 'show'])->name('assignments.show');
+
+    // Analyst Routes
+    Route::middleware(['role:analista'])->prefix('analyst')->name('analyst.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'analyst'])->name('dashboard');
+        Route::resource('assignments', App\Http\Controllers\VideoAssignmentController::class);
+        Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\VideoAssignmentController::class, 'markCompleted'])->name('assignments.markCompleted');
+        Route::post('assignments/{assignment}/accept', [App\Http\Controllers\VideoAssignmentController::class, 'playerAccept'])->name('assignments.playerAccept');
+        Route::post('assignments/{assignment}/submit', [App\Http\Controllers\VideoAssignmentController::class, 'playerSubmit'])->name('assignments.playerSubmit');
+        Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
+        Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
+    });
+
+    // Player Routes  
+    Route::middleware(['role:jugador'])->prefix('player')->name('player.')->group(function () {
+        Route::get('/videos', [DashboardController::class, 'playerVideos'])->name('videos');
+        Route::get('/completed', [DashboardController::class, 'playerCompleted'])->name('completed');
+        Route::get('/pending', [DashboardController::class, 'playerPending'])->name('pending');
+        Route::get('/upload', [VideoController::class, 'playerUpload'])->name('upload');
+        Route::post('/upload', [VideoController::class, 'playerStore'])->name('upload.store');
+    });
+
+    // Coach Routes
+    Route::middleware(['role:entrenador'])->prefix('coach')->name('coach.')->group(function () {
+        Route::get('/videos', [DashboardController::class, 'coachVideos'])->name('videos');
+        Route::get('/users', [DashboardController::class, 'coachUsers'])->name('users');
+        Route::get('/assignments', [DashboardController::class, 'coachAssignments'])->name('assignments');
+        Route::get('/rivals', [DashboardController::class, 'coachRivals'])->name('rivals');
+        Route::get('/reports/team', [DashboardController::class, 'teamReport'])->name('reports.team');
+        Route::get('/players/compare', [DashboardController::class, 'playersCompare'])->name('players.compare');
+        Route::get('/training/plan', [DashboardController::class, 'trainingPlan'])->name('training.plan');
+        Route::get('/roster', [DashboardController::class, 'roster'])->name('roster');
+        Route::get('/player/{user}', [DashboardController::class, 'playerProfile'])->name('player.profile');
+        Route::get('/player/{user}/assign', [DashboardController::class, 'playerAssign'])->name('player.assign');
+    });
+
+    // General Routes (accessible by all roles)
+    Route::get('/teams', function() { return view('teams.index', ['teams' => \App\Models\Team::all()]); })->name('teams.index');
+    Route::get('/categories', function() { return view('categories.index', ['categories' => \App\Models\Category::all()]); })->name('categories.index');
+    Route::get('/assignments', function() { return view('assignments.index'); })->name('assignments.index');
+    Route::get('/reports', function() { return view('reports.index'); })->name('reports.index');
 });

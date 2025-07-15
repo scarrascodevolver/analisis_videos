@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'role',
     ];
 
     /**
@@ -44,5 +46,50 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    public function uploadedVideos()
+    {
+        return $this->hasMany(Video::class, 'uploaded_by');
+    }
+
+    public function videoComments()
+    {
+        return $this->hasMany(VideoComment::class);
+    }
+
+    public function assignedVideos()
+    {
+        return $this->hasMany(VideoAssignment::class, 'assigned_to');
+    }
+
+    public function assignedByMe()
+    {
+        return $this->hasMany(VideoAssignment::class, 'assigned_by');
+    }
+
+    public function pendingAssignments()
+    {
+        return $this->assignedVideos()->where('status', 'assigned');
+    }
+
+    public function isAnalyst()
+    {
+        return $this->role === 'analista';
+    }
+
+    public function isPlayer()
+    {
+        return $this->role === 'jugador';
+    }
+
+    public function isCoach()
+    {
+        return $this->role === 'entrenador';
     }
 }
