@@ -6,13 +6,8 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\DashboardController;
 
-// Public route
-Route::get('/', function() {
-    if (auth()->check()) {
-        return redirect()->route('home');
-    }
-    return view('welcome');
-});
+// Public route - Redirect directly to login
+Route::redirect('/', '/login');
 
 // Authentication Routes
 Auth::routes();
