@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('page_title', 'Mis Videos Asignados')
+@section('page_title', 'Mis Videos')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
+    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
     <li class="breadcrumb-item active">Mis Videos</li>
 @endsection
 

@@ -41,7 +41,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('assignments/{assignment}/accept', [App\Http\Controllers\VideoAssignmentController::class, 'playerAccept'])->name('assignments.playerAccept');
         Route::post('assignments/{assignment}/submit', [App\Http\Controllers\VideoAssignmentController::class, 'playerSubmit'])->name('assignments.playerSubmit');
         Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
-        Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
     });
 
     // Player Routes  
@@ -58,18 +57,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/videos', [DashboardController::class, 'coachVideos'])->name('videos');
         Route::get('/users', [DashboardController::class, 'coachUsers'])->name('users');
         Route::get('/assignments', [DashboardController::class, 'coachAssignments'])->name('assignments');
-        Route::get('/rivals', [DashboardController::class, 'coachRivals'])->name('rivals');
-        Route::get('/reports/team', [DashboardController::class, 'teamReport'])->name('reports.team');
-        Route::get('/players/compare', [DashboardController::class, 'playersCompare'])->name('players.compare');
-        Route::get('/training/plan', [DashboardController::class, 'trainingPlan'])->name('training.plan');
-        Route::get('/roster', [DashboardController::class, 'roster'])->name('roster');
         Route::get('/player/{user}', [DashboardController::class, 'playerProfile'])->name('player.profile');
         Route::get('/player/{user}/assign', [DashboardController::class, 'playerAssign'])->name('player.assign');
     });
 
     // General Routes (accessible by all roles)
-    Route::get('/teams', function() { return view('teams.index', ['teams' => \App\Models\Team::all()]); })->name('teams.index');
-    Route::get('/categories', function() { return view('categories.index', ['categories' => \App\Models\Category::all()]); })->name('categories.index');
-    Route::get('/assignments', function() { return view('assignments.index'); })->name('assignments.index');
-    Route::get('/reports', function() { return view('reports.index'); })->name('reports.index');
+    // Removed unused routes (teams, categories, reports)
 });

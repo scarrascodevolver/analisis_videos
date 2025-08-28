@@ -3,7 +3,7 @@
 @section('page_title', $video->title)
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
+    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
     <li class="breadcrumb-item"><a href="{{ route('videos.index') }}">Videos</a></li>
     <li class="breadcrumb-item active">{{ $video->title }}</li>
 @endsection

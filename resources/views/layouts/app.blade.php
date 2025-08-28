@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('page_title', 'Dashboard') - Los Troncos</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo_lt.png') }}">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -102,6 +103,26 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
+        /* Sobrescribir color azul de Bootstrap para enlaces */
+        .breadcrumb-item a {
+            color: #1e4d2b !important;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: #2d5a3a !important;
+            text-decoration: none;
+        }
+        
+        /* Enlaces generales en verde */
+        a {
+            color: #1e4d2b;
+        }
+        
+        a:hover {
+            color: #2d5a3a;
+            text-decoration: none;
+        }
+
         @yield('css')
     </style>
 </head>
@@ -117,7 +138,7 @@
                     </a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="{{ route('home') }}" class="nav-link">Inicio</a>
+                    <a href="{{ route('videos.index') }}" class="nav-link">Videos</a>
                 </li>
             </ul>
 
@@ -144,7 +165,7 @@
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
-            <a href="{{ route('home') }}" class="brand-link">
+            <a href="{{ route('videos.index') }}" class="brand-link">
                 <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" 
                      class="brand-image img-circle elevation-3" 
                      style="width: 33px; height: 33px; object-fit: cover;">
@@ -167,24 +188,12 @@
                 <!-- Sidebar Menu -->
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
-                        <li class="nav-item">
-                            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
 
                         @if(Auth::user()->role === 'analista')
                             <li class="nav-item">
                                 <a href="{{ route('videos.create') }}" class="nav-link {{ request()->routeIs('videos.create') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-video"></i>
                                     <p>Subir Video</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('analyst.reports') }}" class="nav-link {{ request()->routeIs('analyst.reports') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-chart-bar"></i>
-                                    <p>Reportes</p>
                                 </a>
                             </li>
                         @endif
@@ -221,20 +230,8 @@
                                     <p>Jugadores</p>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('coach.reports.team') }}" class="nav-link {{ request()->routeIs('coach.reports.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-chart-line"></i>
-                                    <p>Reportes Equipo</p>
-                                </a>
-                            </li>
                         @endif
 
-                        <li class="nav-item">
-                            <a href="{{ route('teams.index') }}" class="nav-link {{ request()->routeIs('teams.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-users"></i>
-                                <p>Equipos</p>
-                            </a>
-                        </li>
                     </ul>
                 </nav>
             </div>

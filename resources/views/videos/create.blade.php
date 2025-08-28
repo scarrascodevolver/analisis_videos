@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('page_title', 'Subir Nuevo Video')
+@section('page_title', 'Subir Video')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
-    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}">Videos</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
+    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}">Videos del Equipo</a></li>
     <li class="breadcrumb-item active">Subir Video</li>
 @endsection
 

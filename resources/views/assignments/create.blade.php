@@ -3,7 +3,7 @@
 @section('page_title', 'Nueva Asignación de Video')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
+    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
     <li class="breadcrumb-item"><a href="{{ route('analyst.assignments.index') }}">Asignaciones</a></li>
     <li class="breadcrumb-item active">Nueva Asignación</li>
 @endsection

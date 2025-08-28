@@ -7,7 +7,7 @@
     <div class="auth-card">
         <div class="auth-header">
             <div class="logo-icon">
-                <i class="fas fa-shield-alt"></i>
+                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             <h3>Los Troncos</h3>
             <p>Registro en el Sistema</p>
