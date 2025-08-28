@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
     {
         // Crear usuario Analista
         $analista = User::create([
-            'name' => 'Juan Pérez',
+            'name' => 'Jeremias Rodriguez',
             'email' => 'analista@rugby.com',
             'password' => Hash::make('password123'),
             'phone' => '+56912345678',
@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
 
         // Crear usuario Entrenador
         $entrenador = User::create([
-            'name' => 'Roberto Silva',
+            'name' => 'Thor',
             'email' => 'entrenador@rugby.com',
             'password' => Hash::make('password123'),
             'phone' => '+56911223344',
@@ -64,7 +64,7 @@ class UserSeeder extends Seeder
 
         // Crear usuario Director Técnico
         $dt = User::create([
-            'name' => 'Miguel Ángel González',
+            'name' => 'Valentin Dapena',
             'email' => 'dt@rugby.com',
             'password' => Hash::make('password123'),
             'phone' => '+56955667788',
