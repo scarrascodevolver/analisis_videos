@@ -98,7 +98,13 @@ class VideoController extends Controller
         }
 
         $file = $request->file('video_file');
-        $filename = time() . '_' . $file->getClientOriginalName();
+        $originalName = $file->getClientOriginalName();
+
+        // Sanitizar nombre de archivo: remover espacios y caracteres especiales
+        $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
+        $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
+
+        $filename = time() . '_' . $sanitizedName;
         $path = $file->storeAs('videos', $filename, 'public');
 
         $video = Video::create([
@@ -249,7 +255,13 @@ class VideoController extends Controller
         ]);
 
         $file = $request->file('video_file');
-        $filename = time() . '_player_' . $file->getClientOriginalName();
+        $originalName = $file->getClientOriginalName();
+
+        // Sanitizar nombre de archivo: remover espacios y caracteres especiales
+        $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
+        $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
+
+        $filename = time() . '_player_' . $sanitizedName;
         $path = $file->storeAs('videos/player-uploads', $filename, 'public');
 
         $ownTeam = Team::where('is_own_team', true)->first();
