@@ -25,9 +25,11 @@
                             <div class="card video-card h-100">
                                 
                                 <!-- Video Thumbnail -->
-                                <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
-                                    <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
-                                </div>
+                                <a href="{{ route('assignments.show', $assignment) }}" class="d-block">
+                                    <div class="card-img-top bg-dark d-flex align-items-center justify-content-center video-thumbnail" style="height: 200px; cursor: pointer;">
+                                        <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
+                                    </div>
+                                </a>
 
                                 <!-- Video Info -->
                                 <div class="card-body p-3">
@@ -65,14 +67,6 @@
                                     @endif
                                 </div>
 
-                                <!-- Actions -->
-                                <div class="card-footer bg-transparent">
-                                    <div class="btn-group w-100">
-                                        <a href="{{ route('assignments.show', $assignment) }}" class="btn btn-primary btn-block btn-sm">
-                                            <i class="fas fa-play"></i> Ver Video
-                                        </a>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -104,6 +98,17 @@
     .video-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .video-thumbnail {
+        transition: all 0.3s ease;
+    }
+    .video-thumbnail:hover {
+        background-color: #2a2a2a !important;
+    }
+    .video-thumbnail:hover i {
+        opacity: 1 !important;
+        transform: scale(1.1);
+        color: #1e4d2b !important;
     }
     .alert-sm {
         font-size: 0.875rem;
