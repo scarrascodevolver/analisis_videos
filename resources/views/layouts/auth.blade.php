@@ -111,6 +111,12 @@
             border-radius: 8px 0 0 8px;
         }
         
+        .input-group select.form-control {
+            height: auto !important;
+            line-height: 1.5 !important;
+            padding: 12px 15px !important;
+        }
+        
         .step-indicator {
             background: #f8f9fa;
             padding: 15px;

@@ -30,11 +30,11 @@
                                     </label>
                                     <div class="custom-file">
                                         <input type="file" class="custom-file-input @error('video_file') is-invalid @enderror" 
-                                               id="video_file" name="video_file" accept=".mp4,.mov,.avi" required>
+                                               id="video_file" name="video_file" accept=".mp4,.mov,.avi,.webm,.mkv" required>
                                         <label class="custom-file-label" for="video_file">Seleccionar archivo de video...</label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Formatos soportados: MP4, MOV, AVI. Tamaño máximo: 1GB
+                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 200MB
                                     </small>
                                     @error('video_file')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -186,33 +186,33 @@
                             </div>
                         </div>
 
-                        <!-- Match Date -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="match_date">
-                                        <i class="fas fa-calendar"></i> Fecha del Partido *
-                                    </label>
-                                    <input type="date" class="form-control @error('match_date') is-invalid @enderror" 
-                                           id="match_date" name="match_date" value="{{ old('match_date') }}" required>
-                                    @error('match_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>
-                                        <i class="fas fa-info-circle"></i> Información de Categorías
-                                    </label>
-                                    <div class="bg-light p-3 rounded">
-                                        @foreach($categories as $category)
-                                            <small class="d-block">
-                                                <strong>{{ $category->name }}:</strong> {{ $category->description }}
-                                            </small>
-                                        @endforeach
-                                    </div>
-                                </div>
+
+                        <!-- Player Assignment Section -->
+                        <div class="form-group">
+                            <label for="assigned_players">
+                                <i class="fas fa-user-plus"></i> Asignar a Jugadores (Opcional)
+                            </label>
+                            <select class="form-control select2" id="assigned_players" name="assigned_players[]" multiple="multiple" 
+                                    data-placeholder="Buscar y seleccionar jugadores..." style="width: 100%;">
+                                @foreach($players as $player)
+                                    <option value="{{ $player->id }}">
+                                        {{ $player->name }}
+                                        @if($player->profile && $player->profile->position)
+                                            - {{ $player->profile->position }}
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">
+                                Puedes buscar por nombre o posición. Selecciona múltiples jugadores manteniendo Ctrl.
+                            </small>
+                            
+                            <div class="form-group mt-3">
+                                <label for="assignment_notes">
+                                    <i class="fas fa-sticky-note"></i> Notas de Asignación
+                                </label>
+                                <textarea class="form-control" id="assignment_notes" name="assignment_notes" rows="2" 
+                                          placeholder="Notas específicas para los jugadores asignados...">{{ old('assignment_notes') }}</textarea>
                             </div>
                         </div>
 
@@ -222,7 +222,7 @@
                                 <i class="fas fa-align-left"></i> Descripción del Video
                             </label>
                             <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="4" 
+                                      id="description" name="description" rows="3" 
                                       placeholder="Describe el contenido del video, aspectos importantes a analizar, etc.">{{ old('description') }}</textarea>
                             <small class="form-text text-muted">
                                 Incluye información relevante sobre el partido, jugadas específicas, objetivos del análisis, etc.
@@ -235,11 +235,13 @@
                         <!-- Upload Progress -->
                         <div class="form-group" id="uploadProgress" style="display: none;">
                             <label>Progreso de Subida</label>
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                     role="progressbar" style="width: 0%">
-                                    0%
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar">
+                                    <span id="progressText">0%</span>
                                 </div>
+                            </div>
+                            <div id="uploadStatus" class="text-muted small">
+                                Preparando subida...
                             </div>
                         </div>
                     </div>
@@ -281,28 +283,106 @@ $(document).ready(function() {
         }
     });
 
-    // Form validation
+    // Form validation and upload with real progress
     $('#videoUploadForm').on('submit', function(e) {
+        e.preventDefault(); // Always prevent default to handle with AJAX
+        
         var fileInput = $('#video_file')[0];
         if (!fileInput.files || !fileInput.files[0]) {
-            e.preventDefault();
             alert('Por favor selecciona un archivo de video');
             return false;
         }
 
         var file = fileInput.files[0];
-        var maxSize = 1024 * 1024 * 1024; // 1GB
+        var maxSize = 200 * 1024 * 1024; // 200MB
         
         if (file.size > maxSize) {
-            e.preventDefault();
-            alert('El archivo es demasiado grande. El tamaño máximo es 1GB.');
+            alert('El archivo es demasiado grande. El tamaño máximo es 200MB.');
             return false;
         }
 
-        // Show upload progress
+        // Prepare form data
+        var formData = new FormData(this);
+        
+        // Show progress
         $('#uploadProgress').show();
         $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Subiendo...');
+        $('#progressBar').removeClass('bg-success bg-danger bg-primary bg-warning').css('background-color', '#1e4d2b');
+        
+        // AJAX upload with progress
+        uploadWithProgress(formData);
     });
+    
+    function uploadWithProgress(formData) {
+        var xhr = new XMLHttpRequest();
+        
+        // Progress tracking
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                var percentComplete = Math.round((e.loaded / e.total) * 100);
+                $('#progressBar').css('width', percentComplete + '%');
+                $('#progressText').text(percentComplete + '%');
+                
+                // Update status text
+                if (percentComplete < 100) {
+                    var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
+                    var total = (e.total / (1024 * 1024)).toFixed(1);
+                    $('#uploadStatus').text(`Subiendo: ${loaded}MB / ${total}MB`);
+                } else {
+                    $('#uploadStatus').text('Procesando archivo...');
+                    $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
+                }
+            }
+        });
+        
+        // Upload completion
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    $('#progressBar').css('background-color', '#28a745'); // Verde éxito
+                    $('#progressText').text('¡Completado!');
+                    $('#uploadStatus').text('Video subido exitosamente');
+                    
+                    // Redirect after short delay
+                    setTimeout(function() {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            window.location.href = '/videos';
+                        }
+                    }, 1500);
+                } catch (e) {
+                    // If not JSON, assume it's a redirect response
+                    $('#progressBar').css('background-color', '#28a745'); // Verde éxito
+                    $('#progressText').text('¡Completado!');
+                    $('#uploadStatus').text('Video subido exitosamente');
+                    
+                    setTimeout(function() {
+                        window.location.href = '/videos';
+                    }, 1500);
+                }
+            } else {
+                $('#progressBar').css('background-color', '#dc3545'); // Rojo error
+                $('#progressText').text('Error');
+                $('#uploadStatus').text('Error en la subida. Código: ' + xhr.status);
+                $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
+            }
+        });
+        
+        // Upload error
+        xhr.addEventListener('error', function() {
+            $('#progressBar').css('background-color', '#dc3545'); // Rojo error
+            $('#progressText').text('Error');
+            $('#uploadStatus').text('Error de conexión durante la subida');
+            $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
+        });
+        
+        // Start upload
+        xhr.open('POST', '{{ route("videos.store") }}');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
+    }
 
     // Rugby situation preview
     $('#rugby_situation_id').on('change', function() {
@@ -320,18 +400,52 @@ $(document).ready(function() {
         }
     });
 
-    // Auto-generate title based on selections
+    // Initialize Select2 for players
+    $('#assigned_players').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Buscar y seleccionar jugadores...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "No se encontraron jugadores";
+            },
+            searching: function() {
+                return "Buscando...";
+            },
+            removeAllItems: function() {
+                return "Quitar todos los elementos";
+            }
+        }
+    });
+    
+    // Auto-generate title based on selections (only if title is empty)
+    var titleInput = $('#title');
+    var isUserTyping = false;
+    
+    titleInput.on('input', function() {
+        isUserTyping = $(this).val().length > 0;
+    });
+    
+    function cleanText(text) {
+        return text.replace(/\s+/g, ' ').replace(' (Nuestro Equipo)', '').trim();
+    }
+    
     $('#analyzed_team_id, #rival_team_id, #category_id, #rugby_situation_id').on('change', function() {
-        var analyzedTeam = $('#analyzed_team_id option:selected').text();
-        var rivalTeam = $('#rival_team_id option:selected').text();
-        var category = $('#category_id option:selected').text();
-        var rugbySituation = $('#rugby_situation_id option:selected').text();
+        if (isUserTyping) return; // Don't auto-generate if user is typing
         
-        if (analyzedTeam && analyzedTeam !== 'Seleccionar equipo...') {
-            var title = 'Análisis ' + category;
+        var analyzedTeam = cleanText($('#analyzed_team_id option:selected').text());
+        var rivalTeam = cleanText($('#rival_team_id option:selected').text());
+        var category = cleanText($('#category_id option:selected').text());
+        var rugbySituation = cleanText($('#rugby_situation_id option:selected').text());
+        
+        if (analyzedTeam && analyzedTeam !== 'Seleccionar equipo...' && category && category !== 'Seleccionar categoría...') {
+            var title = '';
             
             if (rugbySituation && rugbySituation !== 'Sin situación específica') {
-                title = rugbySituation + ' - ' + category;
+                title = rugbySituation;
+            } else {
+                title = 'Análisis ' + category;
             }
             
             if (rivalTeam && rivalTeam !== 'Sin rival (entrenamiento)') {
@@ -340,9 +454,7 @@ $(document).ready(function() {
                 title += ' - ' + analyzedTeam;
             }
             
-            if ($('#title').val() === '' || $('#title').data('auto-generated')) {
-                $('#title').val(title).data('auto-generated', true);
-            }
+            titleInput.val(title);
         }
     });
 });

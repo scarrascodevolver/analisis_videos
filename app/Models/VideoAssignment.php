@@ -11,18 +11,7 @@ class VideoAssignment extends Model
         'assigned_by',
         'assigned_to',
         'notes',
-        'due_date',
-        'status',
-        'completed_at',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'due_date' => 'date',
-            'completed_at' => 'datetime',
-        ];
-    }
 
     public function video()
     {
@@ -39,22 +28,8 @@ class VideoAssignment extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function scopeOverdue($query)
+    public function scopeForPlayer($query, $playerId)
     {
-        return $query->where('due_date', '<', now())
-                     ->where('status', '!=', 'completed');
-    }
-
-    public function scopePending($query)
-    {
-        return $query->where('status', 'assigned');
-    }
-
-    public function markAsCompleted()
-    {
-        $this->update([
-            'status' => 'completed',
-            'completed_at' => now(),
-        ]);
+        return $query->where('assigned_to', $playerId);
     }
 }

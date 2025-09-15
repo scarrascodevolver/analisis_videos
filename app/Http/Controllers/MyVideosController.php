@@ -23,8 +23,8 @@ class MyVideosController extends Controller
         $stats = [
             'total' => $user->assignedVideos()->count(),
             'pending' => $user->pendingAssignments()->count(),
-            'completed' => $user->assignedVideos()->where('status', 'completed')->count(),
-            'overdue' => $user->assignedVideos()->where('due_date', '<', now())->where('status', '!=', 'completed')->count(),
+            'completed' => 0, // Ya no hay estados de completado
+            'overdue' => 0, // Ya no hay fechas límite
         ];
 
         return view('my-videos.index', compact('assignedVideos', 'stats'));

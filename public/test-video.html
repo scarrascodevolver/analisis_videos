@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Video Seeking</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        video { width: 100%; max-width: 600px; }
+        .controls { margin: 10px 0; }
+        button { margin: 5px; padding: 10px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏉 Test Video Seeking - Los Troncos</h1>
+        
+        <div class="info">
+            <h3>Diagnóstico de Video Controls</h3>
+            <p>Esta página prueba los controles nativos del navegador para diagnosticar el problema de seeking.</p>
+        </div>
+        
+        <video id="testVideo" controls preload="metadata">
+            <source src="/stream/videos/1755914574_Screenrecorder-2023-11-16-07-47-59-219.mp4" type="video/mp4">
+            <source src="/storage/videos/1755914574_Screenrecorder-2023-11-16-07-47-59-219.mp4" type="video/mp4">
+            Tu navegador no soporta video HTML5.
+        </video>
+        
+        <div class="controls">
+            <button onclick="seekTo(10)">Ir a 10s</button>
+            <button onclick="seekTo(30)">Ir a 30s</button>
+            <button onclick="seekTo(60)">Ir a 60s</button>
+            <button onclick="testSeek()">Test Seeking</button>
+        </div>
+        
+        <div class="info">
+            <h4>Información del Video:</h4>
+            <div id="videoInfo">Cargando...</div>
+            
+            <h4>Log de Tests:</h4>
+            <div id="testLog"></div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('testVideo');
+        const videoInfo = document.getElementById('videoInfo');
+        const testLog = document.getElementById('testLog');
+        
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            testLog.innerHTML += `<div>[${time}] ${message}</div>`;
+        }
+        
+        function seekTo(seconds) {
+            log(`Intentando ir a ${seconds} segundos...`);
+            const oldTime = video.currentTime;
+            video.currentTime = seconds;
+            
+            setTimeout(() => {
+                const newTime = video.currentTime;
+                if (Math.abs(newTime - seconds) < 1) {
+                    log(`✅ Seeking exitoso: ${oldTime.toFixed(1)}s → ${newTime.toFixed(1)}s`);
+                } else {
+                    log(`❌ Seeking falló: quería ${seconds}s, got ${newTime.toFixed(1)}s`);
+                }
+            }, 100);
+        }
+        
+        function testSeek() {
+            log('🧪 Iniciando test de seeking...');
+            
+            // Test 1: Can we seek at all?
+            video.currentTime = 0;
+            setTimeout(() => {
+                if (video.currentTime < 1) {
+                    log('✅ Reset a 0 funcionó');
+                    seekTo(video.duration / 2);
+                } else {
+                    log('❌ No se pudo resetear a 0');
+                }
+            }, 100);
+        }
+        
+        video.addEventListener('loadedmetadata', function() {
+            videoInfo.innerHTML = `
+                <strong>Duración:</strong> ${video.duration.toFixed(1)} segundos<br>
+                <strong>Dimensiones:</strong> ${video.videoWidth}x${video.videoHeight}<br>
+                <strong>Can seek:</strong> ${video.seekable.length > 0 ? 'Sí' : 'No'}<br>
+                <strong>Ready state:</strong> ${video.readyState}<br>
+            `;
+            log('✅ Video metadata cargado');
+        });
+        
+        video.addEventListener('canplay', function() {
+            log('✅ Video puede reproducirse');
+        });
+        
+        video.addEventListener('seeking', function() {
+            log(`🔍 Seeking a ${video.currentTime.toFixed(1)}s...`);
+        });
+        
+        video.addEventListener('seeked', function() {
+            log(`✅ Seeked completed a ${video.currentTime.toFixed(1)}s`);
+        });
+        
+        video.addEventListener('error', function(e) {
+            log(`❌ Video error: ${e.target.error?.message || 'Unknown error'}`);
+        });
+        
+        video.addEventListener('timeupdate', function() {
+            // Log time updates occasionally
+            if (Math.floor(video.currentTime) % 5 === 0 && video.currentTime > 0) {
+                // Don't spam the log
+            }
+        });
+        
+        log('🚀 Test page loaded');
+    </script>
+</body>
+</html>

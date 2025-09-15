@@ -35,9 +35,9 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: 500px; display: block;" preload="auto">
+                        <video id="rugbyVideo" controls style="width: 100%; height: 500px; display: block;" preload="metadata">
+                            <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
                             <source src="{{ asset('storage/' . $video->file_path) }}" type="{{ $video->mime_type }}">
-                            <source src="{{ url('storage/' . $video->file_path) }}" type="{{ $video->mime_type }}">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
@@ -47,24 +47,11 @@
                             <!-- Fullscreen notifications will appear here -->
                         </div>
                         
-                        
-                        <!-- Video Controls Enhancement -->
-                        <div class="video-controls-overlay" style="position: absolute; bottom: 60px; left: 10px; right: 10px; z-index: 10;">
-                            <div class="d-flex justify-content-between align-items-center text-white">
-                                <div class="bg-dark px-3 py-2 rounded" style="background: rgba(0,0,0,0.8) !important;">
-                                    <button id="playPauseBtn" class="btn btn-sm btn-outline-light">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <span id="currentTime" class="ml-2 font-weight-bold">00:00</span>
-                                    <span>/</span>
-                                    <span id="duration" class="font-weight-bold">00:00</span>
-                                </div>
-                                <div>
-                                    <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold">
-                                        <i class="fas fa-comment-plus"></i> Comentar aquí
-                                    </button>
-                                </div>
-                            </div>
+                        <!-- Add Comment Button Overlay -->
+                        <div class="video-controls-overlay" style="position: absolute; bottom: 60px; right: 10px; z-index: 10;">
+                            <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold">
+                                <i class="fas fa-comment-plus"></i> Comentar aquí
+                            </button>
                         </div>
                     </div>
 
@@ -323,20 +310,12 @@
 <script>
 $(document).ready(function() {
     const video = document.getElementById('rugbyVideo');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const currentTimeSpan = document.getElementById('currentTime');
-    const durationSpan = document.getElementById('duration');
     const timestampInput = document.getElementById('timestamp_seconds');
     const timestampDisplay = document.getElementById('timestampDisplay');
     
-    // Force timeline creation after a small delay
-    setTimeout(function() {
-        if (video.duration && !isNaN(video.duration)) {
-            createTimelineMarkers();
-        }
-    }, 500);
-
-    // Video control functions
+    console.log('✅ JavaScript loaded - timeline funcional');
+    
+    // Basic time formatting function
     function formatTime(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -347,63 +326,12 @@ $(document).ready(function() {
         }
         return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
-
-    // Video event listeners
-    // Initialize video on page load
-    if (video.readyState >= 2) {
-        console.log('Video already loaded');
-        durationSpan.textContent = formatTime(video.duration);
-        createTimelineMarkers();
-    }
-
-    video.addEventListener('loadedmetadata', function() {
-        console.log('Video metadata loaded, duration:', video.duration);
-        if (video.duration && !isNaN(video.duration)) {
-            durationSpan.textContent = formatTime(video.duration);
-            createTimelineMarkers();
-        }
-    });
-
-    video.addEventListener('error', function(e) {
-        console.error('Video error:', e);
-        
-        // Show more detailed error info
-        const errorDetails = video.error ? `Código: ${video.error.code}, Mensaje: ${video.error.message}` : 'Error desconocido';
-        console.error('Detalles del error:', errorDetails);
-        console.error('Video src:', video.src);
-        
-        alert('Error al cargar el video. Verifica que el archivo existe y el formato es compatible.');
-    });
-
+    
+    // Update timestamp input to current video time
     video.addEventListener('timeupdate', function() {
-        currentTimeSpan.textContent = formatTime(video.currentTime);
-        updateProgressIndicator();
-        
-        // Auto-update timestamp input to current video time
         if (document.activeElement !== timestampInput) {
             timestampInput.value = Math.floor(video.currentTime);
             timestampDisplay.textContent = formatTime(Math.floor(video.currentTime));
-        }
-        
-        // Check for comments at current time and show notifications
-        checkAndShowCommentNotifications();
-        checkAndShowFullscreenNotifications();
-    });
-
-    video.addEventListener('play', function() {
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    });
-
-    video.addEventListener('pause', function() {
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    });
-
-    // Play/Pause button
-    playPauseBtn.addEventListener('click', function() {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
         }
     });
 
@@ -420,99 +348,149 @@ $(document).ready(function() {
         timestampDisplay.textContent = formatTime(seconds);
     });
 
-    // Timeline markers creation
+    // Comment timestamp buttons
+    $('.timestamp-btn').on('click', function() {
+        const timestamp = $(this).data('timestamp');
+        video.currentTime = timestamp;
+        if (video.paused) {
+            video.play();
+        }
+    });
+
+    // Toggle comments section
+    $('#toggleCommentsBtn').on('click', function() {
+        const commentsSection = $('#commentsSection');
+        const videoSection = $('#videoSection');
+        const toggleBtn = $('#toggleCommentsBtn');
+        const toggleText = $('#toggleCommentsText');
+        const toggleIcon = toggleBtn.find('i');
+        
+        if (commentsSection.is(':visible')) {
+            commentsSection.hide();
+            videoSection.removeClass('col-lg-8').addClass('col-lg-12');
+            toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+            toggleText.text('Mostrar Comentarios');
+            toggleBtn.removeClass('btn-warning').addClass('btn-success');
+            $('#rugbyVideo').css('height', '600px');
+        } else {
+            commentsSection.show();
+            videoSection.removeClass('col-lg-12').addClass('col-lg-8');
+            toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+            toggleText.text('Ocultar Comentarios');
+            toggleBtn.removeClass('btn-success').addClass('btn-warning');
+            $('#rugbyVideo').css('height', '500px');
+        }
+    });
+
+    // Timeline de comentarios
     function createTimelineMarkers() {
         const timeline = document.getElementById('timelineMarkers');
         const videoDuration = video.duration;
         
-        // Clear existing markers
+        if (!videoDuration || videoDuration === 0) {
+            console.log('⚠️ No se puede crear timeline - duración no disponible');
+            return;
+        }
+
+        console.log('🔧 Creando timeline con duración:', videoDuration);
+        
+        // Clear existing content
         timeline.innerHTML = '';
         
-        // Create clickable timeline bar (background)
-        const timelineBar = document.createElement('div');
-        timelineBar.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40px;
+        // Create progress bar
+        const progressContainer = document.createElement('div');
+        progressContainer.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 100%;
             background: #dee2e6;
             border-radius: 5px;
             cursor: pointer;
         `;
-        timeline.appendChild(timelineBar);
         
-        // Create progress bar
+        // Progress bar
         const progressBar = document.createElement('div');
         progressBar.id = 'progressBar';
         progressBar.style.cssText = `
             position: absolute;
-            top: 15px;
+            top: 0;
             left: 0;
-            height: 10px;
+            height: 100%;
             width: 0%;
-            background: #007bff;
+            background: #1e4d2b;
             border-radius: 5px;
             transition: width 0.1s ease;
         `;
-        timeline.appendChild(progressBar);
         
-        // Add click handler for timeline seeking
-        timeline.addEventListener('click', function(e) {
-            const rect = this.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percentage = clickX / rect.width;
-            const newTime = percentage * videoDuration;
-            video.currentTime = newTime;
-        });
-        
-        // Create progress indicator (current position)
+        // Progress indicator
         const progressIndicator = document.createElement('div');
         progressIndicator.id = 'progressIndicator';
         progressIndicator.style.cssText = `
             position: absolute;
-            top: 10px;
+            top: -5px;
             left: 0%;
-            width: 20px;
-            height: 20px;
-            background: #ff6b35;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            z-index: 15;
+            width: 4px;
+            height: 50px;
+            background: #1e4d2b;
+            border-radius: 2px;
+            transition: left 0.1s ease;
             transform: translateX(-50%);
         `;
-        timeline.appendChild(progressIndicator);
+        
+        progressContainer.appendChild(progressBar);
+        progressContainer.appendChild(progressIndicator);
         
         // Add comment markers
-        @if($comments->count() > 0)
-        @foreach($comments as $comment)
-            const marker{{ $loop->index }} = document.createElement('div');
-            const position{{ $loop->index }} = ({{ $comment->timestamp_seconds }} / videoDuration) * 100;
-            marker{{ $loop->index }}.style.cssText = `
+        const comments = @json($comments);
+        comments.forEach(comment => {
+            const position = (comment.timestamp_seconds / videoDuration) * 100;
+            
+            const marker = document.createElement('div');
+            marker.className = 'comment-marker';
+            marker.setAttribute('data-timestamp', comment.timestamp_seconds);
+            marker.setAttribute('data-comment', comment.comment);
+            marker.style.cssText = `
                 position: absolute;
-                left: ${position{{ $loop->index }}}%;
-                top: 5px;
-                width: 4px;
-                height: 30px;
+                top: -5px;
+                left: ${position}%;
+                width: 8px;
+                height: 50px;
                 background: #28a745;
+                border: 2px solid #fff;
+                border-radius: 4px;
                 cursor: pointer;
-                border: 1px solid white;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                z-index: 10;
                 transform: translateX(-50%);
+                z-index: 10;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             `;
-            marker{{ $loop->index }}.setAttribute('data-toggle', 'tooltip');
-            marker{{ $loop->index }}.setAttribute('title', '{{ $comment->formatted_timestamp }} - {{ ucfirst($comment->category) }}');
-            marker{{ $loop->index }}.addEventListener('click', function(e) {
+            
+            // Tooltip on hover
+            marker.title = `${formatTime(comment.timestamp_seconds)}: ${comment.comment.substring(0, 50)}...`;
+            
+            // Click to seek
+            marker.addEventListener('click', function(e) {
                 e.stopPropagation();
-                video.currentTime = {{ $comment->timestamp_seconds }};
-                video.play();
+                video.currentTime = comment.timestamp_seconds;
+                if (video.paused) {
+                    video.play();
+                }
             });
-            timeline.appendChild(marker{{ $loop->index }});
-        @endforeach
-        @endif
+            
+            progressContainer.appendChild(marker);
+        });
+        
+        // Timeline click to seek
+        progressContainer.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const newTime = percentage * videoDuration;
+            
+            video.currentTime = newTime;
+            console.log('🎯 Timeline click seek to:', formatTime(newTime));
+        });
+        
+        timeline.appendChild(progressContainer);
     }
     
     // Update progress indicator and bar
@@ -533,168 +511,36 @@ $(document).ready(function() {
         }
     }
 
-    // Comment timestamp buttons
-    $('.timestamp-btn').on('click', function() {
-        const timestamp = $(this).data('timestamp');
-        video.currentTime = timestamp;
-        video.play();
-    });
-
-    // Comment form submission
-    $('#commentForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        if (!timestampInput.value) {
-            alert('Por favor selecciona un timestamp para el comentario');
-            return false;
-        }
-
-        const formData = new FormData(this);
-        const submitBtn = $(this).find('button[type="submit"]');
-        
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
-        
-        $.ajax({
-            url: $(this).attr('action'),
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload(); // Reload to show new comment
-                } else {
-                    alert('Error al agregar comentario');
-                }
-            },
-            error: function(xhr) {
-                console.error('Error:', xhr);
-                let errorMsg = 'Error al agregar comentario';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
-                }
-                alert(errorMsg);
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false).html('<i class="fas fa-comment"></i> Agregar Comentario');
-            }
-        });
-    });
-
-    // Add comment at current position
-    $('#addCommentBtn').on('click', function() {
-        const currentSeconds = Math.floor(video.currentTime);
-        timestampInput.value = currentSeconds;
-        timestampDisplay.textContent = formatTime(currentSeconds);
-        
-        // Scroll to comment form
-        $('html, body').animate({
-            scrollTop: $('#commentForm').offset().top - 100
-        }, 500);
-    });
-
-    // Reply functionality
-    $('.reply-btn').on('click', function() {
-        const commentId = $(this).data('comment-id');
-        const replyForm = $('#replyForm' + commentId);
-        
-        // Toggle reply form visibility
-        if (replyForm.is(':visible')) {
-            replyForm.slideUp();
-        } else {
-            // Hide other reply forms
-            $('.reply-form').slideUp();
-            replyForm.slideDown();
-            replyForm.find('textarea').focus();
+    // Initialize timeline when video metadata loads
+    video.addEventListener('loadedmetadata', function() {
+        console.log('📹 Video metadata loaded, duration:', video.duration);
+        if (video.duration && !isNaN(video.duration)) {
+            createTimelineMarkers();
         }
     });
 
-    // Handle reply form submission
-    $(document).on('submit', '.reply-form-submit', function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const commentId = form.data('comment-id');
-        const videoId = form.data('video-id');
-        const replyText = form.find('textarea[name="reply_comment"]').val();
-        const submitBtn = form.find('button[type="submit"]');
-        
-        if (!replyText.trim()) {
-            alert('Por favor escribe una respuesta');
-            return;
-        }
-        
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
-        
-        $.ajax({
-            url: `{{ route('video.comments.store', $video) }}`,
-            method: 'POST',
-            data: {
-                comment: replyText,
-                parent_id: commentId,
-                timestamp_seconds: 0, // Replies don't need specific timestamps
-                category: 'general',
-                priority: 'media',
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload(); // Reload to show new reply
-                } else {
-                    alert('Error al enviar respuesta');
-                }
-            },
-            error: function(xhr) {
-                console.error('Error completo:', xhr);
-                console.error('Status:', xhr.status);
-                console.error('Response:', xhr.responseText);
-                
-                let errorMsg = 'Error al enviar respuesta';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\\n');
-                } else if (xhr.status === 422) {
-                    errorMsg = 'Error de validación. Verifica los datos enviados.';
-                } else if (xhr.status === 500) {
-                    errorMsg = 'Error interno del servidor. Revisa los logs.';
-                }
-                alert(errorMsg);
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false).html('<i class="fas fa-reply"></i> Responder');
-            }
-        });
+    // Update timeline progress
+    video.addEventListener('timeupdate', function() {
+        updateProgressIndicator();
+        checkAndShowCommentNotifications();
     });
 
-    // Mark complete functionality  
-    $('.mark-complete-btn').on('click', function() {
-        const commentId = $(this).data('comment-id');
-        // AJAX call to mark comment as complete
-        console.log('Mark complete:', commentId);
-    });
+    // Force timeline creation if video is already loaded
+    if (video.readyState >= 2) {
+        console.log('📹 Video already loaded');
+        createTimelineMarkers();
+    }
+    
+    // Also try after a delay
+    setTimeout(function() {
+        if (video.duration && !isNaN(video.duration) && !document.getElementById('progressBar')) {
+            console.log('⏰ Creating timeline after delay');
+            createTimelineMarkers();
+        }
+    }, 1000);
 
     // Comment notifications system
-    const commentsData = [
-        @foreach($comments as $comment)
-        {
-            id: {{ $comment->id }},
-            timestamp: {{ $comment->timestamp_seconds }},
-            comment: @json($comment->comment),
-            category: '{{ $comment->category }}',
-            priority: '{{ $comment->priority }}',
-            user: '{{ $comment->user->name }}',
-            user_role: '{{ $comment->user->role }}'
-        },
-        @endforeach
-    ];
-    
-    let activeNotifications = [];
+    const commentsData = @json($comments);
     let lastCheckedTime = -1;
     
     function checkAndShowCommentNotifications() {
@@ -709,7 +555,7 @@ $(document).ready(function() {
         
         // Find comments at current time (exact match or ±1 second)
         const currentComments = commentsData.filter(comment => 
-            Math.abs(comment.timestamp - currentTime) <= 1
+            Math.abs(comment.timestamp_seconds - currentTime) <= 1
         );
         
         // Show notifications for current comments
@@ -720,15 +566,12 @@ $(document).ready(function() {
     
     function showCommentNotification(comment) {
         const notificationArea = document.getElementById('commentNotifications');
-        const timeline = document.getElementById('timelineMarkers');
         
         if (!video.duration) return;
         
-        // Calculate exact position where the green marker is
-        const timelineRect = timeline.getBoundingClientRect();
-        const timelineWidth = timelineRect.width;
-        const position = (comment.timestamp / video.duration) * 100;
-        const leftPosition = (position / 100) * timelineWidth;
+        // Calculate position relative to the notifications area
+        const notificationAreaWidth = notificationArea.offsetWidth;
+        const relativePosition = (comment.timestamp_seconds / video.duration) * notificationAreaWidth;
         
         // Create notification element
         const notification = document.createElement('div');
@@ -751,10 +594,6 @@ $(document).ready(function() {
             'baja': 'secondary'
         };
         
-        // Calculate position relative to the notifications area, not timeline
-        const notificationAreaWidth = notificationArea.offsetWidth;
-        const relativePosition = (comment.timestamp / video.duration) * notificationAreaWidth;
-        
         notification.style.cssText = `
             position: absolute;
             top: 10px;
@@ -762,8 +601,8 @@ $(document).ready(function() {
             transform: translateX(-50%);
             max-width: 320px;
             min-width: 250px;
-            background: rgba(255, 255, 255, 0.85);
-            border: 2px solid rgba(40, 167, 69, 0.7);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #28a745;
             border-radius: 12px;
             padding: 12px 15px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -777,10 +616,10 @@ $(document).ready(function() {
             <div class="d-flex align-items-start">
                 <div class="flex-grow-1">
                     <div class="d-flex align-items-center mb-2">
-                        <span class="badge badge-${categoryColors[comment.category]} mr-2" style="font-size: 10px;">
+                        <span class="badge badge-${categoryColors[comment.category] || 'secondary'} mr-2" style="font-size: 10px;">
                             ${comment.category.charAt(0).toUpperCase() + comment.category.slice(1)}
                         </span>
-                        <span class="badge badge-${priorityColors[comment.priority]}" style="font-size: 10px;">
+                        <span class="badge badge-${priorityColors[comment.priority] || 'secondary'}" style="font-size: 10px;">
                             ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
                         </span>
                     </div>
@@ -788,8 +627,8 @@ $(document).ready(function() {
                         ${comment.comment.length > 80 ? comment.comment.substring(0, 80) + '...' : comment.comment}
                     </p>
                     <small class="text-muted" style="font-size: 11px;">
-                        <i class="fas fa-user"></i> ${comment.user} 
-                        <span class="ml-2"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp)}</span>
+                        <i class="fas fa-user"></i> ${comment.user.name} 
+                        <span class="ml-2"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}</span>
                     </small>
                 </div>
                 <button class="btn btn-sm btn-link text-muted p-1 ml-2" 
@@ -802,6 +641,18 @@ $(document).ready(function() {
         `;
         
         notificationArea.appendChild(notification);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, 5000);
     }
     
     function hideAllNotifications() {
@@ -811,200 +662,35 @@ $(document).ready(function() {
         }
     }
     
-    // Fullscreen notifications system
-    let isFullscreen = false;
-    let fullscreenLastCheckedTime = -1;
-    
-    // Detect fullscreen changes (multiple browser support)
-    function handleFullscreenChange() {
-        isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || 
-                         document.mozFullScreenElement || document.msFullscreenElement);
-        const fullscreenArea = document.getElementById('fullscreenNotifications');
-        if (fullscreenArea) {
-            fullscreenArea.style.display = isFullscreen ? 'block' : 'none';
-        }
-        if (!isFullscreen) {
-            hideAllFullscreenNotifications();
-        }
-        console.log('Fullscreen status:', isFullscreen);
-    }
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    
-    function checkAndShowFullscreenNotifications() {
-        if (!isFullscreen) return;
-        
-        const currentTime = Math.floor(video.currentTime);
-        
-        // Only check once per second
-        if (currentTime === fullscreenLastCheckedTime) return;
-        fullscreenLastCheckedTime = currentTime;
-        
-        // Hide any active fullscreen notifications when moving to different timestamp
-        hideAllFullscreenNotifications();
-        
-        // Find comments at current time (exact match or ±1 second)
-        const currentComments = commentsData.filter(comment => 
-            Math.abs(comment.timestamp - currentTime) <= 1
-        );
-        
-        // Show fullscreen notifications for current comments
-        currentComments.forEach(comment => {
-            showFullscreenNotification(comment);
-        });
-    }
-    
-    function showFullscreenNotification(comment) {
-        const fullscreenArea = document.getElementById('fullscreenNotifications');
-        if (!fullscreenArea || !video.duration) return;
-        
-        console.log('Creando notificación fullscreen para:', comment.comment);
-        
-        // Calculate position across the full width
-        const screenWidth = window.innerWidth || document.documentElement.clientWidth;
-        const relativePosition = (comment.timestamp / video.duration) * (screenWidth * 0.8); // 80% of screen width
-        
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.id = `fullscreen-notification-${comment.id}`;
-        notification.className = 'fullscreen-comment-notification';
-        
-        // Category colors
-        const categoryColors = {
-            'tecnico': 'info',
-            'tactico': 'warning', 
-            'fisico': 'success',
-            'mental': 'purple',
-            'general': 'secondary'
-        };
-        
-        const priorityColors = {
-            'critica': 'danger',
-            'alta': 'warning',
-            'media': 'info', 
-            'baja': 'secondary'
-        };
-        
-        notification.style.cssText = `
-            position: fixed !important;
-            bottom: 100px !important;
-            left: ${relativePosition}px !important;
-            transform: translateX(-50%) !important;
-            max-width: 500px !important;
-            min-width: 350px !important;
-            background: rgba(0, 0, 0, 0.9) !important;
-            color: white !important;
-            border: 3px solid #28a745 !important;
-            border-radius: 20px !important;
-            padding: 20px 25px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
-            z-index: 99999 !important;
-            animation: bounceIn 0.8s ease !important;
-            pointer-events: auto !important;
-            backdrop-filter: blur(8px) !important;
-        `;
-        
-        notification.innerHTML = `
-            <div class="d-flex align-items-start">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="badge badge-${categoryColors[comment.category]} mr-2" style="font-size: 14px; padding: 6px 12px;">
-                            ${comment.category.charAt(0).toUpperCase() + comment.category.slice(1)}
-                        </span>
-                        <span class="badge badge-${priorityColors[comment.priority]}" style="font-size: 14px; padding: 6px 12px;">
-                            ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
-                        </span>
-                    </div>
-                    <p class="mb-3 text-white" style="font-size: 18px; line-height: 1.4; font-weight: 600;">
-                        ${comment.comment.length > 120 ? comment.comment.substring(0, 120) + '...' : comment.comment}
-                    </p>
-                    <small class="text-light" style="font-size: 15px; opacity: 0.9;">
-                        <i class="fas fa-user"></i> ${comment.user} 
-                        <span class="ml-3"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp)}</span>
-                    </small>
-                </div>
-                <button class="btn btn-sm btn-link text-light p-2 ml-3" 
-                        style="font-size: 16px; opacity: 0.8;" 
-                        onclick="closeFullscreenNotification(${comment.id})"
-                        title="Cerrar">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        // Add to body instead of container for fullscreen
-        document.body.appendChild(notification);
-        console.log('Notificación agregada al body');
-    }
-    
-    function hideAllFullscreenNotifications() {
-        // Remove all fullscreen notifications from body
-        const fullscreenNotifications = document.querySelectorAll('[id^="fullscreen-notification-"]');
-        fullscreenNotifications.forEach(notification => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        });
-        console.log('Eliminadas todas las notificaciones fullscreen');
-    }
-    
-    // Close fullscreen notification function (global)
-    window.closeFullscreenNotification = function(commentId) {
-        const notification = document.getElementById(`fullscreen-notification-${commentId}`);
-        if (notification && notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    };
-    
     // Close notification function (global)
     window.closeNotification = function(commentId) {
         const notification = document.getElementById(`notification-${commentId}`);
         if (notification && notification.parentNode) {
-            notification.parentNode.removeChild(notification);
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
         }
     };
-
-    // Toggle comments section
-    $('#toggleCommentsBtn').on('click', function() {
-        const commentsSection = $('#commentsSection');
-        const videoSection = $('#videoSection');
-        const toggleBtn = $('#toggleCommentsBtn');
-        const toggleText = $('#toggleCommentsText');
-        const toggleIcon = toggleBtn.find('i');
-        
-        if (commentsSection.is(':visible')) {
-            // Hide comments and expand video
-            commentsSection.hide();
-            videoSection.removeClass('col-lg-8').addClass('col-lg-12');
-            toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
-            toggleText.text('Mostrar Comentarios');
-            toggleBtn.removeClass('btn-warning').addClass('btn-success');
-            
-            // Resize video player
-            $('#rugbyVideo').css('height', '600px');
-            
-        } else {
-            // Show comments and restore video size
-            commentsSection.show();
-            videoSection.removeClass('col-lg-12').addClass('col-lg-8');
-            toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
-            toggleText.text('Ocultar Comentarios');
-            toggleBtn.removeClass('btn-success').addClass('btn-warning');
-            
-            // Restore video player size
-            $('#rugbyVideo').css('height', '500px');
-        }
-    });
-
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-
-    // Video speed controls (optional enhancement)
-    const speedControls = ['0.5x', '0.75x', '1x', '1.25x', '1.5x', '2x'];
-    // Implementation for speed controls can be added here
 });
 </script>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.comment-notification {
+    transition: opacity 0.3s ease;
+}
+
+/* Badge colors for mental category */
+.badge-purple {
+    background-color: #6f42c1;
+    color: white;
+}
+</style>
 @endsection

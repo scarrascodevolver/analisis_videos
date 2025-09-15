@@ -22,7 +22,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $analista->id,
-            'experience_level' => 'profesional',
             'position' => 'Analista Senior',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
@@ -39,7 +38,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $jugador->id,
-            'experience_level' => 'avanzado',
             'position' => 'Primera Línea',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
@@ -56,7 +54,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $entrenador->id,
-            'experience_level' => 'profesional',
             'position' => 'Entrenador Principal',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
@@ -73,7 +70,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $dt->id,
-            'experience_level' => 'profesional',
             'position' => 'Director Técnico',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
@@ -90,7 +86,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $scout->id,
-            'experience_level' => 'avanzado',
             'position' => 'Scout',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
@@ -107,7 +102,6 @@ class UserSeeder extends Seeder
 
         UserProfile::create([
             'user_id' => $aficionado->id,
-            'experience_level' => 'principiante',
             'position' => null,
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => null,

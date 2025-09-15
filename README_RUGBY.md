@@ -120,14 +120,7 @@ video_assignments (asignaciones)
 
 Para completar el sistema MVP:
 
-1. **Implementar autenticación** con middleware de roles
-2. **Crear formularios de registro** dual (básico + rugby)
-3. **Sistema de subida de videos** con validación
-4. **Reproductor de video** con comentarios temporales
-5. **Dashboards específicos** por rol
-6. **Sistema de notificaciones** para asignaciones
-7. **Búsqueda y filtros** avanzados
-8. **Exportación a PDF** de reportes
+1. **Dashboards específicos** por rol
 
 ### 💾 Respaldo y Migración
 

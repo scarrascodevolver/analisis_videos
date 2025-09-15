@@ -8,10 +8,23 @@ class UserProfile extends Model
 {
     protected $fillable = [
         'user_id',
-        'experience_level',
         'position',
+        'secondary_position',
+        'player_number',
+        'weight',
+        'height',
+        'date_of_birth',
+        'goals',
+        'coaching_experience',
+        'certifications',
+        'specializations',
         'club_team_organization',
         'division_category',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'specializations' => 'array',
     ];
 
     public function user()

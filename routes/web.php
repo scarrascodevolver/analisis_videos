@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\VideoStreamController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -22,6 +23,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
     Route::get('videos/{video}/analytics', [VideoController::class, 'analytics'])->name('videos.analytics');
+    
+    // Video Streaming Routes (with Range support for seeking)
+    Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
+    Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
     
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');

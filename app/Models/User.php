@@ -75,7 +75,7 @@ class User extends Authenticatable
 
     public function pendingAssignments()
     {
-        return $this->assignedVideos()->where('status', 'assigned');
+        return $this->assignedVideos(); // Ya no hay estados, todas las asignaciones están "activas"
     }
 
     public function isAnalyst()

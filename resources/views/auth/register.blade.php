@@ -106,14 +106,20 @@
 
                     <!-- Role -->
                     <div class="form-group">
-                        <label class="text-muted small">Rol en el equipo</label>
-                        <select class="form-control @error('role') is-invalid @enderror" name="role" required>
-                            <option value="">Seleccionar rol...</option>
-                            <option value="jugador" {{ old('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
-                            <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
-                            <option value="analista" {{ old('role') == 'analista' ? 'selected' : '' }}>Analista</option>
-                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff Técnico</option>
-                        </select>
+                        <div class="input-group">
+                            <select class="form-control @error('role') is-invalid @enderror" name="role" required>
+                                <option value="">Seleccionar rol en el equipo...</option>
+                                <option value="jugador" {{ old('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
+                                <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
+                                <option value="analista" {{ old('role') == 'analista' ? 'selected' : '' }}>Analista</option>
+                                <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff Técnico</option>
+                            </select>
+                            <div class="input-group-append">
+                                <span class="input-group-text">
+                                    <i class="fas fa-users"></i>
+                                </span>
+                            </div>
+                        </div>
                         @error('role')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
@@ -137,16 +143,46 @@
                 <!-- Step 2: Rugby Profile -->
                 <div id="step2" class="registration-step" style="display: none;">
                     <h5 class="text-center mb-4">
-                        <i class="fas fa-futbol text-success"></i>
+                        <i class="fas fa-football-ball text-success"></i>
                         Perfil Rugby
                     </h5>
 
                     <!-- Player Fields -->
                     <div id="playerFields" style="display: none;">
                         <div class="form-group">
-                            <label class="text-muted small">Posición principal</label>
-                            <select class="form-control" name="position">
-                                <option value="">Seleccionar posición...</option>
+                            <label class="text-muted small font-weight-bold">Posición principal</label>
+                            <select class="form-control rugby-select" name="position">
+                                <option value="">Seleccionar posición principal...</option>
+                                <optgroup label="Primera Línea">
+                                    <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
+                                    <option value="hooker">Hooker (2)</option>
+                                    <option value="pilar_derecho">Pilar Derecho (3)</option>
+                                </optgroup>
+                                <optgroup label="Segunda Línea">
+                                    <option value="segunda_linea_4">Segunda Línea (4)</option>
+                                    <option value="segunda_linea_5">Segunda Línea (5)</option>
+                                </optgroup>
+                                <optgroup label="Tercera Línea">
+                                    <option value="ala_izquierdo">Ala Izquierdo (6)</option>
+                                    <option value="ala_derecho">Ala Derecho (7)</option>
+                                    <option value="octavo">Octavo (8)</option>
+                                </optgroup>
+                                <optgroup label="Backs">
+                                    <option value="medio_scrum">Medio Scrum (9)</option>
+                                    <option value="apertura">Apertura (10)</option>
+                                    <option value="ala_izquierdo_back">Ala Izquierdo (11)</option>
+                                    <option value="centro_interno">Centro Interno (12)</option>
+                                    <option value="centro_externo">Centro Externo (13)</option>
+                                    <option value="ala_derecho_back">Ala Derecho (14)</option>
+                                    <option value="fullback">Fullback (15)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="text-muted small font-weight-bold">Posición secundaria</label>
+                            <select class="form-control rugby-select" name="secondary_position">
+                                <option value="">Seleccionar posición secundaria (opcional)...</option>
                                 <optgroup label="Primera Línea">
                                     <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
                                     <option value="hooker">Hooker (2)</option>
@@ -176,36 +212,14 @@
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label class="text-muted small">Número</label>
-                                    <input type="number" class="form-control" name="player_number" 
-                                           min="1" max="99" placeholder="10">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="text-muted small">Experiencia</label>
-                                    <select class="form-control" name="experience_level">
-                                        <option value="">Nivel...</option>
-                                        <option value="principiante">Principiante</option>
-                                        <option value="intermedio">Intermedio</option>
-                                        <option value="avanzado">Avanzado</option>
-                                        <option value="experto">Experto</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="text-muted small">Peso (kg)</label>
+                                    <label class="text-muted small font-weight-bold">Peso (kg)</label>
                                     <input type="number" class="form-control" name="weight" 
                                            min="40" max="200" placeholder="75">
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label class="text-muted small">Altura (cm)</label>
+                                    <label class="text-muted small font-weight-bold">Altura (cm)</label>
                                     <input type="number" class="form-control" name="height" 
                                            min="150" max="220" placeholder="180">
                                 </div>
@@ -213,7 +227,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="text-muted small">Fecha de nacimiento</label>
+                            <label class="text-muted small font-weight-bold">Fecha de nacimiento</label>
                             <input type="date" class="form-control" name="date_of_birth" 
                                    max="{{ date('Y-m-d', strtotime('-15 years')) }}">
                         </div>
@@ -272,13 +286,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Goals (Common) -->
-                    <div class="form-group">
-                        <label class="text-muted small">Objetivos principales</label>
-                        <textarea class="form-control" name="goals" rows="3" 
-                                  placeholder="Describe tu experiencia en el rugby..."></textarea>
                     </div>
 
                     <!-- Navigation Buttons -->
@@ -384,19 +391,15 @@ $(document).ready(function() {
         return isValid;
     }
 
-    // Auto-suggest player number
+    // Position selection enhancement
     $('select[name="position"]').on('change', function() {
-        const position = $(this).val();
-        const numbers = {
-            'pilar_izquierdo': 1, 'hooker': 2, 'pilar_derecho': 3,
-            'segunda_linea_4': 4, 'segunda_linea_5': 5,
-            'ala_izquierdo': 6, 'ala_derecho': 7, 'octavo': 8,
-            'medio_scrum': 9, 'apertura': 10, 'ala_izquierdo_back': 11,
-            'centro_interno': 12, 'centro_externo': 13, 'ala_derecho_back': 14, 'fullback': 15
-        };
-
-        if (numbers[position] && !$('[name="player_number"]').val()) {
-            $('[name="player_number"]').val(numbers[position]);
+        const selectedPosition = $(this).val();
+        const secondarySelect = $('select[name="secondary_position"]');
+        
+        // Disable the same position in secondary select
+        secondarySelect.find('option').prop('disabled', false);
+        if (selectedPosition) {
+            secondarySelect.find(`option[value="${selectedPosition}"]`).prop('disabled', true);
         }
     });
 
@@ -412,4 +415,116 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<style>
+/* Improved CSS for rugby selects */
+.rugby-select {
+    font-size: 14px !important;
+    min-height: 50px !important;
+    height: auto !important;
+    line-height: 1.6 !important;
+    padding: 12px 15px !important;
+    background-color: #fff;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: ellipsis;
+    appearance: menulist;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+}
+
+.rugby-select:focus {
+    border-color: #1e4d2b;
+    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+    outline: none;
+}
+
+.rugby-select option {
+    padding: 12px 15px !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    white-space: normal !important;
+    word-wrap: break-word;
+    min-height: 40px;
+    display: block;
+    background-color: #fff;
+    color: #333;
+}
+
+.rugby-select option:hover {
+    background-color: #f8f9fa;
+}
+
+.rugby-select optgroup {
+    font-weight: bold !important;
+    color: #1e4d2b !important;
+    font-size: 13px !important;
+    padding: 8px 15px !important;
+    background-color: #f1f8f1;
+    margin: 4px 0;
+}
+
+.rugby-select optgroup option {
+    font-weight: normal !important;
+    color: #333 !important;
+    padding-left: 25px !important;
+    background-color: #fff;
+    border-left: 3px solid #1e4d2b;
+}
+
+/* Better label visibility */
+.font-weight-bold {
+    color: #495057 !important;
+    font-size: 13px !important;
+}
+
+/* Form enhancements */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #1e4d2b;
+    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+}
+
+/* Additional fixes for select visibility */
+select.rugby-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* For mobile devices */
+@media (max-width: 768px) {
+    .rugby-select {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        min-height: 44px !important;
+    }
+}
+
+/* For different browsers */
+select.rugby-select option {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+}
+
+/* Firefox specific */
+@-moz-document url-prefix() {
+    .rugby-select option {
+        text-indent: 0.01px;
+        text-overflow: '';
+    }
+}
+</style>
 @endsection

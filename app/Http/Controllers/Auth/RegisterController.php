@@ -61,8 +61,8 @@ class RegisterController extends Controller
         if (isset($data['role']) && $data['role'] === 'jugador') {
             $rules = array_merge($rules, [
                 'position' => ['nullable', 'string'],
+                'secondary_position' => ['nullable', 'string'],
                 'player_number' => ['nullable', 'integer', 'min:1', 'max:99'],
-                'experience_level' => ['nullable', 'in:principiante,intermedio,avanzado,experto'],
                 'weight' => ['nullable', 'integer', 'min:40', 'max:200'],
                 'height' => ['nullable', 'integer', 'min:150', 'max:220'],
                 'date_of_birth' => ['nullable', 'date'],
@@ -108,8 +108,8 @@ class RegisterController extends Controller
             if ($data['role'] === 'jugador') {
                 $profileData = array_merge($profileData, [
                     'position' => $data['position'] ?? null,
+                    'secondary_position' => $data['secondary_position'] ?? null,
                     'player_number' => $data['player_number'] ?? null,
-                    'experience_level' => $data['experience_level'] ?? null,
                     'weight' => $data['weight'] ?? null,
                     'height' => $data['height'] ?? null,
                     'date_of_birth' => $data['date_of_birth'] ?? null,

@@ -45,7 +45,6 @@ class DashboardController extends Controller
     public function playerCompleted()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->where('status', 'completed')
                                     ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category'])
                                     ->latest()
                                     ->get();
@@ -56,7 +55,6 @@ class DashboardController extends Controller
     public function playerPending()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->whereIn('status', ['assigned', 'in_progress'])
                                     ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category'])
                                     ->latest()
                                     ->get();

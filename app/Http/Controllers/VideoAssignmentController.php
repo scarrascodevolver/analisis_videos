@@ -23,7 +23,6 @@ class VideoAssignmentController extends Controller
     public function create()
     {
         $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])
-                      ->where('status', 'pending')
                       ->latest()
                       ->get();
         
@@ -46,8 +45,7 @@ class VideoAssignmentController extends Controller
 
         // Check if assignment already exists
         $existingAssignment = VideoAssignment::where('video_id', $request->video_id)
-                                           ->where('player_id', $request->player_id)
-                                           ->where('status', '!=', 'completado')
+                                           ->where('assigned_to', $request->player_id)
                                            ->first();
 
         if ($existingAssignment) {

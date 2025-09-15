@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             TeamSeeder::class,
             CategorySeeder::class,
             RugbySituationSeeder::class,
+            PlayersSeeder::class,
         ]);
 
         // Create sample users with different roles
@@ -63,7 +64,6 @@ class DatabaseSeeder extends Seeder
         // Create user profiles
         \App\Models\UserProfile::create([
             'user_id' => $analyst->id,
-            'experience_level' => 'profesional',
             'position' => null,
             'club_team_organization' => 'Los Troncos RC',
             'division_category' => 'Primera División',
@@ -71,7 +71,6 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\UserProfile::create([
             'user_id' => $coach->id,
-            'experience_level' => 'profesional',
             'position' => null,
             'club_team_organization' => 'Los Troncos RC',
             'division_category' => 'Primera División',
@@ -79,7 +78,6 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\UserProfile::create([
             'user_id' => $player->id,
-            'experience_level' => 'intermedio',
             'position' => 'Centro',
             'club_team_organization' => 'Los Troncos RC',
             'division_category' => 'Primera División',
@@ -87,7 +85,6 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\UserProfile::create([
             'user_id' => $analyst2->id,
-            'experience_level' => 'avanzado',
             'position' => null,
             'club_team_organization' => 'Los Troncos RC',
             'division_category' => 'Primera División',
@@ -95,7 +92,6 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\UserProfile::create([
             'user_id' => $player2->id,
-            'experience_level' => 'principiante',
             'position' => 'Ala',
             'club_team_organization' => 'Los Troncos RC',
             'division_category' => 'Primera División',

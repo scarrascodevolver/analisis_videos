@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Video;
 use App\Models\Team;
 use App\Models\Category;
@@ -28,9 +29,9 @@ class VideoController extends Controller
 
         // Filter by team
         if ($request->filled('team')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('analyzed_team_id', $request->team)
-                  ->orWhere('rival_team_id', $request->team);
+                    ->orWhere('rival_team_id', $request->team);
             });
         }
 
@@ -57,21 +58,44 @@ class VideoController extends Controller
         $rivalTeams = Team::where('is_own_team', false)->get();
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
 
-        return view('videos.create', compact('teams', 'categories', 'ownTeam', 'rivalTeams', 'rugbySituations'));
+        // Obtener jugadores para asignación
+        $players = User::where('role', 'jugador')
+            ->with('profile')
+            ->orderBy('name')
+            ->get();
+
+        return view('videos.create', compact('teams', 'categories', 'ownTeam', 'rivalTeams', 'rugbySituations', 'players'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'video_file' => 'required|file|mimes:mp4,mov,avi|max:1048576', // 1GB max
-            'analyzed_team_id' => 'required|exists:teams,id',
-            'rival_team_id' => 'nullable|exists:teams,id',
-            'category_id' => 'required|exists:categories,id',
-            'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
-            'match_date' => 'required|date',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:204800', // 200MB max
+                'analyzed_team_id' => 'required|exists:teams,id',
+                'rival_team_id' => 'nullable|exists:teams,id',
+                'category_id' => 'required|exists:categories,id',
+                'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
+                'match_date' => 'required|date',
+                'assigned_players' => 'nullable|array',
+                'assigned_players.*' => 'exists:users,id',
+                'assignment_notes' => 'nullable|string|max:1000',
+            ], [
+                'video_file.max' => 'El archivo de video no puede superar los 200MB.',
+                'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error de validación',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        }
 
         $file = $request->file('video_file');
         $filename = time() . '_' . $file->getClientOriginalName();
@@ -93,19 +117,46 @@ class VideoController extends Controller
             'status' => 'pending'
         ]);
 
+        // Crear asignaciones si se seleccionaron jugadores
+        if ($request->filled('assigned_players') && is_array($request->assigned_players)) {
+            foreach ($request->assigned_players as $playerId) {
+                \App\Models\VideoAssignment::create([
+                    'video_id' => $video->id,
+                    'assigned_to' => $playerId,
+                    'assigned_by' => auth()->id(),
+                    'notes' => $request->assignment_notes ?? 'Video asignado desde subida inicial.',
+                ]);
+            }
+
+            $assignedCount = count($request->assigned_players);
+            $successMessage = "Video subido exitosamente y asignado a {$assignedCount} jugador(es).";
+        } else {
+            $successMessage = "Video subido exitosamente.";
+        }
+
+        // Check if request is AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+                'video_id' => $video->id,
+                'redirect' => route('videos.show', $video)
+            ]);
+        }
+
         return redirect()->route('videos.show', $video)
-                         ->with('success', 'Video subido exitosamente');
+            ->with('success', $successMessage);
     }
 
     public function show(Video $video)
     {
         $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'comments.user', 'comments.replies.user']);
-        
+
         $comments = $video->comments()
-                         ->whereNull('parent_id')
-                         ->with(['user', 'replies.user'])
-                         ->orderBy('timestamp_seconds')
-                         ->get();
+            ->whereNull('parent_id')
+            ->with(['user', 'replies.user'])
+            ->orderBy('timestamp_seconds')
+            ->get();
 
         return view('videos.show', compact('video', 'comments'));
     }
@@ -132,39 +183,46 @@ class VideoController extends Controller
         ]);
 
         $video->update($request->only([
-            'title', 'description', 'analyzed_team_id', 
-            'rival_team_id', 'category_id', 'match_date'
+            'title',
+            'description',
+            'analyzed_team_id',
+            'rival_team_id',
+            'category_id',
+            'match_date'
         ]));
 
         return redirect()->route('videos.show', $video)
-                         ->with('success', 'Video actualizado exitosamente');
+            ->with('success', 'Video actualizado exitosamente');
     }
 
     public function destroy(Video $video)
     {
         // Delete file from storage
         Storage::disk('public')->delete($video->file_path);
-        
+
         $video->delete();
 
         return redirect()->route('videos.index')
-                         ->with('success', 'Video eliminado exitosamente');
+            ->with('success', 'Video eliminado exitosamente');
     }
 
     public function analytics(Video $video)
     {
         $comments = $video->comments()
-                         ->with('user')
-                         ->orderBy('timestamp_seconds')
-                         ->get();
+            ->with('user')
+            ->orderBy('timestamp_seconds')
+            ->get();
 
         $commentsByCategory = $comments->groupBy('category');
         $commentsByPriority = $comments->groupBy('priority');
         $commentsByStatus = $comments->groupBy('status');
 
         return view('videos.analytics', compact(
-            'video', 'comments', 'commentsByCategory', 
-            'commentsByPriority', 'commentsByStatus'
+            'video',
+            'comments',
+            'commentsByCategory',
+            'commentsByPriority',
+            'commentsByStatus'
         ));
     }
 
@@ -182,9 +240,12 @@ class VideoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'video_file' => 'required|file|mimes:mp4,mov,avi|max:524288', // 512MB max for players
+            'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:1048576', // 1GB max for players, más formatos
             'category_id' => 'required|exists:categories,id',
             'analysis_request' => 'required|string'
+        ], [
+            'video_file.max' => 'El archivo de video no puede superar 1GB.',
+            'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
         ]);
 
         $file = $request->file('video_file');
@@ -209,6 +270,6 @@ class VideoController extends Controller
         ]);
 
         return redirect()->route('player.videos')
-                         ->with('success', 'Video subido exitosamente. Un analista lo revisará pronto.');
+            ->with('success', 'Video subido exitosamente. Un analista lo revisará pronto.');
     }
 }
