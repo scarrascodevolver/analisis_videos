@@ -8,53 +8,6 @@
 @endsection
 
 @section('main_content')
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h3>{{ $stats['total'] }}</h3>
-                    <p>Total Asignados</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-video"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3>{{ $stats['pending'] }}</h3>
-                    <p>Pendientes</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3>{{ $stats['completed'] }}</h3>
-                    <p>Completados</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-check"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3>{{ $stats['overdue'] }}</h3>
-                    <p>Atrasados</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Assigned Videos -->
     <div class="card">
@@ -69,9 +22,7 @@
                 <div class="row">
                     @foreach($assignedVideos as $assignment)
                         <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card video-card h-100 
-                                {{ $assignment->status === 'completed' ? 'border-success' : 
-                                   ($assignment->due_date && $assignment->due_date < now() && $assignment->status !== 'completed' ? 'border-danger' : 'border-warning') }}">
+                            <div class="card video-card h-100">
                                 
                                 <!-- Video Thumbnail -->
                                 <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
@@ -89,22 +40,6 @@
                                         </span>
                                     @endif
 
-                                    <!-- Assignment Status -->
-                                    <div class="mb-2">
-                                        @if($assignment->status === 'completed')
-                                            <span class="badge badge-success">
-                                                <i class="fas fa-check"></i> Completado
-                                            </span>
-                                        @elseif($assignment->due_date && $assignment->due_date < now())
-                                            <span class="badge badge-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> Atrasado
-                                            </span>
-                                        @else
-                                            <span class="badge badge-warning">
-                                                <i class="fas fa-clock"></i> Pendiente
-                                            </span>
-                                        @endif
-                                    </div>
 
                                     <!-- Teams -->
                                     <p class="card-text small text-muted mb-2">
@@ -121,13 +56,6 @@
                                         Asignado por: {{ $assignment->assignedBy->name }}
                                     </p>
 
-                                    <!-- Due Date -->
-                                    @if($assignment->due_date)
-                                        <p class="card-text small text-muted mb-2">
-                                            <i class="fas fa-calendar"></i>
-                                            Fecha límite: {{ $assignment->due_date->format('d/m/Y') }}
-                                        </p>
-                                    @endif
 
                                     <!-- Notes -->
                                     @if($assignment->notes)
@@ -140,19 +68,9 @@
                                 <!-- Actions -->
                                 <div class="card-footer bg-transparent">
                                     <div class="btn-group w-100">
-                                        <a href="{{ route('assignments.show', $assignment) }}" class="btn btn-primary btn-sm">
+                                        <a href="{{ route('assignments.show', $assignment) }}" class="btn btn-primary btn-block btn-sm">
                                             <i class="fas fa-play"></i> Ver Video
                                         </a>
-                                        @if($assignment->status !== 'completed')
-                                            <form action="{{ route('assignments.complete', $assignment) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn btn-success btn-sm" 
-                                                        onclick="return confirm('¿Marcar como completado?')">
-                                                    <i class="fas fa-check"></i> Completar
-                                                </button>
-                                            </form>
-                                        @endif
                                     </div>
                                 </div>
                             </div>

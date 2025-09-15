@@ -219,9 +219,15 @@
 
                         @if(Auth::user()->role === 'jugador')
                             <li class="nav-item">
-                                <a href="{{ route('player.videos') }}" class="nav-link {{ request()->routeIs('player.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-tasks"></i>
-                                    <p>Mis Asignaciones</p>
+                                <a href="{{ route('my-videos') }}" class="nav-link {{ request()->routeIs('my-videos') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-video"></i>
+                                    <p>Mis Videos</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('videos.index') }}" class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-users"></i>
+                                    <p>Videos del Equipo</p>
                                 </a>
                             </li>
                         @endif

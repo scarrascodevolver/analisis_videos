@@ -243,11 +243,6 @@
                                         <button class="dropdown-item reply-btn" data-comment-id="{{ $comment->id }}">
                                             <i class="fas fa-reply"></i> Responder
                                         </button>
-                                        @if(auth()->id() === $comment->user_id || auth()->user()->role === 'analista')
-                                            <button class="dropdown-item mark-complete-btn" data-comment-id="{{ $comment->id }}">
-                                                <i class="fas fa-check"></i> Marcar completado
-                                            </button>
-                                        @endif
                                     </div>
                                 </div>
                             </div>
