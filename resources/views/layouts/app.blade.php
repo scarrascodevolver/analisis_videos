@@ -201,21 +201,32 @@
                             </li>
                         @endif
 
-                        <li class="nav-item">
-                            <a href="{{ route('videos.index') }}" class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-video"></i>
-                                <p>Videos del Equipo</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('my-videos') }}" class="nav-link {{ request()->routeIs('my-videos') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-user-circle"></i>
-                                <p>Mis Videos</p>
-                                @if(auth()->user()->pendingAssignments()->count() > 0)
-                                    <span class="badge badge-warning navbar-badge">{{ auth()->user()->pendingAssignments()->count() }}</span>
-                                @endif
-                            </a>
-                        </li>
+                        @if(Auth::user()->role !== 'jugador' && Auth::user()->role !== 'director_club')
+                            <li class="nav-item">
+                                <a href="{{ route('videos.index') }}" class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-video"></i>
+                                    <p>Videos del Equipo</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('my-videos') }}" class="nav-link {{ request()->routeIs('my-videos') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-user-circle"></i>
+                                    <p>Mis Videos</p>
+                                    @if(auth()->user()->pendingAssignments()->count() > 0)
+                                        <span class="badge badge-warning navbar-badge">{{ auth()->user()->pendingAssignments()->count() }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endif
+
+                        @if(Auth::user()->role === 'director_club')
+                            <li class="nav-item">
+                                <a href="{{ route('videos.index') }}" class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-video"></i>
+                                    <p>Videos del Equipo</p>
+                                </a>
+                            </li>
+                        @endif
 
                         @if(Auth::user()->role === 'jugador')
                             <li class="nav-item">

@@ -14,8 +14,8 @@ class UserSeeder extends Seeder
         // Crear usuario Analista
         $analista = User::create([
             'name' => 'Jeremias Rodriguez',
-            'email' => 'analista@rugby.com',
-            'password' => Hash::make('password123'),
+            'email' => 'jere@clublostroncos.cl',
+            'password' => Hash::make('jere2025'),
             'phone' => '+56912345678',
             'role' => 'analista',
         ]);
@@ -45,9 +45,9 @@ class UserSeeder extends Seeder
 
         // Crear usuario Entrenador
         $entrenador = User::create([
-            'name' => 'Thor',
-            'email' => 'entrenador@rugby.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Juan Cruz Fleitas',
+            'email' => 'juancruz@clublostroncos.cl',
+            'password' => Hash::make('juancruz2025'),
             'phone' => '+56911223344',
             'role' => 'entrenador',
         ]);
@@ -59,11 +59,43 @@ class UserSeeder extends Seeder
             'division_category' => 'Primera División',
         ]);
 
+        // Crear segundo entrenador - Valentin Dapena
+        $entrenador2 = User::create([
+            'name' => 'Valentin Dapena',
+            'email' => 'valentin@clublostroncos.cl',
+            'password' => Hash::make('valentin2025'),
+            'phone' => '+56922334455',
+            'role' => 'entrenador',
+        ]);
+
+        UserProfile::create([
+            'user_id' => $entrenador2->id,
+            'position' => 'Entrenador Asistente',
+            'club_team_organization' => 'Los Troncos Rugby Club',
+            'division_category' => 'Primera División',
+        ]);
+
+        // Crear tercer entrenador - Victor Escobar
+        $entrenador3 = User::create([
+            'name' => 'Victor Escobar',
+            'email' => 'victor@clublostroncos.cl',
+            'password' => Hash::make('victor2025'),
+            'phone' => '+56933445566',
+            'role' => 'entrenador',
+        ]);
+
+        UserProfile::create([
+            'user_id' => $entrenador3->id,
+            'position' => 'Entrenador de Forwards',
+            'club_team_organization' => 'Los Troncos Rugby Club',
+            'division_category' => 'Primera División',
+        ]);
+
         // Crear usuario Director Técnico
         $dt = User::create([
-            'name' => 'Valentin Dapena',
-            'email' => 'dt@rugby.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Roberto Martinez',
+            'email' => 'dt@clublostroncos.cl',
+            'password' => Hash::make('roberto2025'),
             'phone' => '+56955667788',
             'role' => 'director_tecnico',
         ]);
@@ -71,6 +103,22 @@ class UserSeeder extends Seeder
         UserProfile::create([
             'user_id' => $dt->id,
             'position' => 'Director Técnico',
+            'club_team_organization' => 'Los Troncos Rugby Club',
+            'division_category' => 'Primera División',
+        ]);
+
+        // Crear usuario Director del Club
+        $directorClub = User::create([
+            'name' => 'Juan Carlos Rodriguez',
+            'email' => 'juancarlos@clublostroncos.cl',
+            'password' => Hash::make('juancarlos2025'),
+            'phone' => '+56944556677',
+            'role' => 'director_club',
+        ]);
+
+        UserProfile::create([
+            'user_id' => $directorClub->id,
+            'position' => 'Director del Club',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
         ]);
