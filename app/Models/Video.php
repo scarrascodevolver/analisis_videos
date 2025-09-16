@@ -10,6 +10,7 @@ class Video extends Model
         'title',
         'description',
         'file_path',
+        'thumbnail_path',
         'file_name',
         'file_size',
         'mime_type',

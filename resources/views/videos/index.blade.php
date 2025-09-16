@@ -93,6 +93,25 @@
                             @foreach($videos as $video)
                                 <div class="col-md-4 mb-4">
                                     <div class="card video-card h-100">
+                                        <!-- Video Thumbnail -->
+                                        <div class="card-img-top" style="height: 200px; overflow: hidden; background: #f8f9fa;">
+                                            @if($video->thumbnail_path && file_exists(public_path('storage/' . $video->thumbnail_path)))
+                                                <img src="{{ asset('storage/' . $video->thumbnail_path) }}"
+                                                     alt="{{ $video->title }}"
+                                                     class="w-100 h-100"
+                                                     style="object-fit: cover; cursor: pointer;"
+                                                     onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                                            @else
+                                                <div class="d-flex flex-column align-items-center justify-content-center h-100 rugby-thumbnail"
+                                                     style="cursor: pointer;"
+                                                     onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                                                    <div class="play-button-circle mb-2">
+                                                        <i class="fas fa-play fa-lg text-white"></i>
+                                                    </div>
+                                                    <small class="text-white font-weight-bold">VIDEO RUGBY</small>
+                                                </div>
+                                            @endif
+                                        </div>
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $video->title }}</h6>
                                             <p class="card-text">
@@ -262,6 +281,72 @@
     background: #1e4d2b;
     border-color: #1e4d2b;
     color: white;
+}
+
+/* Video card improvements */
+.video-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.video-card .card-img-top {
+    transition: all 0.3s ease;
+}
+
+.video-card .card-img-top:hover {
+    transform: scale(1.02);
+}
+
+.video-card .card-img-top img {
+    transition: opacity 0.3s ease;
+}
+
+.video-card .card-img-top:hover img {
+    opacity: 0.9;
+}
+
+/* Rugby thumbnail placeholder */
+.rugby-thumbnail {
+    background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.rugby-thumbnail::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shine 3s infinite;
+}
+
+.play-button-circle {
+    width: 60px;
+    height: 60px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content-center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.rugby-thumbnail:hover .play-button-circle {
+    transform: scale(1.1);
+    background: #218838;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 </style>
 

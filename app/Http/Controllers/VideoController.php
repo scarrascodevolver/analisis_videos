@@ -107,10 +107,14 @@ class VideoController extends Controller
         $filename = time() . '_' . $sanitizedName;
         $path = $file->storeAs('videos', $filename, 'public');
 
+        // Generate thumbnail placeholder
+        $thumbnailPath = $this->generateVideoThumbnail($filename);
+
         $video = Video::create([
             'title' => $request->title,
             'description' => $request->description,
             'file_path' => $path,
+            'thumbnail_path' => $thumbnailPath,
             'file_name' => $filename,
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
@@ -264,12 +268,16 @@ class VideoController extends Controller
         $filename = time() . '_player_' . $sanitizedName;
         $path = $file->storeAs('videos/player-uploads', $filename, 'public');
 
+        // Generate thumbnail placeholder
+        $thumbnailPath = $this->generateVideoThumbnail($filename);
+
         $ownTeam = Team::where('is_own_team', true)->first();
 
         $video = Video::create([
             'title' => $request->title . ' (Solicitud de Análisis)',
             'description' => $request->description . "\n\nSolicitud específica: " . $request->analysis_request,
             'file_path' => $path,
+            'thumbnail_path' => $thumbnailPath,
             'file_name' => $filename,
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
@@ -283,5 +291,15 @@ class VideoController extends Controller
 
         return redirect()->route('player.videos')
             ->with('success', 'Video subido exitosamente. Un analista lo revisará pronto.');
+    }
+
+    /**
+     * Generate a thumbnail placeholder for the video
+     * Since GD is not available, we return null and use CSS placeholders
+     */
+    private function generateVideoThumbnail($filename)
+    {
+        // Sin GD, retornamos null y usaremos placeholders CSS
+        return null;
     }
 }
