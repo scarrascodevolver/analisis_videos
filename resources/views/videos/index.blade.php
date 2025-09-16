@@ -91,11 +91,11 @@
                     @if(isset($videos) && $videos->count() > 0)
                         <div class="row">
                             @foreach($videos as $video)
-                                <div class="col-md-4 mb-4">
+                                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                                     <div class="card video-card h-100">
                                         <!-- Video Thumbnail -->
                                         <div class="card-img-top video-thumbnail-container"
-                                             style="height: 200px; overflow: hidden; background: #f8f9fa; position: relative;"
+                                             style="height: 150px; overflow: hidden; background: #f8f9fa; position: relative;"
                                              data-video-url="{{ route('videos.stream', $video) }}"
                                              data-video-id="{{ $video->id }}">
 
@@ -122,9 +122,9 @@
                                                 <small class="text-white font-weight-bold">CARGANDO...</small>
                                             </div>
                                         </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title">{{ $video->title }}</h6>
-                                            <p class="card-text">
+                                        <div class="card-body py-2 px-3">
+                                            <h6 class="card-title mb-2">{{ $video->title }}</h6>
+                                            <p class="card-text mb-1">
                                                 <small class="text-muted">
                                                     {{ $video->analyzedTeam->name }}
                                                     @if($video->rivalTeam)
@@ -132,15 +132,15 @@
                                                     @endif
                                                 </small>
                                             </p>
-                                            <div class="mb-2">
-                                                <span class="badge badge-rugby">{{ $video->category->name }}</span>
+                                            <div class="mb-1">
+                                                <span class="badge badge-rugby badge-sm">{{ $video->category->name }}</span>
                                                 @if($video->rugbySituation)
-                                                    <span class="badge badge-rugby-light ml-1">
+                                                    <span class="badge badge-rugby-light badge-sm ml-1">
                                                         {{ $video->rugbySituation->name }}
                                                     </span>
                                                 @endif
                                             </div>
-                                            <p class="card-text">
+                                            <p class="card-text mb-2">
                                                 <small class="text-muted">
                                                     <i class="fas fa-calendar"></i> {{ $video->match_date->format('d/m/Y') }}
                                                 </small>
@@ -250,6 +250,11 @@
     color: white;
     font-size: 0.875em;
     font-weight: 500;
+}
+
+.badge-sm {
+    font-size: 0.75em;
+    padding: 0.25rem 0.5rem;
 }
 
 /* Rugby button variations */
@@ -397,9 +402,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            // Dimensiones del canvas
-            canvas.width = 320;
-            canvas.height = 180;
+            // Dimensiones del canvas (16:9 aspect ratio, más pequeño)
+            canvas.width = 300;
+            canvas.height = 150;
 
             // Dibujar frame del video
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
