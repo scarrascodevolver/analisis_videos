@@ -91,20 +91,29 @@ class Video extends Model
 
     public function scopeVisibleForUser($query, $user)
     {
-        if (in_array($user->role, ['analista', 'entrenador', 'staff'])) {
-            return $query;
+        if (in_array($user->role, ['analista', 'entrenador', 'staff', 'director_tecnico'])) {
+            return $query; // Staff ve todos los videos
         }
 
         if ($user->role === 'jugador') {
+            $userCategoryId = $user->profile?->user_category_id;
             $userPosition = $user->profile?->position;
             $playerCategory = $this->getPlayerCategory($userPosition);
 
-            return $query->where(function($q) use ($user, $playerCategory) {
-                $q->where('visibility_type', 'public')
-                  ->orWhere('visibility_type', $playerCategory)
-                  ->orWhereHas('assignments', function($assignQ) use ($user) {
-                      $assignQ->where('assigned_to', $user->id);
-                  });
+            return $query->where(function($q) use ($user, $userCategoryId, $playerCategory) {
+                // Solo videos de la misma categoría del usuario (o si no tiene categoría, ve todos los públicos)
+                if ($userCategoryId) {
+                    $q->where('category_id', $userCategoryId);
+                }
+
+                // Además debe cumplir con el tipo de visibilidad
+                $q->where(function($visQ) use ($user, $playerCategory) {
+                    $visQ->where('visibility_type', 'public')
+                         ->orWhere('visibility_type', $playerCategory)
+                         ->orWhereHas('assignments', function($assignQ) use ($user) {
+                             $assignQ->where('assigned_to', $user->id);
+                         });
+                });
             });
         }
 

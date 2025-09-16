@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Models\Category;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -30,6 +31,17 @@ class RegisterController extends Controller
      * @var string
      */
     protected $redirectTo = '/home';
+
+    /**
+     * Show the application registration form.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showRegistrationForm()
+    {
+        $categories = Category::all();
+        return view('auth.register', compact('categories'));
+    }
 
     /**
      * Create a new controller instance.
@@ -66,6 +78,7 @@ class RegisterController extends Controller
                 'weight' => ['nullable', 'integer', 'min:40', 'max:200'],
                 'height' => ['nullable', 'integer', 'min:150', 'max:220'],
                 'date_of_birth' => ['nullable', 'date'],
+                'user_category_id' => ['required', 'exists:categories,id'],
             ]);
         }
 
@@ -113,6 +126,7 @@ class RegisterController extends Controller
                     'weight' => $data['weight'] ?? null,
                     'height' => $data['height'] ?? null,
                     'date_of_birth' => $data['date_of_birth'] ?? null,
+                    'user_category_id' => $data['user_category_id'] ?? null,
                 ]);
             } elseif ($data['role'] === 'entrenador') {
                 $profileData = array_merge($profileData, [

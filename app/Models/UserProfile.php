@@ -20,6 +20,7 @@ class UserProfile extends Model
         'specializations',
         'club_team_organization',
         'division_category',
+        'user_category_id',
     ];
 
     protected $casts = [
@@ -30,5 +31,10 @@ class UserProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'user_category_id');
     }
 }
