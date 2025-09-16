@@ -1,6 +1,6 @@
 # 🏉 CLAUDE.md - Sistema de Análisis Rugby "Los Troncos"
 
-## 📅 Última actualización: 2025-09-15
+## 📅 Última actualización: 2025-09-16
 
 ---
 
@@ -34,12 +34,92 @@
 - ✅ **Víctor Escobar** (victor@clublostroncos.cl / victor2025) - Entrenador de Forwards
 - ✅ **Juan Carlos Rodríguez** (juancarlos@clublostroncos.cl / juancarlos2025) - Director de Club
 
-#### 5. **Funcionalidad de Eliminación de Videos** (2025-09-15)
-- ✅ **Botón eliminar en vista individual**: Solo visible para analistas y entrenadores
-- ✅ **Botón eliminar en listado**: También disponible en vista index de videos
-- ✅ **Modal de confirmación**: Con detalles del video y advertencia (ambas vistas)
-- ✅ **Backend funcional**: Elimina archivo físico y registro de BD
-- ✅ **Permisos actualizados**: Analista + Entrenador pueden editar/eliminar cualquier video
+#### 5. **Sistema de Visibilidad por Categorías - Video Thumbnails** (2025-09-16)
+- ✅ **Video Thumbnails HTML5+Canvas**: Generación automática de miniaturas reales del video
+- ✅ **Cards optimizadas**: Tamaño reducido (120px), sin efectos de carga molestos
+- ✅ **Título overflow**: Limitado a 2 líneas con ellipsis automático
+- ✅ **Rama feature/video-thumbnails**: Implementación completa y funcional
+
+#### 6. **Sistema de Visibilidad por Categorías - Backend** (2025-09-16)
+- ✅ **Campo visibility_type**: Enum('public', 'forwards', 'backs', 'specific') en videos
+- ✅ **Modelo Video actualizado**: Scope visibleForUser() y getPlayerCategory() helper
+- ✅ **Validación y storage**: VideoController maneja nuevos tipos de visibilidad
+- ✅ **Filtrado automático**: Index aplica filtros según rol y posición del usuario
+
+#### 7. **Sistema de Visibilidad por Categorías - Frontend** (2025-09-16)
+- ✅ **Radio buttons visibilidad**: 4 opciones claras en formulario de subida
+- ✅ **JavaScript condicional**: Selector de jugadores aparece solo si "Específicos"
+- ✅ **Estilos rugby**: Tema verde con hover y estados activos
+- ✅ **Bug corregido**: getPlayerCategory() maneja posiciones de texto correctamente
+
+---
+
+## 🚧 **PRÓXIMA IMPLEMENTACIÓN - SISTEMA CATEGORÍAS DE USUARIO**
+
+### 🎯 **PROBLEMA IDENTIFICADO (2025-09-16):**
+- Videos por categoría (Juveniles, Adulta Primera, etc.) son visibles para TODOS los usuarios
+- Falta identificar categoría del usuario en el registro
+- Necesario filtro combinado: user_category + visibility_type
+
+### 📋 **PLAN DE IMPLEMENTACIÓN:**
+
+#### **FASE 1: Database Migration**
+```sql
+-- Archivo: database/migrations/YYYY_MM_DD_add_user_category_id_to_user_profiles_table.php
+ALTER TABLE user_profiles ADD COLUMN user_category_id INT AFTER division_category;
+ALTER TABLE user_profiles ADD FOREIGN KEY (user_category_id) REFERENCES categories(id);
+```
+
+#### **FASE 2: Models Update**
+```php
+// app/Models/UserProfile.php
+protected $fillable = [..., 'user_category_id'];
+public function category() { return $this->belongsTo(Category::class, 'user_category_id'); }
+
+// app/Models/Video.php - scopeVisibleForUser() actualizado
+// Filtro combinado: category_id + visibility_type
+```
+
+#### **FASE 3: Registration Form**
+```html
+<!-- resources/views/auth/register.blade.php -->
+<select name="user_category_id" required>
+  <option value="1">Juveniles</option>
+  <option value="2">Adulta Primera</option>
+  <!-- etc -->
+</select>
+```
+
+#### **FASE 4: Controller Updates**
+```php
+// app/Http/Controllers/Auth/RegisterController.php
+// Validación + storage de user_category_id
+// Pasar $categories a vista register
+```
+
+### 🎯 **LÓGICA FINAL ESPERADA:**
+```
+Video "Juveniles" + "Forwards" =
+├─ Usuario categoría "Juveniles" + posición Forward: ✅ Lo ve
+├─ Usuario categoría "Juveniles" + posición Back: ❌ No lo ve
+├─ Usuario categoría "Adulta" + cualquier posición: ❌ No lo ve
+└─ Analistas/Entrenadores: ✅ Lo ven (sin filtro)
+```
+
+### ⚠️ **RIESGOS Y CONSIDERACIONES:**
+- **24 jugadores existentes** tendrán user_category_id = NULL
+- **Migración nullable** inicialmente para no romper sistema
+- **Fallback logic** para usuarios sin categoría asignada
+- **Data migration manual** necesaria para usuarios existentes
+
+### 📁 **ARCHIVOS A MODIFICAR:**
+- ✅ `database/migrations/` - Nueva migración user_category_id
+- ✅ `app/Models/UserProfile.php` - Agregar fillable + relación
+- ✅ `app/Models/Video.php` - Actualizar scopeVisibleForUser()
+- ✅ `app/Http/Controllers/Auth/RegisterController.php` - Validación + storage
+- ✅ `resources/views/auth/register.blade.php` - Selector de categoría
+- ❌ `app/Http/Controllers/VideoController.php` - NO TOCAR (ya funciona)
+- ❌ `resources/views/videos/` - NO TOCAR (filtro transparente)
 
 ---
 
