@@ -108,7 +108,7 @@
                     <div class="form-group">
                         <div class="input-group">
                             <select class="form-control @error('role') is-invalid @enderror" name="role" required>
-                                <option value="">Seleccionar rol en el equipo...</option>
+                                <option value="">Rol en el equipo...</option>
                                 <option value="jugador" {{ old('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
                                 <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
                                 <option value="analista" {{ old('role') == 'analista' ? 'selected' : '' }}>Analista</option>
@@ -152,7 +152,7 @@
                         <div class="form-group">
                             <label class="text-muted small font-weight-bold">Posición principal</label>
                             <select class="form-control rugby-select" name="position">
-                                <option value="">Seleccionar posición principal...</option>
+                                <option value="">Posición principal...</option>
                                 <optgroup label="Primera Línea">
                                     <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
                                     <option value="hooker">Hooker (2)</option>
@@ -182,7 +182,7 @@
                         <div class="form-group">
                             <label class="text-muted small font-weight-bold">Posición secundaria</label>
                             <select class="form-control rugby-select" name="secondary_position">
-                                <option value="">Seleccionar posición secundaria (opcional)...</option>
+                                <option value="">Posición secundaria...</option>
                                 <optgroup label="Primera Línea">
                                     <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
                                     <option value="hooker">Hooker (2)</option>

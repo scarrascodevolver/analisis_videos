@@ -19,15 +19,20 @@
                         {{ $video->title }}
                     </h3>
                     <div class="card-tools">
-                        <button id="toggleCommentsBtn" class="btn btn-sm btn-warning mr-2" title="Ocultar/Mostrar comentarios">
+                        <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
                             <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
                         </button>
-                        @if(auth()->user()->role === 'analista' || auth()->id() === $video->uploaded_by)
-                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-sm btn-primary">
+                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by)
+                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-sm btn-rugby-light">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
                         @endif
-                        <a href="{{ route('videos.analytics', $video) }}" class="btn btn-sm btn-info">
+                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                            <button type="button" class="btn btn-sm btn-rugby-dark" data-toggle="modal" data-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        @endif
+                        <a href="{{ route('videos.analytics', $video) }}" class="btn btn-sm btn-rugby">
                             <i class="fas fa-chart-line"></i> Analytics
                         </a>
                     </div>
@@ -92,7 +97,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Categoría:</strong></td>
-                                    <td><span class="badge badge-primary">{{ $video->category->name }}</span></td>
+                                    <td><span class="badge badge-rugby">{{ $video->category->name }}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Fecha:</strong></td>
@@ -687,5 +692,98 @@ $(document).ready(function() {
     background-color: #6f42c1;
     color: white;
 }
+
+/* Rugby badge */
+.badge-rugby {
+    background: #1e4d2b;
+    color: white;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+/* Rugby button variations */
+.btn-rugby-light {
+    background: #28a745;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-light:hover {
+    background: #218838;
+    color: white;
+}
+
+.btn-rugby-dark {
+    background: #0d2818;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-dark:hover {
+    background: #1a4028;
+    color: white;
+}
+
+.btn-rugby-outline {
+    background: transparent;
+    border: 2px solid #1e4d2b;
+    color: #1e4d2b;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-outline:hover {
+    background: #1e4d2b;
+    border-color: #1e4d2b;
+    color: white;
+}
 </style>
+
+<!-- Modal de Confirmación para Eliminar Video -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="text-center mb-3">¿Estás seguro de eliminar este video?</h5>
+                <div class="alert alert-warning">
+                    <strong>Video:</strong> {{ $video->title }}<br>
+                    <strong>Archivo:</strong> {{ $video->file_name }}<br>
+                    <strong>Tamaño:</strong> {{ number_format($video->file_size / 1048576, 2) }} MB
+                </div>
+                <p class="text-danger text-center">
+                    <strong>⚠️ Esta acción no se puede deshacer.</strong><br>
+                    Se eliminará el video, todos sus comentarios y asignaciones.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-rugby-outline" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <form method="POST" action="{{ route('videos.destroy', $video) }}" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-rugby-dark">
+                        <i class="fas fa-trash"></i> Eliminar Video
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

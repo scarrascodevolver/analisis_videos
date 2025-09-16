@@ -27,6 +27,20 @@
 - ✅ **Seeders actualizados**: UserSeeder, PlayersSeeder, DatabaseSeeder sin experience_level
 - ✅ **Modelo UserProfile**: Actualizado con todos los campos correctos
 
+#### 4. **Nuevos Usuarios Staff "Los Troncos"** (2025-09-15)
+- ✅ **Jeremías** (jere@clublostroncos.cl / jere2025) - Analista de Video
+- ✅ **Juan Cruz Fleitas** (juancruz@clublostroncos.cl / juancruz2025) - Entrenador Principal
+- ✅ **Valentín Dapena** (valentin@clublostroncos.cl / valentin2025) - Entrenador Asistente
+- ✅ **Víctor Escobar** (victor@clublostroncos.cl / victor2025) - Entrenador de Forwards
+- ✅ **Juan Carlos Rodríguez** (juancarlos@clublostroncos.cl / juancarlos2025) - Director de Club
+
+#### 5. **Funcionalidad de Eliminación de Videos** (2025-09-15)
+- ✅ **Botón eliminar en vista individual**: Solo visible para analistas y entrenadores
+- ✅ **Botón eliminar en listado**: También disponible en vista index de videos
+- ✅ **Modal de confirmación**: Con detalles del video y advertencia (ambas vistas)
+- ✅ **Backend funcional**: Elimina archivo físico y registro de BD
+- ✅ **Permisos actualizados**: Analista + Entrenador pueden editar/eliminar cualquier video
+
 ---
 
 ## 🚀 PRÓXIMAS TAREAS (Para mañana):

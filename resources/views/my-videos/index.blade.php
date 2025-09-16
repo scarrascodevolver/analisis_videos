@@ -37,7 +37,7 @@
                                     
                                     <!-- Rugby Situation Badge -->
                                     @if($assignment->video->rugbySituation)
-                                        <span class="badge mb-2" style="background-color: {{ $assignment->video->rugbySituation->color }}; color: white;">
+                                        <span class="badge badge-rugby-light mb-2">
                                             {{ $assignment->video->rugbySituation->name }}
                                         </span>
                                     @endif
@@ -112,6 +112,14 @@
     }
     .alert-sm {
         font-size: 0.875rem;
+    }
+
+    /* Rugby badge light */
+    .badge-rugby-light {
+        background: #28a745;
+        color: white;
+        font-size: 0.875em;
+        font-weight: 500;
     }
 </style>
 @endsection

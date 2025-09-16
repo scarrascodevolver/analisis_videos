@@ -24,7 +24,7 @@
                         </div>
                         <div class="col-md-3 mb-2">
                             <select name="rugby_situation" class="form-control">
-                                <option value="">Todas las situaciones</option>
+                                <option value="">Situación</option>
                                 @foreach($rugbySituations as $categoryName => $situations)
                                     <optgroup label="{{ $categoryName }}">
                                         @foreach($situations as $situation)
@@ -38,7 +38,7 @@
                         </div>
                         <div class="col-md-2 mb-2">
                             <select name="category" class="form-control">
-                                <option value="">Todas las categorías</option>
+                                <option value="">Categoría</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
@@ -48,7 +48,7 @@
                         </div>
                         <div class="col-md-2 mb-2">
                             <select name="team" class="form-control">
-                                <option value="">Todos los equipos</option>
+                                <option value="">Equipo</option>
                                 @foreach($teams as $team)
                                     <option value="{{ $team->id }}" {{ request('team') == $team->id ? 'selected' : '' }}>
                                         {{ $team->name }}
@@ -104,9 +104,9 @@
                                                 </small>
                                             </p>
                                             <div class="mb-2">
-                                                <span class="badge badge-primary">{{ $video->category->name }}</span>
+                                                <span class="badge badge-rugby">{{ $video->category->name }}</span>
                                                 @if($video->rugbySituation)
-                                                    <span class="badge ml-1" style="background-color: {{ $video->rugbySituation->color }}; color: white;">
+                                                    <span class="badge badge-rugby-light ml-1">
                                                         {{ $video->rugbySituation->name }}
                                                     </span>
                                                 @endif
@@ -118,20 +118,73 @@
                                             </p>
                                         </div>
                                         <div class="card-footer">
-                                            <a href="{{ route('videos.show', $video) }}" class="btn btn-primary btn-sm">
+                                            <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
                                                 <i class="fas fa-play"></i> Ver Video
                                             </a>
-                                            @if(auth()->user()->role === 'analista' && $video->uploaded_by === auth()->id())
-                                                <a href="{{ route('videos.edit', $video) }}" class="btn btn-warning btn-sm">
+                                            @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by)
+                                                <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm">
                                                     <i class="fas fa-edit"></i> Editar
                                                 </a>
+                                            @endif
+                                            @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                                                <button type="button" class="btn btn-rugby-dark btn-sm" data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
                                             @endif
                                         </div>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
-                        
+
+                        <!-- Modales de Confirmación para Eliminar Videos -->
+                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                            @foreach($videos as $video)
+                                <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel-{{ $video->id }}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title" id="deleteModalLabel-{{ $video->id }}">
+                                                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="text-center mb-3">
+                                                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem;"></i>
+                                                </div>
+                                                <h5 class="text-center mb-3">¿Estás seguro de eliminar este video?</h5>
+                                                <div class="alert alert-warning">
+                                                    <strong>Video:</strong> {{ $video->title }}<br>
+                                                    <strong>Archivo:</strong> {{ $video->file_name }}<br>
+                                                    <strong>Tamaño:</strong> {{ number_format($video->file_size / 1048576, 2) }} MB<br>
+                                                    <strong>Fecha:</strong> {{ $video->match_date->format('d/m/Y') }}
+                                                </div>
+                                                <p class="text-danger text-center">
+                                                    <strong>⚠️ Esta acción no se puede deshacer.</strong><br>
+                                                    Se eliminará el video, todos sus comentarios y asignaciones.
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-rugby-outline" data-dismiss="modal">
+                                                    <i class="fas fa-times"></i> Cancelar
+                                                </button>
+                                                <form method="POST" action="{{ route('videos.destroy', $video) }}" style="display: inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-rugby-dark">
+                                                        <i class="fas fa-trash"></i> Eliminar Video
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+
                         @if(method_exists($videos, 'links'))
                             <div class="d-flex justify-content-center">
                                 {{ $videos->links() }}
@@ -153,4 +206,63 @@
             </div>
         </div>
     </div>
+
+<style>
+/* Rugby badges */
+.badge-rugby {
+    background: #1e4d2b;
+    color: white;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.badge-rugby-light {
+    background: #28a745;
+    color: white;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+/* Rugby button variations */
+.btn-rugby-light {
+    background: #28a745;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-light:hover {
+    background: #218838;
+    color: white;
+}
+
+.btn-rugby-dark {
+    background: #0d2818;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-dark:hover {
+    background: #1a4028;
+    color: white;
+}
+
+.btn-rugby-outline {
+    background: transparent;
+    border: 2px solid #1e4d2b;
+    color: #1e4d2b;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-rugby-outline:hover {
+    background: #1e4d2b;
+    border-color: #1e4d2b;
+    color: white;
+}
+</style>
+
 @endsection
