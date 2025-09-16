@@ -22,6 +22,7 @@ class Video extends Model
         'rugby_situation_id',
         'match_date',
         'status',
+        'visibility_type',
     ];
 
     protected function casts(): array
@@ -86,5 +87,36 @@ class Video extends Model
     public function scopeByTeam($query, $teamId)
     {
         return $query->where('analyzed_team_id', $teamId);
+    }
+
+    public function scopeVisibleForUser($query, $user)
+    {
+        if (in_array($user->role, ['analista', 'entrenador', 'staff'])) {
+            return $query;
+        }
+
+        if ($user->role === 'jugador') {
+            $userPosition = $user->profile?->position;
+            $playerCategory = $this->getPlayerCategory($userPosition);
+
+            return $query->where(function($q) use ($user, $playerCategory) {
+                $q->where('visibility_type', 'public')
+                  ->orWhere('visibility_type', $playerCategory)
+                  ->orWhereHas('assignments', function($assignQ) use ($user) {
+                      $assignQ->where('assigned_to', $user->id);
+                  });
+            });
+        }
+
+        return $query;
+    }
+
+    public static function getPlayerCategory($position)
+    {
+        if (is_null($position)) {
+            return 'backs';
+        }
+
+        return in_array($position, [1, 2, 3, 4, 5, 6, 7, 8]) ? 'forwards' : 'backs';
     }
 }

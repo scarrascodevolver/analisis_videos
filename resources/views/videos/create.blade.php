@@ -187,10 +187,51 @@
                         </div>
 
 
-                        <!-- Player Assignment Section -->
+                        <!-- Video Visibility Section -->
                         <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-eye"></i> ¿Quién puede ver este video?
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="visibility_type" id="visibility_public" value="public" checked>
+                                        <label class="form-check-label" for="visibility_public">
+                                            <strong>Todo el Equipo</strong>
+                                            <br><small class="text-muted">Visible para todos los jugadores, entrenadores y staff</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="visibility_type" id="visibility_forwards" value="forwards">
+                                        <label class="form-check-label" for="visibility_forwards">
+                                            <strong>Solo Delanteros</strong>
+                                            <br><small class="text-muted">Visible solo para posiciones 1-8 (Forwards)</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="visibility_type" id="visibility_backs" value="backs">
+                                        <label class="form-check-label" for="visibility_backs">
+                                            <strong>Solo Backs</strong>
+                                            <br><small class="text-muted">Visible solo para posiciones 9-15 (Tres Cuartos)</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="visibility_type" id="visibility_specific" value="specific">
+                                        <label class="form-check-label" for="visibility_specific">
+                                            <strong>Jugadores Específicos</strong>
+                                            <br><small class="text-muted">Solo para los jugadores que selecciones abajo</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Player Assignment Section -->
+                        <div class="form-group" id="player-assignment-section">
                             <label for="assigned_players">
-                                <i class="fas fa-user-plus"></i> Asignar a Jugadores (Opcional)
+                                <i class="fas fa-user-plus"></i> Seleccionar Jugadores Específicos
                             </label>
                             <select class="form-control select2" id="assigned_players" name="assigned_players[]" multiple="multiple" 
                                     data-placeholder="Buscar y seleccionar jugadores..." style="width: 100%;">
@@ -418,7 +459,30 @@ $(document).ready(function() {
             }
         }
     });
-    
+
+    // Handle visibility type changes
+    function togglePlayerAssignment() {
+        const specificSelected = $('#visibility_specific').is(':checked');
+        const playerSection = $('#player-assignment-section');
+
+        if (specificSelected) {
+            playerSection.show();
+            $('#assigned_players').prop('required', true);
+        } else {
+            playerSection.hide();
+            $('#assigned_players').prop('required', false);
+            $('#assigned_players').val(null).trigger('change'); // Clear selection
+        }
+    }
+
+    // Initialize visibility state
+    togglePlayerAssignment();
+
+    // Listen for visibility type changes
+    $('input[name="visibility_type"]').on('change', function() {
+        togglePlayerAssignment();
+    });
+
     // Auto-generate title based on selections (only if title is empty)
     var titleInput = $('#title');
     var isUserTyping = false;
@@ -459,4 +523,63 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<style>
+/* Visibility option styling */
+.form-check {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-check:hover {
+    border-color: #1e4d2b;
+    background: #f0f4f1;
+}
+
+.form-check-input:checked + .form-check-label {
+    color: #1e4d2b;
+}
+
+.form-check:has(.form-check-input:checked) {
+    border-color: #1e4d2b;
+    background: #e8f5e8;
+    box-shadow: 0 2px 4px rgba(30, 77, 43, 0.1);
+}
+
+.form-check-label {
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.form-check-label strong {
+    color: #343a40;
+    font-size: 1rem;
+}
+
+.form-check-label small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
+}
+
+#player-assignment-section {
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 2px solid #1e4d2b;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+#player-assignment-section label {
+    color: #1e4d2b;
+    font-weight: 600;
+}
+</style>
+
 @endsection

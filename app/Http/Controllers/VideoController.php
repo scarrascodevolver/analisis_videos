@@ -15,7 +15,8 @@ class VideoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'rugbySituation']);
+        $query = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'rugbySituation'])
+                      ->visibleForUser(auth()->user());
 
         // Filter by rugby situation
         if ($request->filled('rugby_situation')) {
@@ -82,6 +83,7 @@ class VideoController extends Controller
                 'assigned_players' => 'nullable|array',
                 'assigned_players.*' => 'exists:users,id',
                 'assignment_notes' => 'nullable|string|max:1000',
+                'visibility_type' => 'required|in:public,forwards,backs,specific',
             ], [
                 'video_file.max' => 'El archivo de video no puede superar los 200MB.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
@@ -124,11 +126,12 @@ class VideoController extends Controller
             'category_id' => $request->category_id,
             'rugby_situation_id' => $request->rugby_situation_id,
             'match_date' => $request->match_date,
-            'status' => 'pending'
+            'status' => 'pending',
+            'visibility_type' => $request->visibility_type
         ]);
 
-        // Crear asignaciones si se seleccionaron jugadores
-        if ($request->filled('assigned_players') && is_array($request->assigned_players)) {
+        // Crear asignaciones si el tipo de visibilidad es 'specific'
+        if ($request->visibility_type === 'specific' && $request->filled('assigned_players') && is_array($request->assigned_players)) {
             foreach ($request->assigned_players as $playerId) {
                 \App\Models\VideoAssignment::create([
                     'video_id' => $video->id,
@@ -141,7 +144,13 @@ class VideoController extends Controller
             $assignedCount = count($request->assigned_players);
             $successMessage = "Video subido exitosamente y asignado a {$assignedCount} jugador(es).";
         } else {
-            $successMessage = "Video subido exitosamente.";
+            $visibilityMessages = [
+                'public' => 'Video subido exitosamente y visible para todo el equipo.',
+                'forwards' => 'Video subido exitosamente y visible para delanteros.',
+                'backs' => 'Video subido exitosamente y visible para backs.',
+                'specific' => 'Video subido exitosamente.'
+            ];
+            $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente.';
         }
 
         // Check if request is AJAX
