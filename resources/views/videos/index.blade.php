@@ -91,11 +91,11 @@
                     @if(isset($videos) && $videos->count() > 0)
                         <div class="row">
                             @foreach($videos as $video)
-                                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
                                     <div class="card video-card h-100">
                                         <!-- Video Thumbnail -->
                                         <div class="card-img-top video-thumbnail-container"
-                                             style="height: 150px; overflow: hidden; background: #f8f9fa; position: relative;"
+                                             style="height: 120px; overflow: hidden; background: #f8f9fa; position: relative;"
                                              data-video-url="{{ route('videos.stream', $video) }}"
                                              data-video-id="{{ $video->id }}">
 
@@ -113,17 +113,14 @@
                                             </video>
 
                                             <!-- Placeholder while loading -->
-                                            <div class="d-flex flex-column align-items-center justify-content-center h-100 rugby-thumbnail"
+                                            <div class="d-flex align-items-center justify-content-center h-100 rugby-thumbnail"
                                                  style="cursor: pointer;"
                                                  onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                                                <div class="play-button-circle mb-2">
-                                                    <i class="fas fa-play fa-lg text-white"></i>
-                                                </div>
                                                 <small class="text-white font-weight-bold">CARGANDO...</small>
                                             </div>
                                         </div>
-                                        <div class="card-body py-2 px-3">
-                                            <h6 class="card-title mb-2">{{ $video->title }}</h6>
+                                        <div class="card-body py-1 px-2">
+                                            <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
                                             <p class="card-text mb-1">
                                                 <small class="text-muted">
                                                     {{ $video->analyzedTeam->name }}
@@ -140,7 +137,7 @@
                                                     </span>
                                                 @endif
                                             </div>
-                                            <p class="card-text mb-2">
+                                            <p class="card-text mb-1">
                                                 <small class="text-muted">
                                                     <i class="fas fa-calendar"></i> {{ $video->match_date->format('d/m/Y') }}
                                                 </small>
@@ -257,6 +254,18 @@
     padding: 0.25rem 0.5rem;
 }
 
+/* Video title overflow fix */
+.video-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    max-height: 2.4em;
+    font-size: 0.9rem;
+}
+
 /* Rugby button variations */
 .btn-rugby-light {
     background: #28a745;
@@ -326,31 +335,19 @@
 
 /* Rugby thumbnail placeholder */
 .rugby-thumbnail {
-    background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3a 100%);
+    background: #1e4d2b;
     position: relative;
-    overflow: hidden;
-}
-
-.rugby-thumbnail::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-    animation: shine 3s infinite;
 }
 
 .play-button-circle {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background: #28a745;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content-center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
 }
 
@@ -359,10 +356,6 @@
     background: #218838;
 }
 
-@keyframes shine {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
 </style>
 
 <script>
@@ -403,8 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctx = canvas.getContext('2d');
 
             // Dimensiones del canvas (16:9 aspect ratio, más pequeño)
-            canvas.width = 300;
-            canvas.height = 150;
+            canvas.width = 240;
+            canvas.height = 120;
 
             // Dibujar frame del video
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
