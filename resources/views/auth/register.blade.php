@@ -107,7 +107,7 @@
                     <!-- Role -->
                     <div class="form-group">
                         <div class="input-group">
-                            <select class="form-control @error('role') is-invalid @enderror" name="role" required>
+                            <select class="form-control rugby-select @error('role') is-invalid @enderror" name="role" required>
                                 <option value="">Rol en el equipo...</option>
                                 <option value="jugador" {{ old('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
                                 <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
@@ -228,8 +228,23 @@
 
                         <div class="form-group">
                             <label class="text-muted small font-weight-bold">Fecha de nacimiento</label>
-                            <input type="date" class="form-control" name="date_of_birth" 
+                            <input type="date" class="form-control" name="date_of_birth"
                                    max="{{ date('Y-m-d', strtotime('-15 years')) }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="text-muted small font-weight-bold">Categoría del Jugador *</label>
+                            <select class="form-control rugby-select" name="user_category_id" required>
+                                <option value="">Seleccionar categoría...</option>
+                                @if(isset($categories))
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <small class="form-text text-muted">
+                                Selecciona la categoría a la que perteneces (determina qué videos puedes ver)
+                            </small>
                         </div>
                     </div>
 
@@ -525,6 +540,41 @@ select.rugby-select option {
         text-indent: 0.01px;
         text-overflow: '';
     }
+}
+
+/* Rugby theme colors for selects */
+.rugby-select:focus {
+    border-color: #1e4d2b !important;
+    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25) !important;
+}
+
+.rugby-select option:hover {
+    background-color: #1e4d2b !important;
+    color: white !important;
+}
+
+.rugby-select option:checked,
+.rugby-select option:selected {
+    background-color: #1e4d2b !important;
+    color: white !important;
+}
+
+/* Chrome/Safari specific hover */
+.rugby-select option:hover {
+    background: linear-gradient(#1e4d2b, #1e4d2b) !important;
+    background-color: #1e4d2b !important;
+}
+
+/* Modern browsers */
+.rugby-select option {
+    background-color: white;
+    color: #333;
+}
+
+.rugby-select option:hover,
+.rugby-select option:focus {
+    background-color: #1e4d2b !important;
+    color: white !important;
 }
 </style>
 @endsection
