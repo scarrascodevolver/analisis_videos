@@ -117,6 +117,26 @@ class Video extends Model
             return 'backs';
         }
 
-        return in_array($position, [1, 2, 3, 4, 5, 6, 7, 8]) ? 'forwards' : 'backs';
+        // Convert position text to category
+        $forwardPositions = [
+            'Prop Izquierdo (#1)', 'Hooker (#2)', 'Prop Derecho (#3)',
+            'Segunda Línea (#4)', 'Segunda Línea (#5)',
+            'Ala Ciega (#6)', 'Ala Abierta (#7)', 'Octavo (#8)',
+            'Primera Línea', 'Hooker/Prop Suplente', 'Segunda Línea Suplente',
+            'Tercera Línea Suplente', 'Entrenador de Forwards'
+        ];
+
+        // Check if position contains any forward indicators
+        foreach ($forwardPositions as $forwardPos) {
+            if (stripos($position, $forwardPos) !== false ||
+                stripos($position, 'primera línea') !== false ||
+                stripos($position, 'segunda línea') !== false ||
+                stripos($position, 'tercera línea') !== false ||
+                preg_match('/#[1-8]\)/', $position)) {
+                return 'forwards';
+            }
+        }
+
+        return 'backs';
     }
 }
