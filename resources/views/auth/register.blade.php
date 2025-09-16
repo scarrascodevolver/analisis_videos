@@ -543,38 +543,47 @@ select.rugby-select option {
 }
 
 /* Rugby theme colors for selects */
+.rugby-select {
+    border-color: #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
 .rugby-select:focus {
     border-color: #1e4d2b !important;
+    outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25) !important;
 }
 
-.rugby-select option:hover {
-    background-color: #1e4d2b !important;
-    color: white !important;
+.rugby-select:hover {
+    border-color: #1e4d2b;
 }
 
-.rugby-select option:checked,
-.rugby-select option:selected {
-    background-color: #1e4d2b !important;
-    color: white !important;
-}
-
-/* Chrome/Safari specific hover */
-.rugby-select option:hover {
-    background: linear-gradient(#1e4d2b, #1e4d2b) !important;
-    background-color: #1e4d2b !important;
-}
-
-/* Modern browsers */
+/* Para navegadores que soportan personalización de options */
 .rugby-select option {
-    background-color: white;
+    padding: 8px 12px;
     color: #333;
+    background-color: white;
 }
 
-.rugby-select option:hover,
-.rugby-select option:focus {
-    background-color: #1e4d2b !important;
-    color: white !important;
+.rugby-select option:checked {
+    background-color: #1e4d2b;
+    color: white;
 }
+
+/* Webkit browsers (Chrome, Safari) - personalización limitada */
+.rugby-select::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.rugby-select::-webkit-scrollbar-thumb {
+    background: #1e4d2b;
+    border-radius: 6px;
+}
+
+.rugby-select::-webkit-scrollbar-thumb:hover {
+    background: #164023;
+}
+
+/* Alternativa: Crear un select personalizado con div + JS (más complejo) */
 </style>
 @endsection
