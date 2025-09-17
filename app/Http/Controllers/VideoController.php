@@ -50,7 +50,16 @@ class VideoController extends Controller
 
         // Get filter data
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-        $categories = Category::all();
+
+        // Categories: Analysts see all, staff see only their category
+        if (auth()->user()->role === 'analista') {
+            $categories = Category::all();
+        } else {
+            // Staff only see their assigned category
+            $userCategoryId = auth()->user()->profile->user_category_id ?? null;
+            $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+        }
+
         $teams = Team::all();
 
         return view('videos.index', compact('videos', 'rugbySituations', 'categories', 'teams'));
@@ -59,7 +68,15 @@ class VideoController extends Controller
     public function create()
     {
         $teams = Team::all();
-        $categories = Category::all();
+
+        // Categories: Analysts see all, staff see only their category
+        if (auth()->user()->role === 'analista') {
+            $categories = Category::all();
+        } else {
+            // Staff only see their assigned category
+            $userCategoryId = auth()->user()->profile->user_category_id ?? null;
+            $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+        }
         $ownTeam = Team::where('is_own_team', true)->first();
         $rivalTeams = Team::where('is_own_team', false)->get();
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');

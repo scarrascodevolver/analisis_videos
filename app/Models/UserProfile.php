@@ -22,6 +22,7 @@ class UserProfile extends Model
         'division_category',
         'user_category_id',
         'can_receive_assignments',
+        'avatar',
     ];
 
     protected $casts = [

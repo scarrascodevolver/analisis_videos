@@ -150,11 +150,19 @@
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                        <i class="fas fa-user"></i> {{ Auth::user()->name }}
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                        @if(Auth::user()->profile && Auth::user()->profile->avatar)
+                            <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}"
+                                 alt="Avatar"
+                                 class="img-circle mr-2"
+                                 style="width: 28px; height: 28px; object-fit: cover;">
+                        @else
+                            <i class="fas fa-user mr-2"></i>
+                        @endif
+                        {{ Auth::user()->name }}
                     </a>
                     <div class="dropdown-menu dropdown-menu-right">
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="{{ route('profile.show') }}">
                             <i class="fas fa-user"></i> Perfil
                         </a>
                         <div class="dropdown-divider"></div>
@@ -182,11 +190,22 @@
                 <!-- User panel -->
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <i class="fas fa-user-circle fa-2x text-light"></i>
+                        @if(Auth::user()->profile && Auth::user()->profile->avatar)
+                            <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}"
+                                 alt="Avatar"
+                                 class="img-circle elevation-2"
+                                 style="width: 34px; height: 34px; object-fit: cover;">
+                        @else
+                            <i class="fas fa-user-circle fa-2x text-light"></i>
+                        @endif
                     </div>
                     <div class="info">
-                        <div class="text-light">{{ Auth::user()->name }}</div>
-                        <small class="text-muted">{{ ucfirst(Auth::user()->role) }}</small>
+                        <a href="{{ route('profile.show') }}" class="text-light text-decoration-none">
+                            {{ Auth::user()->name }}
+                        </a>
+                        <div>
+                            <small class="text-muted">{{ ucfirst(Auth::user()->role) }}</small>
+                        </div>
                     </div>
                 </div>
 

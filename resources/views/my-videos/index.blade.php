@@ -105,7 +105,7 @@
                     <i class="fas fa-video fa-4x text-muted mb-3"></i>
                     <h4 class="text-muted">No tienes videos asignados</h4>
                     <p class="text-muted">Los analistas y entrenadores te asignarán videos para análisis aquí.</p>
-                    <a href="{{ route('videos.index') }}" class="btn btn-primary">
+                    <a href="{{ route('videos.index') }}" class="btn btn-rugby">
                         <i class="fas fa-video"></i> Ver Videos del Equipo
                     </a>
                 </div>

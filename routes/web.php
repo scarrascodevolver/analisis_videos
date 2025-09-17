@@ -48,13 +48,21 @@ Route::middleware(['auth'])->group(function () {
         Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
     });
 
-    // Player Routes  
+    // Player Routes
     Route::middleware(['role:jugador'])->prefix('player')->name('player.')->group(function () {
         Route::get('/videos', [DashboardController::class, 'playerVideos'])->name('videos');
         Route::get('/completed', [DashboardController::class, 'playerCompleted'])->name('completed');
         Route::get('/pending', [DashboardController::class, 'playerPending'])->name('pending');
         Route::get('/upload', [VideoController::class, 'playerUpload'])->name('upload');
         Route::post('/upload', [VideoController::class, 'playerStore'])->name('upload.store');
+    });
+
+    // Profile Routes (for all authenticated users)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
+        Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
     });
 
     // Coach Routes

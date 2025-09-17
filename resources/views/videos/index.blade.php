@@ -8,7 +8,8 @@
 @endsection
 
 @section('main_content')
-    <!-- Filters -->
+    <!-- Filters (only for non-players) -->
+    @if(auth()->user()->role !== 'jugador')
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -18,12 +19,12 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="GET" action="{{ route('videos.index') }}" class="row">
+                    <form method="GET" action="{{ route('videos.index') }}" class="row" id="filter-form">
                         <div class="col-md-3 mb-2">
-                            <input type="text" name="search" class="form-control" placeholder="Buscar por título..." value="{{ request('search') }}">
+                            <input type="text" name="search" id="search-input" class="form-control" placeholder="Buscar por título..." value="{{ request('search') }}">
                         </div>
                         <div class="col-md-3 mb-2">
-                            <select name="rugby_situation" class="form-control">
+                            <select name="rugby_situation" id="situation-select" class="form-control">
                                 <option value="">Situación</option>
                                 @foreach($rugbySituations as $categoryName => $situations)
                                     <optgroup label="{{ $categoryName }}">
@@ -36,8 +37,9 @@
                                 @endforeach
                             </select>
                         </div>
+                        @if(auth()->user()->role === 'analista')
                         <div class="col-md-2 mb-2">
-                            <select name="category" class="form-control">
+                            <select name="category" id="category-select" class="form-control">
                                 <option value="">Categoría</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -47,15 +49,15 @@
                             </select>
                         </div>
                         <div class="col-md-2 mb-2">
-                            <select name="division" class="form-control">
+                            <select name="division" id="division-select" class="form-control">
                                 <option value="">División</option>
                                 <option value="primera" {{ request('division') == 'primera' ? 'selected' : '' }}>Primera</option>
                                 <option value="intermedia" {{ request('division') == 'intermedia' ? 'selected' : '' }}>Intermedia</option>
-                                <option value="unica" {{ request('division') == 'unica' ? 'selected' : '' }}>Única</option>
                             </select>
                         </div>
+                        @endif
                         <div class="col-md-2 mb-2">
-                            <select name="team" class="form-control">
+                            <select name="team" id="team-select" class="form-control">
                                 <option value="">Equipo</option>
                                 @foreach($teams as $team)
                                     <option value="{{ $team->id }}" {{ request('team') == $team->id ? 'selected' : '' }}>
@@ -65,11 +67,8 @@
                             </select>
                         </div>
                         <div class="col-md-2 mb-2">
-                            <button type="submit" class="btn btn-rugby mr-2">
-                                <i class="fas fa-search"></i> Filtrar
-                            </button>
-                            <a href="{{ route('videos.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i>
+                            <a href="{{ route('videos.index') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times"></i> Limpiar
                             </a>
                         </div>
                     </form>
@@ -77,6 +76,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Videos List -->
     <div class="row">
@@ -451,6 +451,44 @@ document.addEventListener('DOMContentLoaded', function() {
         // Iniciar carga
         video.load();
     }
+
+    // Filtros automáticos
+    let filterTimeout;
+
+    // Función para enviar filtros automáticamente
+    function autoFilter() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(function() {
+            document.getElementById('filter-form').submit();
+        }, 500); // Esperar 500ms después de que el usuario deje de escribir
+    }
+
+    // Filtro automático para búsqueda de texto
+    document.getElementById('search-input').addEventListener('input', autoFilter);
+
+    // Filtros automáticos para selects
+    document.getElementById('situation-select').addEventListener('change', function() {
+        document.getElementById('filter-form').submit();
+    });
+
+    // Solo para analistas (que tienen acceso a estos filtros)
+    const categorySelect = document.getElementById('category-select');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    }
+
+    const divisionSelect = document.getElementById('division-select');
+    if (divisionSelect) {
+        divisionSelect.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    }
+
+    document.getElementById('team-select').addEventListener('change', function() {
+        document.getElementById('filter-form').submit();
+    });
 });
 </script>
 
