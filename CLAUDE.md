@@ -8,6 +8,15 @@
 
 ### ✅ COMPLETADO RECIENTEMENTE:
 
+#### 9. **Sistema de Perfil de Usuario con Avatar - COMPLETADO** (2025-09-17)
+- ✅ **Migración avatar**: Campo `avatar` agregado a `user_profiles` table
+- ✅ **ProfileController**: CRUD completo con upload/eliminación de avatar
+- ✅ **Rutas de perfil**: `/profile`, `/profile/edit`, eliminación de avatar
+- ✅ **Vistas completas**: `profile/show.blade.php` y `profile/edit.blade.php`
+- ✅ **UI actualizada**: Sidebar con avatar clickeable + dropdown menú superior
+- ✅ **Validación**: Imágenes JPEG/PNG/JPG/GIF, máx 2MB, preview instantáneo
+- ✅ **Storage**: Gestión segura con eliminación de archivos anteriores
+
 #### 8. **Sistema de Categorías de Usuario - COMPLETADO** (2025-09-17)
 - ✅ **VPS sincronizado**: Rama `funcionalidad/categorias-usuario` desplegada en producción
 - ✅ **Migraciones ejecutadas**: user_category_id, visibility_type, thumbnails funcionando
@@ -97,24 +106,24 @@ Video::visibleForUser($user)
 
 ---
 
-## 🚀 PRÓXIMAS TAREAS (Para mañana):
+## 🚀 PRÓXIMAS TAREAS (Inmediatas):
 
-### 1. **Perfil del Jugador** 
-- [ ] Crear vista detallada del perfil de jugador
-- [ ] Mostrar información personal, posiciones, estadísticas
-- [ ] Dashboard personalizado para jugadores
-- [ ] Videos asignados y completados
+### 1. **Avatar en Cards de Jugadores - RAMA: feature/player-avatar-cards**
+- [ ] **Actualizar vista coach/users**: Mostrar avatar del jugador en cada card
+- [ ] **Modificar cards verticales**: Integrar foto de perfil como header
+- [ ] **Placeholder por defecto**: Ícono cuando no hay avatar subido
+- [ ] **Responsive design**: Asegurar que funcione en móvil
+- [ ] **Commit y merge**: Una vez implementado, mergear a main
 
-### 2. **Perfiles de Entrenadores**
-- [ ] Vista de entrenador para analizar jugadores
-- [ ] Filtros por jugador específico
-- [ ] Panel de análisis con métricas por jugador
-- [ ] Comparación entre jugadores
-
-### 3. **Sistema de Filtros**
+### 2. **Sistema de Filtros Avanzado**
 - [ ] Filtros por jugador en videos
 - [ ] Filtros por categoría y posición
 - [ ] Búsqueda avanzada de análisis
+
+### 3. **Dashboard Mejorado**
+- [ ] Panel de análisis con métricas por jugador
+- [ ] Comparación entre jugadores
+- [ ] Estadísticas de progreso
 
 ---
 
@@ -199,7 +208,15 @@ php artisan db:seed --class=UserSeeder
 
 ## 📁 ARCHIVOS CLAVE MODIFICADOS HOY
 
-### **Nuevos:**
+### **Sistema de Perfil con Avatar (2025-09-17):**
+- `database/migrations/2025_09_17_120000_add_avatar_to_user_profiles_table.php` - Campo avatar
+- `app/Http/Controllers/ProfileController.php` - CRUD perfil con avatar
+- `resources/views/profile/show.blade.php` - Vista de perfil completa
+- `resources/views/profile/edit.blade.php` - Formulario con upload de imagen
+- `resources/views/layouts/app.blade.php` - Sidebar y menú con avatar
+- `routes/web.php` - Rutas de perfil agregadas
+
+### **Anteriores:**
 - `app/Http/Controllers/VideoStreamController.php` - Range requests para video
 - `database/migrations/2025_09_15_050000_add_player_fields_to_user_profiles_table.php`
 - `database/migrations/2025_09_15_060000_remove_experience_level_from_user_profiles_table.php`
@@ -210,7 +227,6 @@ php artisan db:seed --class=UserSeeder
 - `resources/views/auth/register.blade.php` - Formulario optimizado con CSS
 - `app/Models/UserProfile.php` - Campos actualizados
 - `app/Http/Controllers/Auth/RegisterController.php` - Sin experience_level
-- `routes/web.php` - Rutas de streaming agregadas
 - Todos los seeders actualizados
 
 ---
@@ -227,8 +243,36 @@ php artisan db:seed --class=UserSeeder
 
 ## 💡 NOTAS PARA EL DESARROLLO
 
+### **Avatar en Cards de Jugadores:**
+```blade
+{{-- Estructura básica para cards con avatar --}}
+<div class="card h-100">
+    <div class="card-header text-center p-2">
+        @if($player->profile && $player->profile->avatar)
+            <img src="{{ asset('storage/' . $player->profile->avatar) }}"
+                 alt="Avatar"
+                 class="img-circle elevation-2"
+                 style="width: 60px; height: 60px; object-fit: cover;">
+        @else
+            <i class="fas fa-user-circle fa-3x text-muted"></i>
+        @endif
+    </div>
+    <div class="card-body">
+        <h6 class="card-title">{{ $player->name }}</h6>
+        {{-- resto del contenido --}}
+    </div>
+</div>
+```
+
+### **Implementación Técnica:**
+- **Archivo a modificar**: `resources/views/dashboards/coach-users.blade.php`
+- **Relación necesaria**: `$players->load('profile')` en controller
+- **Placeholder**: Usar `fa-user-circle` cuando no hay avatar
+- **Tamaño imagen**: 60px x 60px para cards, object-fit: cover
+
+### **Otras Notas:**
 - **No usar experience_level**: Campo eliminado permanentemente
-- **Usar rutas de streaming**: Para videos usar `/videos/{id}/stream` 
+- **Usar rutas de streaming**: Para videos usar `/videos/{id}/stream`
 - **CSS rugby**: Clase `.rugby-select` para selects optimizados
 - **Colors**: Verde principal `#1e4d2b`, secundario `#28a745`
 - **Testing**: Siempre probar video seeking después de cambios de JS
