@@ -25,11 +25,35 @@
                             <div class="card video-card h-100">
                                 
                                 <!-- Video Thumbnail -->
-                                <a href="{{ route('assignments.show', $assignment) }}" class="d-block">
-                                    <div class="card-img-top bg-dark d-flex align-items-center justify-content-center video-thumbnail" style="height: 200px; cursor: pointer;">
-                                        <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
+                                <div class="card-img-top video-thumbnail-container"
+                                     style="height: 200px; overflow: hidden; background: #f8f9fa; position: relative;"
+                                     data-video-url="{{ route('videos.stream', $assignment->video) }}"
+                                     data-video-id="{{ $assignment->video->id }}"
+                                     onclick="window.location.href='{{ route('assignments.show', $assignment) }}'">
+
+                                    <!-- Generated Thumbnail (will be populated by JS) -->
+                                    <img class="video-thumbnail-img w-100 h-100"
+                                         style="object-fit: cover; cursor: pointer; display: none;">
+
+                                    <!-- Hidden Video for Thumbnail Generation -->
+                                    <video class="video-hidden"
+                                           style="display: none;"
+                                           preload="metadata"
+                                           muted>
+                                        <source src="{{ route('videos.stream', $assignment->video) }}" type="{{ $assignment->video->mime_type }}">
+                                    </video>
+
+                                    <!-- Placeholder while loading -->
+                                    <div class="d-flex align-items-center justify-content-center h-100 rugby-thumbnail"
+                                         style="cursor: pointer;">
+                                        <div class="text-center">
+                                            <div class="play-button-circle mb-2">
+                                                <i class="fas fa-play text-white"></i>
+                                            </div>
+                                            <small class="text-white font-weight-bold">CARGANDO...</small>
+                                        </div>
                                     </div>
-                                </a>
+                                </div>
 
                                 <!-- Video Info -->
                                 <div class="card-body p-3">
@@ -99,17 +123,6 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .video-thumbnail {
-        transition: all 0.3s ease;
-    }
-    .video-thumbnail:hover {
-        background-color: #2a2a2a !important;
-    }
-    .video-thumbnail:hover i {
-        opacity: 1 !important;
-        transform: scale(1.1);
-        color: #1e4d2b !important;
-    }
     .alert-sm {
         font-size: 0.875rem;
     }
@@ -121,5 +134,136 @@
         font-size: 0.875em;
         font-weight: 500;
     }
+
+    /* Rugby thumbnail placeholder */
+    .rugby-thumbnail {
+        background: #1e4d2b;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .rugby-thumbnail:hover {
+        background: #2d5a3d;
+    }
+
+    .play-button-circle {
+        width: 60px;
+        height: 60px;
+        background: #28a745;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        margin: 0 auto;
+    }
+
+    .rugby-thumbnail:hover .play-button-circle {
+        transform: scale(1.1);
+        background: #218838;
+    }
+
+    /* Video thumbnail improvements */
+    .video-thumbnail-container {
+        transition: all 0.3s ease;
+    }
+
+    .video-thumbnail-container:hover {
+        transform: scale(1.02);
+    }
+
+    .video-thumbnail-img {
+        transition: opacity 0.3s ease;
+    }
+
+    .video-thumbnail-container:hover .video-thumbnail-img {
+        opacity: 0.9;
+    }
 </style>
+@endsection
+
+@section('js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎬 Iniciando generación de thumbnails en Mis Videos...');
+
+    const thumbnailContainers = document.querySelectorAll('.video-thumbnail-container');
+
+    thumbnailContainers.forEach((container, index) => {
+        // Delay progresivo para no sobrecargar
+        setTimeout(() => {
+            generateThumbnail(container);
+        }, index * 800); // Más tiempo entre videos para evitar sobrecarga
+    });
+
+    function generateThumbnail(container) {
+        const video = container.querySelector('.video-hidden');
+        const thumbnailImg = container.querySelector('.video-thumbnail-img');
+        const placeholder = container.querySelector('.rugby-thumbnail');
+        const videoId = container.dataset.videoId;
+
+        if (!video || !thumbnailImg || !placeholder) return;
+
+        // Cuando el video tiene metadata
+        video.addEventListener('loadedmetadata', function() {
+            console.log(`📹 Video ${videoId} metadata cargada`);
+
+            // Ir al segundo 5 para mejor thumbnail
+            video.currentTime = Math.min(5, video.duration / 4);
+        });
+
+        // Cuando llegamos al tiempo deseado
+        video.addEventListener('seeked', function() {
+            console.log(`🎯 Video ${videoId} positioned para thumbnail`);
+
+            // Crear canvas para capturar frame
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Dimensiones del canvas (manteniendo aspect ratio)
+            canvas.width = 320;
+            canvas.height = 200;
+
+            // Dibujar frame del video
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convertir a imagen
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Mostrar thumbnail
+            thumbnailImg.src = dataURL;
+            thumbnailImg.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            console.log(`✅ Thumbnail generado para video ${videoId}`);
+        });
+
+        // Error handler
+        video.addEventListener('error', function(e) {
+            console.log(`❌ Error cargando video ${videoId}:`, e);
+
+            // Mantener placeholder pero cambiar texto
+            const text = placeholder.querySelector('small');
+            if (text) {
+                text.textContent = 'VIDEO RUGBY';
+            }
+        });
+
+        // Timeout fallback
+        setTimeout(() => {
+            if (thumbnailImg.style.display === 'none') {
+                console.log(`⏰ Timeout para video ${videoId}, manteniendo placeholder`);
+                const text = placeholder.querySelector('small');
+                if (text) {
+                    text.textContent = 'VIDEO RUGBY';
+                }
+            }
+        }, 12000); // 12 segundos timeout para dar más tiempo
+
+        // Iniciar carga
+        video.load();
+    }
+});
+</script>
 @endsection
