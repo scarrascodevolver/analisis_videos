@@ -270,6 +270,40 @@ php artisan db:seed --class=UserSeeder
 - **Placeholder**: Usar `fa-user-circle` cuando no hay avatar
 - **Tamaño imagen**: 60px x 60px para cards, object-fit: cover
 
+### **Actualización del VPS:**
+```bash
+# 1. Conectar al VPS por SSH
+ssh usuario@ip_del_vps
+
+# 2. Ir al directorio del proyecto
+cd /var/www/html/rugby-analysis-system
+
+# 3. Hacer pull de los cambios
+git pull origin main
+
+# 4. Ejecutar migraciones nuevas (CRÍTICO para avatar)
+php artisan migrate
+
+# 5. Limpiar caché de Laravel
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+
+# 6. Verificar permisos de storage (para avatares)
+sudo chown -R www-data:www-data storage/
+sudo chmod -R 755 storage/
+
+# 7. Asegurar que el symlink de storage existe
+php artisan storage:link
+```
+
+### **Verificación Post-Actualización:**
+- ✅ Login con usuarios existentes funciona
+- ✅ Acceso a `/profile` y `/profile/edit`
+- ✅ Upload de avatar y preview funcionando
+- ✅ Sidebar y menú muestran avatares
+- ✅ Migraciones aplicadas sin errores
+
 ### **Otras Notas:**
 - **No usar experience_level**: Campo eliminado permanentemente
 - **Usar rutas de streaming**: Para videos usar `/videos/{id}/stream`
