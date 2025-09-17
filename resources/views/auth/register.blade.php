@@ -104,25 +104,8 @@
                         </div>
                     </div>
 
-                    <!-- Role -->
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="hidden" name="role" value="jugador">
-                            <input type="text" class="form-control rugby-select" value="Jugador" readonly>
-                            <small class="text-muted mt-1">
-                                <i class="fas fa-info-circle"></i>
-                                Solo jugadores pueden registrarse públicamente. Para staff contacte al administrador.
-                            </small>
-                            <div class="input-group-append">
-                                <span class="input-group-text">
-                                    <i class="fas fa-users"></i>
-                                </span>
-                            </div>
-                        </div>
-                        @error('role')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
+                    <!-- Hidden role field -->
+                    <input type="hidden" name="role" value="jugador">
 
                     <!-- Navigation Buttons -->
                     <div class="row mt-4">
@@ -345,17 +328,8 @@
 @section('js')
 <script>
 $(document).ready(function() {
-    // Show/hide fields based on role
-    $('select[name="role"]').on('change', function() {
-        const role = $(this).val();
-        $('#playerFields, #coachFields').hide();
-        
-        if (role === 'jugador') {
-            $('#playerFields').show();
-        } else if (role === 'entrenador') {
-            $('#coachFields').show();
-        }
-    });
+    // Always show player fields since only players can register
+    $('#playerFields').show();
 
     // Step navigation
     $('#nextStep1').on('click', function() {
