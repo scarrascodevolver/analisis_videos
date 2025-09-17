@@ -22,7 +22,6 @@ Route::middleware(['auth'])->group(function () {
     // Video Routes
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
-    Route::get('videos/{video}/analytics', [VideoController::class, 'analytics'])->name('videos.analytics');
     
     // Video Streaming Routes (with Range support for seeking)
     Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');

@@ -120,6 +120,48 @@ class Video extends Model
         return $query;
     }
 
+    /**
+     * Scope para "Videos del Equipo" - NO incluye videos específicos
+     * Solo videos públicos y por categoría de posición (forwards/backs)
+     */
+    public function scopeTeamVisible($query, $user)
+    {
+        if (in_array($user->role, ['analista', 'entrenador', 'staff', 'director_tecnico'])) {
+            return $query; // Staff ve todos los videos
+        }
+
+        if ($user->role === 'jugador') {
+            $userCategoryId = $user->profile?->user_category_id;
+            $userPosition = $user->profile?->position;
+            $playerCategory = $this->getPlayerCategory($userPosition);
+
+            return $query->where(function($q) use ($user, $userCategoryId, $playerCategory) {
+                // Solo videos de la misma categoría del usuario
+                if ($userCategoryId) {
+                    $q->where('category_id', $userCategoryId);
+                }
+
+                // SOLO tipos de visibilidad pública y por posición - NO incluir 'specific'
+                $q->where(function($visQ) use ($playerCategory) {
+                    $visQ->where('visibility_type', 'public')
+                         ->orWhere('visibility_type', $playerCategory);
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Scope para "Mis Videos" - Solo videos específicamente asignados al usuario
+     */
+    public function scopeMyAssignedVideos($query, $user)
+    {
+        return $query->whereHas('assignments', function($assignQ) use ($user) {
+            $assignQ->where('assigned_to', $user->id);
+        });
+    }
+
     public static function getPlayerCategory($position)
     {
         if (is_null($position)) {

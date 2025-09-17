@@ -32,9 +32,6 @@
                                 <i class="fas fa-trash"></i> Eliminar
                             </button>
                         @endif
-                        <a href="{{ route('videos.analytics', $video) }}" class="btn btn-sm btn-rugby">
-                            <i class="fas fa-chart-line"></i> Analytics
-                        </a>
                     </div>
                 </div>
                 <div class="card-body p-0">

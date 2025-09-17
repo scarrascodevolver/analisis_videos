@@ -16,7 +16,7 @@ class VideoController extends Controller
     public function index(Request $request)
     {
         $query = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'rugbySituation'])
-                      ->visibleForUser(auth()->user());
+                      ->teamVisible(auth()->user());
 
         // Filter by rugby situation
         if ($request->filled('rugby_situation')) {
@@ -225,25 +225,6 @@ class VideoController extends Controller
             ->with('success', 'Video eliminado exitosamente');
     }
 
-    public function analytics(Video $video)
-    {
-        $comments = $video->comments()
-            ->with('user')
-            ->orderBy('timestamp_seconds')
-            ->get();
-
-        $commentsByCategory = $comments->groupBy('category');
-        $commentsByPriority = $comments->groupBy('priority');
-        $commentsByStatus = $comments->groupBy('status');
-
-        return view('videos.analytics', compact(
-            'video',
-            'comments',
-            'commentsByCategory',
-            'commentsByPriority',
-            'commentsByStatus'
-        ));
-    }
 
     public function playerUpload()
     {
