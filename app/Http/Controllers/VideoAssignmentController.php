@@ -25,8 +25,16 @@ class VideoAssignmentController extends Controller
         $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])
                       ->latest()
                       ->get();
-        
-        $players = User::where('role', 'jugador')->get();
+
+        $players = User::where(function($query) {
+                $query->where('role', 'jugador')
+                      ->orWhereHas('profile', function($q) {
+                          $q->where('can_receive_assignments', true);
+                      });
+            })
+            ->with('profile')
+            ->orderBy('name')
+            ->get();
 
         return view('assignments.create', compact('videos', 'players'));
     }
@@ -89,7 +97,15 @@ class VideoAssignmentController extends Controller
     public function edit(VideoAssignment $assignment)
     {
         $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])->get();
-        $players = User::where('role', 'jugador')->get();
+        $players = User::where(function($query) {
+                $query->where('role', 'jugador')
+                      ->orWhereHas('profile', function($q) {
+                          $q->where('can_receive_assignments', true);
+                      });
+            })
+            ->with('profile')
+            ->orderBy('name')
+            ->get();
 
         return view('assignments.edit', compact('assignment', 'videos', 'players'));
     }

@@ -21,11 +21,13 @@ class UserProfile extends Model
         'club_team_organization',
         'division_category',
         'user_category_id',
+        'can_receive_assignments',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'specializations' => 'array',
+        'can_receive_assignments' => 'boolean',
     ];
 
     public function user()

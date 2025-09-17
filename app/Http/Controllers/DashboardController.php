@@ -151,7 +151,7 @@ class DashboardController extends Controller
     public function playerProfile(User $user)
     {
         $user->load('profile');
-        
+
         return view('dashboards.player-profile', compact('user'));
     }
 

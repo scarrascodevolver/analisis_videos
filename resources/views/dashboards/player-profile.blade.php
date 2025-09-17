@@ -1,9 +1,8 @@
 @extends('layouts.app')
 
-@section('page_title', 'Perfil de ' . $user->name)
+@section('page_title', 'Perfil del Jugador')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
     <li class="breadcrumb-item"><a href="{{ route('coach.users') }}">Jugadores</a></li>
     <li class="breadcrumb-item active">{{ $user->name }}</li>
 @endsection
@@ -14,19 +13,11 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header text-center">
-                    <h3 class="card-title">
-                        <i class="fas fa-user"></i>
-                        Información del Jugador
+                    <h3 class="card-title mb-0">
+                        {{ $user->name }}
                     </h3>
                 </div>
                 <div class="card-body text-center">
-                    <!-- Avatar -->
-                    <div class="player-avatar-large mb-3 mx-auto">
-                        {{ strtoupper(substr($user->name, 0, 1)) }}{{ strtoupper(substr(explode(' ', $user->name)[1] ?? '', 0, 1)) }}
-                    </div>
-
-                    <!-- Nombre -->
-                    <h4 class="text-rugby mb-3">{{ $user->name }}</h4>
 
                     <!-- Información del perfil -->
                     <div class="profile-info">
@@ -46,9 +37,9 @@
                             @endif
 
                             <div class="info-item mb-3">
-                                <i class="fas fa-layer-group text-rugby"></i>
+                                <i class="fas fa-trophy text-rugby"></i>
                                 <strong>Categoría:</strong><br>
-                                <span class="category-badge-large">{{ $user->profile->category->name ?? 'Sin categoría' }}</span>
+                                <span class="text-muted">{{ $user->profile->category->name ?? 'Sin categoría' }}</span>
                             </div>
 
                             @if($user->profile->player_number)
@@ -64,8 +55,12 @@
                                     <i class="fas fa-ruler text-rugby"></i>
                                     <strong>Físico:</strong><br>
                                     <span class="text-muted">
-                                        @if($user->profile->height){{ $user->profile->height }}cm @endif
-                                        @if($user->profile->weight)• {{ $user->profile->weight }}kg@endif
+                                        @if($user->profile->height)
+                                            {{ $user->profile->height }}cm
+                                        @endif
+                                        @if($user->profile->weight)
+                                            • {{ $user->profile->weight }}kg
+                                        @endif
                                     </span>
                                 </div>
                             @endif
@@ -73,10 +68,10 @@
                             @if($user->profile->date_of_birth)
                                 <div class="info-item mb-3">
                                     <i class="fas fa-calendar text-rugby"></i>
-                                    <strong>Fecha de Nacimiento:</strong><br>
-                                    <span class="text-muted">{{ \Carbon\Carbon::parse($user->profile->date_of_birth)->format('d/m/Y') }}</span>
-                                    <small class="d-block text-muted">
-                                        ({{ \Carbon\Carbon::parse($user->profile->date_of_birth)->age }} años)
+                                    <strong>Edad:</strong><br>
+                                    <small class="text-muted">
+                                        {{ \Carbon\Carbon::parse($user->profile->date_of_birth)->age }} años
+                                        ({{ \Carbon\Carbon::parse($user->profile->date_of_birth)->format('d/m/Y') }})
                                     </small>
                                 </div>
                             @endif
@@ -122,84 +117,110 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: #1e4d2b;
+    background: linear-gradient(135deg, #1e4d2b, #28a745);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 2.5rem;
+    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.3);
+}
+
+.info-item {
+    text-align: left;
+    padding: 10px 0;
+    border-bottom: 1px solid #f4f4f4;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item i {
+    margin-right: 10px;
+    width: 20px;
 }
 
 .text-rugby {
     color: #1e4d2b !important;
 }
 
-.category-badge-large {
-    background: #28a745;
-    color: white;
-    border-radius: 15px;
-    padding: 8px 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.info-item {
-    padding: 12px;
-    border-left: 3px solid #1e4d2b;
-    background: #f8f9fa;
-    border-radius: 5px;
-    text-align: left;
-}
-
-.info-item i {
-    margin-right: 8px;
+.spinner-border.text-rugby {
+    color: #1e4d2b !important;
 }
 
 .video-card {
-    transition: transform 0.2s ease;
-    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
 }
 
 .video-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(30, 77, 43, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.15);
+    border-color: #1e4d2b;
+}
+
+.video-thumbnail-container {
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #1e4d2b, #28a745);
 }
 
 .video-thumbnail {
-    height: 120px;
-    background: #1e4d2b;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     border-radius: 8px;
-    position: relative;
-    overflow: hidden;
 }
 
-.video-thumbnail::before {
-    content: '▶';
+.play-overlay {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    background: rgba(30, 77, 43, 0.8);
     color: white;
-    font-size: 2rem;
-    opacity: 0.8;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
 }
 
-.spinner-border.text-rugby {
-    color: #1e4d2b !important;
+.video-card:hover .play-overlay {
+    background: rgba(30, 77, 43, 0.9);
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 .btn-rugby {
     background-color: #1e4d2b;
     border-color: #1e4d2b;
     color: white;
+    border-radius: 6px;
 }
 
 .btn-rugby:hover {
     background-color: #164023;
     border-color: #164023;
     color: white;
+}
+
+.stats-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    border-color: #1e4d2b;
+    box-shadow: 0 2px 8px rgba(30, 77, 43, 0.1);
 }
 </style>
 @endsection
@@ -212,85 +233,68 @@ $(document).ready(function() {
 
     function loadPlayerVideos(playerId) {
         $.ajax({
-            url: `/api/players/${playerId}/videos`,
+            url: '/api/players/' + playerId + '/videos',
             method: 'GET',
             success: function(data) {
                 displayVideos(data.videos, data.stats);
             },
-            error: function() {
-                $('#player-videos-container').html(`
-                    <div class="text-center py-4 text-danger">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h6>Error cargando videos</h6>
-                        <p class="text-muted">No se pudieron cargar los videos del jugador</p>
-                    </div>
-                `);
+            error: function(xhr) {
+                console.error('Error cargando videos:', xhr);
+                $('#player-videos-container').html(
+                    '<div class="alert alert-warning">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' +
+                    'Error al cargar los videos del jugador' +
+                    '</div>'
+                );
             }
         });
     }
 
     function displayVideos(videos, stats) {
-        if (videos.length === 0) {
-            $('#player-videos-container').html(`
-                <div class="text-center py-4">
-                    <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
-                    <h6 class="text-muted">No hay videos asignados</h6>
-                    <p class="text-muted">Este jugador no tiene videos asignados aún</p>
-                </div>
-            `);
+        if (!videos || videos.length === 0) {
+            $('#player-videos-container').html(
+                '<div class="text-center py-4">' +
+                '<i class="fas fa-video-slash fa-3x text-muted mb-3"></i>' +
+                '<h5 class="text-muted">No hay videos asignados</h5>' +
+                '<p class="text-muted">Este jugador aún no tiene videos asignados para analizar</p>' +
+                '</div>'
+            );
             return;
         }
 
         let html = '';
 
-        // Estadísticas
-        html += `
-            <div class="row mb-4 text-center">
-                <div class="col-md-6">
-                    <div class="border rounded p-3">
-                        <h3 class="text-rugby mb-0">${stats.total}</h3>
-                        <small class="text-muted">Total Videos</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="border rounded p-3">
-                        <h3 class="text-info mb-0">${stats.pending}</h3>
-                        <small class="text-muted">Videos Asignados</small>
-                    </div>
-                </div>
-            </div>
-        `;
-
         // Videos
         html += '<div class="row">';
-        videos.forEach(video => {
-            html += `
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card video-card h-100">
-                        <div class="video-thumbnail"></div>
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">${video.title}</h6>
-                            <p class="card-text text-muted small mb-2">
-                                ${video.analyzed_team?.name || 'Equipo'}
-                                ${video.rival_team ? 'vs ' + video.rival_team.name : ''}
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    📅 ${formatDate(video.match_date)}
-                                </small>
-                                <span class="small text-info">
-                                    📋 Asignado
-                                </span>
-                            </div>
-                        </div>
-                        <div class="card-footer p-2">
-                            <a href="/videos/${video.id}" class="btn btn-rugby btn-sm btn-block">
-                                <i class="fas fa-play"></i> Ver Video
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
+        videos.forEach(function(video) {
+            const teamName = video.analyzed_team ? video.analyzed_team.name : 'Equipo';
+            const rivalText = video.rival_team ? ('vs ' + video.rival_team.name) : '';
+
+            html += '<div class="col-md-6 col-lg-4 mb-3">';
+            html += '<div class="card video-card h-100">';
+            html += '<a href="/videos/' + video.id + '" class="text-decoration-none text-dark">';
+            html += '<div class="video-thumbnail-container position-relative">';
+            html += '<video class="video-thumbnail" preload="metadata" muted>';
+            html += '<source src="/videos/' + video.id + '/stream#t=1" type="video/mp4">';
+            html += '</video>';
+            html += '<div class="play-overlay">';
+            html += '<i class="fas fa-play"></i>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="card-body p-3">';
+            html += '<h6 class="card-title mb-2">' + video.title + '</h6>';
+            html += '<p class="card-text text-muted small mb-2">';
+            html += teamName + ' ' + rivalText;
+            html += '</p>';
+            html += '<div class="d-flex justify-content-between align-items-center">';
+            html += '<small class="text-muted">';
+            html += '📅 ' + formatDate(video.match_date);
+            html += '</small>';
+            html += '</div>';
+            html += '</div>';
+            html += '</a>';
+            html += '</div>';
+            html += '</div>';
         });
         html += '</div>';
 

@@ -109,7 +109,7 @@
     border: 2px solid #e9ecef;
     border-radius: 15px;
     background: #fff;
-    min-height: 280px;
+    min-height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -130,8 +130,8 @@
 
 /* Avatar centrado más grande */
 .player-avatar-center {
-    width: 80px;
-    height: 80px;
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1e4d2b, #28a745);
     display: flex;
@@ -139,7 +139,7 @@
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     box-shadow: 0 4px 10px rgba(30, 77, 43, 0.3);
 }
 

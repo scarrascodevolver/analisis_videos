@@ -16,6 +16,8 @@
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+    <!-- Bebas Neue Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 
     <style>
         .rugby-green {
@@ -172,7 +174,7 @@
                 <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" 
                      class="brand-image img-circle elevation-3" 
                      style="width: 33px; height: 33px; object-fit: cover;">
-                <span class="brand-text font-weight-light">Los Troncos</span>
+                <span class="brand-text" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 3px; vertical-align: middle; margin-left: 10px;">Los Troncos</span>
             </a>
 
             <!-- Sidebar -->
@@ -299,8 +301,7 @@
 
         <!-- Footer -->
         <footer class="main-footer">
-            <strong>Copyright &copy; {{ date('Y') }} <a href="#">Los Troncos Rugby</a>.</strong>
-            Sistema de Análisis de Video.
+            Sistema de Análisis de Video Rugby Los Troncos
             <div class="float-right d-none d-sm-inline-block">
                 <b>Versión</b> 1.0.0
             </div>

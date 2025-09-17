@@ -13,8 +13,13 @@ class PlayerApiController extends Controller
      */
     public function all(Request $request)
     {
-        // Get all players (users with role 'jugador')
-        $players = User::where('role', 'jugador')
+        // Get all players (users with role 'jugador' or staff that can receive assignments)
+        $players = User::where(function($query) {
+                $query->where('role', 'jugador')
+                      ->orWhereHas('profile', function($q) {
+                          $q->where('can_receive_assignments', true);
+                      });
+            })
             ->with(['profile.category'])
             ->withCount(['assignedVideos as video_count'])
             ->orderBy('name')
@@ -55,8 +60,13 @@ class PlayerApiController extends Controller
             ]);
         }
 
-        // Get players (users with role 'jugador')
-        $players = User::where('role', 'jugador')
+        // Get players (users with role 'jugador' or staff that can receive assignments)
+        $players = User::where(function($mainQuery) {
+                $mainQuery->where('role', 'jugador')
+                          ->orWhereHas('profile', function($q) {
+                              $q->where('can_receive_assignments', true);
+                          });
+            })
             ->where(function($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                   ->orWhere('email', 'LIKE', "%{$query}%");
@@ -102,10 +112,10 @@ class PlayerApiController extends Controller
      */
     public function playerVideos(Request $request, User $player)
     {
-        // Verify the player is actually a player
-        if ($player->role !== 'jugador') {
+        // Verify the player is actually a player or staff that can receive assignments
+        if ($player->role !== 'jugador' && !($player->profile && $player->profile->can_receive_assignments)) {
             return response()->json([
-                'error' => 'Usuario no es un jugador'
+                'error' => 'Usuario no puede recibir asignaciones de videos'
             ], 404);
         }
 

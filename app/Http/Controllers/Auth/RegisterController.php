@@ -65,31 +65,20 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:jugador,entrenador,analista,staff'],
+            'role' => ['required', 'in:jugador'],
             'phone' => ['nullable', 'string', 'max:20'],
         ];
 
-        // Additional validation for player fields
-        if (isset($data['role']) && $data['role'] === 'jugador') {
-            $rules = array_merge($rules, [
-                'position' => ['nullable', 'string'],
-                'secondary_position' => ['nullable', 'string'],
-                'player_number' => ['nullable', 'integer', 'min:1', 'max:99'],
-                'weight' => ['nullable', 'integer', 'min:40', 'max:200'],
-                'height' => ['nullable', 'integer', 'min:150', 'max:220'],
-                'date_of_birth' => ['nullable', 'date'],
-                'user_category_id' => ['required', 'exists:categories,id'],
-            ]);
-        }
-
-        // Additional validation for coach fields
-        if (isset($data['role']) && $data['role'] === 'entrenador') {
-            $rules = array_merge($rules, [
-                'coaching_experience' => ['nullable', 'integer', 'min:0', 'max:50'],
-                'certifications' => ['nullable', 'string'],
-                'specializations' => ['nullable', 'array'],
-            ]);
-        }
+        // Player fields validation (always required since only players can register)
+        $rules = array_merge($rules, [
+            'position' => ['nullable', 'string'],
+            'secondary_position' => ['nullable', 'string'],
+            'player_number' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'weight' => ['nullable', 'integer', 'min:40', 'max:200'],
+            'height' => ['nullable', 'integer', 'min:150', 'max:220'],
+            'date_of_birth' => ['nullable', 'date'],
+            'user_category_id' => ['required', 'exists:categories,id'],
+        ]);
 
         return Validator::make($data, $rules);
     }
@@ -118,23 +107,16 @@ class RegisterController extends Controller
                 'goals' => $data['goals'] ?? null,
             ];
 
-            if ($data['role'] === 'jugador') {
-                $profileData = array_merge($profileData, [
-                    'position' => $data['position'] ?? null,
-                    'secondary_position' => $data['secondary_position'] ?? null,
-                    'player_number' => $data['player_number'] ?? null,
-                    'weight' => $data['weight'] ?? null,
-                    'height' => $data['height'] ?? null,
-                    'date_of_birth' => $data['date_of_birth'] ?? null,
-                    'user_category_id' => $data['user_category_id'] ?? null,
-                ]);
-            } elseif ($data['role'] === 'entrenador') {
-                $profileData = array_merge($profileData, [
-                    'coaching_experience' => $data['coaching_experience'] ?? null,
-                    'certifications' => $data['certifications'] ?? null,
-                    'specializations' => isset($data['specializations']) ? json_encode($data['specializations']) : null,
-                ]);
-            }
+            // Add player fields (always since only players can register)
+            $profileData = array_merge($profileData, [
+                'position' => $data['position'] ?? null,
+                'secondary_position' => $data['secondary_position'] ?? null,
+                'player_number' => $data['player_number'] ?? null,
+                'weight' => $data['weight'] ?? null,
+                'height' => $data['height'] ?? null,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'user_category_id' => $data['user_category_id'] ?? null,
+            ]);
 
             UserProfile::create($profileData);
         }

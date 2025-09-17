@@ -107,13 +107,12 @@
                     <!-- Role -->
                     <div class="form-group">
                         <div class="input-group">
-                            <select class="form-control rugby-select @error('role') is-invalid @enderror" name="role" required>
-                                <option value="">Rol en el equipo...</option>
-                                <option value="jugador" {{ old('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
-                                <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
-                                <option value="analista" {{ old('role') == 'analista' ? 'selected' : '' }}>Analista</option>
-                                <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff Técnico</option>
-                            </select>
+                            <input type="hidden" name="role" value="jugador">
+                            <input type="text" class="form-control rugby-select" value="Jugador" readonly>
+                            <small class="text-muted mt-1">
+                                <i class="fas fa-info-circle"></i>
+                                Solo jugadores pueden registrarse públicamente. Para staff contacte al administrador.
+                            </small>
                             <div class="input-group-append">
                                 <span class="input-group-text">
                                     <i class="fas fa-users"></i>
