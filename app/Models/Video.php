@@ -162,6 +162,33 @@ class Video extends Model
         });
     }
 
+    /**
+     * Scope para Entrenadores - Solo videos de su categoría asignada
+     * Analistas y staff ven todos los videos
+     */
+    public function scopeCoachVisible($query, $user)
+    {
+        // Analistas, staff y directores ven todos los videos
+        if (in_array($user->role, ['analista', 'staff', 'director_tecnico', 'director_club'])) {
+            return $query;
+        }
+
+        // Entrenadores solo ven videos de su categoría
+        if ($user->role === 'entrenador') {
+            $coachCategoryId = $user->profile?->user_category_id;
+
+            if ($coachCategoryId) {
+                return $query->where('category_id', $coachCategoryId);
+            } else {
+                // Si el entrenador no tiene categoría asignada, no ve ningún video
+                return $query->whereRaw('1 = 0'); // Devuelve query vacío
+            }
+        }
+
+        // Para cualquier otro rol, aplicar el filtro normal
+        return $query;
+    }
+
     public static function getPlayerCategory($position)
     {
         if (is_null($position)) {

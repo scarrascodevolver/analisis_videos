@@ -65,6 +65,7 @@ class DashboardController extends Controller
     public function coachVideos()
     {
         $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader'])
+                      ->coachVisible(auth()->user())
                       ->latest()
                       ->paginate(12);
 
@@ -73,14 +74,42 @@ class DashboardController extends Controller
 
     public function coachUsers()
     {
-        $users = User::with('profile')->get();
-        
+        $user = auth()->user();
+
+        // Si es analista o staff, ve todos los usuarios
+        if (in_array($user->role, ['analista', 'staff', 'director_tecnico', 'director_club'])) {
+            $users = User::with('profile')->get();
+        } else {
+            // Si es entrenador, solo ve jugadores de su categoría
+            $coachCategoryId = $user->profile?->user_category_id;
+
+            $users = User::where('role', 'jugador')
+                         ->when($coachCategoryId, function($query) use ($coachCategoryId) {
+                             return $query->whereHas('profile', function($q) use ($coachCategoryId) {
+                                 $q->where('user_category_id', $coachCategoryId);
+                             });
+                         })
+                         ->with('profile')
+                         ->get();
+        }
+
         return view('dashboards.coach-users', compact('users'));
     }
 
     public function coachAssignments()
     {
+        $user = auth()->user();
+
         $assignments = VideoAssignment::with(['video', 'assignedTo', 'assignedBy'])
+                                     ->when($user->role === 'entrenador', function($query) use ($user) {
+                                         $coachCategoryId = $user->profile?->user_category_id;
+                                         if ($coachCategoryId) {
+                                             // Solo asignaciones de videos de su categoría
+                                             return $query->whereHas('video', function($q) use ($coachCategoryId) {
+                                                 $q->where('category_id', $coachCategoryId);
+                                             });
+                                         }
+                                     })
                                      ->latest()
                                      ->paginate(15);
 
@@ -128,8 +157,11 @@ class DashboardController extends Controller
 
     public function playerAssign(User $user)
     {
-        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])->latest()->get();
-        
+        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])
+                      ->coachVisible(auth()->user())
+                      ->latest()
+                      ->get();
+
         return view('dashboards.player-assign', compact('user', 'videos'));
     }
 }

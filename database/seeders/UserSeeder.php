@@ -57,6 +57,7 @@ class UserSeeder extends Seeder
             'position' => 'Entrenador Principal',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
+            'user_category_id' => 3, // Juan Cruz → Juveniles
         ]);
 
         // Crear segundo entrenador - Valentin Dapena
@@ -73,6 +74,7 @@ class UserSeeder extends Seeder
             'position' => 'Entrenador Asistente',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
+            'user_category_id' => 1, // Valentín → Adulta Primera
         ]);
 
         // Crear tercer entrenador - Victor Escobar
@@ -89,6 +91,7 @@ class UserSeeder extends Seeder
             'position' => 'Entrenador de Forwards',
             'club_team_organization' => 'Los Troncos Rugby Club',
             'division_category' => 'Primera División',
+            'user_category_id' => 2, // Víctor → Adulta Intermedia
         ]);
 
         // Crear usuario Director Técnico
