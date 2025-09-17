@@ -9,6 +9,40 @@ use App\Models\Video;
 class PlayerApiController extends Controller
 {
     /**
+     * Get all players for display
+     */
+    public function all(Request $request)
+    {
+        // Get all players (users with role 'jugador')
+        $players = User::where('role', 'jugador')
+            ->with(['profile.category'])
+            ->withCount(['assignedVideos as video_count'])
+            ->orderBy('name')
+            ->get();
+
+        // Format the response
+        $formattedPlayers = $players->map(function($player) {
+            return [
+                'id' => $player->id,
+                'name' => $player->name,
+                'email' => $player->email,
+                'profile' => [
+                    'position' => $player->profile->position ?? null,
+                    'secondary_position' => $player->profile->secondary_position ?? null,
+                    'category' => $player->profile->category ? [
+                        'id' => $player->profile->category->id,
+                        'name' => $player->profile->category->name
+                    ] : null
+                ],
+                'video_count' => $player->video_count
+            ];
+        });
+
+        return response()->json([
+            'players' => $formattedPlayers
+        ]);
+    }
+    /**
      * Search players by name, position, or category
      */
     public function search(Request $request)

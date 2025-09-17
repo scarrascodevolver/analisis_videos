@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
 
     // Player API Routes (for AJAX search functionality)
+    Route::get('api/players/all', [PlayerApiController::class, 'all'])->name('api.players.all');
     Route::get('api/players/search', [PlayerApiController::class, 'search'])->name('api.players.search');
     Route::get('api/players/{player}/videos', [PlayerApiController::class, 'playerVideos'])->name('api.players.videos');
     

@@ -59,8 +59,24 @@
                         <!-- Los resultados se cargarán aquí via AJAX -->
                     </div>
 
-                    <!-- Estado vacío inicial -->
-                    <div id="empty-state" class="text-center py-5">
+                    <!-- Todos los jugadores -->
+                    <div id="all-players-section">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h5 class="text-rugby">
+                                    <i class="fas fa-users"></i>
+                                    Todos los Jugadores
+                                </h5>
+                                <hr class="mb-4">
+                            </div>
+                        </div>
+                        <div id="all-players-grid" class="row">
+                            <!-- Los jugadores se cargarán aquí al iniciar -->
+                        </div>
+                    </div>
+
+                    <!-- Estado vacío inicial (se oculta cuando se cargan jugadores) -->
+                    <div id="empty-state" class="text-center py-5" style="display: none;">
                         <i class="fas fa-search fa-4x text-muted mb-3"></i>
                         <h4 class="text-muted">Busca un jugador para comenzar</h4>
                         <p class="text-muted">
@@ -231,8 +247,9 @@ $(document).ready(function() {
 
     function showEmptyState() {
         hideAllStates();
-        $emptyState.show();
-        $searchStats.html('<span class="text-muted"><i class="fas fa-info-circle"></i> Escribe para buscar jugadores y ver sus videos asignados</span>');
+        $('#all-players-section').show();
+        loadAllPlayers();
+        $searchStats.html('<span class="text-muted"><i class="fas fa-info-circle"></i> Escribe para buscar jugadores específicos</span>');
     }
 
     function showLoading() {
@@ -252,6 +269,34 @@ $(document).ready(function() {
         $emptyState.hide();
         $noResults.hide();
         $playerVideos.hide();
+        $('#all-players-section').hide();
+    }
+
+    function loadAllPlayers() {
+        $.ajax({
+            url: '/api/players/all',
+            method: 'GET',
+            success: function(data) {
+                if (data.players.length === 0) {
+                    $('#all-players-grid').html(`
+                        <div class="col-12 text-center py-4">
+                            <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No hay jugadores registrados</h6>
+                        </div>
+                    `);
+                    return;
+                }
+
+                renderPlayersGrid(data.players, '#all-players-grid');
+            },
+            error: function() {
+                $('#all-players-grid').html(`
+                    <div class="col-12 text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error cargando jugadores
+                    </div>
+                `);
+            }
+        });
     }
 
     function searchPlayers(query) {
@@ -280,9 +325,7 @@ $(document).ready(function() {
         });
     }
 
-    function displayPlayers(players) {
-        hideAllStates();
-
+    function renderPlayersGrid(players, targetContainer) {
         let html = '';
         players.forEach(player => {
             const initials = player.name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -314,10 +357,10 @@ $(document).ready(function() {
             `;
         });
 
-        $searchResults.html(html).show();
+        $(targetContainer).html(html);
 
         // Agregar event listeners a las cards
-        $('.player-card').on('click', function() {
+        $('.player-card').off('click').on('click', function() {
             const playerId = $(this).data('player-id');
             const playerName = $(this).find('h6').text();
 
@@ -326,6 +369,12 @@ $(document).ready(function() {
 
             loadPlayerVideos(playerId, playerName);
         });
+    }
+
+    function displayPlayers(players) {
+        hideAllStates();
+        renderPlayersGrid(players, '#search-results');
+        $searchResults.show();
     }
 
     function loadPlayerVideos(playerId, playerName) {
