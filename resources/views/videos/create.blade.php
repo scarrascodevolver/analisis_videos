@@ -129,17 +129,36 @@
                                     <label for="category_id">
                                         <i class="fas fa-tags"></i> Categoría *
                                     </label>
-                                    <select class="form-control @error('category_id') is-invalid @enderror" 
+                                    <select class="form-control @error('category_id') is-invalid @enderror"
                                             id="category_id" name="category_id" required>
                                         <option value="">Seleccionar categoría...</option>
                                         @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" 
+                                            <option value="{{ $category->id }}"
                                                     {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                                 {{ $category->name }}
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('category_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- División (solo para categoría Adultas) -->
+                                <div class="form-group" id="division-group" style="display: none;">
+                                    <label for="division">
+                                        <i class="fas fa-layer-group"></i> División
+                                    </label>
+                                    <select class="form-control @error('division') is-invalid @enderror"
+                                            id="division" name="division">
+                                        <option value="">Seleccionar división...</option>
+                                        <option value="primera" {{ old('division') == 'primera' ? 'selected' : '' }}>Primera División</option>
+                                        <option value="intermedia" {{ old('division') == 'intermedia' ? 'selected' : '' }}>División Intermedia</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Especifica la división para videos de categoría Adultas
+                                    </small>
+                                    @error('division')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -481,6 +500,30 @@ $(document).ready(function() {
     // Listen for visibility type changes
     $('input[name="visibility_type"]').on('change', function() {
         togglePlayerAssignment();
+    });
+
+    // Handle division field visibility (solo para categoría Adultas)
+    function toggleDivisionField() {
+        const categorySelect = $('#category_id');
+        const selectedCategoryText = categorySelect.find('option:selected').text();
+        const divisionGroup = $('#division-group');
+
+        if (selectedCategoryText === 'Adultas') {
+            divisionGroup.show();
+            $('#division').prop('required', true);
+        } else {
+            divisionGroup.hide();
+            $('#division').prop('required', false);
+            $('#division').val(''); // Clear selection
+        }
+    }
+
+    // Initialize division field state
+    toggleDivisionField();
+
+    // Listen for category changes
+    $('#category_id').on('change', function() {
+        toggleDivisionField();
     });
 
     // Auto-generate title based on selections (only if title is empty)

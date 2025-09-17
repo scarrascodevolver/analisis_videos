@@ -19,6 +19,7 @@ class Video extends Model
         'analyzed_team_id',
         'rival_team_id',
         'category_id',
+        'division',
         'rugby_situation_id',
         'match_date',
         'status',
@@ -87,6 +88,11 @@ class Video extends Model
     public function scopeByTeam($query, $teamId)
     {
         return $query->where('analyzed_team_id', $teamId);
+    }
+
+    public function scopeByDivision($query, $division)
+    {
+        return $query->where('division', $division);
     }
 
     public function scopeVisibleForUser($query, $user)

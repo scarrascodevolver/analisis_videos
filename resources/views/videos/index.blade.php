@@ -47,6 +47,14 @@
                             </select>
                         </div>
                         <div class="col-md-2 mb-2">
+                            <select name="division" class="form-control">
+                                <option value="">División</option>
+                                <option value="primera" {{ request('division') == 'primera' ? 'selected' : '' }}>Primera</option>
+                                <option value="intermedia" {{ request('division') == 'intermedia' ? 'selected' : '' }}>Intermedia</option>
+                                <option value="unica" {{ request('division') == 'unica' ? 'selected' : '' }}>Única</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2">
                             <select name="team" class="form-control">
                                 <option value="">Equipo</option>
                                 @foreach($teams as $team)
@@ -131,6 +139,11 @@
                                             </p>
                                             <div class="mb-1">
                                                 <span class="badge badge-rugby badge-sm">{{ $video->category->name }}</span>
+                                                @if($video->division && $video->category->name === 'Adultas')
+                                                    <span class="badge badge-secondary badge-sm ml-1">
+                                                        {{ ucfirst($video->division) }}
+                                                    </span>
+                                                @endif
                                                 @if($video->rugbySituation)
                                                     <span class="badge badge-rugby-light badge-sm ml-1">
                                                         {{ $video->rugbySituation->name }}

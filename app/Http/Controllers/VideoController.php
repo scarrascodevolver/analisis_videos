@@ -28,6 +28,11 @@ class VideoController extends Controller
             $query->where('category_id', $request->category);
         }
 
+        // Filter by division
+        if ($request->filled('division')) {
+            $query->where('division', $request->division);
+        }
+
         // Filter by team
         if ($request->filled('team')) {
             $query->where(function ($q) use ($request) {
@@ -78,6 +83,7 @@ class VideoController extends Controller
                 'analyzed_team_id' => 'required|exists:teams,id',
                 'rival_team_id' => 'nullable|exists:teams,id',
                 'category_id' => 'required|exists:categories,id',
+                'division' => 'nullable|in:primera,intermedia,unica',
                 'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
                 'match_date' => 'required|date',
                 'assigned_players' => 'nullable|array',
@@ -124,6 +130,7 @@ class VideoController extends Controller
             'analyzed_team_id' => $request->analyzed_team_id,
             'rival_team_id' => $request->rival_team_id,
             'category_id' => $request->category_id,
+            'division' => $request->division,
             'rugby_situation_id' => $request->rugby_situation_id,
             'match_date' => $request->match_date,
             'status' => 'pending',
@@ -275,6 +282,7 @@ class VideoController extends Controller
             'analyzed_team_id' => $ownTeam->id,
             'rival_team_id' => null,
             'category_id' => $request->category_id,
+            'division' => 'unica', // Jugadores no especifican división, se asigna automáticamente
             'match_date' => now()->toDateString(),
             'status' => 'pending'
         ]);
