@@ -126,10 +126,24 @@ class Video extends Model
      */
     public function scopeTeamVisible($query, $user)
     {
-        if (in_array($user->role, ['analista', 'entrenador', 'staff', 'director_tecnico'])) {
-            return $query; // Staff ve todos los videos
+        // Analistas, staff y directores ven todos los videos
+        if (in_array($user->role, ['analista', 'staff', 'director_tecnico', 'director_club'])) {
+            return $query;
         }
 
+        // Entrenadores solo ven videos de su categoría asignada
+        if ($user->role === 'entrenador') {
+            $coachCategoryId = $user->profile?->user_category_id;
+
+            if ($coachCategoryId) {
+                return $query->where('category_id', $coachCategoryId);
+            } else {
+                // Si el entrenador no tiene categoría asignada, no ve ningún video
+                return $query->whereRaw('1 = 0');
+            }
+        }
+
+        // Jugadores ven videos de su categoría + filtros de visibilidad
         if ($user->role === 'jugador') {
             $userCategoryId = $user->profile?->user_category_id;
             $userPosition = $user->profile?->position;
