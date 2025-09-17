@@ -6,6 +6,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VideoStreamController;
+use App\Http\Controllers\PlayerApiController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -26,6 +27,10 @@ Route::middleware(['auth'])->group(function () {
     // Video Streaming Routes (with Range support for seeking)
     Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
     Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
+
+    // Player API Routes (for AJAX search functionality)
+    Route::get('api/players/search', [PlayerApiController::class, 'search'])->name('api.players.search');
+    Route::get('api/players/{player}/videos', [PlayerApiController::class, 'playerVideos'])->name('api.players.videos');
     
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
