@@ -94,18 +94,6 @@
                         </p>
                     </div>
 
-                    <!-- Videos del jugador seleccionado -->
-                    <div id="player-videos" style="display: none;">
-                        <div class="border-top pt-4 mt-4">
-                            <h5 id="player-videos-title">
-                                <i class="fas fa-video"></i>
-                                Videos asignados
-                            </h5>
-                            <div id="videos-grid" class="row">
-                                <!-- Los videos se cargarán aquí via AJAX -->
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
             </div>
@@ -119,57 +107,107 @@
     transition: all 0.3s ease;
     cursor: pointer;
     border: 2px solid #e9ecef;
-    border-radius: 10px;
-    background: #f8f9fa;
+    border-radius: 15px;
+    background: #fff;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .player-card:hover {
     border-color: #1e4d2b;
-    background: #f0f4f1;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(30, 77, 43, 0.1);
+    background: #f8fffe;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(30, 77, 43, 0.15);
 }
 
 .player-card.selected {
     border-color: #1e4d2b;
     background: #e8f5e8;
-    box-shadow: 0 2px 4px rgba(30, 77, 43, 0.2);
+    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.2);
 }
 
-.player-avatar {
-    width: 50px;
-    height: 50px;
+/* Avatar centrado más grande */
+.player-avatar-center {
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background: #1e4d2b;
+    background: linear-gradient(135deg, #1e4d2b, #28a745);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 10px rgba(30, 77, 43, 0.3);
 }
 
-.video-count-badge {
-    background: #1e4d2b;
-    color: white;
-    border-radius: 15px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
+/* Nombre del jugador */
+.player-name {
+    font-size: 1.1rem;
     font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px !important;
+    line-height: 1.3;
 }
 
-.category-badge {
-    background: #28a745;
-    color: white;
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 500;
+/* Sección de posiciones */
+.positions-info {
+    min-height: 60px;
+}
+
+.position-primary {
+    margin-bottom: 8px;
+}
+
+.position-secondary {
+    margin-bottom: 8px;
 }
 
 .position-text {
+    color: #1e4d2b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-left: 5px;
+}
+
+.position-text-secondary {
     color: #6c757d;
     font-size: 0.9rem;
+    font-weight: 400;
+    margin-left: 5px;
+}
+
+/* Badges nuevos */
+.category-badge-new {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.video-count-badge-new {
+    background: linear-gradient(135deg, #1e4d2b, #2d6a3e);
+    color: white;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 120px;
+    box-shadow: 0 3px 10px rgba(30, 77, 43, 0.3);
+}
+
+/* Iconos rugby */
+.fas.fa-football-ball,
+.fas.fa-exchange-alt {
+    font-size: 0.9rem;
+    margin-right: 5px;
 }
 
 .video-thumbnail {
@@ -214,7 +252,6 @@
 <script>
 $(document).ready(function() {
     let searchTimeout;
-    let currentPlayerId = null;
 
     // Elementos del DOM
     const $searchInput = $('#player-search');
@@ -222,7 +259,6 @@ $(document).ready(function() {
     const $searchResults = $('#search-results');
     const $emptyState = $('#empty-state');
     const $noResults = $('#no-results');
-    const $playerVideos = $('#player-videos');
     const $searchStats = $('#search-stats');
 
     // Búsqueda con debounce
@@ -268,7 +304,6 @@ $(document).ready(function() {
         $searchResults.hide();
         $emptyState.hide();
         $noResults.hide();
-        $playerVideos.hide();
         $('#all-players-section').hide();
     }
 
@@ -330,27 +365,46 @@ $(document).ready(function() {
         players.forEach(player => {
             const initials = player.name.split(' ').map(n => n[0]).join('').toUpperCase();
             const position = player.profile?.position || 'Sin posición';
+            const secondaryPosition = player.profile?.secondary_position;
             const category = player.profile?.category?.name || 'Sin categoría';
             const videoCount = player.video_count || 0;
 
             html += `
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="player-card p-3" data-player-id="${player.id}">
-                        <div class="d-flex align-items-center">
-                            <div class="player-avatar me-3">
-                                ${initials}
+                <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
+                    <div class="player-card text-center p-4" data-player-id="${player.id}">
+                        <!-- Avatar centrado -->
+                        <div class="player-avatar-center mx-auto mb-3">
+                            ${initials}
+                        </div>
+
+                        <!-- Nombre del jugador -->
+                        <h6 class="player-name mb-3">${player.name}</h6>
+
+                        <!-- Posiciones -->
+                        <div class="positions-info mb-3">
+                            <div class="position-primary mb-2">
+                                <i class="fas fa-football-ball text-rugby"></i>
+                                <span class="position-text">${position}</span>
                             </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1 font-weight-bold">${player.name}</h6>
-                                <p class="mb-1 position-text">${position}</p>
-                                <span class="category-badge">${category}</span>
-                            </div>
-                            <div class="text-center">
-                                <div class="video-count-badge">
-                                    📺 ${videoCount}
+                            ${secondaryPosition ? `
+                                <div class="position-secondary mb-2">
+                                    <i class="fas fa-exchange-alt text-rugby"></i>
+                                    <span class="position-text-secondary">${secondaryPosition}</span>
                                 </div>
-                                <small class="text-muted d-block mt-1">videos</small>
+                            ` : ''}
+                        </div>
+
+                        <!-- Categoría -->
+                        <div class="category-section mb-3">
+                            <span class="category-badge-new">${category}</span>
+                        </div>
+
+                        <!-- Contador de videos -->
+                        <div class="video-count-section">
+                            <div class="video-count-badge-new">
+                                📺 ${videoCount}
                             </div>
+                            <small class="text-muted d-block">videos asignados</small>
                         </div>
                     </div>
                 </div>
@@ -359,15 +413,12 @@ $(document).ready(function() {
 
         $(targetContainer).html(html);
 
-        // Agregar event listeners a las cards
+        // Agregar event listeners a las cards - CAMBIO: navegar en lugar de mostrar videos
         $('.player-card').off('click').on('click', function() {
             const playerId = $(this).data('player-id');
-            const playerName = $(this).find('h6').text();
 
-            $('.player-card').removeClass('selected');
-            $(this).addClass('selected');
-
-            loadPlayerVideos(playerId, playerName);
+            // Navegar al perfil del jugador
+            window.location.href = `/coach/player/${playerId}`;
         });
     }
 
@@ -375,105 +426,6 @@ $(document).ready(function() {
         hideAllStates();
         renderPlayersGrid(players, '#search-results');
         $searchResults.show();
-    }
-
-    function loadPlayerVideos(playerId, playerName) {
-        currentPlayerId = playerId;
-
-        $('#player-videos-title').html(`<i class="fas fa-video"></i> Videos asignados a ${playerName}`);
-        $('#videos-grid').html('<div class="col-12 text-center py-4"><div class="spinner-border text-rugby" role="status"><span class="sr-only">Cargando videos...</span></div></div>');
-        $playerVideos.show();
-
-        $.ajax({
-            url: `/api/players/${playerId}/videos`,
-            method: 'GET',
-            success: function(data) {
-                displayPlayerVideos(data.videos, data.stats);
-            },
-            error: function() {
-                $('#videos-grid').html('<div class="col-12 text-center py-4 text-danger"><i class="fas fa-exclamation-triangle"></i> Error cargando videos</div>');
-            }
-        });
-    }
-
-    function displayPlayerVideos(videos, stats) {
-        if (videos.length === 0) {
-            $('#videos-grid').html(`
-                <div class="col-12 text-center py-4">
-                    <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
-                    <h6 class="text-muted">No hay videos asignados</h6>
-                    <p class="text-muted">Este jugador no tiene videos asignados aún</p>
-                </div>
-            `);
-            return;
-        }
-
-        let html = '';
-
-        videos.forEach(video => {
-            const statusIcon = '📋'; // Generic assignment icon
-            const statusText = 'Asignado';
-            const statusClass = 'text-info';
-
-            html += `
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card video-card h-100">
-                        <div class="video-thumbnail"></div>
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">${video.title}</h6>
-                            <p class="card-text text-muted small mb-2">
-                                ${video.analyzed_team?.name || 'Equipo'}
-                                ${video.rival_team ? 'vs ' + video.rival_team.name : ''}
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    📅 ${formatDate(video.match_date)}
-                                </small>
-                                <span class="small ${statusClass}">
-                                    ${statusIcon} ${statusText}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="card-footer p-2">
-                            <a href="/videos/${video.id}" class="btn btn-rugby btn-sm btn-block">
-                                <i class="fas fa-play"></i> Ver Video
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        // Agregar estadísticas
-        html = `
-            <div class="col-12 mb-3">
-                <div class="row text-center">
-                    <div class="col-md-6">
-                        <div class="border rounded p-2">
-                            <h4 class="text-rugby mb-0">${stats.total}</h4>
-                            <small class="text-muted">Total Videos</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="border rounded p-2">
-                            <h4 class="text-info mb-0">${stats.pending}</h4>
-                            <small class="text-muted">Videos Asignados</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        ` + html;
-
-        $('#videos-grid').html(html);
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
     }
 
     // Inicializar vista
