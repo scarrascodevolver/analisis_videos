@@ -12,10 +12,10 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+        // Estructura realista para rugby: 3 categorías principales
         $categories = [
-            ['name' => 'Adulta Primera', 'description' => 'Categoría primera división adulta'],
-            ['name' => 'Adulta Intermedia', 'description' => 'Categoría intermedia división adulta'],
-            ['name' => 'Juveniles', 'description' => 'Categoría juvenil'],
+            ['name' => 'Juveniles', 'description' => 'Categoría juvenil (Sub-18, Sub-16, etc.)'],
+            ['name' => 'Adultas', 'description' => 'Categorías adultas (Primera + Intermedia)'],
             ['name' => 'Femenino', 'description' => 'Categoría femenina'],
         ];
 
