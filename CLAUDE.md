@@ -1,12 +1,22 @@
 # 🏉 CLAUDE.md - Sistema de Análisis Rugby "Los Troncos"
 
-## 📅 Última actualización: 2025-09-16
+## 📅 Última actualización: 2025-09-17
 
 ---
 
 ## 🎯 ESTADO ACTUAL DEL PROYECTO
 
 ### ✅ COMPLETADO RECIENTEMENTE:
+
+#### 8. **Sistema de Categorías de Usuario - COMPLETADO** (2025-09-17)
+- ✅ **VPS sincronizado**: Rama `funcionalidad/categorias-usuario` desplegada en producción
+- ✅ **Migraciones ejecutadas**: user_category_id, visibility_type, thumbnails funcionando
+- ✅ **UserSeeder ejecutado**: Staff completo creado (Jeremías, Juan Cruz, Valentín, Víctor)
+- ✅ **Datos limpios**: Solo 3 jugadores esenciales (uno por categoría)
+- ✅ **Sistema funcionando**: Login con categorías, filtros de video por categoría
+- ✅ **Credenciales activas**: Jeremías Rodríguez (jere@clublostroncos.cl / jere2025)
+
+#### 7. **Sistema de Visibilidad por Categorías - Frontend** (2025-09-16)
 
 #### 1. **Timeline de Comentarios Funcional** (2025-09-15)
 - ✅ **VideoStreamController**: Implementado con soporte Range requests HTTP para seeking perfecto
@@ -54,72 +64,36 @@
 
 ---
 
-## 🚧 **PRÓXIMA IMPLEMENTACIÓN - SISTEMA CATEGORÍAS DE USUARIO**
+## 🎉 **SISTEMA COMPLETADO - CATEGORÍAS DE USUARIO FUNCIONANDO**
 
-### 🎯 **PROBLEMA IDENTIFICADO (2025-09-16):**
-- Videos por categoría (Juveniles, Adulta Primera, etc.) son visibles para TODOS los usuarios
-- Falta identificar categoría del usuario en el registro
-- Necesario filtro combinado: user_category + visibility_type
+### ✅ **IMPLEMENTACIÓN EXITOSA (2025-09-17):**
 
-### 📋 **PLAN DE IMPLEMENTACIÓN:**
+El sistema de categorías de usuario está **100% funcional** tanto en desarrollo como en producción:
 
-#### **FASE 1: Database Migration**
-```sql
--- Archivo: database/migrations/YYYY_MM_DD_add_user_category_id_to_user_profiles_table.php
-ALTER TABLE user_profiles ADD COLUMN user_category_id INT AFTER division_category;
-ALTER TABLE user_profiles ADD FOREIGN KEY (user_category_id) REFERENCES categories(id);
-```
-
-#### **FASE 2: Models Update**
+#### **🔧 ARQUITECTURA IMPLEMENTADA:**
 ```php
-// app/Models/UserProfile.php
-protected $fillable = [..., 'user_category_id'];
-public function category() { return $this->belongsTo(Category::class, 'user_category_id'); }
-
-// app/Models/Video.php - scopeVisibleForUser() actualizado
-// Filtro combinado: category_id + visibility_type
+// Filtro combinado: user_category_id + visibility_type
+Video::visibleForUser($user)
+    ->where('category_id', $user->profile->user_category_id)  // Solo su categoría
+    ->where(function($q) use ($user) {
+        $q->where('visibility_type', 'public')                // Videos públicos
+          ->orWhere('visibility_type', $playerCategory)        // Su posición (forwards/backs)
+          ->orWhereHas('assignments', fn($q) => $q->where('assigned_to', $user->id)); // Específicos
+    });
 ```
 
-#### **FASE 3: Registration Form**
-```html
-<!-- resources/views/auth/register.blade.php -->
-<select name="user_category_id" required>
-  <option value="1">Juveniles</option>
-  <option value="2">Adulta Primera</option>
-  <!-- etc -->
-</select>
-```
+#### **👥 USUARIOS DE PRODUCCIÓN:**
+- **Analistas**: Jeremías Rodríguez (jere@clublostroncos.cl) - Ve todos los videos
+- **Entrenadores**: Juan Cruz, Valentín, Víctor - Ven todos los videos
+- **Jugadores**: 3 usuarios (uno por categoría) - Ven solo SU categoría
 
-#### **FASE 4: Controller Updates**
-```php
-// app/Http/Controllers/Auth/RegisterController.php
-// Validación + storage de user_category_id
-// Pasar $categories a vista register
+#### **🎯 LÓGICA FINAL FUNCIONANDO:**
 ```
-
-### 🎯 **LÓGICA FINAL ESPERADA:**
+✅ Usuario "Juveniles" + Video "Juveniles Forwards" = Lo ve
+❌ Usuario "Juveniles" + Video "Adulta Forwards" = No lo ve
+❌ Usuario "Adulta" + Video "Juveniles Backs" = No lo ve
+✅ Analistas/Entrenadores = Ven todos sin filtro
 ```
-Video "Juveniles" + "Forwards" =
-├─ Usuario categoría "Juveniles" + posición Forward: ✅ Lo ve
-├─ Usuario categoría "Juveniles" + posición Back: ❌ No lo ve
-├─ Usuario categoría "Adulta" + cualquier posición: ❌ No lo ve
-└─ Analistas/Entrenadores: ✅ Lo ven (sin filtro)
-```
-
-### ⚠️ **RIESGOS Y CONSIDERACIONES:**
-- **24 jugadores existentes** tendrán user_category_id = NULL
-- **Migración nullable** inicialmente para no romper sistema
-- **Fallback logic** para usuarios sin categoría asignada
-- **Data migration manual** necesaria para usuarios existentes
-
-### 📁 **ARCHIVOS A MODIFICAR:**
-- ✅ `database/migrations/` - Nueva migración user_category_id
-- ✅ `app/Models/UserProfile.php` - Agregar fillable + relación
-- ✅ `app/Models/Video.php` - Actualizar scopeVisibleForUser()
-- ✅ `app/Http/Controllers/Auth/RegisterController.php` - Validación + storage
-- ✅ `resources/views/auth/register.blade.php` - Selector de categoría
-- ❌ `app/Http/Controllers/VideoController.php` - NO TOCAR (ya funciona)
-- ❌ `resources/views/videos/` - NO TOCAR (filtro transparente)
 
 ---
 
