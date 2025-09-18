@@ -671,6 +671,177 @@ $(document).ready(function() {
             }, 300);
         }
     };
+
+    // FULLSCREEN COMMENTS SYSTEM FOR MOBILE
+    let isFullscreen = false;
+
+    // Detect fullscreen changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    function handleFullscreenChange() {
+        const fullscreenElement = document.fullscreenElement ||
+                                document.webkitFullscreenElement ||
+                                document.mozFullScreenElement ||
+                                document.msFullscreenElement;
+
+        isFullscreen = !!fullscreenElement;
+
+        console.log('🔄 Fullscreen change detected:', isFullscreen);
+
+        if (isFullscreen) {
+            // Show fullscreen notifications
+            document.getElementById('fullscreenNotifications').style.display = 'block';
+            // Hide normal notifications during fullscreen
+            hideAllNotifications();
+        } else {
+            // Hide fullscreen notifications
+            document.getElementById('fullscreenNotifications').style.display = 'none';
+            hideAllFullscreenNotifications();
+        }
+    }
+
+    function showCommentNotificationFullscreen(comment) {
+        const fullscreenArea = document.getElementById('fullscreenNotifications');
+
+        if (!video.duration || !isFullscreen) return;
+
+        // Create notification element for fullscreen
+        const notification = document.createElement('div');
+        notification.id = `fs-notification-${comment.id}`;
+        notification.className = 'fullscreen-comment-notification';
+
+        // Category colors
+        const categoryColors = {
+            'tecnico': 'info',
+            'tactico': 'warning',
+            'fisico': 'success',
+            'mental': 'purple',
+            'general': 'secondary'
+        };
+
+        const priorityColors = {
+            'critica': 'danger',
+            'alta': 'warning',
+            'media': 'info',
+            'baja': 'secondary'
+        };
+
+        notification.style.cssText = `
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            max-width: 350px;
+            min-width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #28a745;
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: white;
+            z-index: 9999;
+            animation: slideInFromRight 0.5s ease;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        `;
+
+        notification.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge badge-${categoryColors[comment.category] || 'secondary'} mr-2" style="font-size: 12px; padding: 4px 8px;">
+                            ${comment.category.charAt(0).toUpperCase() + comment.category.slice(1)}
+                        </span>
+                        <span class="badge badge-${priorityColors[comment.priority] || 'secondary'}" style="font-size: 12px; padding: 4px 8px;">
+                            ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
+                        </span>
+                    </div>
+                    <p class="mb-3" style="font-size: 16px; line-height: 1.4; font-weight: 500; color: white;">
+                        ${comment.comment}
+                    </p>
+                    <small style="font-size: 13px; color: #ccc;">
+                        <i class="fas fa-user"></i> ${comment.user.name}
+                        <span class="ml-3"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}</span>
+                    </small>
+                </div>
+                <button class="btn btn-sm btn-link text-white p-2 ml-3"
+                        style="font-size: 16px; opacity: 0.8;"
+                        onclick="closeFullscreenNotification(${comment.id})"
+                        title="Cerrar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        fullscreenArea.appendChild(notification);
+
+        // Auto-hide after 6 seconds in fullscreen
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, 6000);
+    }
+
+    function hideAllFullscreenNotifications() {
+        const fullscreenArea = document.getElementById('fullscreenNotifications');
+        while (fullscreenArea.firstChild) {
+            fullscreenArea.removeChild(fullscreenArea.firstChild);
+        }
+    }
+
+    // Close fullscreen notification function (global)
+    window.closeFullscreenNotification = function(commentId) {
+        const notification = document.getElementById(`fs-notification-${commentId}`);
+        if (notification && notification.parentNode) {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+    };
+
+    // Update the main comment notification function to handle fullscreen
+    const originalCheckAndShowCommentNotifications = checkAndShowCommentNotifications;
+    checkAndShowCommentNotifications = function() {
+        const currentTime = Math.floor(video.currentTime);
+
+        // Only check once per second
+        if (currentTime === lastCheckedTime) return;
+        lastCheckedTime = currentTime;
+
+        // Hide notifications based on current mode
+        if (isFullscreen) {
+            hideAllFullscreenNotifications();
+        } else {
+            hideAllNotifications();
+        }
+
+        // Find comments at current time (exact match or ±1 second)
+        const currentComments = commentsData.filter(comment =>
+            Math.abs(comment.timestamp_seconds - currentTime) <= 1
+        );
+
+        // Show notifications for current comments
+        currentComments.forEach(comment => {
+            if (isFullscreen) {
+                showCommentNotificationFullscreen(comment);
+            } else {
+                showCommentNotification(comment);
+            }
+        });
+    };
+
+    console.log('✅ Sistema de comentarios en pantalla completa inicializado');
 });
 </script>
 
@@ -680,7 +851,22 @@ $(document).ready(function() {
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 .comment-notification {
+    transition: opacity 0.3s ease;
+}
+
+.fullscreen-comment-notification {
     transition: opacity 0.3s ease;
 }
 
