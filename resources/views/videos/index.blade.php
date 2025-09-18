@@ -104,22 +104,14 @@
                                         <!-- Video Thumbnail -->
                                         <div class="card-img-top video-thumbnail-container"
                                              style="height: 120px; overflow: hidden; position: relative; cursor: pointer;"
-                                             data-video-url="{{ route('videos.stream', $video) }}"
-                                             data-video-id="{{ $video->id }}"
                                              onclick="window.location.href='{{ route('videos.show', $video) }}'">
 
-                                            <!-- Canvas for thumbnail generation -->
-                                            <canvas class="video-canvas w-100 h-100"
-                                                   style="object-fit: cover; display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
-
-                                            <!-- Loading state -->
-                                            <div class="thumbnail-loading d-flex align-items-center justify-content-center h-100"
-                                                 style="background: #f8f9fa; color: #6c757d; position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                                                <div style="text-align: center;">
-                                                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i><br>
-                                                    <span style="font-size: 11px;">Cargando...</span>
-                                                </div>
-                                            </div>
+                                            <video class="w-100 h-100"
+                                                   style="object-fit: cover;"
+                                                   preload="metadata"
+                                                   muted>
+                                                <source src="{{ route('videos.stream', $video) }}#t=5" type="{{ $video->mime_type }}">
+                                            </video>
                                         </div>
                                         <div class="card-body py-1 px-2">
                                             <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
@@ -367,84 +359,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 Iniciando sistema Canvas thumbnails...');
-
-    // Canvas Thumbnail Generator
-    class VideoThumbnailGenerator {
-        constructor(container) {
-            this.container = container;
-            this.videoUrl = container.dataset.videoUrl;
-            this.videoId = container.dataset.videoId;
-            this.canvas = container.querySelector('.video-canvas');
-            this.loading = container.querySelector('.thumbnail-loading');
-
-            this.generateThumbnail();
-        }
-
-        async generateThumbnail() {
-            try {
-                console.log(`🎯 Generando thumbnail para video ${this.videoId}...`);
-
-                // Crear video element oculto
-                const video = document.createElement('video');
-                video.crossOrigin = 'anonymous';
-                video.muted = true;
-                video.preload = 'metadata';
-
-                // Promesa para cargar el video
-                const loadPromise = new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Timeout loading video'));
-                    }, 10000); // 10s timeout
-
-                    video.onloadedmetadata = () => {
-                        clearTimeout(timeout);
-                        // Ir al segundo 5 o 25% del video
-                        video.currentTime = Math.min(5, video.duration * 0.25);
-                    };
-
-                    video.onseeked = () => {
-                        clearTimeout(timeout);
-                        resolve();
-                    };
-
-                    video.onerror = () => {
-                        clearTimeout(timeout);
-                        reject(new Error('Error loading video'));
-                    };
-                });
-
-                // Cargar video
-                video.src = this.videoUrl;
-                await loadPromise;
-
-                // Configurar canvas
-                const ctx = this.canvas.getContext('2d');
-                this.canvas.width = 320;  // Resolución fija
-                this.canvas.height = 180; // 16:9 aspect ratio
-
-                // Dibujar frame del video
-                ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
-
-                // Mostrar canvas, ocultar loading
-                this.canvas.style.display = 'block';
-                this.loading.style.display = 'none';
-
-                console.log(`✅ Thumbnail generado para video ${this.videoId}`);
-
-            } catch (error) {
-                console.log(`❌ Error generando thumbnail para video ${this.videoId}:`, error.message);
-                // Si falla, mantener el estado "Cargando..." sin cambiar nada
-            }
-        }
-    }
-
-    // Inicializar thumbnails
-    const containers = document.querySelectorAll('.video-thumbnail-container');
-    containers.forEach(container => {
-        new VideoThumbnailGenerator(container);
-    });
-
     // Filtros automáticos
     let filterTimeout;
 
