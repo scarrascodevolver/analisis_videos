@@ -2,6 +2,35 @@
 
 @section('title', 'Iniciar Sesión - Los Troncos')
 
+@section('css')
+<style>
+.password-toggle-btn {
+    border-left: 0 !important;
+    border-color: #ced4da;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    background-color: #1e4d2b;
+    color: white;
+    border-color: #1e4d2b;
+}
+
+.password-toggle-btn:focus {
+    box-shadow: none;
+    border-color: #1e4d2b;
+}
+
+.password-toggle-btn.active {
+    background-color: #1e4d2b;
+    color: white;
+    border-color: #1e4d2b;
+}
+</style>
+@endsection
+
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
@@ -39,12 +68,12 @@
                 <!-- Password -->
                 <div class="form-group">
                     <div class="input-group">
-                        <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                               name="password" placeholder="Contraseña" required>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror"
+                               id="password" name="password" placeholder="Contraseña" required>
                         <div class="input-group-append">
-                            <span class="input-group-text">
-                                <i class="fas fa-lock"></i>
-                            </span>
+                            <button type="button" class="btn password-toggle-btn" id="togglePassword" title="Mostrar contraseña">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
                         </div>
                     </div>
                     @error('password')
@@ -84,4 +113,33 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    togglePassword.addEventListener('click', function() {
+        // Toggle the type attribute
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+
+        // Toggle the icon and button state
+        if (type === 'text') {
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+            togglePassword.classList.add('active');
+            togglePassword.title = 'Ocultar contraseña';
+        } else {
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+            togglePassword.classList.remove('active');
+            togglePassword.title = 'Mostrar contraseña';
+        }
+    });
+});
+</script>
 @endsection
