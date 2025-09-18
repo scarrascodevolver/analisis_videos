@@ -106,20 +106,10 @@
                                              style="height: 120px; overflow: hidden; position: relative; cursor: pointer;"
                                              onclick="window.location.href='{{ route('videos.show', $video) }}'">
 
-                                            <!-- Loading state -->
-                                            <div class="thumbnail-loading d-flex align-items-center justify-content-center h-100"
-                                                 style="background: #f8f9fa; color: #6c757d; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;">
-                                                <div style="text-align: center;">
-                                                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i><br>
-                                                    <span style="font-size: 11px;">Cargando...</span>
-                                                </div>
-                                            </div>
-
-                                            <video class="video-thumbnail w-100 h-100"
+                                            <video class="w-100 h-100"
                                                    style="object-fit: cover;"
                                                    preload="metadata"
-                                                   muted
-                                                   data-video-id="{{ $video->id }}">
+                                                   muted>
                                                 <source src="{{ route('videos.stream', $video) }}#t=5" type="{{ $video->mime_type }}">
                                             </video>
                                         </div>
@@ -369,37 +359,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Video thumbnail loading handler
-    const videoThumbnails = document.querySelectorAll('.video-thumbnail');
-
-    videoThumbnails.forEach(video => {
-        const container = video.closest('.video-thumbnail-container');
-        const loading = container.querySelector('.thumbnail-loading');
-        const videoId = video.dataset.videoId;
-
-        // Cuando el video carga y puede mostrar frame, ocultar loading
-        video.addEventListener('canplay', function() {
-            console.log(`✅ Thumbnail ${videoId} listo para mostrar`);
-            if (loading) {
-                loading.style.display = 'none';
-            }
-        });
-
-        // También ocultar loading si carga datos
-        video.addEventListener('loadeddata', function() {
-            console.log(`✅ Thumbnail ${videoId} datos cargados`);
-            if (loading) {
-                loading.style.display = 'none';
-            }
-        });
-
-        // Si hay error, mantener el loading
-        video.addEventListener('error', function() {
-            console.log(`❌ Error cargando thumbnail ${videoId}`);
-            // Mantener loading visible si falla
-        });
-    });
-
     // Filtros automáticos
     let filterTimeout;
 
