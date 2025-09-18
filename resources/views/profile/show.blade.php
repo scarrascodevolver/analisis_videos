@@ -182,12 +182,6 @@
                     </div>
                     @endif
 
-                    @if($user->profile->goals)
-                    <div class="col-sm-12">
-                        <strong><i class="fas fa-bullseye mr-1"></i> Objetivos</strong>
-                        <p class="text-muted">{{ $user->profile->goals }}</p>
-                    </div>
-                    @endif
                 </div>
             </div>
         </div>

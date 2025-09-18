@@ -258,28 +258,6 @@
             </div>
             @endif
 
-            <!-- Additional Information -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-info-circle"></i> Información Adicional
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="goals">Objetivos y Metas</label>
-                                <textarea class="form-control @error('goals') is-invalid @enderror"
-                                          id="goals" name="goals" rows="3">{{ old('goals', $user->profile->goals ?? '') }}</textarea>
-                                @error('goals')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Action Buttons -->
             <div class="card">
