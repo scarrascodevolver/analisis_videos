@@ -401,25 +401,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log(`📱 Setting up mobile placeholder for video ${videoId}`);
 
-        // Mejorar el placeholder para móvil
-        const text = placeholder.querySelector('small');
-        if (text) {
-            text.innerHTML = '<i class="fas fa-video text-white" style="font-size: 18px; margin-bottom: 5px;"></i><br>VIDEO RUGBY';
-            text.style.textAlign = 'center';
-            text.style.lineHeight = '1.2';
-        }
+        // LIMPIAR contenido existente para empezar desde cero
+        placeholder.innerHTML = '';
 
-        // Agregar efecto visual mejorado
-        placeholder.style.background = 'linear-gradient(135deg, #1e4d2b 0%, #28a745 100%)';
-        placeholder.style.position = 'relative';
-        placeholder.style.overflow = 'hidden';
+        // Agregar efecto visual mejorado PRIMERO
+        placeholder.style.cssText = `
+            background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        `;
 
-        // Agregar icono de play más grande
-        const playIcon = placeholder.querySelector('.play-button-circle');
-        if (playIcon) {
-            playIcon.style.width = '60px';
-            playIcon.style.height = '60px';
-            playIcon.style.fontSize = '20px';
+        // Crear contenido HTML completamente nuevo
+        placeholder.innerHTML = `
+            <div style="text-align: center; color: white; z-index: 10; position: relative;">
+                <div style="font-size: 32px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                    🏉
+                </div>
+                <div style="font-size: 14px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.7); letter-spacing: 1px;">
+                    VIDEO RUGBY
+                </div>
+            </div>
+        `;
+
+        // Mantener funcionalidad de click
+        const originalOnclick = container.getAttribute('onclick');
+        if (originalOnclick) {
+            placeholder.setAttribute('onclick', originalOnclick);
         }
 
         console.log(`✅ Mobile placeholder setup complete for video ${videoId}`);
