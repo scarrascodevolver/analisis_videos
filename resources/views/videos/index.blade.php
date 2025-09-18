@@ -135,6 +135,23 @@
                                                         {{ $video->rugbySituation->name }}
                                                     </span>
                                                 @endif
+
+                                                {{-- Badge de Visibilidad --}}
+                                                @if($video->visibility_type && $video->visibility_type !== 'public')
+                                                    @if($video->visibility_type === 'forwards')
+                                                        <span class="badge badge-warning badge-sm ml-1" title="Solo visible para Forwards">
+                                                            <i class="fas fa-shield-alt"></i> Forwards
+                                                        </span>
+                                                    @elseif($video->visibility_type === 'backs')
+                                                        <span class="badge badge-info badge-sm ml-1" title="Solo visible para Backs">
+                                                            <i class="fas fa-running"></i> Backs
+                                                        </span>
+                                                    @elseif($video->visibility_type === 'specific')
+                                                        <span class="badge badge-dark badge-sm ml-1" title="Asignado a jugadores específicos">
+                                                            <i class="fas fa-user-check"></i> Específico
+                                                        </span>
+                                                    @endif
+                                                @endif
                                             </div>
                                             <p class="card-text mb-1">
                                                 <small class="text-muted">
