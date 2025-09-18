@@ -538,26 +538,59 @@ $(document).ready(function() {
     // Comment notifications system
     const commentsData = @json($comments);
     let lastCheckedTime = -1;
-    
+    let activeCommentIds = new Set(); // Track currently visible notifications
+
     function checkAndShowCommentNotifications() {
         const currentTime = Math.floor(video.currentTime);
-        
+
         // Only check once per second
         if (currentTime === lastCheckedTime) return;
         lastCheckedTime = currentTime;
-        
-        // Hide any active notifications when moving to different timestamp
-        hideAllNotifications();
-        
+
         // Find comments at current time (exact match or ±1 second)
-        const currentComments = commentsData.filter(comment => 
+        const currentComments = commentsData.filter(comment =>
             Math.abs(comment.timestamp_seconds - currentTime) <= 1
         );
-        
-        // Show notifications for current comments
-        currentComments.forEach(comment => {
-            showCommentNotification(comment);
-        });
+
+        // Get IDs of comments that should be visible now
+        const currentCommentIds = new Set(currentComments.map(c => c.id));
+
+        // Only update notifications if the set of comments has changed
+        if (!setsAreEqual(activeCommentIds, currentCommentIds)) {
+            // Remove notifications that should no longer be visible
+            activeCommentIds.forEach(commentId => {
+                if (!currentCommentIds.has(commentId)) {
+                    const notification = document.getElementById(`notification-${commentId}`);
+                    if (notification && notification.parentNode) {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }
+            });
+
+            // Show new notifications
+            currentComments.forEach(comment => {
+                if (!activeCommentIds.has(comment.id)) {
+                    showCommentNotification(comment);
+                }
+            });
+
+            // Update active comment IDs
+            activeCommentIds = currentCommentIds;
+        }
+    }
+
+    // Helper function to compare sets
+    function setsAreEqual(set1, set2) {
+        if (set1.size !== set2.size) return false;
+        for (let item of set1) {
+            if (!set2.has(item)) return false;
+        }
+        return true;
     }
     
     function showCommentNotification(comment) {
@@ -656,6 +689,8 @@ $(document).ready(function() {
         while (notificationArea.firstChild) {
             notificationArea.removeChild(notificationArea.firstChild);
         }
+        // Clear tracking when hiding all notifications
+        activeCommentIds.clear();
     }
     
     // Close notification function (global)
@@ -668,6 +703,8 @@ $(document).ready(function() {
                     notification.parentNode.removeChild(notification);
                 }
             }, 300);
+            // Remove from tracking
+            activeCommentIds.delete(commentId);
         }
     };
 
