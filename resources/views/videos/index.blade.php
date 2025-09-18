@@ -107,24 +107,24 @@
                                              data-video-url="{{ route('videos.stream', $video) }}"
                                              data-video-id="{{ $video->id }}">
 
-                                            <!-- Generated Thumbnail (will be populated by JS) -->
-                                            <img class="video-thumbnail-img w-100 h-100"
-                                                 style="object-fit: cover; cursor: pointer; display: none;"
-                                                 onclick="window.location.href='{{ route('videos.show', $video) }}'">
-
-                                            <!-- Hidden Video for Thumbnail Generation -->
-                                            <video class="video-hidden"
-                                                   style="display: none;"
+                                            <!-- Video Thumbnail using native poster -->
+                                            <video class="video-thumbnail w-100 h-100"
+                                                   style="object-fit: cover; cursor: pointer; background: #1e4d2b;"
                                                    preload="metadata"
-                                                   muted>
-                                                <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
+                                                   muted
+                                                   onclick="window.location.href='{{ route('videos.show', $video) }}'"
+                                                   onloadedmetadata="this.currentTime = Math.min(5, this.duration / 4)">
+                                                <source src="{{ route('videos.stream', $video) }}#t=5" type="{{ $video->mime_type }}">
                                             </video>
 
-                                            <!-- Placeholder while loading -->
-                                            <div class="d-flex align-items-center justify-content-center h-100 rugby-thumbnail"
-                                                 style="cursor: pointer;"
+                                            <!-- Fallback placeholder (only if video fails) -->
+                                            <div class="video-fallback d-flex align-items-center justify-content-center h-100"
+                                                 style="cursor: pointer; background: linear-gradient(135deg, #1e4d2b, #28a745); color: white; display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
                                                  onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                                                <small class="text-white font-weight-bold">CARGANDO...</small>
+                                                <div style="text-align: center;">
+                                                    <i class="fas fa-play-circle" style="font-size: 32px; margin-bottom: 8px;"></i><br>
+                                                    <span style="font-size: 12px; font-weight: bold;">VIDEO RUGBY</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="card-body py-1 px-2">
@@ -373,140 +373,34 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 Iniciando generación de thumbnails...');
+    console.log('🎬 Iniciando sistema de thumbnails nativo...');
 
-    // Detección de dispositivos móviles
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('📱 Device detection for thumbnails:', isMobile ? 'MOBILE' : 'DESKTOP');
+    const videoThumbnails = document.querySelectorAll('.video-thumbnail');
 
-    const thumbnailContainers = document.querySelectorAll('.video-thumbnail-container');
-
-    thumbnailContainers.forEach((container, index) => {
-        if (isMobile) {
-            // En móvil: usar placeholder mejorado inmediatamente
-            setupMobilePlaceholder(container);
-        } else {
-            // En PC: generar thumbnail automático con delay
-            setTimeout(() => {
-                generateThumbnail(container);
-            }, index * 500);
-        }
-    });
-
-    function setupMobilePlaceholder(container) {
-        const placeholder = container.querySelector('.rugby-thumbnail');
+    videoThumbnails.forEach((video, index) => {
+        const container = video.closest('.video-thumbnail-container');
+        const fallback = container.querySelector('.video-fallback');
         const videoId = container.dataset.videoId;
 
-        if (!placeholder) return;
+        // Error handler - mostrar fallback si video falla
+        video.addEventListener('error', function() {
+            console.log(`❌ Error cargando video ${videoId}, mostrando fallback`);
+            video.style.display = 'none';
+            if (fallback) {
+                fallback.style.display = 'flex';
+            }
+        });
 
-        console.log(`📱 Setting up mobile placeholder for video ${videoId}`);
-
-        // LIMPIAR contenido existente para empezar desde cero
-        placeholder.innerHTML = '';
-
-        // Agregar efecto visual mejorado PRIMERO
-        placeholder.style.cssText = `
-            background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            border-radius: 8px;
-        `;
-
-        // Crear contenido HTML completamente nuevo
-        placeholder.innerHTML = `
-            <div style="text-align: center; color: white; z-index: 10; position: relative;">
-                <div style="font-size: 32px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                    🏉
-                </div>
-                <div style="font-size: 14px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.7); letter-spacing: 1px;">
-                    VIDEO RUGBY
-                </div>
-            </div>
-        `;
-
-        // Mantener funcionalidad de click
-        const originalOnclick = container.getAttribute('onclick');
-        if (originalOnclick) {
-            placeholder.setAttribute('onclick', originalOnclick);
-        }
-
-        console.log(`✅ Mobile placeholder setup complete for video ${videoId}`);
-    }
-
-    function generateThumbnail(container) {
-        const video = container.querySelector('.video-hidden');
-        const thumbnailImg = container.querySelector('.video-thumbnail-img');
-        const placeholder = container.querySelector('.rugby-thumbnail');
-        const videoId = container.dataset.videoId;
-
-        if (!video || !thumbnailImg || !placeholder) return;
-
-        // Cuando el video tiene metadata
+        // Éxito - ocultar fallback
         video.addEventListener('loadedmetadata', function() {
-            console.log(`📹 Video ${videoId} metadata cargada`);
-
-            // Ir al segundo 5 para mejor thumbnail
-            video.currentTime = Math.min(5, video.duration / 4);
-        });
-
-        // Cuando llegamos al tiempo deseado
-        video.addEventListener('seeked', function() {
-            console.log(`🎯 Video ${videoId} positioned para thumbnail`);
-
-            // Crear canvas para capturar frame
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            // Dimensiones del canvas (16:9 aspect ratio, más pequeño)
-            canvas.width = 240;
-            canvas.height = 120;
-
-            // Dibujar frame del video
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convertir a imagen
-            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-
-            // Mostrar thumbnail
-            thumbnailImg.src = dataURL;
-            thumbnailImg.style.display = 'block';
-            placeholder.style.display = 'none';
-
-            console.log(`✅ Thumbnail generado para video ${videoId}`);
-        });
-
-        // Error handler
-        video.addEventListener('error', function(e) {
-            console.log(`❌ Error cargando video ${videoId}:`, e);
-
-            // Mantener placeholder pero cambiar texto
-            const text = placeholder.querySelector('small');
-            if (text) {
-                text.textContent = 'VIDEO RUGBY';
+            console.log(`✅ Video thumbnail ${videoId} cargado exitosamente`);
+            if (fallback) {
+                fallback.style.display = 'none';
             }
         });
 
-        // Timeout fallback
-        setTimeout(() => {
-            if (thumbnailImg.style.display === 'none') {
-                console.log(`⏰ Timeout para video ${videoId}, manteniendo placeholder`);
-                const text = placeholder.querySelector('small');
-                if (text) {
-                    text.textContent = 'VIDEO RUGBY';
-                }
-            }
-        }, 10000); // 10 segundos timeout
-
-        // Iniciar carga
-        video.load();
-    }
+        console.log(`🎯 Video thumbnail ${videoId} inicializado`);
+    });
 
     // Filtros automáticos
     let filterTimeout;
