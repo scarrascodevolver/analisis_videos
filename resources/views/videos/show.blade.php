@@ -970,41 +970,39 @@ $(document).ready(function() {
         const commentId = $(this).data('comment-id');
         const $commentElement = $(this).closest('.comment-item, .reply');
 
-        if (confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/comments/${commentId}`,
+            type: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    // Remover el elemento del DOM con animación
+                    $commentElement.fadeOut(300, function() {
+                        $(this).remove();
+
+                        // Actualizar contador de comentarios
+                        const currentCount = parseInt($('.card-title:contains("Comentarios")').text().match(/\((\d+)\)/)[1]);
+                        const newCount = currentCount - 1;
+                        $('.card-title:contains("Comentarios")').html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
+                    });
+
+                    // Mostrar mensaje de éxito
+                    toastr.success('Comentario eliminado exitosamente');
                 }
-            });
-
-            $.ajax({
-                url: `/comments/${commentId}`,
-                type: 'DELETE',
-                success: function(response) {
-                    if (response.success) {
-                        // Remover el elemento del DOM con animación
-                        $commentElement.fadeOut(300, function() {
-                            $(this).remove();
-
-                            // Actualizar contador de comentarios
-                            const currentCount = parseInt($('.card-title:contains("Comentarios")').text().match(/\((\d+)\)/)[1]);
-                            const newCount = currentCount - 1;
-                            $('.card-title:contains("Comentarios")').html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
-                        });
-
-                        // Mostrar mensaje de éxito
-                        toastr.success('Comentario eliminado exitosamente');
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 403) {
-                        toastr.error('No tienes permisos para eliminar este comentario');
-                    } else {
-                        toastr.error('Error al eliminar el comentario');
-                    }
+            },
+            error: function(xhr) {
+                if (xhr.status === 403) {
+                    toastr.error('No tienes permisos para eliminar este comentario');
+                } else {
+                    toastr.error('Error al eliminar el comentario');
                 }
-            });
-        }
+            }
+        });
     });
 });
 </script>
