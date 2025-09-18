@@ -188,14 +188,47 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎬 Iniciando generación de thumbnails en Mis Videos...');
 
+    // Detección de dispositivos móviles
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 Device detection for my-videos thumbnails:', isMobile ? 'MOBILE' : 'DESKTOP');
+
     const thumbnailContainers = document.querySelectorAll('.video-thumbnail-container');
 
     thumbnailContainers.forEach((container, index) => {
-        // Delay progresivo para no sobrecargar
-        setTimeout(() => {
-            generateThumbnail(container);
-        }, index * 800); // Más tiempo entre videos para evitar sobrecarga
+        if (isMobile) {
+            // En móvil: usar placeholder mejorado inmediatamente
+            setupMobilePlaceholder(container);
+        } else {
+            // En PC: generar thumbnail automático con delay
+            setTimeout(() => {
+                generateThumbnail(container);
+            }, index * 800); // Más tiempo entre videos para evitar sobrecarga
+        }
     });
+
+    function setupMobilePlaceholder(container) {
+        const placeholder = container.querySelector('.rugby-thumbnail');
+        const videoId = container.dataset.videoId;
+
+        if (!placeholder) return;
+
+        console.log(`📱 Setting up mobile placeholder for my-video ${videoId}`);
+
+        // Mejorar el placeholder para móvil
+        const text = placeholder.querySelector('small');
+        if (text) {
+            text.innerHTML = '<i class="fas fa-video text-white" style="font-size: 18px; margin-bottom: 5px;"></i><br>VIDEO RUGBY';
+            text.style.textAlign = 'center';
+            text.style.lineHeight = '1.2';
+        }
+
+        // Agregar efecto visual mejorado
+        placeholder.style.background = 'linear-gradient(135deg, #1e4d2b 0%, #28a745 100%)';
+        placeholder.style.position = 'relative';
+        placeholder.style.overflow = 'hidden';
+
+        console.log(`✅ Mobile placeholder setup complete for my-video ${videoId}`);
+    }
 
     function generateThumbnail(container) {
         const video = container.querySelector('.video-hidden');
