@@ -139,7 +139,7 @@
                                                 {{-- Badge de Visibilidad --}}
                                                 @if($video->visibility_type && $video->visibility_type !== 'public')
                                                     @if($video->visibility_type === 'forwards')
-                                                        <span class="badge badge-warning badge-sm ml-1" title="Solo visible para Forwards">
+                                                        <span class="badge badge-secondary badge-sm ml-1" title="Solo visible para Forwards">
                                                             <i class="fas fa-shield-alt"></i> Forwards
                                                         </span>
                                                     @elseif($video->visibility_type === 'backs')
