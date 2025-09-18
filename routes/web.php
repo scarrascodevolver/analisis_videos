@@ -66,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Coach Routes
-    Route::middleware(['role:entrenador'])->prefix('coach')->name('coach.')->group(function () {
+    Route::middleware(['role:entrenador,analista'])->prefix('coach')->name('coach.')->group(function () {
         Route::get('/videos', [DashboardController::class, 'coachVideos'])->name('videos');
         Route::get('/users', [DashboardController::class, 'coachUsers'])->name('users');
         Route::get('/assignments', [DashboardController::class, 'coachAssignments'])->name('assignments');
