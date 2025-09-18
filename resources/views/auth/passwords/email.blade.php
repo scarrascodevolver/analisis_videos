@@ -1,45 +1,64 @@
-@extends('layouts.app')
+@extends('layouts.auth')
+
+@section('title', 'Recuperar Contraseña - Los Troncos')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="logo-icon">
+                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" style="width: 80px; height: 80px; object-fit: contain;">
+            </div>
+            <h3>Los Troncos</h3>
+            <p>Sistema de Análisis Rugby</p>
+        </div>
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+        <div class="auth-body">
+            <h5 class="text-center mb-4">Recuperar Contraseña</h5>
 
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+            @if (session('status'))
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    {{ session('status') }}
                 </div>
+            @endif
+
+            <p class="text-muted text-center mb-4">
+                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+
+            <form method="POST" action="{{ route('password.email') }}">
+                @csrf
+
+                <!-- Email -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="email" class="form-control @error('email') is-invalid @enderror"
+                               id="email" name="email" placeholder="Correo electrónico"
+                               value="{{ old('email') }}" required autofocus>
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                        </div>
+                    </div>
+                    @error('email')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-rugby btn-block btn-lg">
+                    <i class="fas fa-paper-plane"></i> Enviar Enlace de Recuperación
+                </button>
+            </form>
+
+            <!-- Links -->
+            <div class="text-center mt-4">
+                <p class="mb-0">
+                    ¿Recordaste tu contraseña?
+                    <a href="{{ route('login') }}"><strong>Iniciar Sesión</strong></a>
+                </p>
             </div>
         </div>
     </div>
