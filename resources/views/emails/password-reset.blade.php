@@ -66,19 +66,30 @@
             margin: 30px auto;
             padding: 15px 30px;
             background: linear-gradient(135deg, #1e4d2b, #2d5a3a);
-            color: white;
-            text-decoration: none;
+            color: white !important;
+            text-decoration: none !important;
             border-radius: 50px;
             text-align: center;
             font-size: 18px;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(30, 77, 43, 0.3);
             transition: all 0.3s ease;
+            border: none;
         }
         .reset-button:hover {
             background: linear-gradient(135deg, #2d5a3a, #1e4d2b);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(30, 77, 43, 0.4);
+            color: white !important;
+            text-decoration: none !important;
+        }
+        .reset-button:visited {
+            color: white !important;
+            text-decoration: none !important;
+        }
+        .reset-button:active {
+            color: white !important;
+            text-decoration: none !important;
         }
         .security-note {
             background-color: #f8f9fa;
@@ -128,7 +139,9 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo">
+            <div style="width: 80px; height: 80px; margin: 0 auto 15px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 48px; color: white;">🏉</span>
+            </div>
             <h1>LOS TRONCOS</h1>
             <p>Rugby Club</p>
         </div>
