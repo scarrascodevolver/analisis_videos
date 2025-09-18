@@ -614,39 +614,64 @@ $(document).ready(function() {
         // Calculate position relative to the notifications area
         const notificationAreaWidth = notificationArea.offsetWidth;
         const relativePosition = (comment.timestamp_seconds / video.duration) * notificationAreaWidth;
-        
+
         // Create notification element
         const notification = document.createElement('div');
         notification.id = `notification-${comment.id}`;
         notification.className = 'comment-notification';
-        
+
         // Category colors
         const categoryColors = {
             'tecnico': 'info',
-            'tactico': 'warning', 
+            'tactico': 'warning',
             'fisico': 'success',
             'mental': 'purple',
             'general': 'secondary'
         };
-        
+
         const priorityColors = {
             'critica': 'danger',
             'alta': 'warning',
-            'media': 'info', 
+            'media': 'info',
             'baja': 'secondary'
         };
-        
+
+        // Responsive width and positioning for mobile
+        const isMobileView = window.innerWidth <= 768;
+        const notificationWidth = isMobileView ? 280 : 320;
+        const minWidth = isMobileView ? 200 : 250;
+        const padding = isMobileView ? '8px 12px' : '12px 15px';
+
+        // Smart positioning to keep notification within bounds
+        let leftPosition = relativePosition;
+        let transformX = '-50%';
+
+        if (isMobileView) {
+            const halfWidth = notificationWidth / 2;
+            const margin = 10; // minimum margin from edges
+
+            if (relativePosition < halfWidth + margin) {
+                // Too close to left edge - align to left
+                leftPosition = margin;
+                transformX = '0%';
+            } else if (relativePosition > notificationAreaWidth - halfWidth - margin) {
+                // Too close to right edge - align to right
+                leftPosition = notificationAreaWidth - margin;
+                transformX = '-100%';
+            }
+        }
+
         notification.style.cssText = `
             position: absolute;
             top: 10px;
-            left: ${relativePosition}px;
-            transform: translateX(-50%);
-            max-width: 320px;
-            min-width: 250px;
+            left: ${leftPosition}px;
+            transform: translateX(${transformX});
+            max-width: ${notificationWidth}px;
+            min-width: ${minWidth}px;
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #28a745;
             border-radius: 12px;
-            padding: 12px 15px;
+            padding: ${padding};
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             z-index: 1000;
             animation: fadeIn 0.5s ease;
@@ -1053,6 +1078,28 @@ $(document).ready(function() {
 
 .comment-notification {
     transition: opacity 0.3s ease;
+}
+
+/* Mobile responsive improvements for comment notifications */
+@media (max-width: 768px) {
+    .comment-notification {
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+    }
+
+    .comment-notification .badge {
+        font-size: 11px !important;
+        padding: 0.2em 0.5em !important;
+    }
+
+    .comment-notification small {
+        font-size: 12px !important;
+    }
+
+    .comment-notification .btn-sm {
+        font-size: 11px !important;
+        padding: 0.2rem 0.4rem !important;
+    }
 }
 
 .pseudo-fullscreen-comment {
