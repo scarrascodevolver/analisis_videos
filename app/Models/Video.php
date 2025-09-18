@@ -215,16 +215,23 @@ class Video extends Model
             return 'backs';
         }
 
-        // Convert position text to category
+        // Posiciones Forward - incluye valores del formulario de registro
         $forwardPositions = [
+            // Inglés (legacy)
             'Prop Izquierdo (#1)', 'Hooker (#2)', 'Prop Derecho (#3)',
             'Segunda Línea (#4)', 'Segunda Línea (#5)',
             'Ala Ciega (#6)', 'Ala Abierta (#7)', 'Octavo (#8)',
             'Primera Línea', 'Hooker/Prop Suplente', 'Segunda Línea Suplente',
-            'Tercera Línea Suplente', 'Entrenador de Forwards'
+            'Tercera Línea Suplente', 'Entrenador de Forwards',
+
+            // Español (formulario de registro)
+            'pilar_izquierdo', 'hooker', 'pilar_derecho',
+            'segunda_linea_4', 'segunda_linea_5',
+            'ala_ciega', 'ala_abierta', 'octavo',
+            'ala_izquierdo_forward', 'ala_derecho_forward'
         ];
 
-        // Check if position contains any forward indicators
+        // Verificar si la posición es Forward
         foreach ($forwardPositions as $forwardPos) {
             if (stripos($position, $forwardPos) !== false ||
                 stripos($position, 'primera línea') !== false ||
@@ -235,6 +242,7 @@ class Video extends Model
             }
         }
 
+        // Si no es Forward, es Back
         return 'backs';
     }
 }
