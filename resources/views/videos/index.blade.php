@@ -120,15 +120,6 @@
                                                     <span style="font-size: 11px;">Cargando...</span>
                                                 </div>
                                             </div>
-
-                                            <!-- Fallback placeholder -->
-                                            <div class="video-fallback d-flex align-items-center justify-content-center h-100"
-                                                 style="background: linear-gradient(135deg, #1e4d2b, #28a745); color: white; display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                                                <div style="text-align: center;">
-                                                    <i class="fas fa-play-circle" style="font-size: 32px; margin-bottom: 8px;"></i><br>
-                                                    <span style="font-size: 12px; font-weight: bold;">VIDEO RUGBY</span>
-                                                </div>
-                                            </div>
                                         </div>
                                         <div class="card-body py-1 px-2">
                                             <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
@@ -386,7 +377,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.videoId = container.dataset.videoId;
             this.canvas = container.querySelector('.video-canvas');
             this.loading = container.querySelector('.thumbnail-loading');
-            this.fallback = container.querySelector('.video-fallback');
 
             this.generateThumbnail();
         }
@@ -444,13 +434,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } catch (error) {
                 console.log(`❌ Error generando thumbnail para video ${this.videoId}:`, error.message);
-                this.showFallback();
+                // Si falla, mantener el estado "Cargando..." sin cambiar nada
             }
-        }
-
-        showFallback() {
-            this.loading.style.display = 'none';
-            this.fallback.style.display = 'flex';
         }
     }
 
