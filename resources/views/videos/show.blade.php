@@ -700,13 +700,47 @@ $(document).ready(function() {
             // Hide fullscreen notifications
             document.getElementById('fullscreenNotifications').style.display = 'none';
             hideAllFullscreenNotifications();
+
+            // Remover overlay móvil cuando se sale de fullscreen
+            const mobileOverlay = document.getElementById('mobileFullscreenOverlay');
+            if (mobileOverlay && mobileOverlay.parentNode) {
+                mobileOverlay.parentNode.removeChild(mobileOverlay);
+            }
         }
     }
 
     function showCommentNotificationFullscreen(comment) {
-        const fullscreenArea = document.getElementById('fullscreenNotifications');
+        // En móvil, usar el elemento que está realmente en fullscreen
+        const fullscreenElement = document.fullscreenElement ||
+                                document.webkitFullscreenElement ||
+                                document.mozFullScreenElement ||
+                                document.msFullscreenElement;
 
-        if (!video.duration || !isFullscreen) return;
+        if (!video.duration || !isFullscreen || !fullscreenElement) return;
+
+        // Si es el video el que está en fullscreen, crear overlay dentro del video
+        let fullscreenArea;
+        if (fullscreenElement === video) {
+            // Crear contenedor overlay dentro del video si no existe
+            fullscreenArea = fullscreenElement.parentNode.querySelector('#mobileFullscreenOverlay');
+            if (!fullscreenArea) {
+                fullscreenArea = document.createElement('div');
+                fullscreenArea.id = 'mobileFullscreenOverlay';
+                fullscreenArea.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: 9999;
+                `;
+                fullscreenElement.parentNode.appendChild(fullscreenArea);
+            }
+        } else {
+            // Usar el div original si el contenedor está en fullscreen
+            fullscreenArea = document.getElementById('fullscreenNotifications');
+        }
 
         // Create notification element for fullscreen
         const notification = document.createElement('div');
@@ -792,9 +826,20 @@ $(document).ready(function() {
     }
 
     function hideAllFullscreenNotifications() {
+        // Limpiar overlay móvil si existe
+        const mobileOverlay = document.getElementById('mobileFullscreenOverlay');
+        if (mobileOverlay) {
+            while (mobileOverlay.firstChild) {
+                mobileOverlay.removeChild(mobileOverlay.firstChild);
+            }
+        }
+
+        // Limpiar overlay original
         const fullscreenArea = document.getElementById('fullscreenNotifications');
-        while (fullscreenArea.firstChild) {
-            fullscreenArea.removeChild(fullscreenArea.firstChild);
+        if (fullscreenArea) {
+            while (fullscreenArea.firstChild) {
+                fullscreenArea.removeChild(fullscreenArea.firstChild);
+            }
         }
     }
 
