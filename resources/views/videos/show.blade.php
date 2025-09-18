@@ -526,6 +526,26 @@ $(document).ready(function() {
         if (video.duration && !isNaN(video.duration)) {
             createTimelineMarkers();
         }
+
+        // Check for timestamp parameter in URL (from session expiry return)
+        const urlParams = new URLSearchParams(window.location.search);
+        const startTime = urlParams.get('t');
+        if (startTime && !isNaN(startTime)) {
+            const timeInSeconds = parseInt(startTime);
+            if (timeInSeconds > 0 && timeInSeconds < video.duration) {
+                video.currentTime = timeInSeconds;
+                console.log(`🕐 Video positioned at ${timeInSeconds}s from URL parameter`);
+
+                // Show notification that video was restored
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(`Video restaurado desde ${formatTime(timeInSeconds)}`, 'Sesión Recuperada');
+                }
+
+                // Clean URL parameter
+                const newUrl = window.location.href.split('?')[0];
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        }
     });
 
     // Update timeline progress

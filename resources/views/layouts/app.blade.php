@@ -342,5 +342,98 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     @yield('js')
+
+    <!-- Session Expiry Handler -->
+    <script>
+    $(document).ready(function() {
+        // Global AJAX error handler for session expiry
+        $(document).ajaxError(function(event, xhr, settings, thrownError) {
+            if (xhr.status === 419) {
+                // Page expired (CSRF token expired)
+                handleSessionExpiry();
+            } else if (xhr.status === 401) {
+                // Unauthorized (session expired)
+                handleSessionExpiry();
+            }
+        });
+
+        // Handle form submissions with expired CSRF tokens
+        $(document).on('submit', 'form', function(e) {
+            const form = $(this);
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+            // Check if form has CSRF token and if it's valid
+            const formCsrfToken = form.find('input[name="_token"]').val();
+            if (formCsrfToken && formCsrfToken !== csrfToken) {
+                e.preventDefault();
+                handleSessionExpiry();
+                return false;
+            }
+        });
+
+        function handleSessionExpiry() {
+            // Store current page URL to redirect back after login
+            const currentUrl = window.location.href;
+            const isVideoPage = currentUrl.includes('/videos/') && currentUrl.includes('/show');
+
+            if (isVideoPage) {
+                // For video pages, store the video URL and timestamp
+                const video = document.getElementById('rugbyVideo');
+                const currentTime = video ? video.currentTime : 0;
+
+                localStorage.setItem('rugby_return_url', currentUrl);
+                localStorage.setItem('rugby_video_time', currentTime);
+
+                // Show user-friendly message
+                if (typeof toastr !== 'undefined') {
+                    toastr.warning('Tu sesión ha expirado. Serás redirigido al login.', 'Sesión Expirada');
+                } else {
+                    alert('Tu sesión ha expirado. Serás redirigido al login.');
+                }
+
+                // Redirect after a short delay
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else {
+                // For other pages, just store the URL
+                localStorage.setItem('rugby_return_url', currentUrl);
+
+                if (typeof toastr !== 'undefined') {
+                    toastr.info('Tu sesión ha expirado. Redirigiendo...', 'Sesión Expirada');
+                } else {
+                    alert('Tu sesión ha expirado. Serás redirigido al login.');
+                }
+
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+            }
+        }
+
+        // Check if user just logged in and should return to a stored page
+        @auth
+        const returnUrl = localStorage.getItem('rugby_return_url');
+        const videoTime = localStorage.getItem('rugby_video_time');
+
+        if (returnUrl && returnUrl !== window.location.href) {
+            // Only redirect if this is the dashboard or login success page
+            const currentPath = window.location.pathname;
+            if (currentPath === '/home' || currentPath === '/dashboard' || currentPath === '/') {
+                localStorage.removeItem('rugby_return_url');
+
+                if (videoTime) {
+                    localStorage.removeItem('rugby_video_time');
+                    // Add video time as URL parameter
+                    const separator = returnUrl.includes('?') ? '&' : '?';
+                    window.location.href = returnUrl + separator + 't=' + Math.floor(videoTime);
+                } else {
+                    window.location.href = returnUrl;
+                }
+            }
+        }
+        @endauth
+    });
+    </script>
 </body>
 </html>
