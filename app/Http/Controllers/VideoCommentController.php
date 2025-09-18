@@ -72,6 +72,18 @@ class VideoCommentController extends Controller
 
     public function destroy(\App\Models\VideoComment $comment)
     {
+        // Solo el autor del comentario puede eliminarlo
+        if ($comment->user_id !== auth()->id()) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No tienes permisos para eliminar este comentario'
+                ], 403);
+            }
+
+            return back()->withErrors(['error' => 'No tienes permisos para eliminar este comentario']);
+        }
+
         $comment->delete();
 
         if (request()->ajax()) {

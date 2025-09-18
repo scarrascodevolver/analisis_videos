@@ -244,6 +244,13 @@
                                         <button class="dropdown-item reply-btn" data-comment-id="{{ $comment->id }}">
                                             <i class="fas fa-reply"></i> Responder
                                         </button>
+                                        @if($comment->user_id === auth()->id())
+                                            <div class="dropdown-divider"></div>
+                                            <button class="dropdown-item text-danger delete-comment-btn"
+                                                    data-comment-id="{{ $comment->id }}">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -274,15 +281,22 @@
                                                     <p class="mb-1">{{ $reply->comment }}</p>
                                                     <small class="text-muted">
                                                         <i class="fas fa-user"></i> {{ $reply->user->name }}
-                                                        <span class="badge badge-sm badge-{{ 
-                                                            $reply->user->role === 'analista' ? 'primary' : 
-                                                            ($reply->user->role === 'entrenador' ? 'success' : 'info') 
+                                                        <span class="badge badge-sm badge-{{
+                                                            $reply->user->role === 'analista' ? 'primary' :
+                                                            ($reply->user->role === 'entrenador' ? 'success' : 'info')
                                                         }}">
                                                             {{ ucfirst($reply->user->role) }}
                                                         </span>
                                                         - {{ $reply->created_at->diffForHumans() }}
                                                     </small>
                                                 </div>
+                                                @if($reply->user_id === auth()->id())
+                                                    <button class="btn btn-sm btn-outline-danger delete-comment-btn"
+                                                            data-comment-id="{{ $reply->id }}"
+                                                            title="Eliminar respuesta">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -950,6 +964,48 @@ $(document).ready(function() {
     }
 
     console.log('✅ Sistema pseudo-fullscreen inicializado');
+
+    // Manejar borrado de comentarios
+    $(document).on('click', '.delete-comment-btn', function() {
+        const commentId = $(this).data('comment-id');
+        const $commentElement = $(this).closest('.comment-item, .reply');
+
+        if (confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            $.ajax({
+                url: `/comments/${commentId}`,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        // Remover el elemento del DOM con animación
+                        $commentElement.fadeOut(300, function() {
+                            $(this).remove();
+
+                            // Actualizar contador de comentarios
+                            const currentCount = parseInt($('.card-title:contains("Comentarios")').text().match(/\((\d+)\)/)[1]);
+                            const newCount = currentCount - 1;
+                            $('.card-title:contains("Comentarios")').html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
+                        });
+
+                        // Mostrar mensaje de éxito
+                        toastr.success('Comentario eliminado exitosamente');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        toastr.error('No tienes permisos para eliminar este comentario');
+                    } else {
+                        toastr.error('Error al eliminar el comentario');
+                    }
+                }
+            });
+        }
+    });
 });
 </script>
 
