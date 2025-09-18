@@ -44,13 +44,12 @@
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
                         
-                        <!-- Fullscreen Comment Notifications -->
-                        <div id="fullscreenNotifications" class="position-absolute" style="bottom: 60px; left: 10px; right: 10px; top: 10px; pointer-events: none; z-index: 9999; display: none;">
-                            <!-- Fullscreen notifications will appear here -->
-                        </div>
                         
-                        <!-- Add Comment Button Overlay -->
+                        <!-- Mobile Fullscreen Button -->
                         <div class="video-controls-overlay" style="position: absolute; bottom: 60px; right: 10px; z-index: 10;">
+                            <button id="mobileFullscreenBtn" class="btn btn-sm btn-dark mr-2" title="Pantalla completa" style="display: none;">
+                                <i class="fas fa-expand"></i>
+                            </button>
                             <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold">
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
                             </button>
@@ -672,191 +671,143 @@ $(document).ready(function() {
         }
     };
 
-    // FULLSCREEN COMMENTS SYSTEM FOR MOBILE
-    let isFullscreen = false;
+    // PSEUDO-FULLSCREEN SYSTEM FOR MOBILE
+    let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let isPseudoFullscreen = false;
 
-    // Detect fullscreen changes
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    console.log('📱 Device detection:', isMobile ? 'MOBILE' : 'DESKTOP');
 
-    function handleFullscreenChange() {
-        const fullscreenElement = document.fullscreenElement ||
-                                document.webkitFullscreenElement ||
-                                document.mozFullScreenElement ||
-                                document.msFullscreenElement;
+    // Show mobile fullscreen button only on mobile devices
+    if (isMobile) {
+        document.getElementById('mobileFullscreenBtn').style.display = 'inline-block';
 
-        isFullscreen = !!fullscreenElement;
+        // Disable native fullscreen on mobile
+        video.addEventListener('webkitbeginfullscreen', function(e) {
+            e.preventDefault();
+            enterPseudoFullscreen();
+        });
 
-        console.log('🔄 Fullscreen change detected:', isFullscreen);
-
-        if (isFullscreen) {
-            // Show fullscreen notifications
-            document.getElementById('fullscreenNotifications').style.display = 'block';
-            // Hide normal notifications during fullscreen
-            hideAllNotifications();
-        } else {
-            // Hide fullscreen notifications
-            document.getElementById('fullscreenNotifications').style.display = 'none';
-            hideAllFullscreenNotifications();
-
-            // Remover overlay móvil cuando se sale de fullscreen
-            const mobileOverlay = document.getElementById('mobileFullscreenOverlay');
-            if (mobileOverlay && mobileOverlay.parentNode) {
-                mobileOverlay.parentNode.removeChild(mobileOverlay);
-            }
-        }
+        // Hide native fullscreen button
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
     }
 
-    function showCommentNotificationFullscreen(comment) {
-        // En móvil, usar el elemento que está realmente en fullscreen
-        const fullscreenElement = document.fullscreenElement ||
-                                document.webkitFullscreenElement ||
-                                document.mozFullScreenElement ||
-                                document.msFullscreenElement;
-
-        if (!video.duration || !isFullscreen || !fullscreenElement) return;
-
-        // Si es el video el que está en fullscreen, crear overlay dentro del video
-        let fullscreenArea;
-        if (fullscreenElement === video) {
-            // Crear contenedor overlay dentro del video si no existe
-            fullscreenArea = fullscreenElement.parentNode.querySelector('#mobileFullscreenOverlay');
-            if (!fullscreenArea) {
-                fullscreenArea = document.createElement('div');
-                fullscreenArea.id = 'mobileFullscreenOverlay';
-                fullscreenArea.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    pointer-events: none;
-                    z-index: 9999;
-                `;
-                fullscreenElement.parentNode.appendChild(fullscreenArea);
-            }
+    // Mobile fullscreen button click
+    document.getElementById('mobileFullscreenBtn').addEventListener('click', function() {
+        if (isPseudoFullscreen) {
+            exitPseudoFullscreen();
         } else {
-            // Usar el div original si el contenedor está en fullscreen
-            fullscreenArea = document.getElementById('fullscreenNotifications');
+            enterPseudoFullscreen();
         }
+    });
 
-        // Create notification element for fullscreen
-        const notification = document.createElement('div');
-        notification.id = `fs-notification-${comment.id}`;
-        notification.className = 'fullscreen-comment-notification';
+    function enterPseudoFullscreen() {
+        const videoSection = document.getElementById('videoSection');
+        const videoContainer = videoSection.querySelector('.video-container');
 
-        // Category colors
-        const categoryColors = {
-            'tecnico': 'info',
-            'tactico': 'warning',
-            'fisico': 'success',
-            'mental': 'purple',
-            'general': 'secondary'
-        };
+        isPseudoFullscreen = true;
 
-        const priorityColors = {
-            'critica': 'danger',
-            'alta': 'warning',
-            'media': 'info',
-            'baja': 'secondary'
-        };
-
-        notification.style.cssText = `
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 90%;
-            min-width: 320px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 2px solid #28a745;
-            border-radius: 12px;
-            padding: 15px 20px;
-            color: white;
+        // Create pseudo-fullscreen overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'pseudoFullscreenOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
             z-index: 9999;
-            animation: slideUpFromBottom 0.5s ease;
-            pointer-events: auto;
-            backdrop-filter: blur(3px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-            text-align: center;
+            display: flex;
+            flex-direction: column;
         `;
 
-        notification.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="flex-grow-1 text-center">
-                    <div class="mb-2">
-                        <span class="badge badge-${categoryColors[comment.category] || 'secondary'} mr-2" style="font-size: 11px; padding: 3px 6px;">
-                            ${comment.category.charAt(0).toUpperCase() + comment.category.slice(1)}
-                        </span>
-                        <span class="badge badge-${priorityColors[comment.priority] || 'secondary'}" style="font-size: 11px; padding: 3px 6px;">
-                            ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
-                        </span>
-                    </div>
-                    <p class="mb-2" style="font-size: 16px; line-height: 1.3; font-weight: 500; color: white; margin: 0 10px;">
-                        ${comment.comment}
-                    </p>
-                    <small style="font-size: 12px; color: #ccc;">
-                        <i class="fas fa-user"></i> ${comment.user.name} • <i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}
-                    </small>
-                </div>
-                <button class="btn btn-sm btn-link text-white p-1 ml-2"
-                        style="font-size: 14px; opacity: 0.8; min-width: 30px;"
-                        onclick="closeFullscreenNotification(${comment.id})"
-                        title="Cerrar">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+        // Clone video container
+        const clonedContainer = videoContainer.cloneNode(true);
+        clonedContainer.style.cssText = `
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         `;
 
-        fullscreenArea.appendChild(notification);
+        // Update video size
+        const clonedVideo = clonedContainer.querySelector('#rugbyVideo');
+        clonedVideo.style.cssText = `
+            width: 100%;
+            height: 100%;
+            max-height: calc(100vh - 200px);
+            object-fit: contain;
+        `;
 
-        // Auto-hide after 5 seconds in fullscreen
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.style.opacity = '0';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }
-        }, 5000);
+        // Add exit button
+        const exitBtn = document.createElement('button');
+        exitBtn.innerHTML = '<i class="fas fa-times"></i>';
+        exitBtn.style.cssText = `
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10000;
+        `;
+        exitBtn.onclick = exitPseudoFullscreen;
+
+        // Add comments area at bottom
+        const commentsArea = document.createElement('div');
+        commentsArea.id = 'pseudoFullscreenComments';
+        commentsArea.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            border-top: 2px solid #28a745;
+        `;
+        commentsArea.innerHTML = '<h6><i class="fas fa-comments"></i> Comentarios en tiempo real</h6>';
+
+        overlay.appendChild(exitBtn);
+        overlay.appendChild(clonedContainer);
+        overlay.appendChild(commentsArea);
+        document.body.appendChild(overlay);
+
+        // Hide original video
+        videoContainer.style.display = 'none';
+
+        // Update button icon
+        document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
+
+        console.log('📱 Entered pseudo-fullscreen mode');
     }
 
-    function hideAllFullscreenNotifications() {
-        // Limpiar overlay móvil si existe
-        const mobileOverlay = document.getElementById('mobileFullscreenOverlay');
-        if (mobileOverlay) {
-            while (mobileOverlay.firstChild) {
-                mobileOverlay.removeChild(mobileOverlay.firstChild);
-            }
+    function exitPseudoFullscreen() {
+        const overlay = document.getElementById('pseudoFullscreenOverlay');
+        if (overlay) {
+            overlay.remove();
         }
 
-        // Limpiar overlay original
-        const fullscreenArea = document.getElementById('fullscreenNotifications');
-        if (fullscreenArea) {
-            while (fullscreenArea.firstChild) {
-                fullscreenArea.removeChild(fullscreenArea.firstChild);
-            }
-        }
+        // Show original video
+        document.getElementById('videoSection').querySelector('.video-container').style.display = 'block';
+
+        isPseudoFullscreen = false;
+
+        // Update button icon
+        document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
+
+        console.log('📱 Exited pseudo-fullscreen mode');
     }
 
-    // Close fullscreen notification function (global)
-    window.closeFullscreenNotification = function(commentId) {
-        const notification = document.getElementById(`fs-notification-${commentId}`);
-        if (notification && notification.parentNode) {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }
-    };
-
-    // Update the main comment notification function to handle fullscreen
+    // Update comment notification system for pseudo-fullscreen
     const originalCheckAndShowCommentNotifications = checkAndShowCommentNotifications;
     checkAndShowCommentNotifications = function() {
         const currentTime = Math.floor(video.currentTime);
@@ -865,12 +816,8 @@ $(document).ready(function() {
         if (currentTime === lastCheckedTime) return;
         lastCheckedTime = currentTime;
 
-        // Hide notifications based on current mode
-        if (isFullscreen) {
-            hideAllFullscreenNotifications();
-        } else {
-            hideAllNotifications();
-        }
+        // Hide all notifications first
+        hideAllNotifications();
 
         // Find comments at current time (exact match or ±1 second)
         const currentComments = commentsData.filter(comment =>
@@ -879,15 +826,58 @@ $(document).ready(function() {
 
         // Show notifications for current comments
         currentComments.forEach(comment => {
-            if (isFullscreen) {
-                showCommentNotificationFullscreen(comment);
+            if (isPseudoFullscreen) {
+                showCommentInPseudoFullscreen(comment);
             } else {
                 showCommentNotification(comment);
             }
         });
     };
 
-    console.log('✅ Sistema de comentarios en pantalla completa inicializado');
+    function showCommentInPseudoFullscreen(comment) {
+        const commentsArea = document.getElementById('pseudoFullscreenComments');
+        if (!commentsArea) return;
+
+        const notification = document.createElement('div');
+        notification.className = 'pseudo-fullscreen-comment';
+        notification.style.cssText = `
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            animation: slideInFromBottom 0.5s ease;
+        `;
+
+        notification.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="mb-1">
+                        <span class="badge badge-success">${comment.category}</span>
+                        <span class="badge badge-warning ml-1">${comment.priority}</span>
+                    </div>
+                    <p class="mb-1" style="font-size: 14px;">${comment.comment}</p>
+                    <small style="opacity: 0.8;">
+                        <i class="fas fa-user"></i> ${comment.user.name} • ${formatTime(comment.timestamp_seconds)}
+                    </small>
+                </div>
+                <button onclick="this.parentNode.parentNode.remove()" class="btn btn-sm btn-link text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        commentsArea.appendChild(notification);
+
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 8000);
+    }
+
+    console.log('✅ Sistema pseudo-fullscreen inicializado');
 });
 </script>
 
@@ -897,14 +887,14 @@ $(document).ready(function() {
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-@keyframes slideUpFromBottom {
+@keyframes slideInFromBottom {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(100%);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateY(0);
     }
 }
 
@@ -912,7 +902,7 @@ $(document).ready(function() {
     transition: opacity 0.3s ease;
 }
 
-.fullscreen-comment-notification {
+.pseudo-fullscreen-comment {
     transition: opacity 0.3s ease;
 }
 
