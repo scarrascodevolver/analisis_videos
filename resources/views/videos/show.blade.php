@@ -450,9 +450,8 @@ $(document).ready(function() {
         progressContainer.appendChild(progressBar);
         progressContainer.appendChild(progressIndicator);
         
-        // Add comment markers
-        const comments = @json($comments);
-        comments.forEach(comment => {
+        // Add comment markers (usar commentsData actualizable)
+        commentsData.forEach(comment => {
             const position = (comment.timestamp_seconds / videoDuration) * 100;
             
             const marker = document.createElement('div');
