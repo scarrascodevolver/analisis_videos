@@ -28,6 +28,17 @@ class LoginController extends Controller
     protected $redirectTo = '/home';
 
     /**
+     * Get the post-login redirect path.
+     *
+     * @return string
+     */
+    public function redirectTo()
+    {
+        // Siempre redirigir a home después del login, ignorar URL anterior
+        return '/home';
+    }
+
+    /**
      * Create a new controller instance.
      *
      * @return void
