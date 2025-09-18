@@ -731,43 +731,44 @@ $(document).ready(function() {
 
         notification.style.cssText = `
             position: absolute;
-            top: 20px;
-            right: 20px;
-            max-width: 350px;
-            min-width: 280px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 3px solid #28a745;
-            border-radius: 15px;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 90%;
+            min-width: 320px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #28a745;
+            border-radius: 12px;
             padding: 15px 20px;
             color: white;
             z-index: 9999;
-            animation: slideInFromRight 0.5s ease;
+            animation: slideUpFromBottom 0.5s ease;
             pointer-events: auto;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            text-align: center;
         `;
 
         notification.innerHTML = `
-            <div class="d-flex align-items-start">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="badge badge-${categoryColors[comment.category] || 'secondary'} mr-2" style="font-size: 12px; padding: 4px 8px;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="flex-grow-1 text-center">
+                    <div class="mb-2">
+                        <span class="badge badge-${categoryColors[comment.category] || 'secondary'} mr-2" style="font-size: 11px; padding: 3px 6px;">
                             ${comment.category.charAt(0).toUpperCase() + comment.category.slice(1)}
                         </span>
-                        <span class="badge badge-${priorityColors[comment.priority] || 'secondary'}" style="font-size: 12px; padding: 4px 8px;">
+                        <span class="badge badge-${priorityColors[comment.priority] || 'secondary'}" style="font-size: 11px; padding: 3px 6px;">
                             ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
                         </span>
                     </div>
-                    <p class="mb-3" style="font-size: 16px; line-height: 1.4; font-weight: 500; color: white;">
+                    <p class="mb-2" style="font-size: 16px; line-height: 1.3; font-weight: 500; color: white; margin: 0 10px;">
                         ${comment.comment}
                     </p>
-                    <small style="font-size: 13px; color: #ccc;">
-                        <i class="fas fa-user"></i> ${comment.user.name}
-                        <span class="ml-3"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}</span>
+                    <small style="font-size: 12px; color: #ccc;">
+                        <i class="fas fa-user"></i> ${comment.user.name} • <i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}
                     </small>
                 </div>
-                <button class="btn btn-sm btn-link text-white p-2 ml-3"
-                        style="font-size: 16px; opacity: 0.8;"
+                <button class="btn btn-sm btn-link text-white p-1 ml-2"
+                        style="font-size: 14px; opacity: 0.8; min-width: 30px;"
                         onclick="closeFullscreenNotification(${comment.id})"
                         title="Cerrar">
                     <i class="fas fa-times"></i>
@@ -777,7 +778,7 @@ $(document).ready(function() {
 
         fullscreenArea.appendChild(notification);
 
-        // Auto-hide after 6 seconds in fullscreen
+        // Auto-hide after 5 seconds in fullscreen
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.opacity = '0';
@@ -787,7 +788,7 @@ $(document).ready(function() {
                     }
                 }, 300);
             }
-        }, 6000);
+        }, 5000);
     }
 
     function hideAllFullscreenNotifications() {
@@ -851,14 +852,14 @@ $(document).ready(function() {
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-@keyframes slideInFromRight {
+@keyframes slideUpFromBottom {
     from {
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateX(-50%) translateY(100%);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(-50%) translateY(0);
     }
 }
 
