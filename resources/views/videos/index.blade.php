@@ -377,9 +377,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const loading = container.querySelector('.thumbnail-loading');
         const videoId = video.dataset.videoId;
 
-        // Cuando el video carga metadata, ocultar loading
-        video.addEventListener('loadedmetadata', function() {
-            console.log(`✅ Thumbnail ${videoId} cargado`);
+        // Cuando el video carga y puede mostrar frame, ocultar loading
+        video.addEventListener('canplay', function() {
+            console.log(`✅ Thumbnail ${videoId} listo para mostrar`);
+            if (loading) {
+                loading.style.display = 'none';
+            }
+        });
+
+        // También ocultar loading si carga datos
+        video.addEventListener('loadeddata', function() {
+            console.log(`✅ Thumbnail ${videoId} datos cargados`);
             if (loading) {
                 loading.style.display = 'none';
             }
