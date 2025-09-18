@@ -991,6 +991,34 @@ $(document).ready(function() {
                         $('.card-title:contains("Comentarios")').html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
                     });
 
+                    // SINCRONIZAR TIMELINE Y NOTIFICACIONES
+                    // 1. Remover del array commentsData
+                    const commentIndex = commentsData.findIndex(comment => comment.id == commentId);
+                    if (commentIndex !== -1) {
+                        commentsData.splice(commentIndex, 1);
+                        console.log(`✅ Comentario ${commentId} removido de commentsData`);
+                    }
+
+                    // 2. Limpiar notificaciones activas del comentario borrado
+                    activeCommentIds.delete(parseInt(commentId));
+
+                    // 3. Remover notificación visible si existe
+                    const notification = document.getElementById(`notification-${commentId}`);
+                    if (notification && notification.parentNode) {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+
+                    // 4. Recrear timeline sin el marcador eliminado
+                    if (video.duration && !isNaN(video.duration)) {
+                        createTimelineMarkers();
+                        console.log(`🔄 Timeline recreado sin comentario ${commentId}`);
+                    }
+
                     // Mostrar mensaje de éxito
                     toastr.success('Comentario eliminado exitosamente');
                 }
