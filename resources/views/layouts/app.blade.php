@@ -264,7 +264,7 @@
                             </li>
                         @endif
 
-                        @if(Auth::user()->role === 'entrenador')
+                        @if(Auth::user()->role === 'entrenador' || Auth::user()->role === 'analista')
                             <li class="nav-item">
                                 <a href="{{ route('coach.users') }}" class="nav-link {{ request()->routeIs('coach.users') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-users"></i>
