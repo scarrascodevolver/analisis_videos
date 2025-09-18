@@ -853,22 +853,57 @@ $(document).ready(function() {
         if (currentTime === lastCheckedTime) return;
         lastCheckedTime = currentTime;
 
-        // Hide all notifications first
-        hideAllNotifications();
-
         // Find comments at current time (exact match or ±1 second)
         const currentComments = commentsData.filter(comment =>
             Math.abs(comment.timestamp_seconds - currentTime) <= 1
         );
 
-        // Show notifications for current comments
-        currentComments.forEach(comment => {
-            if (isPseudoFullscreen) {
-                showCommentInPseudoFullscreen(comment);
-            } else {
-                showCommentNotification(comment);
-            }
-        });
+        // Get IDs of comments that should be visible now
+        const currentCommentIds = new Set(currentComments.map(c => c.id));
+
+        // Only update notifications if the set of comments has changed
+        if (!setsAreEqual(activeCommentIds, currentCommentIds)) {
+            // Remove notifications that should no longer be visible
+            activeCommentIds.forEach(commentId => {
+                if (!currentCommentIds.has(commentId)) {
+                    // For pseudo-fullscreen, remove from special area
+                    if (isPseudoFullscreen) {
+                        const commentsArea = document.querySelector('#pseudoFullscreenOverlay .comments-area');
+                        if (commentsArea) {
+                            const pseudoNotification = commentsArea.querySelector('.pseudo-fullscreen-comment');
+                            if (pseudoNotification) {
+                                pseudoNotification.remove();
+                            }
+                        }
+                    } else {
+                        // For normal mode, remove from notification area
+                        const notification = document.getElementById(`notification-${commentId}`);
+                        if (notification && notification.parentNode) {
+                            notification.style.opacity = '0';
+                            setTimeout(() => {
+                                if (notification.parentNode) {
+                                    notification.parentNode.removeChild(notification);
+                                }
+                            }, 300);
+                        }
+                    }
+                }
+            });
+
+            // Show new notifications
+            currentComments.forEach(comment => {
+                if (!activeCommentIds.has(comment.id)) {
+                    if (isPseudoFullscreen) {
+                        showCommentInPseudoFullscreen(comment);
+                    } else {
+                        showCommentNotification(comment);
+                    }
+                }
+            });
+
+            // Update active comment IDs
+            activeCommentIds = currentCommentIds;
+        }
     };
 
     function showCommentInPseudoFullscreen(comment) {
