@@ -1009,6 +1009,55 @@ $(document).ready(function() {
 
     console.log('✅ Sistema pseudo-fullscreen inicializado');
 
+    // Funcionalidad del botón "Comentar aquí"
+    $('#addCommentBtn').on('click', function() {
+        const video = document.getElementById('rugbyVideo');
+        const currentTime = video ? video.currentTime : 0;
+
+        // Mostrar sección de comentarios si está oculta
+        const commentsSection = $('#commentsSection');
+        const videoSection = $('#videoSection');
+        const toggleBtn = $('#toggleCommentsBtn');
+        const toggleText = $('#toggleCommentsText');
+        const toggleIcon = toggleBtn.find('i');
+
+        if (!commentsSection.is(':visible')) {
+            // Mostrar sección de comentarios
+            commentsSection.show();
+            videoSection.removeClass('col-lg-12').addClass('col-lg-8');
+            toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+            toggleText.text('Ocultar Comentarios');
+            toggleBtn.removeClass('btn-success').addClass('btn-warning');
+            $('#rugbyVideo').css('height', '500px');
+        }
+
+        // Scroll hacia la sección de comentarios
+        setTimeout(() => {
+            $('html, body').animate({
+                scrollTop: $('#commentsSection').offset().top - 20
+            }, 800);
+
+            // Focus en el textarea de comentario y pre-llenar timestamp
+            setTimeout(() => {
+                $('#timestampDisplay').text(formatTime(currentTime));
+                $('input[name="timestamp_seconds"]').val(Math.floor(currentTime));
+                $('textarea[name="comment"]').focus();
+
+                // Highlight del formulario brevemente
+                const commentForm = $('#commentForm');
+                commentForm.addClass('border border-success').css('background-color', '#f8fff9');
+                setTimeout(() => {
+                    commentForm.removeClass('border border-success').css('background-color', '');
+                }, 2000);
+
+                // Mostrar notificación
+                if (typeof toastr !== 'undefined') {
+                    toastr.info(`Timestamp establecido en ${formatTime(currentTime)}`, 'Listo para comentar');
+                }
+            }, 900);
+        }, 100);
+    });
+
     // Manejar borrado de comentarios
     $(document).on('click', '.delete-comment-btn', function() {
         const commentId = $(this).data('comment-id');
