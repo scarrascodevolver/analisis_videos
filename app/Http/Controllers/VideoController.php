@@ -97,6 +97,10 @@ class VideoController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('=== VIDEO UPLOAD STARTED ===');
+        \Log::info('User: ' . auth()->id());
+        \Log::info('File: ' . ($request->file('video_file') ? $request->file('video_file')->getClientOriginalName() : 'NO FILE'));
+
         try {
             $request->validate([
                 'title' => 'required|string|max:255',
