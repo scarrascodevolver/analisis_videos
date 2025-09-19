@@ -78,11 +78,11 @@
                     <!-- Password -->
                     <div class="form-group">
                         <div class="input-group">
-                            <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                                   name="password" placeholder="Contraseña" required>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                   name="password" placeholder="Contraseña" required id="password">
                             <div class="input-group-append">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
+                                <span class="input-group-text password-toggle" onclick="togglePassword('password', this)">
+                                    <i class="fas fa-eye"></i>
                                 </span>
                             </div>
                         </div>
@@ -94,11 +94,11 @@
                     <!-- Confirm Password -->
                     <div class="form-group">
                         <div class="input-group">
-                            <input type="password" class="form-control" 
-                                   name="password_confirmation" placeholder="Confirmar contraseña" required>
+                            <input type="password" class="form-control"
+                                   name="password_confirmation" placeholder="Confirmar contraseña" required id="password_confirmation">
                             <div class="input-group-append">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
+                                <span class="input-group-text password-toggle" onclick="togglePassword('password_confirmation', this)">
+                                    <i class="fas fa-eye"></i>
                                 </span>
                             </div>
                         </div>
@@ -327,6 +327,22 @@
 
 @section('js')
 <script>
+// Toggle password visibility
+function togglePassword(fieldId, element) {
+    const passwordField = document.getElementById(fieldId);
+    const icon = element.querySelector('i');
+
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
 $(document).ready(function() {
     // Always show player fields since only players can register
     $('#playerFields').show();
@@ -558,5 +574,25 @@ select.rugby-select option {
 }
 
 /* Alternativa: Crear un select personalizado con div + JS (más complejo) */
+
+/* Password toggle styles */
+.password-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+    background-color: #1e4d2b !important;
+    color: white !important;
+}
+
+.password-toggle i {
+    transition: all 0.3s ease;
+}
+
+.password-toggle:hover i {
+    transform: scale(1.1);
+}
 </style>
 @endsection
