@@ -135,7 +135,7 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
         $filename = time() . '_' . $sanitizedName;
-        $path = $file->storeAs('videos', $filename, 'public');
+        $path = $file->storeAs('videos', $filename, 'spaces');
 
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
@@ -246,7 +246,7 @@ class VideoController extends Controller
     public function destroy(Video $video)
     {
         // Delete file from storage
-        Storage::disk('public')->delete($video->file_path);
+        Storage::disk('spaces')->delete($video->file_path);
 
         $video->delete();
 
@@ -285,7 +285,7 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
         $filename = time() . '_player_' . $sanitizedName;
-        $path = $file->storeAs('videos/player-uploads', $filename, 'public');
+        $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
 
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
