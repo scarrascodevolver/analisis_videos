@@ -13,10 +13,15 @@ class VideoStreamController extends Controller
     public function stream(Video $video, Request $request)
     {
         // Check if file is in DigitalOcean Spaces (new uploads)
-        if (Storage::disk('spaces')->exists($video->file_path)) {
-            // Redirect to CDN URL for better performance
-            $cdnUrl = Storage::disk('spaces')->url($video->file_path);
-            return redirect($cdnUrl);
+        try {
+            if (Storage::disk('spaces')->exists($video->file_path)) {
+                // Redirect to CDN URL for better performance
+                $cdnUrl = Storage::disk('spaces')->url($video->file_path);
+                return redirect($cdnUrl);
+            }
+        } catch (Exception $e) {
+            // Log error and continue to local fallback
+            \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
         }
 
         // Fallback to local storage for old videos
@@ -75,11 +80,16 @@ class VideoStreamController extends Controller
     public function streamByPath($filename, Request $request)
     {
         // Check if file is in DigitalOcean Spaces (new uploads)
-        $spacesPath = 'videos/' . $filename;
-        if (Storage::disk('spaces')->exists($spacesPath)) {
-            // Redirect to CDN URL for better performance
-            $cdnUrl = Storage::disk('spaces')->url($spacesPath);
-            return redirect($cdnUrl);
+        try {
+            $spacesPath = 'videos/' . $filename;
+            if (Storage::disk('spaces')->exists($spacesPath)) {
+                // Redirect to CDN URL for better performance
+                $cdnUrl = Storage::disk('spaces')->url($spacesPath);
+                return redirect($cdnUrl);
+            }
+        } catch (Exception $e) {
+            // Log error and continue to local fallback
+            \Log::warning('DigitalOcean Spaces access failed for path: ' . $e->getMessage());
         }
 
         // Fallback to local storage for old videos

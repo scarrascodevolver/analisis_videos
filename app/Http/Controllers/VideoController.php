@@ -135,7 +135,15 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
         $filename = time() . '_' . $sanitizedName;
-        $path = $file->storeAs('videos', $filename, 'spaces');
+
+        // Try to store in DigitalOcean Spaces, fallback to local if it fails
+        try {
+            $path = $file->storeAs('videos', $filename, 'spaces');
+        } catch (Exception $e) {
+            // Log the error and fallback to local storage
+            \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
+            $path = $file->storeAs('videos', $filename, 'public');
+        }
 
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
@@ -245,8 +253,21 @@ class VideoController extends Controller
 
     public function destroy(Video $video)
     {
-        // Delete file from storage
-        Storage::disk('spaces')->delete($video->file_path);
+        // Delete file from storage - try Spaces first, then local
+        try {
+            if (Storage::disk('spaces')->exists($video->file_path)) {
+                Storage::disk('spaces')->delete($video->file_path);
+            }
+        } catch (Exception $e) {
+            \Log::warning('DigitalOcean Spaces delete failed: ' . $e->getMessage());
+        }
+
+        // Also try deleting from local storage (for old files or fallback)
+        try {
+            Storage::disk('public')->delete($video->file_path);
+        } catch (Exception $e) {
+            \Log::warning('Local storage delete failed: ' . $e->getMessage());
+        }
 
         $video->delete();
 
@@ -285,7 +306,15 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
         $filename = time() . '_player_' . $sanitizedName;
-        $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
+
+        // Try to store in DigitalOcean Spaces, fallback to local if it fails
+        try {
+            $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
+        } catch (Exception $e) {
+            // Log the error and fallback to local storage
+            \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
+            $path = $file->storeAs('videos/player-uploads', $filename, 'public');
+        }
 
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
