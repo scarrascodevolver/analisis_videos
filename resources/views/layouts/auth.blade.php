@@ -13,7 +13,7 @@
 
     <style>
         body {
-            background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3a 50%, #4a7c59 100%);
+            background: linear-gradient(rgba(30, 77, 43, 0.7), rgba(45, 90, 58, 0.8)), url('{{ asset('tineo.jpg') }}') center/cover no-repeat fixed;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
