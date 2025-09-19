@@ -157,7 +157,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <div class="form-group">
                                     <label>Categoría</label>
                                     <select name="category" class="form-control" required>
@@ -168,7 +168,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <div class="form-group">
                                     <label>Prioridad</label>
                                     <select name="priority" class="form-control" required>
