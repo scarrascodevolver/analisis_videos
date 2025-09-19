@@ -31,6 +31,85 @@
 .file-upload-btn {
     cursor: pointer;
 }
+
+/* Camera Modal Styles */
+.camera-modal .modal-dialog {
+    max-width: 600px;
+}
+
+.camera-preview {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.capture-controls {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.capture-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid #1e4d2b;
+    background: #fff;
+    font-size: 24px;
+    color: #1e4d2b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.capture-btn:hover {
+    background: #1e4d2b;
+    color: #fff;
+}
+
+.upload-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .upload-options {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .upload-options .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+/* Rugby theme buttons */
+.btn-rugby {
+    background-color: #1e4d2b;
+    border-color: #1e4d2b;
+    color: #fff;
+}
+
+.btn-rugby:hover {
+    background-color: #155a28;
+    border-color: #155a28;
+    color: #fff;
+}
+
+.btn-outline-rugby {
+    color: #1e4d2b;
+    border-color: #1e4d2b;
+    background-color: transparent;
+}
+
+.btn-outline-rugby:hover {
+    background-color: #1e4d2b;
+    border-color: #1e4d2b;
+    color: #fff;
+}
 @endsection
 
 @section('main_content')
@@ -56,11 +135,16 @@
                     @endif
                 </div>
 
-                <div class="file-upload-wrapper">
-                    <label for="avatar" class="btn btn-rugby file-upload-btn">
-                        <i class="fas fa-camera"></i> Cambiar Foto
-                    </label>
-                    <input type="file" id="avatar" name="avatar" accept="image/*">
+                <div class="upload-options">
+                    <button type="button" class="btn btn-rugby" data-toggle="modal" data-target="#cameraModal">
+                        <i class="fas fa-camera"></i> Tomar Foto
+                    </button>
+                    <div class="file-upload-wrapper">
+                        <label for="avatar" class="btn btn-outline-rugby file-upload-btn">
+                            <i class="fas fa-upload"></i> Subir Archivo
+                        </label>
+                        <input type="file" id="avatar" name="avatar" accept="image/*">
+                    </div>
                 </div>
 
                 @if($user->profile && $user->profile->avatar)
@@ -273,23 +357,155 @@
         </form>
     </div>
 </div>
+
+<!-- Camera Modal -->
+<div class="modal fade camera-modal" id="cameraModal" tabindex="-1" role="dialog" aria-labelledby="cameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header rugby-green">
+                <h5 class="modal-title" id="cameraModalLabel">
+                    <i class="fas fa-camera"></i> Tomar Foto de Perfil
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="camera-container">
+                    <video id="cameraVideo" class="camera-preview" autoplay muted></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="capture-controls">
+                    <button type="button" id="captureBtn" class="capture-btn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Posiciona tu rostro en el centro y presiona el botón para capturar
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" id="useCapturedPhoto" class="btn btn-rugby" style="display: none;">
+                    <i class="fas fa-check"></i> Usar Esta Foto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('js')
 <script>
 $(document).ready(function() {
-    // Preview avatar when selected
+    let stream = null;
+    let capturedImageData = null;
+
+    // Preview avatar when file selected
     $('#avatar').on('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 $('#avatar-preview').attr('src', e.target.result);
+                capturedImageData = null; // Clear camera data if file selected
             };
             reader.readAsDataURL(file);
 
             // Copy file to form input
             $('#avatar-form')[0].files = e.target.files;
+        }
+    });
+
+    // Open camera when modal is shown
+    $('#cameraModal').on('shown.bs.modal', function() {
+        openCamera();
+    });
+
+    // Close camera when modal is hidden
+    $('#cameraModal').on('hidden.bs.modal', function() {
+        closeCamera();
+        $('#useCapturedPhoto').hide();
+        capturedImageData = null;
+    });
+
+    // Open camera function
+    async function openCamera() {
+        try {
+            const constraints = {
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'user' // Front camera on mobile
+                }
+            };
+
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('cameraVideo');
+            video.srcObject = stream;
+
+            console.log('✅ Cámara iniciada correctamente');
+        } catch (error) {
+            console.error('❌ Error al acceder a la cámara:', error);
+            alert('No se pudo acceder a la cámara. Verifica los permisos.');
+        }
+    }
+
+    // Close camera function
+    function closeCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
+
+    // Capture photo
+    $('#captureBtn').on('click', function() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('cameraCanvas');
+        const context = canvas.getContext('2d');
+
+        // Set canvas size to video size
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0);
+
+        // Convert to blob and show preview
+        canvas.toBlob(function(blob) {
+            capturedImageData = blob;
+            const url = URL.createObjectURL(blob);
+            $('#avatar-preview').attr('src', url);
+            $('#useCapturedPhoto').show();
+
+            console.log('📸 Foto capturada correctamente');
+        }, 'image/jpeg', 0.8);
+    });
+
+    // Use captured photo
+    $('#useCapturedPhoto').on('click', function() {
+        if (capturedImageData) {
+            // Create file from blob
+            const file = new File([capturedImageData], 'camera-photo.jpg', {
+                type: 'image/jpeg'
+            });
+
+            // Create FileList and assign to input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            $('#avatar-form')[0].files = dataTransfer.files;
+
+            // Clear regular file input
+            $('#avatar').val('');
+
+            $('#cameraModal').modal('hide');
+            console.log('✅ Foto de cámara lista para subir');
         }
     });
 
@@ -299,6 +515,13 @@ $(document).ready(function() {
             $('#avatar-form')[0].files = $('#avatar')[0].files;
         }
     });
+
+    // Check camera support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn('⚠️ getUserMedia no está soportado en este navegador');
+        $('[data-target="#cameraModal"]').prop('disabled', true)
+            .attr('title', 'Cámara no soportada en este navegador');
+    }
 });
 </script>
 @endsection
