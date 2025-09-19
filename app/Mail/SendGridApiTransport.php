@@ -20,6 +20,15 @@ class SendGridApiTransport extends AbstractTransport
     {
         $email = MessageConverter::toEmail($message->getOriginalMessage());
 
+        // Get email content - prefer HTML, fallback to text
+        $content = $email->getHtmlBody() ?: $email->getTextBody();
+        $contentType = $email->getHtmlBody() ? 'text/html' : 'text/plain';
+
+        // Ensure content is not empty
+        if (empty($content)) {
+            $content = 'Password reset email from Los Troncos Rugby Club';
+        }
+
         $data = [
             'personalizations' => [
                 [
@@ -30,8 +39,8 @@ class SendGridApiTransport extends AbstractTransport
             'subject' => $email->getSubject(),
             'content' => [
                 [
-                    'type' => 'text/plain',
-                    'value' => $email->getTextBody()
+                    'type' => $contentType,
+                    'value' => $content
                 ]
             ]
         ];
