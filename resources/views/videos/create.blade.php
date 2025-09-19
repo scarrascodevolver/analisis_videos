@@ -34,7 +34,7 @@
                                         <label class="custom-file-label" for="video_file">Seleccionar archivo de video...</label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 200MB
+                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 1.2GB
                                     </small>
                                     @error('video_file')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -354,10 +354,10 @@ $(document).ready(function() {
         }
 
         var file = fileInput.files[0];
-        var maxSize = 200 * 1024 * 1024; // 200MB
+        var maxSize = 1.2 * 1024 * 1024 * 1024; // 1.2GB
         
         if (file.size > maxSize) {
-            alert('El archivo es demasiado grande. El tamaño máximo es 200MB.');
+            alert('El archivo es demasiado grande. El tamaño máximo es 1.2GB.');
             return false;
         }
 

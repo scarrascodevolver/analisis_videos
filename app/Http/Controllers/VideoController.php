@@ -102,7 +102,7 @@ class VideoController extends Controller
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:204800', // 200MB max
+                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:1228800', // 1.2GB max
                 'analyzed_team_id' => 'required|exists:teams,id',
                 'rival_team_id' => 'nullable|exists:teams,id',
                 'category_id' => 'required|exists:categories,id',
@@ -114,7 +114,7 @@ class VideoController extends Controller
                 'assignment_notes' => 'nullable|string|max:1000',
                 'visibility_type' => 'required|in:public,forwards,backs,specific',
             ], [
-                'video_file.max' => 'El archivo de video no puede superar los 200MB.',
+                'video_file.max' => 'El archivo de video no puede superar 1.2GB.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
