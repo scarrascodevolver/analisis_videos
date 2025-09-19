@@ -13,9 +13,10 @@ class PlayerApiController extends Controller
      */
     public function all(Request $request)
     {
-        // Get all players (users with role 'jugador' or staff that can receive assignments)
+        // Get all players, coaches and staff (users with role 'jugador', 'entrenador' or staff that can receive assignments)
         $players = User::where(function($query) {
                 $query->where('role', 'jugador')
+                      ->orWhere('role', 'entrenador')
                       ->orWhereHas('profile', function($q) {
                           $q->where('can_receive_assignments', true);
                       });
@@ -60,9 +61,10 @@ class PlayerApiController extends Controller
             ]);
         }
 
-        // Get players (users with role 'jugador' or staff that can receive assignments)
+        // Get players, coaches and staff (users with role 'jugador', 'entrenador' or staff that can receive assignments)
         $players = User::where(function($mainQuery) {
                 $mainQuery->where('role', 'jugador')
+                          ->orWhere('role', 'entrenador')
                           ->orWhereHas('profile', function($q) {
                               $q->where('can_receive_assignments', true);
                           });
@@ -112,8 +114,8 @@ class PlayerApiController extends Controller
      */
     public function playerVideos(Request $request, User $player)
     {
-        // Verify the player is actually a player or staff that can receive assignments
-        if ($player->role !== 'jugador' && !($player->profile && $player->profile->can_receive_assignments)) {
+        // Verify the user is actually a player, coach or staff that can receive assignments
+        if (!in_array($player->role, ['jugador', 'entrenador']) && !($player->profile && $player->profile->can_receive_assignments)) {
             return response()->json([
                 'error' => 'Usuario no puede recibir asignaciones de videos'
             ], 404);

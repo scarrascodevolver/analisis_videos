@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page_title', 'Gestión de Jugadores')
+@section('page_title', 'Gestión de Jugadores y Entrenadores')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
@@ -14,7 +14,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-users"></i>
-                        Gestión de Jugadores
+                        Gestión de Jugadores y Entrenadores
                     </h3>
                 </div>
                 <div class="card-body">
@@ -65,7 +65,7 @@
                             <div class="col-12">
                                 <h5 class="text-rugby">
                                     <i class="fas fa-users"></i>
-                                    Todos los Jugadores
+                                    Todos los Jugadores y Entrenadores
                                 </h5>
                                 <hr class="mb-4">
                             </div>
@@ -78,9 +78,9 @@
                     <!-- Estado vacío inicial (se oculta cuando se cargan jugadores) -->
                     <div id="empty-state" class="text-center py-5" style="display: none;">
                         <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">Busca un jugador para comenzar</h4>
+                        <h4 class="text-muted">Busca un jugador o entrenador para comenzar</h4>
                         <p class="text-muted">
-                            Escribe en el campo de búsqueda para encontrar jugadores<br>
+                            Escribe en el campo de búsqueda para encontrar jugadores y entrenadores<br>
                             y ver sus videos asignados y progreso
                         </p>
                     </div>
@@ -88,7 +88,7 @@
                     <!-- Sin resultados -->
                     <div id="no-results" class="text-center py-5" style="display: none;">
                         <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">No se encontraron jugadores</h4>
+                        <h4 class="text-muted">No se encontraron jugadores ni entrenadores</h4>
                         <p class="text-muted">
                             Intenta con otro nombre o verifica la ortografía
                         </p>
