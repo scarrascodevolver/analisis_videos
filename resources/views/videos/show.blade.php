@@ -133,11 +133,11 @@
                         Agregar Comentario
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body py-2 px-3">
                     <form id="commentForm" action="{{ route('video.comments.store', $video) }}" method="POST" data-video-id="{{ $video->id }}">
                         @csrf
-                        <div class="form-group">
-                            <label>Timestamp</label>
+                        <div class="form-group mb-2">
+                            <label class="mb-1">Timestamp</label>
                             <div class="input-group">
                                 <input type="number" id="timestamp_seconds" name="timestamp_seconds" 
                                        class="form-control" min="0" value="0" required>
@@ -150,16 +150,16 @@
                             <small class="text-muted" id="timestampDisplay">00:00</small>
                         </div>
 
-                        <div class="form-group">
-                            <label>Comentario</label>
-                            <textarea name="comment" class="form-control" rows="2"
+                        <div class="form-group mb-2">
+                            <label class="mb-1">Comentario</label>
+                            <textarea name="comment" class="form-control" rows="1"
                                       placeholder="Describe lo que observas..." required></textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-12">
-                                <div class="form-group">
-                                    <label>Categoría</label>
+                                <div class="form-group mb-2">
+                                    <label class="mb-1">Categoría</label>
                                     <select name="category" class="form-control" required>
                                         <option value="tecnico">Técnico</option>
                                         <option value="tactico">Táctico</option>
@@ -169,8 +169,8 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <div class="form-group">
-                                    <label>Prioridad</label>
+                                <div class="form-group mb-2">
+                                    <label class="mb-1">Prioridad</label>
                                     <select name="priority" class="form-control" required>
                                         <option value="media">Media</option>
                                         <option value="baja">Baja</option>
@@ -181,8 +181,8 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-rugby btn-block">
-                            <i class="fas fa-comment"></i> Agregar Comentario
+                        <button type="submit" class="btn btn-rugby btn-sm btn-block">
+                            <i class="fas fa-comment"></i> Agregar
                         </button>
                     </form>
                 </div>
