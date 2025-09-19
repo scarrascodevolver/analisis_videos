@@ -97,10 +97,6 @@ class VideoController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('=== VIDEO UPLOAD STARTED ===');
-        \Log::info('User: ' . auth()->id());
-        \Log::info('File: ' . ($request->file('video_file') ? $request->file('video_file')->getClientOriginalName() : 'NO FILE'));
-
         try {
             $request->validate([
                 'title' => 'required|string|max:255',
@@ -144,24 +140,9 @@ class VideoController extends Controller
         try {
             $path = $file->storeAs('videos', $filename, 'spaces');
         } catch (Exception $e) {
-            // TEMPORARY DEBUG: Log detailed error info
-            \Log::error('=== DIGITALOCEAN SPACES DEBUG ===');
-            \Log::error('Error: ' . $e->getMessage());
-            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
-            \Log::error('Class: ' . get_class($e));
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            \Log::error('=== END DEBUG ===');
-
-            // TEMPORARY: Show error instead of fallback
-            return response()->json([
-                'success' => false,
-                'message' => 'DEBUG - DigitalOcean Spaces Error: ' . $e->getMessage(),
-                'error_class' => get_class($e),
-                'error_file' => $e->getFile() . ':' . $e->getLine()
-            ], 500);
-
-            // Commented out fallback for debugging
-            // $path = $file->storeAs('videos', $filename, 'public');
+            // Log the error and fallback to local storage
+            \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
+            $path = $file->storeAs('videos', $filename, 'public');
         }
 
         // Generate thumbnail placeholder
@@ -330,20 +311,9 @@ class VideoController extends Controller
         try {
             $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
         } catch (Exception $e) {
-            // TEMPORARY DEBUG: Log detailed error info for player uploads
-            \Log::error('=== DIGITALOCEAN SPACES PLAYER DEBUG ===');
-            \Log::error('Error: ' . $e->getMessage());
-            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
-            \Log::error('Class: ' . get_class($e));
-            \Log::error('=== END PLAYER DEBUG ===');
-
-            // TEMPORARY: Show error instead of fallback
-            return redirect()->back()->withErrors([
-                'video_file' => 'DEBUG - DigitalOcean Spaces Error: ' . $e->getMessage() . ' (Class: ' . get_class($e) . ')'
-            ]);
-
-            // Commented out fallback for debugging
-            // $path = $file->storeAs('videos/player-uploads', $filename, 'public');
+            // Log the error and fallback to local storage
+            \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
+            $path = $file->storeAs('videos/player-uploads', $filename, 'public');
         }
 
         // Generate thumbnail placeholder

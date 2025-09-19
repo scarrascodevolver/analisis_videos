@@ -15,9 +15,16 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Redirect to CDN URL for better performance
-                $cdnUrl = Storage::disk('spaces')->url($video->file_path);
-                return redirect($cdnUrl);
+                // Generate temporary signed URL (expires in 2 hours)
+                $signedUrl = Storage::disk('spaces')->temporaryUrl(
+                    $video->file_path,
+                    now()->addHours(2)
+                );
+
+                // Log for monitoring
+                \Log::info('Generated signed URL for video: ' . $video->id);
+
+                return redirect($signedUrl);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
@@ -83,9 +90,16 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Redirect to CDN URL for better performance
-                $cdnUrl = Storage::disk('spaces')->url($spacesPath);
-                return redirect($cdnUrl);
+                // Generate temporary signed URL (expires in 2 hours)
+                $signedUrl = Storage::disk('spaces')->temporaryUrl(
+                    $spacesPath,
+                    now()->addHours(2)
+                );
+
+                // Log for monitoring
+                \Log::info('Generated signed URL for file: ' . $filename);
+
+                return redirect($signedUrl);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
