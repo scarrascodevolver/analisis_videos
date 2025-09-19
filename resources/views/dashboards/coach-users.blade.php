@@ -368,13 +368,17 @@ $(document).ready(function() {
             const secondaryPosition = player.profile?.secondary_position;
             const category = player.profile?.category?.name || 'Sin categoría';
             const videoCount = player.video_count || 0;
+            const avatar = player.profile?.avatar;
 
             html += `
                 <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
                     <div class="player-card text-center p-4" data-player-id="${player.id}">
                         <!-- Avatar centrado -->
                         <div class="player-avatar-center mx-auto mb-3">
-                            ${initials}
+                            ${avatar ?
+                                `<img src="/storage/${avatar}" alt="${player.name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
+                                initials
+                            }
                         </div>
 
                         <!-- Nombre del jugador -->
