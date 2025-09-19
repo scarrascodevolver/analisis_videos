@@ -11,7 +11,7 @@
 @section('main_content')
     <div class="row">
         <!-- Video Player Section -->
-        <div class="col-lg-9" id="videoSection">
+        <div class="col-lg-10" id="videoSection">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -37,7 +37,7 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: 780px; display: block;" preload="metadata">
+                        <video id="rugbyVideo" controls style="width: 100%; height: 550px; display: block;" preload="metadata">
                             <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Comments Section -->
-        <div class="col-lg-3" id="commentsSection">
+        <div class="col-lg-2" id="commentsSection">
             <!-- Add Comment Form -->
             <div class="card">
                 <div class="card-header">
