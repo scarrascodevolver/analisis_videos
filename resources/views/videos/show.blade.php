@@ -11,7 +11,7 @@
 @section('main_content')
     <div class="row">
         <!-- Video Player Section -->
-        <div class="col-lg-8" id="videoSection">
+        <div class="col-lg-9" id="videoSection">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -37,7 +37,7 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: 500px; display: block;" preload="metadata">
+                        <video id="rugbyVideo" controls style="width: 100%; height: 650px; display: block;" preload="metadata">
                             <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Comments Section -->
-        <div class="col-lg-4" id="commentsSection">
+        <div class="col-lg-3" id="commentsSection">
             <!-- Add Comment Form -->
             <div class="card">
                 <div class="card-header">
@@ -152,7 +152,7 @@
 
                         <div class="form-group">
                             <label>Comentario</label>
-                            <textarea name="comment" class="form-control" rows="3" 
+                            <textarea name="comment" class="form-control" rows="2"
                                       placeholder="Describe lo que observas..." required></textarea>
                         </div>
 
@@ -196,9 +196,9 @@
                         Comentarios ({{ $comments->count() }})
                     </h5>
                 </div>
-                <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                     @forelse($comments as $comment)
-                        <div class="comment-item border-bottom p-3" data-timestamp="{{ $comment->timestamp_seconds }}">
+                        <div class="comment-item border-bottom p-2" data-timestamp="{{ $comment->timestamp_seconds }}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
