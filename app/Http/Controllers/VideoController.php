@@ -81,9 +81,10 @@ class VideoController extends Controller
         $rivalTeams = Team::where('is_own_team', false)->get();
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
 
-        // Obtener jugadores para asignación (incluye staff que puede recibir asignaciones)
+        // Obtener jugadores y entrenadores para asignación (incluye staff que puede recibir asignaciones)
         $players = User::where(function($query) {
                 $query->where('role', 'jugador')
+                      ->orWhere('role', 'entrenador')
                       ->orWhereHas('profile', function($q) {
                           $q->where('can_receive_assignments', true);
                       });
