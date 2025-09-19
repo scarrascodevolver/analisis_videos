@@ -39,7 +39,6 @@
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
                         <video id="rugbyVideo" controls style="width: 100%; height: 500px; display: block;" preload="metadata">
                             <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
-                            <source src="{{ asset('storage/' . $video->file_path) }}" type="{{ $video->mime_type }}">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
