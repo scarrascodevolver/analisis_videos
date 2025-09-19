@@ -71,6 +71,10 @@ return [
             'use_path_style_endpoint' => false,
             'throw' => false,
             'report' => false,
+            // Fix SSL certificate issues in local development
+            'http' => [
+                'verify' => env('APP_ENV') === 'production' ? true : false,
+            ],
         ],
 
     ],
