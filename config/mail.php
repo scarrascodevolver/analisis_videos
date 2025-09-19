@@ -65,6 +65,11 @@ return [
             'transport' => 'resend',
         ],
 
+        'sendgrid_api' => [
+            'transport' => 'sendgrid_api',
+            'api_key' => env('SENDGRID_API_KEY'),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
