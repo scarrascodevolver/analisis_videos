@@ -15,8 +15,15 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Redirect to public CDN URL (fast + universal browser compatibility)
-                $cdnUrl = Storage::disk('spaces')->url($video->file_path);
+                // Build public CDN URL directly (no signed URLs)
+                $cdnBaseUrl = config('filesystems.disks.spaces.url');
+                if ($cdnBaseUrl) {
+                    // Use public CDN URL for maximum compatibility
+                    $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+                } else {
+                    // Fallback to Storage URL if no CDN configured
+                    $cdnUrl = Storage::disk('spaces')->url($video->file_path);
+                }
 
                 // Log for monitoring
                 \Log::info('Redirecting to public CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
@@ -153,8 +160,20 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Stream directly from Spaces (compatible across devices)
-                return $this->streamFileFromSpaces($spacesPath, $request);
+                // Build public CDN URL directly (no signed URLs)
+                $cdnBaseUrl = config('filesystems.disks.spaces.url');
+                if ($cdnBaseUrl) {
+                    // Use public CDN URL for maximum compatibility
+                    $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
+
+                    // Log for monitoring
+                    \Log::info('Redirecting to public CDN for file: ' . $filename . ' -> ' . $cdnUrl);
+
+                    return redirect($cdnUrl);
+                } else {
+                    // Fallback to streaming if no CDN configured
+                    return $this->streamFileFromSpaces($spacesPath, $request);
+                }
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
