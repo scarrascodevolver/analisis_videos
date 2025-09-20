@@ -22,27 +22,16 @@ class VideoStreamController extends Controller
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Detect Chrome browser for better video compatibility
+                    // Detect Chrome browser for optimized streaming
                     $userAgent = $request->header('User-Agent', '');
-                    $isChrome = $this->isChromeBasedBrowser($userAgent);
+                    $isChrome = strpos($userAgent, 'Chrome') !== false && strpos($userAgent, 'Edg') === false;
 
-                    if ($isChrome) {
-                        // Chrome works better with direct CDN access
-                        \Log::info('Direct CDN redirect for Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::info('Browser detection - UA: ' . substr($userAgent, 0, 100) . ' | isChrome: ' . ($isChrome ? 'YES' : 'NO'));
 
-                        return redirect($cdnUrl, 302, [
-                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                            'Pragma' => 'no-cache',
-                            'Expires' => '0',
-                            'Access-Control-Allow-Origin' => '*',
-                            'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
-                            'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
-                        ]);
-                    } else {
-                        // Firefox and others: use proxy streaming to avoid CloudFlare cookies
-                        \Log::info('Proxy streaming from CDN for non-Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
-                        return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
-                    }
+                    // Since proxy streaming works better for all browsers, use optimized proxy
+                    \Log::info('Optimized proxy streaming for ' . ($isChrome ? 'Chrome' : 'other') . ' browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+
+                    return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -350,7 +339,102 @@ class VideoStreamController extends Controller
     }
 
     /**
-     * Proxy stream video from CDN through Laravel
+     * Optimized proxy stream for Chrome compatibility
+     */
+    private function optimizedProxyStreamFromCDN($cdnUrl, $video, Request $request)
+    {
+        try {
+            // Force video/mp4 MIME type for Chrome compatibility
+            $mimeType = 'video/mp4';
+
+            // Get file info from CDN with timeout optimization
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => 5,
+                    'user_agent' => 'Mozilla/5.0 (compatible; LaravelProxy/1.0)'
+                ]
+            ]);
+
+            $headers = get_headers($cdnUrl, 1, $context);
+            if (!$headers || strpos($headers[0], '200') === false) {
+                throw new \Exception('CDN file not accessible');
+            }
+
+            $fileSize = intval($headers['Content-Length'] ?? $headers['content-length'] ?? 0);
+
+            // Handle Range requests with Chrome optimization
+            $range = $request->header('Range');
+
+            if ($range) {
+                // Parse range header
+                preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
+                $start = intval($matches[1]);
+                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+
+                // Validate range
+                if ($start > $fileSize - 1 || $end > $fileSize - 1) {
+                    return response('', 416, [
+                        'Content-Range' => "bytes */$fileSize",
+                    ]);
+                }
+
+                $length = $end - $start + 1;
+
+                // Stream partial content from CDN with Chrome-optimized headers
+                return response()->stream(function () use ($cdnUrl, $start, $length) {
+                    $context = stream_context_create([
+                        'http' => [
+                            'method' => 'GET',
+                            'header' => "Range: bytes=$start-" . ($start + $length - 1) . "\r\n" .
+                                       "User-Agent: Mozilla/5.0 (compatible; LaravelProxy/1.0)\r\n",
+                            'timeout' => 30
+                        ]
+                    ]);
+
+                    $stream = fopen($cdnUrl, 'r', false, $context);
+                    if ($stream) {
+                        fpassthru($stream);
+                        fclose($stream);
+                    }
+                }, 206, [
+                    'Content-Type' => $mimeType,
+                    'Content-Length' => $length,
+                    'Content-Range' => "bytes $start-$end/$fileSize",
+                    'Accept-Ranges' => 'bytes',
+                    'Cache-Control' => 'no-cache',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
+                    'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
+                ]);
+            }
+
+            // No range request - stream full file with Chrome-optimized headers
+            return response()->stream(function () use ($cdnUrl) {
+                $stream = fopen($cdnUrl, 'r');
+                if ($stream) {
+                    fpassthru($stream);
+                    fclose($stream);
+                }
+            }, 200, [
+                'Content-Type' => $mimeType,
+                'Content-Length' => $fileSize,
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'public, max-age=3600',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
+                'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Optimized CDN proxy streaming failed: ' . $e->getMessage());
+            // Fallback to direct Spaces streaming
+            return $this->streamFromSpaces($video, $request);
+        }
+    }
+
+    /**
+     * Original proxy stream video from CDN through Laravel
      * This avoids redirect issues while maintaining fast CDN delivery
      */
     private function proxyStreamFromCDN($cdnUrl, $video, Request $request)
