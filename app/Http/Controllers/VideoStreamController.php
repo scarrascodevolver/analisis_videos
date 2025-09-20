@@ -18,14 +18,20 @@ class VideoStreamController extends Controller
 
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
-            \Log::info('DEBUG: Checking if video exists in Spaces: ' . $video->file_path);
+            \Log::info('DEBUG: Video object: ' . json_encode([
+                'id' => $video->id ?? 'NULL',
+                'file_path' => $video->file_path ?? 'NULL',
+                'title' => $video->title ?? 'NULL'
+            ]));
+
+            \Log::info('DEBUG: Checking if video exists in Spaces: ' . ($video->file_path ?? 'NULL_FILE_PATH'));
 
             if (Storage::disk('spaces')->exists($video->file_path)) {
                 \Log::info('DEBUG: Video exists in Spaces, building CDN URL');
 
                 // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
-                \Log::info('DEBUG: CDN Base URL: ' . $cdnBaseUrl);
+                \Log::info('DEBUG: CDN Base URL: ' . ($cdnBaseUrl ?? 'NULL_CDN_URL'));
 
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
