@@ -16,24 +16,16 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Detect browser and use appropriate streaming method
+                // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Browser detection for optimal compatibility
-                    $userAgent = $request->header('User-Agent', '');
-                    $isChrome = $this->isChromeBasedBrowser($userAgent);
+                    // Log for monitoring
+                    \Log::info('Direct redirect to CDN for maximum speed - video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    if ($isChrome) {
-                        // Chrome: Direct CDN URL (works perfectly)
-                        \Log::info('Chrome detected - serving direct CDN URL for video: ' . $video->id);
-                        return $this->serveDirectCDNForChrome($cdnUrl, $video);
-                    } else {
-                        // Firefox/Safari/Mobile: Proxy streaming (works reliably)
-                        \Log::info('Non-Chrome browser - using proxy streaming for video: ' . $video->id);
-                        return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
-                    }
+                    // Simple 302 redirect - fastest possible method
+                    return redirect($cdnUrl);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -170,27 +162,16 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Detect browser and use appropriate streaming method
+                // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
-                    // Browser detection for optimal compatibility
-                    $userAgent = $request->header('User-Agent', '');
-                    $isChrome = $this->isChromeBasedBrowser($userAgent);
+                    // Log for monitoring
+                    \Log::info('Direct redirect to CDN for maximum speed - file: ' . $filename . ' -> ' . $cdnUrl);
 
-                    // Create a mock video object for compatibility
-                    $mockVideo = (object) ['mime_type' => 'video/mp4', 'file_name' => $filename];
-
-                    if ($isChrome) {
-                        // Chrome: Direct CDN URL (works perfectly)
-                        \Log::info('Chrome detected - serving direct CDN URL for file: ' . $filename);
-                        return $this->serveDirectCDNForChrome($cdnUrl, $mockVideo);
-                    } else {
-                        // Firefox/Safari/Mobile: Proxy streaming (works reliably)
-                        \Log::info('Non-Chrome browser - using proxy streaming for file: ' . $filename);
-                        return $this->proxyStreamFromCDN($cdnUrl, $mockVideo, $request);
-                    }
+                    // Simple 302 redirect - fastest possible method
+                    return redirect($cdnUrl);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
