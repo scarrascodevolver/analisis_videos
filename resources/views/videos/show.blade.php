@@ -37,11 +37,37 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: 550px; display: block;" preload="metadata">
+                        <video id="rugbyVideo" controls style="width: 100%; height: 550px; display: block;" preload="metadata"
+                               onerror="handleMainVideoError(this)" onloadstart="handleMainVideoLoad(this)">
                             <source src="{{ route('videos.stream', $video) }}" type="{{ $video->mime_type }}">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
+
+                        <!-- Video compatibility warning -->
+                        <div id="videoCompatibilityWarning" class="alert alert-warning d-none mt-3" role="alert">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Problema de Compatibilidad de Video</h6>
+                            <p class="mb-2">
+                                <strong>Este video no es compatible con tu dispositivo.</strong><br>
+                                Formato: {{ $video->mime_type }} | Archivo: {{ $video->file_name }}
+                            </p>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2">Recomendaciones:</h6>
+                                    <ul class="small mb-2">
+                                        <li><strong>Desde PC:</strong> Usa Google Chrome o Firefox actualizados</li>
+                                        <li><strong>Desde móvil:</strong> Prueba con navegador diferente (Chrome, Firefox, Safari)</li>
+                                        <li><strong>Videos desde celular:</strong> Graba en modo MP4 compatible</li>
+                                        <li><strong>Videos desde PC:</strong> Usa formatos H.264 o WebM</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <button id="retryVideoBtn" class="btn btn-rugby btn-sm">
+                                        <i class="fas fa-redo"></i> Reintentar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         
                         
                         <!-- Mobile Fullscreen Button -->
@@ -1007,6 +1033,56 @@ $(document).ready(function() {
     }
 
     console.log('✅ Sistema pseudo-fullscreen inicializado');
+
+    // Video compatibility handlers for main player
+    window.handleMainVideoLoad = function(videoElement) {
+        console.log('Main video loading...');
+
+        // Set timeout to detect loading issues
+        setTimeout(() => {
+            if (videoElement.readyState === 0 || videoElement.error) {
+                console.warn('Main video failed to load, showing compatibility warning');
+                handleMainVideoError(videoElement);
+            }
+        }, 5000);
+    };
+
+    window.handleMainVideoError = function(videoElement) {
+        console.error('Main video error:', videoElement.error);
+
+        const warning = document.getElementById('videoCompatibilityWarning');
+        if (warning) {
+            warning.classList.remove('d-none');
+
+            // Hide all notifications when video fails
+            hideAllNotifications();
+
+            // Show device-specific advice
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                warning.querySelector('h6').innerHTML = '<i class="fas fa-mobile-alt"></i> Video incompatible con dispositivo móvil';
+            } else {
+                warning.querySelector('h6').innerHTML = '<i class="fas fa-desktop"></i> Video incompatible con navegador de PC';
+            }
+        }
+    };
+
+    // Retry button functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'retryVideoBtn') {
+            console.log('Retrying video load...');
+            const video = document.getElementById('rugbyVideo');
+            const warning = document.getElementById('videoCompatibilityWarning');
+
+            warning.classList.add('d-none');
+            video.load(); // Force reload
+
+            // Show loading message
+            if (typeof toastr !== 'undefined') {
+                toastr.info('Reintentando cargar video...', 'Cargando');
+            }
+        }
+    });
 
     // Funcionalidad del botón "Comentar aquí"
     $('#addCommentBtn').on('click', function() {

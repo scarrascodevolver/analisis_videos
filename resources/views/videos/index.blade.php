@@ -106,12 +106,26 @@
                                              style="height: 120px; overflow: hidden; position: relative; cursor: pointer;"
                                              onclick="window.location.href='{{ route('videos.show', $video) }}'">
 
-                                            <video class="w-100 h-100"
+                                            <video class="w-100 h-100 video-thumbnail"
                                                    style="object-fit: cover;"
                                                    preload="metadata"
-                                                   muted>
+                                                   muted
+                                                   data-video-id="{{ $video->id }}"
+                                                   onloadstart="handleVideoLoad(this)"
+                                                   onerror="handleVideoError(this)">
                                                 <source src="{{ route('videos.stream', $video) }}#t=5" type="{{ $video->mime_type }}">
                                             </video>
+
+                                            <!-- Fallback thumbnail placeholder -->
+                                            <div class="thumbnail-placeholder d-none"
+                                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                                                        background: linear-gradient(135deg, #1e4d2b, #28a745);
+                                                        display: flex; align-items: center; justify-content: center;">
+                                                <div class="text-center text-white">
+                                                    <i class="fas fa-play-circle fa-3x mb-2"></i>
+                                                    <div class="small">{{ $video->mime_type }}</div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="card-body py-1 px-2">
                                             <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
@@ -409,7 +423,80 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('team-select').addEventListener('change', function() {
         document.getElementById('filter-form').submit();
     });
+
+    // Video compatibility detection and fallback system
+    detectVideoSupport();
 });
+
+// Video compatibility detection functions
+function handleVideoLoad(videoElement) {
+    console.log('Video thumbnail loading for ID:', videoElement.dataset.videoId);
+
+    // Set timeout to detect if video fails to load metadata
+    setTimeout(() => {
+        if (videoElement.readyState === 0) {
+            console.warn('Video metadata failed to load, showing fallback');
+            handleVideoError(videoElement);
+        }
+    }, 3000);
+}
+
+function handleVideoError(videoElement) {
+    console.error('Video error for ID:', videoElement.dataset.videoId);
+
+    const container = videoElement.closest('.video-thumbnail-container');
+    const placeholder = container.querySelector('.thumbnail-placeholder');
+
+    if (placeholder) {
+        videoElement.style.display = 'none';
+        placeholder.classList.remove('d-none');
+
+        // Add compatibility warning
+        const compatibilityBadge = document.createElement('div');
+        compatibilityBadge.className = 'badge badge-warning position-absolute';
+        compatibilityBadge.style.cssText = 'top: 5px; right: 5px; font-size: 10px;';
+        compatibilityBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Códec';
+        container.appendChild(compatibilityBadge);
+    }
+}
+
+// Device-specific codec detection
+function detectVideoSupport() {
+    const video = document.createElement('video');
+    const codecs = {
+        h264: 'video/mp4; codecs="avc1.42E01E"',
+        h265: 'video/mp4; codecs="hev1.1.6.L93.B0"',
+        webm: 'video/webm; codecs="vp9"',
+        av1: 'video/mp4; codecs="av01.0.05M.08"'
+    };
+
+    const support = {};
+    Object.keys(codecs).forEach(codec => {
+        support[codec] = video.canPlayType(codecs[codec]) !== '';
+    });
+
+    console.log('🎥 Device video codec support:', support);
+
+    // Show user-friendly warning if limited support
+    const supportedCount = Object.values(support).filter(Boolean).length;
+    if (supportedCount < 2) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const deviceType = isMobile ? 'móvil' : 'PC';
+
+        console.warn(`⚠️ Soporte limitado de video en ${deviceType}`);
+
+        // Optional: Show toast notification to user
+        if (typeof toastr !== 'undefined') {
+            toastr.warning(
+                `Tu ${deviceType} tiene soporte limitado de video. Algunos videos podrían no reproducirse correctamente.`,
+                'Compatibilidad de Video',
+                { timeOut: 8000 }
+            );
+        }
+    }
+
+    return support;
+}
 </script>
 
 @endsection
