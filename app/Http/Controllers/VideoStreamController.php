@@ -16,16 +16,24 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Build public CDN URL with optimized redirect for Chrome compatibility
+                // Detect browser and use appropriate streaming method
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use optimized redirect for maximum speed
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Log for monitoring
-                    \Log::info('Optimized redirect to CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
+                    // Browser detection for optimal compatibility
+                    $userAgent = $request->header('User-Agent', '');
+                    $isChrome = $this->isChromeBasedBrowser($userAgent);
 
-                    return $this->optimizedRedirectToCDN($cdnUrl, $video, $request);
+                    if ($isChrome) {
+                        // Chrome: Direct CDN URL (works perfectly)
+                        \Log::info('Chrome detected - serving direct CDN URL for video: ' . $video->id);
+                        return $this->serveDirectCDNForChrome($cdnUrl, $video);
+                    } else {
+                        // Firefox/Safari/Mobile: Proxy streaming (works reliably)
+                        \Log::info('Non-Chrome browser - using proxy streaming for video: ' . $video->id);
+                        return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
+                    }
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -162,18 +170,27 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Build public CDN URL with optimized redirect for Chrome compatibility
+                // Detect browser and use appropriate streaming method
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use optimized redirect for maximum speed
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
-                    // Log for monitoring
-                    \Log::info('Optimized redirect to CDN for file: ' . $filename . ' -> ' . $cdnUrl);
+                    // Browser detection for optimal compatibility
+                    $userAgent = $request->header('User-Agent', '');
+                    $isChrome = $this->isChromeBasedBrowser($userAgent);
 
                     // Create a mock video object for compatibility
                     $mockVideo = (object) ['mime_type' => 'video/mp4', 'file_name' => $filename];
-                    return $this->optimizedRedirectToCDN($cdnUrl, $mockVideo, $request);
+
+                    if ($isChrome) {
+                        // Chrome: Direct CDN URL (works perfectly)
+                        \Log::info('Chrome detected - serving direct CDN URL for file: ' . $filename);
+                        return $this->serveDirectCDNForChrome($cdnUrl, $mockVideo);
+                    } else {
+                        // Firefox/Safari/Mobile: Proxy streaming (works reliably)
+                        \Log::info('Non-Chrome browser - using proxy streaming for file: ' . $filename);
+                        return $this->proxyStreamFromCDN($cdnUrl, $mockVideo, $request);
+                    }
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
@@ -416,6 +433,57 @@ class VideoStreamController extends Controller
                 abort(404, 'Video streaming failed');
             }
         }
+    }
+
+    /**
+     * Detect if browser is Chrome-based (Chrome, Edge, Opera, etc.)
+     */
+    private function isChromeBasedBrowser($userAgent)
+    {
+        return preg_match('/Chrome|Chromium|Edge|Opera/i', $userAgent) &&
+               !preg_match('/Firefox|Safari(?!.*Chrome)/i', $userAgent);
+    }
+
+    /**
+     * Serve direct CDN URL for Chrome browsers using HTML video source
+     * Chrome works perfectly with direct CDN URLs
+     */
+    private function serveDirectCDNForChrome($cdnUrl, $video)
+    {
+        $mimeType = $this->getCompatibleMimeType($video);
+
+        // Return HTML that tells Chrome to use the direct CDN URL
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; padding: 0; background: #000; }
+        video { width: 100%; height: 100vh; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <video controls autoplay preload="metadata">
+        <source src="' . htmlspecialchars($cdnUrl) . '" type="' . $mimeType . '">
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        // Redirect parent frame to CDN URL for seamless experience
+        if (window.parent !== window) {
+            window.parent.location.href = "' . htmlspecialchars($cdnUrl) . '";
+        } else {
+            window.location.href = "' . htmlspecialchars($cdnUrl) . '";
+        }
+    </script>
+</body>
+</html>';
+
+        return response($html, 200, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
+        ]);
     }
 
     /**
