@@ -16,16 +16,16 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Build public CDN URL and proxy stream it
+                // Build public CDN URL with optimized redirect for Chrome compatibility
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use proxy streaming from CDN for maximum compatibility
+                    // Use optimized redirect for maximum speed
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
                     // Log for monitoring
-                    \Log::info('Proxy streaming from CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::info('Optimized redirect to CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
+                    return $this->optimizedRedirectToCDN($cdnUrl, $video, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -162,18 +162,18 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Build public CDN URL and proxy stream it
+                // Build public CDN URL with optimized redirect for Chrome compatibility
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use proxy streaming from CDN for maximum compatibility
+                    // Use optimized redirect for maximum speed
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
                     // Log for monitoring
-                    \Log::info('Proxy streaming from CDN for file: ' . $filename . ' -> ' . $cdnUrl);
+                    \Log::info('Optimized redirect to CDN for file: ' . $filename . ' -> ' . $cdnUrl);
 
                     // Create a mock video object for compatibility
                     $mockVideo = (object) ['mime_type' => 'video/mp4', 'file_name' => $filename];
-                    return $this->proxyStreamFromCDN($cdnUrl, $mockVideo, $request);
+                    return $this->optimizedRedirectToCDN($cdnUrl, $mockVideo, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
@@ -298,6 +298,52 @@ class VideoStreamController extends Controller
             \Log::error('Spaces file streaming failed: ' . $e->getMessage());
             // Return 404 to trigger local fallback
             abort(404, 'File streaming failed');
+        }
+    }
+
+    /**
+     * Optimized redirect to CDN with Chrome-compatible headers
+     * Maximum speed with browser compatibility fixes
+     */
+    private function optimizedRedirectToCDN($cdnUrl, $video, Request $request)
+    {
+        try {
+            // Pre-verify CDN accessibility to avoid broken redirects
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => 5
+                ]
+            ]);
+
+            $headers = get_headers($cdnUrl, 1, $context);
+            if (!$headers || strpos($headers[0], '200') === false) {
+                throw new \Exception('CDN file not accessible');
+            }
+
+            // Create redirect response with Chrome-optimized headers
+            $redirectResponse = redirect($cdnUrl, 302);
+
+            // Add headers that Chrome expects for video content
+            $redirectResponse->headers->set('Accept-Ranges', 'bytes');
+            $redirectResponse->headers->set('Content-Type', $this->getCompatibleMimeType($video));
+            $redirectResponse->headers->set('Cache-Control', 'public, max-age=3600');
+            $redirectResponse->headers->set('Access-Control-Allow-Origin', '*');
+            $redirectResponse->headers->set('Access-Control-Allow-Headers', 'Range');
+            $redirectResponse->headers->set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+
+            // Add content length if available from CDN headers
+            $contentLength = $headers['Content-Length'] ?? $headers['content-length'] ?? null;
+            if ($contentLength) {
+                $redirectResponse->headers->set('Content-Length', $contentLength);
+            }
+
+            return $redirectResponse;
+
+        } catch (\Exception $e) {
+            \Log::warning('CDN pre-check failed, using fallback: ' . $e->getMessage());
+            // Fallback to proxy streaming if CDN redirect fails
+            return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
         }
     }
 
