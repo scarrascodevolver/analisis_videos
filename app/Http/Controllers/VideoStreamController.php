@@ -14,19 +14,25 @@ class VideoStreamController extends Controller
     public function stream(Video $video, Request $request)
     {
         // DEBUG: Log that we reached the method
-        \Log::info('VideoStreamController::stream called for video: ' . $video->id);
+        \Log::error('STEP 1: VideoStreamController::stream called for video: ' . $video->id);
 
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
-            \Log::info('DEBUG: Video object: ' . json_encode([
+            \Log::error('STEP 2: Video object: ' . json_encode([
                 'id' => $video->id ?? 'NULL',
                 'file_path' => $video->file_path ?? 'NULL',
                 'title' => $video->title ?? 'NULL'
             ]));
 
-            \Log::info('DEBUG: Checking if video exists in Spaces: ' . ($video->file_path ?? 'NULL_FILE_PATH'));
+            \Log::error('STEP 3: About to check Storage disk');
+            $spaceDisk = Storage::disk('spaces');
+            \Log::error('STEP 4: Storage disk obtained');
 
-            if (Storage::disk('spaces')->exists($video->file_path)) {
+            \Log::error('STEP 5: About to check exists with path: ' . ($video->file_path ?? 'NULL_FILE_PATH'));
+            $exists = $spaceDisk->exists($video->file_path);
+            \Log::error('STEP 6: Exists check completed, result: ' . ($exists ? 'true' : 'false'));
+
+            if ($exists) {
                 \Log::info('DEBUG: Video exists in Spaces, building CDN URL');
 
                 // Simple direct redirect to CDN for maximum speed
