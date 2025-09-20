@@ -24,8 +24,14 @@ class VideoStreamController extends Controller
                     // Log for monitoring
                     \Log::info('Direct redirect to CDN for maximum speed - video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    // Simple 302 redirect - fastest possible method
-                    return redirect($cdnUrl);
+                    // CloudFlare-compatible redirect with cookie prevention headers
+                    return redirect($cdnUrl)->withHeaders([
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0',
+                        'Set-Cookie' => '', // Prevent cookie conflicts
+                        'Access-Control-Allow-Credentials' => 'false'
+                    ]);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -170,8 +176,14 @@ class VideoStreamController extends Controller
                     // Log for monitoring
                     \Log::info('Direct redirect to CDN for maximum speed - file: ' . $filename . ' -> ' . $cdnUrl);
 
-                    // Simple 302 redirect - fastest possible method
-                    return redirect($cdnUrl);
+                    // CloudFlare-compatible redirect with cookie prevention headers
+                    return redirect($cdnUrl)->withHeaders([
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0',
+                        'Set-Cookie' => '', // Prevent cookie conflicts
+                        'Access-Control-Allow-Credentials' => 'false'
+                    ]);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
