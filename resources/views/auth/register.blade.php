@@ -210,8 +210,7 @@
 
                         <div class="form-group">
                             <label class="text-muted small font-weight-bold">Fecha de nacimiento</label>
-                            <input type="date" class="form-control" name="date_of_birth"
-                                   max="{{ date('Y-m-d', strtotime('-15 years')) }}">
+                            <input type="date" class="form-control" name="date_of_birth">
                         </div>
 
                         <div class="form-group">
