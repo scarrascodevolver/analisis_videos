@@ -54,11 +54,12 @@ class VideoStreamController extends Controller
                     \Log::error('STEP 16: Direct redirect to CDN - video: ' . $video->id . ' -> ' . $cdnUrl);
 
                     // CloudFlare-compatible redirect with cookie prevention headers
-                    return redirect($cdnUrl)->withHeaders([
+                    \Log::error('STEP 17: About to return redirect');
+
+                    return redirect($cdnUrl, 302, [
                         'Cache-Control' => 'no-cache, no-store, must-revalidate',
                         'Pragma' => 'no-cache',
                         'Expires' => '0',
-                        'Set-Cookie' => '', // Prevent cookie conflicts
                         'Access-Control-Allow-Credentials' => 'false'
                     ]);
                 } else {
