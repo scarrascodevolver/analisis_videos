@@ -302,49 +302,30 @@ class VideoStreamController extends Controller
     }
 
     /**
-     * Optimized redirect to CDN with Chrome-compatible headers
-     * Maximum speed with browser compatibility fixes
+     * Raw HTTP redirect optimized specifically for Chrome compatibility
+     * Maximum speed - no pre-verification, direct redirect with specific headers
      */
     private function optimizedRedirectToCDN($cdnUrl, $video, Request $request)
     {
-        try {
-            // Pre-verify CDN accessibility to avoid broken redirects
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'HEAD',
-                    'timeout' => 5
-                ]
-            ]);
+        // Log for monitoring
+        \Log::info('Chrome-optimized raw redirect for: ' . $cdnUrl);
 
-            $headers = get_headers($cdnUrl, 1, $context);
-            if (!$headers || strpos($headers[0], '200') === false) {
-                throw new \Exception('CDN file not accessible');
-            }
-
-            // Create redirect response with Chrome-optimized headers
-            $redirectResponse = redirect($cdnUrl, 302);
-
-            // Add headers that Chrome expects for video content
-            $redirectResponse->headers->set('Accept-Ranges', 'bytes');
-            $redirectResponse->headers->set('Content-Type', $this->getCompatibleMimeType($video));
-            $redirectResponse->headers->set('Cache-Control', 'public, max-age=3600');
-            $redirectResponse->headers->set('Access-Control-Allow-Origin', '*');
-            $redirectResponse->headers->set('Access-Control-Allow-Headers', 'Range');
-            $redirectResponse->headers->set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-
-            // Add content length if available from CDN headers
-            $contentLength = $headers['Content-Length'] ?? $headers['content-length'] ?? null;
-            if ($contentLength) {
-                $redirectResponse->headers->set('Content-Length', $contentLength);
-            }
-
-            return $redirectResponse;
-
-        } catch (\Exception $e) {
-            \Log::warning('CDN pre-check failed, using fallback: ' . $e->getMessage());
-            // Fallback to proxy streaming if CDN redirect fails
-            return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
-        }
+        // Use raw HTTP response instead of Laravel redirect for Chrome compatibility
+        return response('', 302, [
+            'Location' => $cdnUrl,
+            'Content-Type' => 'video/mp4',
+            'Accept-Ranges' => 'bytes',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
+            'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
+            'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges',
+            'Vary' => 'Accept-Encoding',
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin'
+        ]);
     }
 
     /**
