@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('filter-form').submit();
     });
 
+});
 </script>
 
 @endsection
