@@ -28,20 +28,10 @@ class VideoStreamController extends Controller
 
                     \Log::info('Browser detection - UA: ' . substr($userAgent, 0, 100) . ' | isChrome: ' . ($isChrome ? 'YES' : 'NO'));
 
-                    if ($isChrome) {
-                        // Chrome: Direct CDN access for maximum speed (no proxy overhead)
-                        \Log::info('Direct CDN for maximum Chrome speed - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    // Use optimized proxy streaming for all browsers to avoid CloudFlare issues
+                    \Log::info('Optimized proxy streaming for ' . ($isChrome ? 'Chrome' : 'other') . ' browser - video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                        // Return raw redirect with minimal headers for speed
-                        return response('', 302, [
-                            'Location' => $cdnUrl,
-                            'Cache-Control' => 'public, max-age=3600',
-                        ]);
-                    } else {
-                        // Firefox: Proxy streaming to avoid CloudFlare cookies
-                        \Log::info('Proxy streaming for non-Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
-                        return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
-                    }
+                    return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
