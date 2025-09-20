@@ -15,13 +15,8 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Redirect to CDN public URL (fast + cross-device compatible)
-                $cdnUrl = Storage::disk('spaces')->url($video->file_path);
-
-                // Log for monitoring
-                \Log::info('Redirecting to CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
-
-                return redirect($cdnUrl);
+                // Stream directly from Spaces through Laravel (compatible across devices)
+                return $this->streamFromSpaces($video, $request);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
@@ -153,13 +148,8 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Redirect to CDN public URL (fast + cross-device compatible)
-                $cdnUrl = Storage::disk('spaces')->url($spacesPath);
-
-                // Log for monitoring
-                \Log::info('Redirecting to CDN for file: ' . $filename . ' -> ' . $cdnUrl);
-
-                return redirect($cdnUrl);
+                // Stream directly from Spaces (compatible across devices)
+                return $this->streamFileFromSpaces($spacesPath, $request);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
