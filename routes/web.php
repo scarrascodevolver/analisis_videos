@@ -14,6 +14,10 @@ Route::redirect('/', '/login');
 // Authentication Routes
 Auth::routes();
 
+// Video Streaming Routes (PUBLIC - no auth needed for video tags)
+Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
+Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
+
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
     // Main Dashboard
@@ -24,10 +28,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
     Route::delete('comments/{comment}', [VideoCommentController::class, 'destroy'])->name('comments.destroy');
-    
-    // Video Streaming Routes (with Range support for seeking)
-    Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
-    Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
 
     // Player API Routes (for AJAX search functionality)
     Route::get('api/players/all', [PlayerApiController::class, 'all'])->name('api.players.all');
