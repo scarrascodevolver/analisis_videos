@@ -78,3 +78,13 @@ Route::middleware(['auth'])->group(function () {
     // General Routes (accessible by all roles)
     // Removed unused routes (teams, categories, reports)
 });
+
+// DEBUG: Test route to verify routing works
+Route::get('/test-video-route', function() {
+    return 'Video route works!';
+});
+
+// DEBUG: Test route that mimics video structure
+Route::get('/test-video/{id}', function($id) {
+    return "Test video route works for ID: $id";
+});
