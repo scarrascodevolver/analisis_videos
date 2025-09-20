@@ -88,3 +88,18 @@ Route::get('/test-video-route', function() {
 Route::get('/test-video/{id}', function($id) {
     return "Test video route works for ID: $id";
 });
+
+// DEBUG: Test video route without model binding
+Route::get('/debug-video/{id}', function($id) {
+    return 'Video ID: ' . $id;
+});
+
+// DEBUG: Test video route with manual model lookup
+Route::get('/debug-video-model/{id}', function($id) {
+    try {
+        $video = App\Models\Video::findOrFail($id);
+        return 'Found video: ' . $video->title;
+    } catch (Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
