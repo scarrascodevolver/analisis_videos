@@ -36,7 +36,10 @@ class VideoStreamController extends Controller
         }
 
         $fileSize = filesize($path);
-        $mimeType = $video->mime_type ?: 'video/mp4';
+
+        // Fix MIME type compatibility: Force video/mp4 for browser compatibility
+        // Many videos are QuickTime content in MP4 containers - browsers prefer video/mp4
+        $mimeType = $this->getCompatibleMimeType($video);
 
         // Handle Range requests for seeking
         $range = $request->header('Range');
@@ -90,7 +93,7 @@ class VideoStreamController extends Controller
         try {
             // Get file info from Spaces
             $fileSize = Storage::disk('spaces')->size($video->file_path);
-            $mimeType = $video->mime_type ?: 'video/mp4';
+            $mimeType = $this->getCompatibleMimeType($video);
 
             // Handle Range requests for seeking compatibility
             $range = $request->header('Range');
@@ -224,7 +227,8 @@ class VideoStreamController extends Controller
         try {
             // Get file info from Spaces
             $fileSize = Storage::disk('spaces')->size($spacesPath);
-            $mimeType = mime_content_type(basename($spacesPath)) ?: 'video/mp4';
+            // Use video/mp4 for maximum browser compatibility
+            $mimeType = 'video/mp4';
 
             // Handle Range requests for seeking compatibility
             $range = $request->header('Range');
@@ -276,5 +280,25 @@ class VideoStreamController extends Controller
             // Return 404 to trigger local fallback
             abort(404, 'File streaming failed');
         }
+    }
+
+    /**
+     * Get browser-compatible MIME type for video
+     */
+    private function getCompatibleMimeType(Video $video)
+    {
+        // Force video/mp4 for better browser compatibility
+        // Even QuickTime content in MP4 containers works better with video/mp4 MIME type
+        if (str_ends_with(strtolower($video->file_name), '.mp4')) {
+            return 'video/mp4';
+        }
+
+        // Map other QuickTime variants to MP4
+        if (in_array($video->mime_type, ['video/quicktime', 'video/mov'])) {
+            return 'video/mp4';
+        }
+
+        // Keep original for other formats
+        return $video->mime_type ?: 'video/mp4';
     }
 }
