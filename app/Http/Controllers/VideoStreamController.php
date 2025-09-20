@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Video;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -15,16 +16,16 @@ class VideoStreamController extends Controller
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Build public CDN URL directly (no signed URLs)
+                // Build public CDN URL and proxy stream it
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use public CDN URL for maximum compatibility
+                    // Use proxy streaming from CDN for maximum compatibility
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
                     // Log for monitoring
-                    \Log::info('Redirecting to public CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::info('Proxy streaming from CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    return redirect($cdnUrl);
+                    return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
@@ -161,16 +162,18 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Build public CDN URL directly (no signed URLs)
+                // Build public CDN URL and proxy stream it
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
                 if ($cdnBaseUrl) {
-                    // Use public CDN URL for maximum compatibility
+                    // Use proxy streaming from CDN for maximum compatibility
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
                     // Log for monitoring
-                    \Log::info('Redirecting to public CDN for file: ' . $filename . ' -> ' . $cdnUrl);
+                    \Log::info('Proxy streaming from CDN for file: ' . $filename . ' -> ' . $cdnUrl);
 
-                    return redirect($cdnUrl);
+                    // Create a mock video object for compatibility
+                    $mockVideo = (object) ['mime_type' => 'video/mp4', 'file_name' => $filename];
+                    return $this->proxyStreamFromCDN($cdnUrl, $mockVideo, $request);
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
@@ -299,22 +302,112 @@ class VideoStreamController extends Controller
     }
 
     /**
+     * Proxy stream video from CDN through Laravel
+     * This avoids redirect issues while maintaining fast CDN delivery
+     */
+    private function proxyStreamFromCDN($cdnUrl, $video, Request $request)
+    {
+        try {
+            // Get file info from CDN
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => 10
+                ]
+            ]);
+
+            $headers = get_headers($cdnUrl, 1, $context);
+            if (!$headers || strpos($headers[0], '200') === false) {
+                throw new \Exception('CDN file not accessible');
+            }
+
+            $fileSize = intval($headers['Content-Length'] ?? $headers['content-length'] ?? 0);
+            $mimeType = $this->getCompatibleMimeType($video);
+
+            // Handle Range requests for seeking
+            $range = $request->header('Range');
+
+            if ($range) {
+                // Parse range header
+                preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
+                $start = intval($matches[1]);
+                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+
+                // Validate range
+                if ($start > $fileSize - 1 || $end > $fileSize - 1) {
+                    return response('', 416, [
+                        'Content-Range' => "bytes */$fileSize",
+                    ]);
+                }
+
+                $length = $end - $start + 1;
+
+                // Stream partial content from CDN
+                return response()->stream(function () use ($cdnUrl, $start, $length) {
+                    $context = stream_context_create([
+                        'http' => [
+                            'method' => 'GET',
+                            'header' => "Range: bytes=$start-" . ($start + $length - 1) . "\r\n",
+                            'timeout' => 30
+                        ]
+                    ]);
+
+                    $stream = fopen($cdnUrl, 'r', false, $context);
+                    if ($stream) {
+                        fpassthru($stream);
+                        fclose($stream);
+                    }
+                }, 206, [
+                    'Content-Type' => $mimeType,
+                    'Content-Length' => $length,
+                    'Content-Range' => "bytes $start-$end/$fileSize",
+                    'Accept-Ranges' => 'bytes',
+                    'Cache-Control' => 'no-cache',
+                ]);
+            }
+
+            // No range request - stream full file from CDN
+            return response()->stream(function () use ($cdnUrl) {
+                $stream = fopen($cdnUrl, 'r');
+                if ($stream) {
+                    fpassthru($stream);
+                    fclose($stream);
+                }
+            }, 200, [
+                'Content-Type' => $mimeType,
+                'Content-Length' => $fileSize,
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('CDN proxy streaming failed: ' . $e->getMessage());
+            // Fallback to direct Spaces streaming
+            if (is_object($video) && isset($video->file_path)) {
+                return $this->streamFromSpaces($video, $request);
+            } else {
+                abort(404, 'Video streaming failed');
+            }
+        }
+    }
+
+    /**
      * Get browser-compatible MIME type for video
      */
-    private function getCompatibleMimeType(Video $video)
+    private function getCompatibleMimeType($video)
     {
         // Force video/mp4 for better browser compatibility
         // Even QuickTime content in MP4 containers works better with video/mp4 MIME type
-        if (str_ends_with(strtolower($video->file_name), '.mp4')) {
+        if (isset($video->file_name) && str_ends_with(strtolower($video->file_name), '.mp4')) {
             return 'video/mp4';
         }
 
         // Map other QuickTime variants to MP4
-        if (in_array($video->mime_type, ['video/quicktime', 'video/mov'])) {
+        if (isset($video->mime_type) && in_array($video->mime_type, ['video/quicktime', 'video/mov'])) {
             return 'video/mp4';
         }
 
         // Keep original for other formats
-        return $video->mime_type ?: 'video/mp4';
+        return $video->mime_type ?? 'video/mp4';
     }
 }
