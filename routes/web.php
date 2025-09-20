@@ -103,3 +103,14 @@ Route::get('/debug-video-model/{id}', function($id) {
         return 'Error: ' . $e->getMessage();
     }
 });
+
+// DEBUG: Test exact VideoStreamController method call
+Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
+    try {
+        $controller = new App\Http\Controllers\VideoStreamController();
+        $request = request();
+        return $controller->stream($video, $request);
+    } catch (Exception $e) {
+        return 'VideoStreamController Error: ' . $e->getMessage();
+    }
+});
