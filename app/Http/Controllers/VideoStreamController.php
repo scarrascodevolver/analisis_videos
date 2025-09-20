@@ -33,11 +33,16 @@ class VideoStreamController extends Controller
             \Log::error('STEP 6: Exists check completed, result: ' . ($exists ? 'true' : 'false'));
 
             if ($exists) {
-                \Log::info('DEBUG: Video exists in Spaces, building CDN URL');
+                \Log::error('STEP 7: Video exists in Spaces, building CDN URL');
 
                 // Simple direct redirect to CDN for maximum speed
+                \Log::error('STEP 8: About to get CDN config');
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
-                \Log::info('DEBUG: CDN Base URL: ' . ($cdnBaseUrl ?? 'NULL_CDN_URL'));
+                \Log::error('STEP 9: CDN Base URL: ' . ($cdnBaseUrl ?? 'NULL_CDN_URL'));
+
+                \Log::error('STEP 10: About to build full CDN URL');
+                \Log::error('STEP 11: video->file_path = ' . $video->file_path);
+                \Log::error('STEP 12: About to rtrim/ltrim operations');
 
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
