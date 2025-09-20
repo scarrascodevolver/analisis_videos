@@ -13,67 +13,28 @@ class VideoStreamController extends Controller
 {
     public function stream(Video $video, Request $request)
     {
-        // DEBUG: Log that we reached the method
-        \Log::error('STEP 1: VideoStreamController::stream called for video: ' . $video->id);
-
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
-            \Log::error('STEP 2: Video object: ' . json_encode([
-                'id' => $video->id ?? 'NULL',
-                'file_path' => $video->file_path ?? 'NULL',
-                'title' => $video->title ?? 'NULL'
-            ]));
-
-            \Log::error('STEP 3: About to check Storage disk');
-            $spaceDisk = Storage::disk('spaces');
-            \Log::error('STEP 4: Storage disk obtained');
-
-            \Log::error('STEP 5: About to check exists with path: ' . ($video->file_path ?? 'NULL_FILE_PATH'));
-            $exists = $spaceDisk->exists($video->file_path);
-            \Log::error('STEP 6: Exists check completed, result: ' . ($exists ? 'true' : 'false'));
-
-            if ($exists) {
-                \Log::error('STEP 7: Video exists in Spaces, building CDN URL');
-
+            if (Storage::disk('spaces')->exists($video->file_path)) {
                 // Simple direct redirect to CDN for maximum speed
-                \Log::error('STEP 8: About to get CDN config');
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
-                \Log::error('STEP 9: CDN Base URL: ' . ($cdnBaseUrl ?? 'NULL_CDN_URL'));
-
-                \Log::error('STEP 10: About to build full CDN URL');
-                \Log::error('STEP 11: video->file_path = ' . $video->file_path);
-                \Log::error('STEP 12: About to rtrim/ltrim operations');
 
                 if ($cdnBaseUrl) {
-                    \Log::error('STEP 13: Building CDN URL with rtrim/ltrim');
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
-                    \Log::error('STEP 14: CDN URL generated successfully: ' . $cdnUrl);
 
                     // Log for monitoring
-                    \Log::error('STEP 15: About to log redirect info');
-                    \Log::error('STEP 16: Direct redirect to CDN - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::info('Proxy streaming from CDN to avoid CloudFlare cookies - video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    // CloudFlare-compatible redirect with cookie prevention headers
-                    \Log::error('STEP 17: About to return redirect');
-
-                    return redirect($cdnUrl, 302, [
-                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                        'Pragma' => 'no-cache',
-                        'Expires' => '0',
-                        'Access-Control-Allow-Credentials' => 'false'
-                    ]);
+                    // Use proxy streaming instead of redirect to avoid CloudFlare cookie issues
+                    return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
                 } else {
-                    \Log::warning('DEBUG: No CDN URL configured');
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
                     return $this->streamFromSpaces($video, $request);
                 }
-            } else {
-                \Log::warning('DEBUG: Video does NOT exist in Spaces');
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
-            \Log::error('DEBUG: Exception in Spaces block: ' . $e->getMessage());
             \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
         }
 
