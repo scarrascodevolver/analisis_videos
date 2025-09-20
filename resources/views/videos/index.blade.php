@@ -110,7 +110,7 @@
                                                    style="object-fit: cover;"
                                                    preload="metadata"
                                                    muted>
-                                                <source src="{{ route('videos.stream', $video) }}#t=5" type="{{ $video->mime_type }}">
+                                                <source src="{{ route('videos.stream', $video) }}#t=5" type="video/mp4">
                                             </video>
                                         </div>
                                         <div class="card-body py-1 px-2">
