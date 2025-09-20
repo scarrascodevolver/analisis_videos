@@ -45,11 +45,13 @@ class VideoStreamController extends Controller
                 \Log::error('STEP 12: About to rtrim/ltrim operations');
 
                 if ($cdnBaseUrl) {
+                    \Log::error('STEP 13: Building CDN URL with rtrim/ltrim');
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
-                    \Log::info('DEBUG: Generated CDN URL: ' . $cdnUrl);
+                    \Log::error('STEP 14: CDN URL generated successfully: ' . $cdnUrl);
 
                     // Log for monitoring
-                    \Log::info('Direct redirect to CDN for maximum speed - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::error('STEP 15: About to log redirect info');
+                    \Log::error('STEP 16: Direct redirect to CDN - video: ' . $video->id . ' -> ' . $cdnUrl);
 
                     // CloudFlare-compatible redirect with cookie prevention headers
                     return redirect($cdnUrl)->withHeaders([
