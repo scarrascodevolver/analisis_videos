@@ -13,6 +13,9 @@ class VideoStreamController extends Controller
 {
     public function stream(Video $video, Request $request)
     {
+        // DEBUG: Log that we reached the method
+        \Log::info('VideoStreamController::stream called for video: ' . $video->id);
+
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
