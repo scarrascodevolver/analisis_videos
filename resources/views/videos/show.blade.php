@@ -321,7 +321,10 @@ $(document).ready(function() {
     const video = document.getElementById('rugbyVideo');
     const timestampInput = document.getElementById('timestamp_seconds');
     const timestampDisplay = document.getElementById('timestampDisplay');
-    
+
+    // Datos de comentarios para el timeline y notificaciones
+    const commentsData = @json($comments);
+
     console.log('✅ JavaScript loaded - timeline funcional');
     
     // Basic time formatting function
@@ -568,7 +571,6 @@ $(document).ready(function() {
     }, 1000);
 
     // Comment notifications system
-    const commentsData = @json($comments);
     let lastCheckedTime = -1;
     let activeCommentIds = new Set(); // Track currently visible notifications
 
