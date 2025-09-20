@@ -20,15 +20,16 @@ class VideoStreamController extends Controller
                 if ($cdnBaseUrl) {
                     // Use public CDN URL for maximum compatibility
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+
+                    // Log for monitoring
+                    \Log::info('Redirecting to public CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
+
+                    return redirect($cdnUrl);
                 } else {
-                    // Fallback to Storage URL if no CDN configured
-                    $cdnUrl = Storage::disk('spaces')->url($video->file_path);
+                    // No CDN configured, stream directly from Spaces
+                    \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
+                    return $this->streamFromSpaces($video, $request);
                 }
-
-                // Log for monitoring
-                \Log::info('Redirecting to public CDN for video: ' . $video->id . ' -> ' . $cdnUrl);
-
-                return redirect($cdnUrl);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
@@ -171,7 +172,8 @@ class VideoStreamController extends Controller
 
                     return redirect($cdnUrl);
                 } else {
-                    // Fallback to streaming if no CDN configured
+                    // No CDN configured, stream directly from Spaces
+                    \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
                     return $this->streamFileFromSpaces($spacesPath, $request);
                 }
             }
