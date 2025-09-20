@@ -18,11 +18,18 @@ class VideoStreamController extends Controller
 
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
+            \Log::info('DEBUG: Checking if video exists in Spaces: ' . $video->file_path);
+
             if (Storage::disk('spaces')->exists($video->file_path)) {
+                \Log::info('DEBUG: Video exists in Spaces, building CDN URL');
+
                 // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
+                \Log::info('DEBUG: CDN Base URL: ' . $cdnBaseUrl);
+
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+                    \Log::info('DEBUG: Generated CDN URL: ' . $cdnUrl);
 
                     // Log for monitoring
                     \Log::info('Direct redirect to CDN for maximum speed - video: ' . $video->id . ' -> ' . $cdnUrl);
@@ -36,13 +43,17 @@ class VideoStreamController extends Controller
                         'Access-Control-Allow-Credentials' => 'false'
                     ]);
                 } else {
+                    \Log::warning('DEBUG: No CDN URL configured');
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
                     return $this->streamFromSpaces($video, $request);
                 }
+            } else {
+                \Log::warning('DEBUG: Video does NOT exist in Spaces');
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
+            \Log::error('DEBUG: Exception in Spaces block: ' . $e->getMessage());
             \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
         }
 
