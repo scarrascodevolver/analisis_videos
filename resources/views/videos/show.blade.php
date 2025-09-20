@@ -37,7 +37,10 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: 550px; display: block;" preload="metadata">
+                        <video id="rugbyVideo" controls style="width: 100%; height: 550px; display: block;"
+                               preload="metadata"
+                               crossorigin="anonymous"
+                               x-webkit-airplay="allow">
                             <source src="{{ route('videos.stream', $video) }}" type="video/mp4">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>

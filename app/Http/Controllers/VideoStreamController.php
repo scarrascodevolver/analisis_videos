@@ -22,16 +22,26 @@ class VideoStreamController extends Controller
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Detect Chrome browser for optimized streaming
+                    // Detect Chrome browser for maximum speed
                     $userAgent = $request->header('User-Agent', '');
                     $isChrome = strpos($userAgent, 'Chrome') !== false && strpos($userAgent, 'Edg') === false;
 
                     \Log::info('Browser detection - UA: ' . substr($userAgent, 0, 100) . ' | isChrome: ' . ($isChrome ? 'YES' : 'NO'));
 
-                    // Since proxy streaming works better for all browsers, use optimized proxy
-                    \Log::info('Optimized proxy streaming for ' . ($isChrome ? 'Chrome' : 'other') . ' browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    if ($isChrome) {
+                        // Chrome: Direct CDN access for maximum speed (no proxy overhead)
+                        \Log::info('Direct CDN for maximum Chrome speed - video: ' . $video->id . ' -> ' . $cdnUrl);
 
-                    return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
+                        // Return raw redirect with minimal headers for speed
+                        return response('', 302, [
+                            'Location' => $cdnUrl,
+                            'Cache-Control' => 'public, max-age=3600',
+                        ]);
+                    } else {
+                        // Firefox: Proxy streaming to avoid CloudFlare cookies
+                        \Log::info('Proxy streaming for non-Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+                        return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
+                    }
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
