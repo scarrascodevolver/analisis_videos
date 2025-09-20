@@ -22,11 +22,27 @@ class VideoStreamController extends Controller
                 if ($cdnBaseUrl) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Log for monitoring
-                    \Log::info('Proxy streaming from CDN to avoid CloudFlare cookies - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    // Detect Chrome browser for better video compatibility
+                    $userAgent = $request->header('User-Agent', '');
+                    $isChrome = $this->isChromeBasedBrowser($userAgent);
 
-                    // Use proxy streaming instead of redirect to avoid CloudFlare cookie issues
-                    return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
+                    if ($isChrome) {
+                        // Chrome works better with direct CDN access
+                        \Log::info('Direct CDN redirect for Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+
+                        return redirect($cdnUrl, 302, [
+                            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                            'Pragma' => 'no-cache',
+                            'Expires' => '0',
+                            'Access-Control-Allow-Origin' => '*',
+                            'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
+                            'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
+                        ]);
+                    } else {
+                        // Firefox and others: use proxy streaming to avoid CloudFlare cookies
+                        \Log::info('Proxy streaming from CDN for non-Chrome browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+                        return $this->proxyStreamFromCDN($cdnUrl, $video, $request);
+                    }
                 } else {
                     // No CDN configured, stream directly from Spaces
                     \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
