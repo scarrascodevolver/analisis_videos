@@ -11,6 +11,24 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VideoStreamController extends Controller
 {
+    /**
+     * Get optimal chunk size based on file size and operation type
+     */
+    private function getOptimalChunkSize($fileSize, $isRangeRequest = false)
+    {
+        // For small files (< 100MB): use larger chunks for speed
+        if ($fileSize < 100 * 1024 * 1024) {
+            return $isRangeRequest ? 131072 : 65536; // 128KB for seeking, 64KB for full stream
+        }
+
+        // For medium files (100MB - 500MB): balanced chunks
+        if ($fileSize < 500 * 1024 * 1024) {
+            return $isRangeRequest ? 65536 : 32768; // 64KB for seeking, 32KB for full stream
+        }
+
+        // For large files (> 500MB): smaller chunks for memory safety
+        return $isRangeRequest ? 32768 : 8192; // 32KB for seeking, 8KB for full stream
+    }
     public function stream(Video $video, Request $request)
     {
         // Check if file is in DigitalOcean Spaces (new uploads)
@@ -129,11 +147,11 @@ class VideoStreamController extends Controller
                 $length = $end - $start + 1;
 
                 // Stream partial content from Spaces using chunks
-                return response()->stream(function () use ($video, $start, $length) {
+                return response()->stream(function () use ($video, $start, $length, $fileSize) {
                     $stream = Storage::disk('spaces')->readStream($video->file_path);
                     fseek($stream, $start);
 
-                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+                    $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                     $bytesRead = 0;
 
                     while (!feof($stream) && $bytesRead < $length) {
@@ -161,10 +179,10 @@ class VideoStreamController extends Controller
             }
 
             // No range request - serve full file from Spaces using chunks
-            return response()->stream(function () use ($video) {
+            return response()->stream(function () use ($video, $fileSize) {
                 $stream = Storage::disk('spaces')->readStream($video->file_path);
 
-                $chunkSize = 8192; // 8KB chunks for memory efficiency
+                $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
                 while (!feof($stream)) {
                     $chunk = fread($stream, $chunkSize);
@@ -307,11 +325,11 @@ class VideoStreamController extends Controller
                 $length = $end - $start + 1;
 
                 // Stream partial content from Spaces using chunks
-                return response()->stream(function () use ($spacesPath, $start, $length) {
+                return response()->stream(function () use ($spacesPath, $start, $length, $fileSize) {
                     $stream = Storage::disk('spaces')->readStream($spacesPath);
                     fseek($stream, $start);
 
-                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+                    $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                     $bytesRead = 0;
 
                     while (!feof($stream) && $bytesRead < $length) {
@@ -339,10 +357,10 @@ class VideoStreamController extends Controller
             }
 
             // No range request - serve full file from Spaces using chunks
-            return response()->stream(function () use ($spacesPath) {
+            return response()->stream(function () use ($spacesPath, $fileSize) {
                 $stream = Storage::disk('spaces')->readStream($spacesPath);
 
-                $chunkSize = 8192; // 8KB chunks for memory efficiency
+                $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
                 while (!feof($stream)) {
                     $chunk = fread($stream, $chunkSize);
@@ -440,7 +458,7 @@ class VideoStreamController extends Controller
                 $length = $end - $start + 1;
 
                 // Stream partial content from CDN with Chrome-optimized headers using chunks
-                return response()->stream(function () use ($cdnUrl, $start, $length) {
+                return response()->stream(function () use ($cdnUrl, $start, $length, $fileSize) {
                     $context = stream_context_create([
                         'http' => [
                             'method' => 'GET',
@@ -452,7 +470,7 @@ class VideoStreamController extends Controller
 
                     $stream = fopen($cdnUrl, 'r', false, $context);
                     if ($stream) {
-                        $chunkSize = 8192; // 8KB chunks for memory efficiency
+                        $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                         $bytesRead = 0;
 
                         while (!feof($stream) && $bytesRead < $length) {
@@ -484,10 +502,10 @@ class VideoStreamController extends Controller
             }
 
             // No range request - stream full file with Chrome-optimized headers using chunks
-            return response()->stream(function () use ($cdnUrl) {
+            return response()->stream(function () use ($cdnUrl, $fileSize) {
                 $stream = fopen($cdnUrl, 'r');
                 if ($stream) {
-                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+                    $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
                     while (!feof($stream)) {
                         $chunk = fread($stream, $chunkSize);
