@@ -46,7 +46,7 @@ class VideoController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        $videos = $query->latest()->paginate(4); // Temporal para ver paginación
+        $videos = $query->latest()->paginate(9);
 
         // Get filter data
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
