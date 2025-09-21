@@ -32,12 +32,10 @@
                                      onclick="window.location.href='{{ route('assignments.show', $assignment) }}'">
 
                                     <!-- Video Thumbnail using native poster -->
-                                    <video class="video-thumbnail w-100 h-100"
-                                           style="object-fit: cover; cursor: pointer; background: #1e4d2b;"
+                                    <video class="w-100 h-100"
+                                           style="object-fit: cover;"
                                            preload="metadata"
-                                           muted
-                                           onclick="window.location.href='{{ route('assignments.show', $assignment) }}'"
-                                           onloadedmetadata="this.currentTime = Math.min(5, this.duration / 4)">
+                                           muted>
                                         <source src="{{ route('videos.stream', $assignment->video) }}#t=5" type="video/mp4">
                                     </video>
 
