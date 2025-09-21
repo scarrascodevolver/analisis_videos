@@ -128,11 +128,28 @@ class VideoStreamController extends Controller
 
                 $length = $end - $start + 1;
 
-                // Stream partial content from Spaces
+                // Stream partial content from Spaces using chunks
                 return response()->stream(function () use ($video, $start, $length) {
                     $stream = Storage::disk('spaces')->readStream($video->file_path);
                     fseek($stream, $start);
-                    echo fread($stream, $length);
+
+                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+                    $bytesRead = 0;
+
+                    while (!feof($stream) && $bytesRead < $length) {
+                        $remainingBytes = $length - $bytesRead;
+                        $currentChunkSize = min($chunkSize, $remainingBytes);
+
+                        $chunk = fread($stream, $currentChunkSize);
+                        if ($chunk === false || strlen($chunk) === 0) {
+                            break;
+                        }
+
+                        echo $chunk;
+                        flush();
+                        $bytesRead += strlen($chunk);
+                    }
+
                     fclose($stream);
                 }, 206, [
                     'Content-Type' => $mimeType,
@@ -143,10 +160,22 @@ class VideoStreamController extends Controller
                 ]);
             }
 
-            // No range request - serve full file from Spaces
+            // No range request - serve full file from Spaces using chunks
             return response()->stream(function () use ($video) {
                 $stream = Storage::disk('spaces')->readStream($video->file_path);
-                fpassthru($stream);
+
+                $chunkSize = 8192; // 8KB chunks for memory efficiency
+
+                while (!feof($stream)) {
+                    $chunk = fread($stream, $chunkSize);
+                    if ($chunk === false || strlen($chunk) === 0) {
+                        break;
+                    }
+
+                    echo $chunk;
+                    flush();
+                }
+
                 fclose($stream);
             }, 200, [
                 'Content-Type' => $mimeType,
@@ -277,11 +306,28 @@ class VideoStreamController extends Controller
 
                 $length = $end - $start + 1;
 
-                // Stream partial content from Spaces
+                // Stream partial content from Spaces using chunks
                 return response()->stream(function () use ($spacesPath, $start, $length) {
                     $stream = Storage::disk('spaces')->readStream($spacesPath);
                     fseek($stream, $start);
-                    echo fread($stream, $length);
+
+                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+                    $bytesRead = 0;
+
+                    while (!feof($stream) && $bytesRead < $length) {
+                        $remainingBytes = $length - $bytesRead;
+                        $currentChunkSize = min($chunkSize, $remainingBytes);
+
+                        $chunk = fread($stream, $currentChunkSize);
+                        if ($chunk === false || strlen($chunk) === 0) {
+                            break;
+                        }
+
+                        echo $chunk;
+                        flush();
+                        $bytesRead += strlen($chunk);
+                    }
+
                     fclose($stream);
                 }, 206, [
                     'Content-Type' => $mimeType,
@@ -292,10 +338,22 @@ class VideoStreamController extends Controller
                 ]);
             }
 
-            // No range request - serve full file from Spaces
+            // No range request - serve full file from Spaces using chunks
             return response()->stream(function () use ($spacesPath) {
                 $stream = Storage::disk('spaces')->readStream($spacesPath);
-                fpassthru($stream);
+
+                $chunkSize = 8192; // 8KB chunks for memory efficiency
+
+                while (!feof($stream)) {
+                    $chunk = fread($stream, $chunkSize);
+                    if ($chunk === false || strlen($chunk) === 0) {
+                        break;
+                    }
+
+                    echo $chunk;
+                    flush();
+                }
+
                 fclose($stream);
             }, 200, [
                 'Content-Type' => $mimeType,
@@ -381,7 +439,7 @@ class VideoStreamController extends Controller
 
                 $length = $end - $start + 1;
 
-                // Stream partial content from CDN with Chrome-optimized headers
+                // Stream partial content from CDN with Chrome-optimized headers using chunks
                 return response()->stream(function () use ($cdnUrl, $start, $length) {
                     $context = stream_context_create([
                         'http' => [
@@ -394,7 +452,23 @@ class VideoStreamController extends Controller
 
                     $stream = fopen($cdnUrl, 'r', false, $context);
                     if ($stream) {
-                        fpassthru($stream);
+                        $chunkSize = 8192; // 8KB chunks for memory efficiency
+                        $bytesRead = 0;
+
+                        while (!feof($stream) && $bytesRead < $length) {
+                            $remainingBytes = $length - $bytesRead;
+                            $currentChunkSize = min($chunkSize, $remainingBytes);
+
+                            $chunk = fread($stream, $currentChunkSize);
+                            if ($chunk === false || strlen($chunk) === 0) {
+                                break;
+                            }
+
+                            echo $chunk;
+                            flush();
+                            $bytesRead += strlen($chunk);
+                        }
+
                         fclose($stream);
                     }
                 }, 206, [
@@ -409,11 +483,22 @@ class VideoStreamController extends Controller
                 ]);
             }
 
-            // No range request - stream full file with Chrome-optimized headers
+            // No range request - stream full file with Chrome-optimized headers using chunks
             return response()->stream(function () use ($cdnUrl) {
                 $stream = fopen($cdnUrl, 'r');
                 if ($stream) {
-                    fpassthru($stream);
+                    $chunkSize = 8192; // 8KB chunks for memory efficiency
+
+                    while (!feof($stream)) {
+                        $chunk = fread($stream, $chunkSize);
+                        if ($chunk === false || strlen($chunk) === 0) {
+                            break;
+                        }
+
+                        echo $chunk;
+                        flush();
+                    }
+
                     fclose($stream);
                 }
             }, 200, [
