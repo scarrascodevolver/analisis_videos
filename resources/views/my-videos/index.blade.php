@@ -39,17 +39,6 @@
                                         <source src="{{ route('videos.stream', $assignment->video) }}#t=5" type="video/mp4">
                                     </video>
 
-                                    <!-- Fallback placeholder (only if video fails) -->
-                                    <div class="video-fallback d-flex align-items-center justify-content-center h-100"
-                                         style="cursor: pointer; background: linear-gradient(135deg, #1e4d2b, #28a745); color: white; display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                                         onclick="window.location.href='{{ route('assignments.show', $assignment) }}'">
-                                        <div class="text-center">
-                                            <div class="play-button-circle mb-2">
-                                                <i class="fas fa-play text-white"></i>
-                                            </div>
-                                            <small class="text-white font-weight-bold">CARGANDO...</small>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- Video Info -->
@@ -189,18 +178,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     videoThumbnails.forEach((video, index) => {
         const container = video.closest('.video-thumbnail-container');
-        const fallback = container.querySelector('.video-fallback');
         const videoId = container.dataset.videoId;
 
         console.log(`📹 Configurando thumbnail nativo para video ${videoId}`);
 
-        // Error handler - mostrar fallback si video falla
+        // Error handler - log only, no fallback needed
         video.addEventListener('error', function() {
-            console.log(`❌ Error cargando video ${videoId}, mostrando fallback`);
-            video.style.display = 'none';
-            if (fallback) {
-                fallback.style.display = 'flex';
-            }
+            console.log(`❌ Error cargando video ${videoId}`);
         });
 
         // Success handler
