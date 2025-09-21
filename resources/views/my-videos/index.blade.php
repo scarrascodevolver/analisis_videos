@@ -38,7 +38,7 @@
                                            muted
                                            onclick="window.location.href='{{ route('assignments.show', $assignment) }}'"
                                            onloadedmetadata="this.currentTime = Math.min(5, this.duration / 4)">
-                                        <source src="{{ route('videos.stream', $assignment->video) }}#t=5" type="{{ $assignment->video->mime_type }}">
+                                        <source src="{{ route('videos.stream', $assignment->video) }}#t=5" type="video/mp4">
                                     </video>
 
                                     <!-- Fallback placeholder (only if video fails) -->
