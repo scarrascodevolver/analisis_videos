@@ -229,7 +229,7 @@
 
                         @if(method_exists($videos, 'links'))
                             <div class="d-flex justify-content-center">
-                                {{ $videos->links() }}
+                                {{ $videos->links('custom.pagination') }}
                             </div>
                         @endif
                     @else
