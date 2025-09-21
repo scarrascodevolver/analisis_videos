@@ -50,7 +50,7 @@ class ProfileController extends Controller
             'height' => 'nullable|integer|min:150|max:220',
             'date_of_birth' => 'nullable|date',
             'user_category_id' => 'required|exists:categories,id',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,heic|max:25600'
         ]);
 
         // Update user basic info
