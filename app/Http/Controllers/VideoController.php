@@ -139,7 +139,7 @@ class VideoController extends Controller
 
         // Try to store in DigitalOcean Spaces, fallback to local if it fails
         try {
-            $path = $file->storeAs('videos', $filename, 'spaces');
+            $path = $file->storeAs('videos', $filename, 'spaces', 'public');
         } catch (Exception $e) {
             // Log the error and fallback to local storage
             \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
@@ -310,7 +310,7 @@ class VideoController extends Controller
 
         // Try to store in DigitalOcean Spaces, fallback to local if it fails
         try {
-            $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
+            $path = $file->storeAs('videos/player-uploads', $filename, 'spaces', 'public');
         } catch (Exception $e) {
             // Log the error and fallback to local storage
             \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
