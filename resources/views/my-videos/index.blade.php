@@ -185,7 +185,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎬 Iniciando sistema de thumbnails nativo en Mis Videos...');
 
-    const videoThumbnails = document.querySelectorAll('.video-thumbnail');
+    const videoThumbnails = document.querySelectorAll('.video-thumbnail-container video');
 
     videoThumbnails.forEach((video, index) => {
         const container = video.closest('.video-thumbnail-container');
