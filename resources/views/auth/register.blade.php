@@ -135,28 +135,20 @@
                             <label class="text-muted small font-weight-bold">Posición principal</label>
                             <select class="form-control rugby-select" name="position">
                                 <option value="">Posición principal...</option>
-                                <optgroup label="Primera Línea">
-                                    <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
-                                    <option value="hooker">Hooker (2)</option>
-                                    <option value="pilar_derecho">Pilar Derecho (3)</option>
-                                </optgroup>
-                                <optgroup label="Segunda Línea">
-                                    <option value="segunda_linea_4">Segunda Línea (4)</option>
-                                    <option value="segunda_linea_5">Segunda Línea (5)</option>
-                                </optgroup>
-                                <optgroup label="Tercera Línea">
-                                    <option value="ala_izquierdo">Ala Izquierdo (6)</option>
-                                    <option value="ala_derecho">Ala Derecho (7)</option>
-                                    <option value="octavo">Octavo (8)</option>
+                                <optgroup label="Forwards">
+                                    <option value="Pilar Izquierdo">Pilar Izquierdo (1)</option>
+                                    <option value="Hooker">Hooker (2)</option>
+                                    <option value="Pilar Derecho">Pilar Derecho (3)</option>
+                                    <option value="Segunda Línea">Segunda Línea (4-5)</option>
+                                    <option value="Ala">Ala (6-7)</option>
+                                    <option value="Octavo">Octavo (8)</option>
                                 </optgroup>
                                 <optgroup label="Backs">
-                                    <option value="medio_scrum">Medio Scrum (9)</option>
-                                    <option value="apertura">Apertura (10)</option>
-                                    <option value="ala_izquierdo_back">Ala Izquierdo (11)</option>
-                                    <option value="centro_interno">Centro Interno (12)</option>
-                                    <option value="centro_externo">Centro Externo (13)</option>
-                                    <option value="ala_derecho_back">Ala Derecho (14)</option>
-                                    <option value="fullback">Fullback (15)</option>
+                                    <option value="Medio Scrum">Medio Scrum (9)</option>
+                                    <option value="Apertura">Apertura (10)</option>
+                                    <option value="Wing">Wing (11-14)</option>
+                                    <option value="Centro">Centro (12-13)</option>
+                                    <option value="Fullback">Fullback (15)</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -165,28 +157,20 @@
                             <label class="text-muted small font-weight-bold">Posición secundaria</label>
                             <select class="form-control rugby-select" name="secondary_position">
                                 <option value="">Posición secundaria...</option>
-                                <optgroup label="Primera Línea">
-                                    <option value="pilar_izquierdo">Pilar Izquierdo (1)</option>
-                                    <option value="hooker">Hooker (2)</option>
-                                    <option value="pilar_derecho">Pilar Derecho (3)</option>
-                                </optgroup>
-                                <optgroup label="Segunda Línea">
-                                    <option value="segunda_linea_4">Segunda Línea (4)</option>
-                                    <option value="segunda_linea_5">Segunda Línea (5)</option>
-                                </optgroup>
-                                <optgroup label="Tercera Línea">
-                                    <option value="ala_izquierdo">Ala Izquierdo (6)</option>
-                                    <option value="ala_derecho">Ala Derecho (7)</option>
-                                    <option value="octavo">Octavo (8)</option>
+                                <optgroup label="Forwards">
+                                    <option value="Pilar Izquierdo">Pilar Izquierdo (1)</option>
+                                    <option value="Hooker">Hooker (2)</option>
+                                    <option value="Pilar Derecho">Pilar Derecho (3)</option>
+                                    <option value="Segunda Línea">Segunda Línea (4-5)</option>
+                                    <option value="Ala">Ala (6-7)</option>
+                                    <option value="Octavo">Octavo (8)</option>
                                 </optgroup>
                                 <optgroup label="Backs">
-                                    <option value="medio_scrum">Medio Scrum (9)</option>
-                                    <option value="apertura">Apertura (10)</option>
-                                    <option value="ala_izquierdo_back">Ala Izquierdo (11)</option>
-                                    <option value="centro_interno">Centro Interno (12)</option>
-                                    <option value="centro_externo">Centro Externo (13)</option>
-                                    <option value="ala_derecho_back">Ala Derecho (14)</option>
-                                    <option value="fullback">Fullback (15)</option>
+                                    <option value="Medio Scrum">Medio Scrum (9)</option>
+                                    <option value="Apertura">Apertura (10)</option>
+                                    <option value="Wing">Wing (11-14)</option>
+                                    <option value="Centro">Centro (12-13)</option>
+                                    <option value="Fullback">Fullback (15)</option>
                                 </optgroup>
                             </select>
                         </div>
