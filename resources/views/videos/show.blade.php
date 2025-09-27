@@ -45,6 +45,44 @@
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
+
+                        <!-- Canvas overlay para anotaciones -->
+                        <canvas id="annotationCanvas"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
+                        </canvas>
+
+                        <!-- Toolbar de anotaciones (oculto por defecto) -->
+                        <div id="annotationToolbar" class="annotation-toolbar" style="display: none;">
+                            <div class="toolbar-container">
+                                <div class="toolbar-title">
+                                    <i class="fas fa-paint-brush"></i> Herramientas de Anotación
+                                    <button id="closeAnnotationMode" class="btn btn-sm btn-outline-light ml-2">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="toolbar-buttons">
+                                    <button id="annotationArrow" class="toolbar-btn active" data-tool="arrow">
+                                        <i class="fas fa-arrow-right"></i> Flecha
+                                    </button>
+                                    <button id="annotationCircle" class="toolbar-btn" data-tool="circle">
+                                        <i class="fas fa-circle"></i> Círculo
+                                    </button>
+                                    <button id="annotationLine" class="toolbar-btn" data-tool="line">
+                                        <i class="fas fa-minus"></i> Línea
+                                    </button>
+                                    <button id="annotationText" class="toolbar-btn" data-tool="text">
+                                        <i class="fas fa-font"></i> Texto
+                                    </button>
+                                    <div class="toolbar-separator"></div>
+                                    <button id="saveAnnotation" class="toolbar-btn save-btn">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button id="clearAnnotations" class="toolbar-btn clear-btn">
+                                        <i class="fas fa-trash"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         
                         
                         <!-- Mobile Fullscreen Button -->
@@ -52,8 +90,11 @@
                             <button id="mobileFullscreenBtn" class="btn btn-sm btn-dark mr-2" title="Pantalla completa" style="display: none;">
                                 <i class="fas fa-expand"></i>
                             </button>
-                            <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold">
+                            <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold mr-2">
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
+                            </button>
+                            <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
+                                <i class="fas fa-paint-brush"></i> Anotar
                             </button>
                         </div>
                     </div>
@@ -1129,6 +1170,348 @@ $(document).ready(function() {
             }
         });
     });
+
+    // ===========================
+    // SISTEMA DE ANOTACIONES
+    // ===========================
+    let annotationMode = false;
+    let fabricCanvas = null;
+    let currentTool = 'arrow';
+    let isDrawing = false;
+    let currentAnnotation = null;
+
+    // Inicializar sistema de anotaciones
+    function initAnnotationSystem() {
+        const canvas = document.getElementById('annotationCanvas');
+        const video = document.getElementById('rugbyVideo');
+
+        // Configurar canvas dimensions
+        function resizeCanvas() {
+            const videoRect = video.getBoundingClientRect();
+            const container = video.parentElement;
+            const containerRect = container.getBoundingClientRect();
+
+            canvas.width = video.offsetWidth;
+            canvas.height = video.offsetHeight;
+            canvas.style.width = video.offsetWidth + 'px';
+            canvas.style.height = video.offsetHeight + 'px';
+
+            if (fabricCanvas) {
+                fabricCanvas.setDimensions({
+                    width: video.offsetWidth,
+                    height: video.offsetHeight
+                });
+            }
+        }
+
+        // Initialize Fabric.js canvas
+        fabricCanvas = new fabric.Canvas('annotationCanvas');
+        fabricCanvas.selection = false;
+        fabricCanvas.isDrawingMode = false;
+
+        // Initial resize
+        resizeCanvas();
+
+        // Resize on window resize and video load
+        window.addEventListener('resize', resizeCanvas);
+        video.addEventListener('loadedmetadata', resizeCanvas);
+
+        console.log('✅ Sistema de anotaciones inicializado');
+    }
+
+    // Toggle annotation mode
+    $('#toggleAnnotationMode').on('click', function() {
+        if (!annotationMode) {
+            enterAnnotationMode();
+        } else {
+            exitAnnotationMode();
+        }
+    });
+
+    function enterAnnotationMode() {
+        annotationMode = true;
+
+        // Pause video
+        const video = document.getElementById('rugbyVideo');
+        video.pause();
+
+        // Show toolbar
+        $('#annotationToolbar').fadeIn(300);
+
+        // Enable canvas interactions
+        $('#annotationCanvas').css('pointer-events', 'auto');
+
+        // Change button state
+        $('#toggleAnnotationMode')
+            .removeClass('btn-warning')
+            .addClass('btn-success')
+            .html('<i class="fas fa-check"></i> Anotando');
+
+        // Initialize if not done
+        if (!fabricCanvas) {
+            initAnnotationSystem();
+        }
+
+        console.log('🎨 Modo anotación activado');
+    }
+
+    function exitAnnotationMode() {
+        annotationMode = false;
+
+        // Hide toolbar
+        $('#annotationToolbar').fadeOut(300);
+
+        // Disable canvas interactions
+        $('#annotationCanvas').css('pointer-events', 'none');
+
+        // Change button state
+        $('#toggleAnnotationMode')
+            .removeClass('btn-success')
+            .addClass('btn-warning')
+            .html('<i class="fas fa-paint-brush"></i> Anotar');
+
+        console.log('❌ Modo anotación desactivado');
+    }
+
+    // Close annotation mode
+    $('#closeAnnotationMode').on('click', exitAnnotationMode);
+
+    // Tool selection
+    $('.toolbar-btn[data-tool]').on('click', function() {
+        const tool = $(this).data('tool');
+        currentTool = tool;
+
+        // Update active state
+        $('.toolbar-btn[data-tool]').removeClass('active');
+        $(this).addClass('active');
+
+        // Configure canvas for tool
+        if (fabricCanvas) {
+            fabricCanvas.isDrawingMode = false;
+            fabricCanvas.selection = false;
+
+            if (tool === 'free_draw') {
+                fabricCanvas.isDrawingMode = true;
+                fabricCanvas.freeDrawingBrush.width = 3;
+                fabricCanvas.freeDrawingBrush.color = '#ff0000';
+            }
+        }
+
+        console.log('🔧 Herramienta seleccionada:', tool);
+    });
+
+    // Drawing functionality
+    function startDrawing(tool, startX, startY) {
+        const options = {
+            left: startX,
+            top: startY,
+            fill: 'transparent',
+            stroke: '#ff0000',
+            strokeWidth: 3,
+            selectable: true,
+            evented: true
+        };
+
+        switch (tool) {
+            case 'arrow':
+                currentAnnotation = new fabric.Line([startX, startY, startX, startY], {
+                    ...options,
+                    strokeWidth: 4
+                });
+                break;
+            case 'circle':
+                currentAnnotation = new fabric.Circle({
+                    ...options,
+                    radius: 1,
+                    left: startX,
+                    top: startY
+                });
+                break;
+            case 'line':
+                currentAnnotation = new fabric.Line([startX, startY, startX, startY], options);
+                break;
+            case 'rectangle':
+                currentAnnotation = new fabric.Rect({
+                    ...options,
+                    width: 1,
+                    height: 1
+                });
+                break;
+        }
+
+        if (currentAnnotation) {
+            fabricCanvas.add(currentAnnotation);
+            fabricCanvas.renderAll();
+        }
+    }
+
+    function updateDrawing(tool, currentX, currentY, startX, startY) {
+        if (!currentAnnotation) return;
+
+        switch (tool) {
+            case 'arrow':
+            case 'line':
+                currentAnnotation.set({
+                    x2: currentX,
+                    y2: currentY
+                });
+                break;
+            case 'circle':
+                const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+                currentAnnotation.set({
+                    radius: radius
+                });
+                break;
+            case 'rectangle':
+                currentAnnotation.set({
+                    width: Math.abs(currentX - startX),
+                    height: Math.abs(currentY - startY),
+                    left: Math.min(startX, currentX),
+                    top: Math.min(startY, currentY)
+                });
+                break;
+        }
+
+        fabricCanvas.renderAll();
+    }
+
+    // Canvas mouse events
+    let startX, startY;
+
+    if (typeof fabric !== 'undefined') {
+        $(document).ready(function() {
+            // Wait for canvas to be available
+            setTimeout(() => {
+                const canvas = document.getElementById('annotationCanvas');
+                if (canvas) {
+                    initAnnotationSystem();
+
+                    fabricCanvas.on('mouse:down', function(event) {
+                        if (!annotationMode || currentTool === 'free_draw') return;
+
+                        isDrawing = true;
+                        const pointer = fabricCanvas.getPointer(event.e);
+                        startX = pointer.x;
+                        startY = pointer.y;
+
+                        startDrawing(currentTool, startX, startY);
+                    });
+
+                    fabricCanvas.on('mouse:move', function(event) {
+                        if (!annotationMode || !isDrawing || currentTool === 'free_draw') return;
+
+                        const pointer = fabricCanvas.getPointer(event.e);
+                        updateDrawing(currentTool, pointer.x, pointer.y, startX, startY);
+                    });
+
+                    fabricCanvas.on('mouse:up', function(event) {
+                        if (!annotationMode) return;
+
+                        isDrawing = false;
+                        currentAnnotation = null;
+
+                        // Add arrow head for arrow tool
+                        if (currentTool === 'arrow' && fabricCanvas.getObjects().length > 0) {
+                            const line = fabricCanvas.getObjects()[fabricCanvas.getObjects().length - 1];
+                            if (line.type === 'line') {
+                                addArrowHead(line);
+                            }
+                        }
+                    });
+                }
+            }, 500);
+        });
+    }
+
+    function addArrowHead(line) {
+        const x1 = line.x1;
+        const y1 = line.y1;
+        const x2 = line.x2;
+        const y2 = line.y2;
+
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const headLength = 20;
+
+        const arrowHead = new fabric.Polygon([
+            {x: x2, y: y2},
+            {x: x2 - headLength * Math.cos(angle - Math.PI/6), y: y2 - headLength * Math.sin(angle - Math.PI/6)},
+            {x: x2 - headLength * Math.cos(angle + Math.PI/6), y: y2 - headLength * Math.sin(angle + Math.PI/6)}
+        ], {
+            fill: '#ff0000',
+            stroke: '#ff0000',
+            strokeWidth: 2,
+            selectable: true,
+            evented: true
+        });
+
+        fabricCanvas.add(arrowHead);
+        fabricCanvas.renderAll();
+    }
+
+    // Save annotation
+    $('#saveAnnotation').on('click', function() {
+        if (!fabricCanvas || fabricCanvas.getObjects().length === 0) {
+            alert('No hay anotaciones para guardar');
+            return;
+        }
+
+        const video = document.getElementById('rugbyVideo');
+        const timestamp = video.currentTime;
+
+        // Get canvas data
+        const annotationData = {
+            canvas_data: fabricCanvas.toJSON(),
+            canvas_width: fabricCanvas.width,
+            canvas_height: fabricCanvas.height,
+            video_width: video.videoWidth,
+            video_height: video.videoHeight
+        };
+
+        // Save via API
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: '/api/annotations',
+            method: 'POST',
+            data: {
+                video_id: {{ $video->id }},
+                timestamp: timestamp,
+                annotation_type: 'canvas',
+                annotation_data: annotationData
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('✅ Anotación guardada:', response);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Anotación guardada exitosamente');
+                    }
+                    // Clear canvas after save
+                    fabricCanvas.clear();
+                } else {
+                    console.error('❌ Error al guardar:', response);
+                    alert('Error al guardar la anotación');
+                }
+            },
+            error: function(xhr) {
+                console.error('❌ Error AJAX:', xhr);
+                alert('Error de conexión al guardar la anotación');
+            }
+        });
+    });
+
+    // Clear annotations
+    $('#clearAnnotations').on('click', function() {
+        if (fabricCanvas) {
+            fabricCanvas.clear();
+            console.log('🗑️ Anotaciones limpiadas');
+        }
+    });
+
+    console.log('✅ Sistema de anotaciones configurado');
 });
 </script>
 
@@ -1232,6 +1615,110 @@ $(document).ready(function() {
     background: #1e4d2b;
     border-color: #1e4d2b;
     color: white;
+}
+
+/* Annotation Toolbar Styles */
+.annotation-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    padding: 15px;
+    backdrop-filter: blur(5px);
+    border: 2px solid #ffc107;
+}
+
+.toolbar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toolbar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.toolbar-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.toolbar-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.toolbar-btn.active {
+    background: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+}
+
+.toolbar-btn.save-btn {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.toolbar-btn.save-btn:hover {
+    background: #218838;
+}
+
+.toolbar-btn.clear-btn {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+.toolbar-btn.clear-btn:hover {
+    background: #c82333;
+}
+
+.toolbar-separator {
+    width: 1px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 5px;
+}
+
+/* Canvas overlay */
+#annotationCanvas {
+    cursor: crosshair;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .annotation-toolbar {
+        padding: 10px;
+    }
+
+    .toolbar-buttons {
+        gap: 5px;
+    }
+
+    .toolbar-btn {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
 }
 </style>
 
