@@ -7,6 +7,7 @@ use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\PlayerApiController;
+use App\Http\Controllers\AnnotationController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -33,6 +34,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('api/players/all', [PlayerApiController::class, 'all'])->name('api.players.all');
     Route::get('api/players/search', [PlayerApiController::class, 'search'])->name('api.players.search');
     Route::get('api/players/{player}/videos', [PlayerApiController::class, 'playerVideos'])->name('api.players.videos');
+
+    // Video Annotations API Routes
+    Route::prefix('api/annotations')->name('api.annotations.')->group(function () {
+        Route::post('/', [AnnotationController::class, 'store'])->name('store');
+        Route::get('/video/{videoId}', [AnnotationController::class, 'getByVideo'])->name('getByVideo');
+        Route::get('/video/{videoId}/timestamp', [AnnotationController::class, 'getByTimestamp'])->name('getByTimestamp');
+        Route::delete('/{id}', [AnnotationController::class, 'destroy'])->name('destroy');
+    });
     
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
