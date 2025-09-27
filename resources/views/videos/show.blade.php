@@ -1189,13 +1189,10 @@ $(document).ready(function() {
     function initAnnotationSystem() {
         const canvas = document.getElementById('annotationCanvas');
         const video = document.getElementById('rugbyVideo');
+        const videoContainer = video.parentElement;
 
         // Configurar canvas dimensions
         function resizeCanvas() {
-            const videoRect = video.getBoundingClientRect();
-            const container = video.parentElement;
-            const containerRect = container.getBoundingClientRect();
-
             canvas.width = video.offsetWidth;
             canvas.height = video.offsetHeight;
             canvas.style.width = video.offsetWidth + 'px';
@@ -1206,6 +1203,21 @@ $(document).ready(function() {
                     width: video.offsetWidth,
                     height: video.offsetHeight
                 });
+
+                // MOVER canvas container DENTRO del video container
+                const canvasContainer = document.querySelector('.canvas-container');
+                if (canvasContainer && canvasContainer.parentElement !== videoContainer) {
+                    videoContainer.appendChild(canvasContainer);
+                    canvasContainer.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        z-index: 5;
+                    `;
+                }
             }
         }
 
@@ -1214,7 +1226,7 @@ $(document).ready(function() {
         fabricCanvas.selection = false;
         fabricCanvas.isDrawingMode = false;
 
-        // Initial resize
+        // Initial resize and positioning
         resizeCanvas();
 
         // Resize on window resize and video load
@@ -1360,6 +1372,18 @@ $(document).ready(function() {
                     height: 1
                 });
                 break;
+            case 'text':
+                const textValue = prompt('Ingresa el texto:') || 'Texto';
+                currentAnnotation = new fabric.Text(textValue, {
+                    left: startX,
+                    top: startY,
+                    fill: selectedColor,
+                    fontSize: 20,
+                    fontFamily: 'Arial',
+                    selectable: true,
+                    evented: true
+                });
+                break;
         }
 
         if (currentAnnotation) {
@@ -1412,11 +1436,17 @@ $(document).ready(function() {
                     fabricCanvas.on('mouse:down', function(event) {
                         if (!annotationMode || currentTool === 'free_draw') return;
 
-                        isDrawing = true;
                         const pointer = fabricCanvas.getPointer(event.e);
                         startX = pointer.x;
                         startY = pointer.y;
 
+                        // Herramienta texto no necesita dragging
+                        if (currentTool === 'text') {
+                            startDrawing(currentTool, startX, startY);
+                            return;
+                        }
+
+                        isDrawing = true;
                         startDrawing(currentTool, startX, startY);
                     });
 
@@ -1501,12 +1531,13 @@ $(document).ready(function() {
         $.ajax({
             url: '/api/annotations',
             method: 'POST',
-            data: {
+            contentType: 'application/json',
+            data: JSON.stringify({
                 video_id: {{ $video->id }},
                 timestamp: timestamp,
                 annotation_type: 'canvas',
                 annotation_data: annotationData
-            },
+            }),
             success: function(response) {
                 if (response.success) {
                     console.log('✅ Anotación guardada:', response);
