@@ -1201,6 +1201,11 @@ $(document).ready(function() {
     let currentDisplayedAnnotation = null;
     let hasTemporaryDrawing = false; // Flag para dibujos temporales
 
+    // DEBUG: Hacer variables accesibles globalmente
+    window.savedAnnotations = savedAnnotations;
+    window.currentDisplayedAnnotation = currentDisplayedAnnotation;
+    window.hasTemporaryDrawing = hasTemporaryDrawing;
+
     // Inicializar sistema de anotaciones
     function initAnnotationSystem() {
         const canvas = document.getElementById('annotationCanvas');
@@ -1272,7 +1277,9 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     savedAnnotations = response.annotations;
+                    window.savedAnnotations = savedAnnotations; // DEBUG: Actualizar global
                     console.log('✅ Anotaciones cargadas:', savedAnnotations.length);
+                    console.log('📋 Primera anotación:', savedAnnotations[0]);
                 }
             },
             error: function(xhr) {
@@ -1701,6 +1708,11 @@ $(document).ready(function() {
         fabricCanvas.clear();
         console.log('🗑️ Anotación ocultada');
     }
+
+    // DEBUG: Hacer funciones accesibles globalmente
+    window.checkAndShowAnnotations = checkAndShowAnnotations;
+    window.displayAnnotation = displayAnnotation;
+    window.clearDisplayedAnnotation = clearDisplayedAnnotation;
 
     console.log('✅ Sistema de anotaciones configurado');
 });
