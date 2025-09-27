@@ -1662,10 +1662,25 @@ $(document).ready(function() {
 
     // Función para mostrar/ocultar anotaciones según timestamp y duración
     function checkAndShowAnnotations() {
-        if (annotationMode || !fabricCanvas) return; // No mostrar en modo edición
+        // DEBUG: Log cada ejecución
+        console.log('🔄 checkAndShowAnnotations ejecutándose', {
+            annotationMode: annotationMode,
+            fabricCanvas: !!fabricCanvas,
+            hasTemporaryDrawing: hasTemporaryDrawing,
+            savedAnnotationsCount: savedAnnotations.length,
+            currentTime: video.currentTime
+        });
+
+        if (annotationMode || !fabricCanvas) {
+            console.log('⏸️ Saliendo: annotationMode o !fabricCanvas');
+            return; // No mostrar en modo edición
+        }
 
         // Si hay dibujo temporal, no interferir
-        if (hasTemporaryDrawing) return;
+        if (hasTemporaryDrawing) {
+            console.log('⏸️ Saliendo: hasTemporaryDrawing');
+            return;
+        }
 
         const currentTime = video.currentTime;
 
@@ -1674,32 +1689,56 @@ $(document).ready(function() {
             const startTime = annotation.timestamp;
             const endTime = annotation.is_permanent ? Infinity : startTime + annotation.duration_seconds;
 
+            console.log('🔍 Verificando anotación:', {
+                id: annotation.id,
+                startTime: startTime,
+                endTime: endTime,
+                currentTime: currentTime,
+                inRange: currentTime >= startTime && currentTime <= endTime
+            });
+
             return currentTime >= startTime && currentTime <= endTime;
         });
 
+        console.log('🎯 Anotación activa encontrada:', activeAnnotation);
+
         if (activeAnnotation && activeAnnotation !== currentDisplayedAnnotation) {
             // Mostrar nueva anotación
+            console.log('✅ Mostrando nueva anotación:', activeAnnotation.id);
             displayAnnotation(activeAnnotation);
             currentDisplayedAnnotation = activeAnnotation;
         } else if (!activeAnnotation && currentDisplayedAnnotation) {
             // Ocultar anotación actual
+            console.log('🗑️ Ocultando anotación actual');
             clearDisplayedAnnotation();
             currentDisplayedAnnotation = null;
         }
     }
 
     function displayAnnotation(annotation) {
-        if (!fabricCanvas) return;
+        console.log('🎨 displayAnnotation llamada con:', annotation);
+
+        if (!fabricCanvas) {
+            console.log('❌ No hay fabricCanvas disponible');
+            return;
+        }
 
         // Limpiar canvas actual
         fabricCanvas.clear();
+        console.log('🧹 Canvas limpiado');
 
         // Cargar datos de la anotación
         if (annotation.annotation_data && annotation.annotation_data.canvas_data) {
+            console.log('📦 Cargando canvas_data:', annotation.annotation_data.canvas_data);
+
             fabricCanvas.loadFromJSON(annotation.annotation_data.canvas_data, function() {
                 fabricCanvas.renderAll();
                 console.log('✅ Anotación mostrada en timestamp:', annotation.timestamp);
+                console.log('🎯 Canvas objetos después de cargar:', fabricCanvas.getObjects().length);
             });
+        } else {
+            console.log('⚠️ No hay canvas_data en la anotación');
+            console.log('📊 annotation_data:', annotation.annotation_data);
         }
     }
 
