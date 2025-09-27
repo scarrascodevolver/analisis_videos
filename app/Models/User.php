@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasMany(VideoAssignment::class, 'assigned_by');
     }
 
+    public function videoAnnotations()
+    {
+        return $this->hasMany(VideoAnnotation::class);
+    }
+
     public function pendingAssignments()
     {
         return $this->assignedVideos(); // Ya no hay estados, todas las asignaciones están "activas"

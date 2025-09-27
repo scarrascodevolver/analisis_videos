@@ -63,6 +63,11 @@ class Video extends Model
         return $this->hasMany(VideoAssignment::class);
     }
 
+    public function annotations()
+    {
+        return $this->hasMany(VideoAnnotation::class);
+    }
+
     public function rugbySituation()
     {
         return $this->belongsTo(RugbySituation::class);
