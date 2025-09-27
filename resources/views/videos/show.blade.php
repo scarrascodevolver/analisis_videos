@@ -1226,7 +1226,16 @@ $(document).ready(function() {
         fabricCanvas.selection = false;
         fabricCanvas.isDrawingMode = false;
 
-        // Initial resize and positioning
+        // FORCE move canvas container to video container immediately
+        setTimeout(() => {
+            const canvasContainer = document.querySelector('.canvas-container');
+            if (canvasContainer && canvasContainer.parentElement !== videoContainer) {
+                videoContainer.appendChild(canvasContainer);
+                console.log('✅ Canvas container movido al video container');
+            }
+        }, 100);
+
+        // Initial resize
         resizeCanvas();
 
         // Resize on window resize and video load
@@ -1255,17 +1264,8 @@ $(document).ready(function() {
         // Show toolbar
         $('#annotationToolbar').fadeIn(300);
 
-        // Enable canvas interactions - CORREGIDO
-        $('.canvas-container').css({
-            'display': 'block',
-            'pointer-events': 'auto',
-            'position': 'absolute',
-            'top': '0',
-            'left': '0',
-            'width': '100%',
-            'height': '100%',
-            'z-index': '10'
-        });
+        // Enable canvas interactions - SIMPLIFICADO
+        $('.canvas-container').css('pointer-events', 'auto');
 
         // Enable fabric canvas pointer events
         if (fabricCanvas) {
@@ -1293,11 +1293,8 @@ $(document).ready(function() {
         // Hide toolbar
         $('#annotationToolbar').fadeOut(300);
 
-        // Disable canvas interactions - CORREGIDO
-        $('.canvas-container').css({
-            'display': 'none',
-            'pointer-events': 'none'
-        });
+        // Disable canvas interactions - SIMPLIFICADO
+        $('.canvas-container').css('pointer-events', 'none');
 
         if (fabricCanvas) {
             fabricCanvas.upperCanvasEl.style.pointerEvents = 'none';
@@ -1790,9 +1787,15 @@ $(document).ready(function() {
     cursor: crosshair;
 }
 
-/* Hide Fabric.js canvas container by default */
+/* Position Fabric.js canvas container correctly */
 .canvas-container {
-    display: none !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
 }
 
 /* Responsive adjustments */
