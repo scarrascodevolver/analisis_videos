@@ -21,6 +21,8 @@ class VideoAnnotation extends Model
         'timestamp',
         'annotation_data',
         'annotation_type',
+        'duration_seconds',
+        'is_permanent',
         'is_visible',
     ];
 
@@ -32,6 +34,8 @@ class VideoAnnotation extends Model
     protected $casts = [
         'annotation_data' => 'array',
         'timestamp' => 'decimal:2',
+        'duration_seconds' => 'integer',
+        'is_permanent' => 'boolean',
         'is_visible' => 'boolean',
     ];
 

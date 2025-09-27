@@ -26,6 +26,8 @@ class AnnotationController extends Controller
             'timestamp' => 'required|numeric|min:0',
             'annotation_data' => 'required|array',
             'annotation_type' => 'required|in:arrow,circle,line,text,rectangle,free_draw,canvas',
+            'duration_seconds' => 'nullable|integer|min:1|max:60',
+            'is_permanent' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -46,6 +48,8 @@ class AnnotationController extends Controller
                 'timestamp' => $request->timestamp,
                 'annotation_data' => $request->annotation_data,
                 'annotation_type' => $request->annotation_type,
+                'duration_seconds' => $request->duration_seconds ?? 4, // Default 4 segundos
+                'is_permanent' => $request->is_permanent ?? false,
                 'is_visible' => true,
             ]);
 

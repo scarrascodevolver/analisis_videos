@@ -79,6 +79,18 @@
                                         <input type="color" id="annotationColor" value="#ff0000" style="width: 30px; height: 25px; border: none; border-radius: 3px;">
                                     </div>
                                     <div class="toolbar-separator"></div>
+                                    <div class="duration-picker-container">
+                                        <label style="color: white; font-size: 11px;">Duración:</label>
+                                        <select id="annotationDuration" style="width: 60px; height: 25px; border: none; border-radius: 3px; background: white;">
+                                            <option value="2">2s</option>
+                                            <option value="4" selected>4s</option>
+                                            <option value="6">6s</option>
+                                            <option value="8">8s</option>
+                                            <option value="10">10s</option>
+                                            <option value="permanent">Fijo</option>
+                                        </select>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
                                     <button id="saveAnnotation" class="toolbar-btn save-btn">
                                         <i class="fas fa-save"></i> Guardar
                                     </button>
@@ -1537,6 +1549,7 @@ $(document).ready(function() {
 
         const video = document.getElementById('rugbyVideo');
         const timestamp = video.currentTime;
+        const selectedDuration = document.getElementById('annotationDuration').value;
 
         // Get canvas data
         const annotationData = {
@@ -1546,6 +1559,22 @@ $(document).ready(function() {
             video_width: video.videoWidth,
             video_height: video.videoHeight
         };
+
+        // Prepare data
+        const postData = {
+            video_id: {{ $video->id }},
+            timestamp: timestamp,
+            annotation_type: 'canvas',
+            annotation_data: annotationData
+        };
+
+        // Add duration settings
+        if (selectedDuration === 'permanent') {
+            postData.is_permanent = true;
+        } else {
+            postData.duration_seconds = parseInt(selectedDuration);
+            postData.is_permanent = false;
+        }
 
         // Save via API
         $.ajaxSetup({
@@ -1558,12 +1587,7 @@ $(document).ready(function() {
             url: '/api/annotations',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({
-                video_id: {{ $video->id }},
-                timestamp: timestamp,
-                annotation_type: 'canvas',
-                annotation_data: annotationData
-            }),
+            data: JSON.stringify(postData),
             success: function(response) {
                 if (response.success) {
                     console.log('✅ Anotación guardada:', response);
@@ -1616,23 +1640,25 @@ $(document).ready(function() {
         }
     });
 
-    // Función para mostrar/ocultar anotaciones según timestamp
+    // Función para mostrar/ocultar anotaciones según timestamp y duración
     function checkAndShowAnnotations() {
         if (annotationMode || !fabricCanvas) return; // No mostrar en modo edición
 
         const currentTime = video.currentTime;
-        const tolerance = 0.5; // ±0.5 segundos
 
-        // Buscar anotación para el timestamp actual
-        const annotationToShow = savedAnnotations.find(annotation =>
-            Math.abs(annotation.timestamp - currentTime) <= tolerance
-        );
+        // Buscar anotaciones activas para el tiempo actual
+        const activeAnnotation = savedAnnotations.find(annotation => {
+            const startTime = annotation.timestamp;
+            const endTime = annotation.is_permanent ? Infinity : startTime + annotation.duration_seconds;
 
-        if (annotationToShow && annotationToShow !== currentDisplayedAnnotation) {
+            return currentTime >= startTime && currentTime <= endTime;
+        });
+
+        if (activeAnnotation && activeAnnotation !== currentDisplayedAnnotation) {
             // Mostrar nueva anotación
-            displayAnnotation(annotationToShow);
-            currentDisplayedAnnotation = annotationToShow;
-        } else if (!annotationToShow && currentDisplayedAnnotation) {
+            displayAnnotation(activeAnnotation);
+            currentDisplayedAnnotation = activeAnnotation;
+        } else if (!activeAnnotation && currentDisplayedAnnotation) {
             // Ocultar anotación actual
             clearDisplayedAnnotation();
             currentDisplayedAnnotation = null;
