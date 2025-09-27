@@ -74,6 +74,11 @@
                                         <i class="fas fa-font"></i> Texto
                                     </button>
                                     <div class="toolbar-separator"></div>
+                                    <div class="color-picker-container">
+                                        <label style="color: white; font-size: 11px;">Color:</label>
+                                        <input type="color" id="annotationColor" value="#ff0000" style="width: 30px; height: 25px; border: none; border-radius: 3px;">
+                                    </div>
+                                    <div class="toolbar-separator"></div>
                                     <button id="saveAnnotation" class="toolbar-btn save-btn">
                                         <i class="fas fa-save"></i> Guardar
                                     </button>
@@ -1238,8 +1243,20 @@ $(document).ready(function() {
         // Show toolbar
         $('#annotationToolbar').fadeIn(300);
 
-        // Enable canvas interactions
-        $('#annotationCanvas').css('pointer-events', 'auto');
+        // Enable canvas interactions - CORREGIDO
+        $('.canvas-container').css({
+            'pointer-events': 'auto',
+            'position': 'absolute',
+            'top': '0',
+            'left': '0',
+            'z-index': '10'
+        });
+
+        // Enable fabric canvas pointer events
+        if (fabricCanvas) {
+            fabricCanvas.upperCanvasEl.style.pointerEvents = 'auto';
+            fabricCanvas.lowerCanvasEl.style.pointerEvents = 'auto';
+        }
 
         // Change button state
         $('#toggleAnnotationMode')
@@ -1261,8 +1278,13 @@ $(document).ready(function() {
         // Hide toolbar
         $('#annotationToolbar').fadeOut(300);
 
-        // Disable canvas interactions
-        $('#annotationCanvas').css('pointer-events', 'none');
+        // Disable canvas interactions - CORREGIDO
+        $('.canvas-container').css('pointer-events', 'none');
+
+        if (fabricCanvas) {
+            fabricCanvas.upperCanvasEl.style.pointerEvents = 'none';
+            fabricCanvas.lowerCanvasEl.style.pointerEvents = 'none';
+        }
 
         // Change button state
         $('#toggleAnnotationMode')
@@ -1302,11 +1324,12 @@ $(document).ready(function() {
 
     // Drawing functionality
     function startDrawing(tool, startX, startY) {
+        const selectedColor = document.getElementById('annotationColor').value;
         const options = {
             left: startX,
             top: startY,
             fill: 'transparent',
-            stroke: '#ff0000',
+            stroke: selectedColor,
             strokeWidth: 3,
             selectable: true,
             evented: true
@@ -1428,6 +1451,7 @@ $(document).ready(function() {
         const y1 = line.y1;
         const x2 = line.x2;
         const y2 = line.y2;
+        const selectedColor = document.getElementById('annotationColor').value;
 
         const angle = Math.atan2(y2 - y1, x2 - x1);
         const headLength = 20;
@@ -1437,8 +1461,8 @@ $(document).ready(function() {
             {x: x2 - headLength * Math.cos(angle - Math.PI/6), y: y2 - headLength * Math.sin(angle - Math.PI/6)},
             {x: x2 - headLength * Math.cos(angle + Math.PI/6), y: y2 - headLength * Math.sin(angle + Math.PI/6)}
         ], {
-            fill: '#ff0000',
-            stroke: '#ff0000',
+            fill: selectedColor,
+            stroke: selectedColor,
             strokeWidth: 2,
             selectable: true,
             evented: true
