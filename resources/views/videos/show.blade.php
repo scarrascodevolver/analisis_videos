@@ -1199,6 +1199,7 @@ $(document).ready(function() {
     let currentAnnotation = null;
     let savedAnnotations = []; // Array de anotaciones guardadas
     let currentDisplayedAnnotation = null;
+    let hasTemporaryDrawing = false; // Flag para dibujos temporales
 
     // Inicializar sistema de anotaciones
     function initAnnotationSystem() {
@@ -1342,7 +1343,8 @@ $(document).ready(function() {
             .addClass('btn-warning')
             .html('<i class="fas fa-paint-brush"></i> Anotar');
 
-        console.log('❌ Modo anotación desactivado');
+        // NO limpiar canvas - mantener dibujos temporales visibles
+        console.log('❌ Modo anotación desactivado - dibujos temporales mantenidos');
     }
 
     // Close annotation mode
@@ -1427,6 +1429,7 @@ $(document).ready(function() {
         if (currentAnnotation) {
             fabricCanvas.add(currentAnnotation);
             fabricCanvas.renderAll();
+            hasTemporaryDrawing = true; // Marcar que hay dibujo temporal
         }
     }
 
@@ -1594,8 +1597,17 @@ $(document).ready(function() {
                     if (typeof toastr !== 'undefined') {
                         toastr.success('Anotación guardada exitosamente');
                     }
-                    // Clear canvas after save
-                    fabricCanvas.clear();
+
+                    // Recargar anotaciones guardadas
+                    loadExistingAnnotations();
+
+                    // Salir automáticamente del modo anotación
+                    exitAnnotationMode();
+
+                    // Reset flag temporal después de guardar
+                    hasTemporaryDrawing = false;
+
+                    console.log('🎯 Guardado exitoso - saliendo del modo anotación');
                 } else {
                     console.error('❌ Error al guardar:', response);
                     alert('Error al guardar la anotación');
@@ -1636,6 +1648,7 @@ $(document).ready(function() {
     $('#clearAnnotations').on('click', function() {
         if (fabricCanvas) {
             fabricCanvas.clear();
+            hasTemporaryDrawing = false; // Reset flag temporal
             console.log('🗑️ Anotaciones limpiadas');
         }
     });
@@ -1643,6 +1656,9 @@ $(document).ready(function() {
     // Función para mostrar/ocultar anotaciones según timestamp y duración
     function checkAndShowAnnotations() {
         if (annotationMode || !fabricCanvas) return; // No mostrar en modo edición
+
+        // Si hay dibujo temporal, no interferir
+        if (hasTemporaryDrawing) return;
 
         const currentTime = video.currentTime;
 
