@@ -603,6 +603,7 @@ $(document).ready(function() {
     video.addEventListener('timeupdate', function() {
         updateProgressIndicator();
         checkAndShowCommentNotifications();
+        checkAndShowAnnotations(); // Nueva función para anotaciones
     });
 
     // Force timeline creation if video is already loaded
@@ -1184,6 +1185,8 @@ $(document).ready(function() {
     let currentTool = 'arrow';
     let isDrawing = false;
     let currentAnnotation = null;
+    let savedAnnotations = []; // Array de anotaciones guardadas
+    let currentDisplayedAnnotation = null;
 
     // Inicializar sistema de anotaciones
     function initAnnotationSystem() {
@@ -1243,6 +1246,26 @@ $(document).ready(function() {
         video.addEventListener('loadedmetadata', resizeCanvas);
 
         console.log('✅ Sistema de anotaciones inicializado');
+
+        // Cargar anotaciones existentes
+        loadExistingAnnotations();
+    }
+
+    // Cargar anotaciones existentes del video
+    function loadExistingAnnotations() {
+        $.ajax({
+            url: `/api/annotations/video/{{ $video->id }}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    savedAnnotations = response.annotations;
+                    console.log('✅ Anotaciones cargadas:', savedAnnotations.length);
+                }
+            },
+            error: function(xhr) {
+                console.error('❌ Error cargando anotaciones:', xhr);
+            }
+        });
     }
 
     // Toggle annotation mode
@@ -1592,6 +1615,50 @@ $(document).ready(function() {
             console.log('🗑️ Anotaciones limpiadas');
         }
     });
+
+    // Función para mostrar/ocultar anotaciones según timestamp
+    function checkAndShowAnnotations() {
+        if (annotationMode || !fabricCanvas) return; // No mostrar en modo edición
+
+        const currentTime = video.currentTime;
+        const tolerance = 0.5; // ±0.5 segundos
+
+        // Buscar anotación para el timestamp actual
+        const annotationToShow = savedAnnotations.find(annotation =>
+            Math.abs(annotation.timestamp - currentTime) <= tolerance
+        );
+
+        if (annotationToShow && annotationToShow !== currentDisplayedAnnotation) {
+            // Mostrar nueva anotación
+            displayAnnotation(annotationToShow);
+            currentDisplayedAnnotation = annotationToShow;
+        } else if (!annotationToShow && currentDisplayedAnnotation) {
+            // Ocultar anotación actual
+            clearDisplayedAnnotation();
+            currentDisplayedAnnotation = null;
+        }
+    }
+
+    function displayAnnotation(annotation) {
+        if (!fabricCanvas) return;
+
+        // Limpiar canvas actual
+        fabricCanvas.clear();
+
+        // Cargar datos de la anotación
+        if (annotation.annotation_data && annotation.annotation_data.canvas_data) {
+            fabricCanvas.loadFromJSON(annotation.annotation_data.canvas_data, function() {
+                fabricCanvas.renderAll();
+                console.log('✅ Anotación mostrada en timestamp:', annotation.timestamp);
+            });
+        }
+    }
+
+    function clearDisplayedAnnotation() {
+        if (!fabricCanvas) return;
+        fabricCanvas.clear();
+        console.log('🗑️ Anotación ocultada');
+    }
 
     console.log('✅ Sistema de anotaciones configurado');
 });

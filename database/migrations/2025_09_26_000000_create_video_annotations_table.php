@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('timestamp', 8, 2); // Timestamp en segundos (ej: 125.50)
             $table->json('annotation_data'); // Datos del dibujo en JSON
-            $table->enum('annotation_type', ['arrow', 'circle', 'line', 'text', 'rectangle', 'free_draw']);
+            $table->enum('annotation_type', ['arrow', 'circle', 'line', 'text', 'rectangle', 'free_draw', 'canvas']);
             $table->boolean('is_visible')->default(true);
             $table->timestamps();
 

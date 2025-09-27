@@ -25,7 +25,7 @@ class AnnotationController extends Controller
             'video_id' => 'required|exists:videos,id',
             'timestamp' => 'required|numeric|min:0',
             'annotation_data' => 'required|array',
-            'annotation_type' => 'required|in:arrow,circle,line,text,rectangle,free_draw',
+            'annotation_type' => 'required|in:arrow,circle,line,text,rectangle,free_draw,canvas',
         ]);
 
         if ($validator->fails()) {
