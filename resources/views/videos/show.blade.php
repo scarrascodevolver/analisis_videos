@@ -1257,10 +1257,13 @@ $(document).ready(function() {
 
         // Enable canvas interactions - CORREGIDO
         $('.canvas-container').css({
+            'display': 'block',
             'pointer-events': 'auto',
             'position': 'absolute',
             'top': '0',
             'left': '0',
+            'width': '100%',
+            'height': '100%',
             'z-index': '10'
         });
 
@@ -1291,7 +1294,10 @@ $(document).ready(function() {
         $('#annotationToolbar').fadeOut(300);
 
         // Disable canvas interactions - CORREGIDO
-        $('.canvas-container').css('pointer-events', 'none');
+        $('.canvas-container').css({
+            'display': 'none',
+            'pointer-events': 'none'
+        });
 
         if (fabricCanvas) {
             fabricCanvas.upperCanvasEl.style.pointerEvents = 'none';
@@ -1553,7 +1559,31 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 console.error('❌ Error AJAX:', xhr);
-                alert('Error de conexión al guardar la anotación');
+                console.error('❌ Status:', xhr.status);
+                console.error('❌ Response:', xhr.responseText);
+                console.error('❌ Data sent:', JSON.stringify({
+                    video_id: {{ $video->id }},
+                    timestamp: timestamp,
+                    annotation_type: 'canvas',
+                    annotation_data: annotationData
+                }));
+
+                let errorMsg = 'Error de conexión al guardar la anotación';
+                if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        if (errorData.message) {
+                            errorMsg = errorData.message;
+                        }
+                        if (errorData.errors) {
+                            console.error('❌ Validation errors:', errorData.errors);
+                            errorMsg += '\nErrores: ' + JSON.stringify(errorData.errors);
+                        }
+                    } catch (e) {
+                        errorMsg += '\nResponse: ' + xhr.responseText;
+                    }
+                }
+                alert(errorMsg);
             }
         });
     });
@@ -1758,6 +1788,11 @@ $(document).ready(function() {
 /* Canvas overlay */
 #annotationCanvas {
     cursor: crosshair;
+}
+
+/* Hide Fabric.js canvas container by default */
+.canvas-container {
+    display: none !important;
 }
 
 /* Responsive adjustments */
