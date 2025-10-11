@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\AnnotationController;
+use App\Http\Controllers\AdminController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -56,6 +57,28 @@ Route::middleware(['auth'])->group(function () {
         Route::post('assignments/{assignment}/accept', [App\Http\Controllers\VideoAssignmentController::class, 'playerAccept'])->name('assignments.playerAccept');
         Route::post('assignments/{assignment}/submit', [App\Http\Controllers\VideoAssignmentController::class, 'playerSubmit'])->name('assignments.playerSubmit');
         Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
+    });
+
+    // Admin/Mantenedor Routes (Only for Analysts)
+    Route::middleware(['role:analista'])->prefix('admin')->name('admin.')->group(function () {
+        // Dashboard del Mantenedor
+        Route::get('/', [AdminController::class, 'index'])->name('index');
+
+        // Gestión de Categorías
+        Route::resource('categories', App\Http\Controllers\CategoryManagementController::class);
+
+        // Gestión de Equipos
+        Route::resource('teams', App\Http\Controllers\TeamManagementController::class);
+
+        // Gestión de Situaciones de Rugby
+        Route::resource('situations', App\Http\Controllers\RugbySituationController::class);
+        Route::post('situations/reorder', [App\Http\Controllers\RugbySituationController::class, 'reorder'])->name('situations.reorder');
+
+        // Gestión de Divisiones (nuevo)
+        Route::resource('divisions', App\Http\Controllers\DivisionController::class);
+
+        // Gestión de Usuarios
+        Route::resource('users', App\Http\Controllers\UserManagementController::class);
     });
 
     // Player Routes

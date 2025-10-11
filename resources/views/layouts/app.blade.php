@@ -275,6 +275,16 @@
                             </li>
                         @endif
 
+                        @if(Auth::user()->role === 'analista')
+                            <li class="nav-header">ADMINISTRACIÓN</li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.index') }}" class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-tools"></i>
+                                    <p>Mantenedor</p>
+                                </a>
+                            </li>
+                        @endif
+
                     </ul>
                 </nav>
             </div>

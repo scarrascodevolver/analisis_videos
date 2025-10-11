@@ -15,4 +15,9 @@ class Category extends Model
     {
         return $this->hasMany(Video::class);
     }
+
+    public function userProfiles()
+    {
+        return $this->hasMany(UserProfile::class, 'user_category_id');
+    }
 }
