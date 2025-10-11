@@ -62,9 +62,9 @@
                                         </span>
                                     </td>
                                     <td>
-                                        @if($user->profile && $user->profile->userCategory)
+                                        @if($user->profile && $user->profile->category)
                                             <span class="badge badge-info">
-                                                {{ $user->profile->userCategory->name }}
+                                                {{ $user->profile->category->name }}
                                             </span>
                                         @else
                                             <span class="text-muted">-</span>

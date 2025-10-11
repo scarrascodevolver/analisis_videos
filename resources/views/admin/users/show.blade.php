@@ -54,10 +54,10 @@
                             </span>
                         </div>
 
-                        @if($user->profile && $user->profile->userCategory)
+                        @if($user->profile && $user->profile->category)
                             <div class="mb-2">
                                 <strong>Categoría:</strong>
-                                <span class="badge badge-info">{{ $user->profile->userCategory->name }}</span>
+                                <span class="badge badge-info">{{ $user->profile->category->name }}</span>
                             </div>
                         @endif
 

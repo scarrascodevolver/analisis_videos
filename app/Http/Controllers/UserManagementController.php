@@ -16,7 +16,7 @@ class UserManagementController extends Controller
      */
     public function index()
     {
-        $users = User::with(['profile.userCategory'])->get();
+        $users = User::with(['profile.category'])->get();
         return view('admin.users.index', compact('users'));
     }
 
@@ -65,7 +65,7 @@ class UserManagementController extends Controller
      */
     public function show(User $user)
     {
-        $user->load(['profile.userCategory', 'videos']);
+        $user->load(['profile.category', 'videos']);
         return view('admin.users.show', compact('user'));
     }
 
