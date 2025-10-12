@@ -20,7 +20,6 @@ class Video extends Model
         'rival_team_id',
         'category_id',
         'division',
-        'division_id',
         'rugby_situation_id',
         'match_date',
         'status',
@@ -72,11 +71,6 @@ class Video extends Model
     public function rugbySituation()
     {
         return $this->belongsTo(RugbySituation::class);
-    }
-
-    public function division()
-    {
-        return $this->belongsTo(Division::class);
     }
 
     public function scopeByCategory($query, $categoryId)

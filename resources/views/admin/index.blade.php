@@ -56,24 +56,6 @@
         </div>
     </div>
 
-    <!-- Divisiones -->
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-secondary">
-            <div class="inner">
-                <h3>{{ $stats['divisions'] }}</h3>
-                <p>Divisiones</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-list-ol"></i>
-            </div>
-            <a href="{{ route('admin.divisions.index') }}" class="small-box-footer">
-                Gestionar <i class="fas fa-arrow-circle-right"></i>
-            </a>
-        </div>
-    </div>
-</div>
-
-<div class="row">
     <!-- Usuarios -->
     <div class="col-lg-3 col-6">
         <div class="small-box bg-info">
@@ -120,14 +102,6 @@
                         <p class="text-muted">Define situaciones de juego (Scrum, Lineout, Maul, etc.) para clasificar y filtrar videos de análisis.</p>
                         <a href="{{ route('admin.situations.index') }}" class="btn btn-warning btn-sm mb-3">
                             <i class="fas fa-cog"></i> Gestionar Situaciones
-                        </a>
-                    </div>
-
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-list-ol text-secondary"></i> Divisiones</h5>
-                        <p class="text-muted">Administra divisiones de competencia (Primera, Segunda, Intermedia, etc.) para organizar equipos y videos.</p>
-                        <a href="{{ route('admin.divisions.index') }}" class="btn btn-secondary btn-sm mb-3">
-                            <i class="fas fa-cog"></i> Gestionar Divisiones
                         </a>
                     </div>
 

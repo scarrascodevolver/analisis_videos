@@ -74,9 +74,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('situations', App\Http\Controllers\RugbySituationController::class);
         Route::post('situations/reorder', [App\Http\Controllers\RugbySituationController::class, 'reorder'])->name('situations.reorder');
 
-        // Gestión de Divisiones (nuevo)
-        Route::resource('divisions', App\Http\Controllers\DivisionController::class);
-
         // Gestión de Usuarios
         Route::resource('users', App\Http\Controllers\UserManagementController::class);
     });
