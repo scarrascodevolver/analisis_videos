@@ -11,11 +11,13 @@
 <div class="row">
     <div class="col-12">
         <div class="card card-rugby">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title">Equipos</h3>
-                <a href="{{ route('admin.teams.create') }}" class="btn btn-rugby btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Equipo
-                </a>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Equipos</h3>
+                    <a href="{{ route('admin.teams.create') }}" class="btn btn-rugby btn-sm">
+                        <i class="fas fa-plus"></i> Nuevo Equipo
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 @if($teams->isEmpty())
@@ -60,24 +62,26 @@
                                             <span class="badge badge-info">{{ $team->rival_videos_count }}</span>
                                         </td>
                                         <td class="text-center">
-                                            <a href="{{ route('admin.teams.edit', $team) }}"
-                                               class="btn btn-warning btn-sm"
-                                               title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form action="{{ route('admin.teams.destroy', $team) }}"
-                                                  method="POST"
-                                                  class="d-inline"
-                                                  onsubmit="return confirm('¿Estás seguro de eliminar este equipo?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                        class="btn btn-danger btn-sm"
-                                                        title="Eliminar"
-                                                        {{ ($team->analyzed_videos_count > 0 || $team->rival_videos_count > 0) ? 'disabled' : '' }}>
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('admin.teams.edit', $team) }}"
+                                                   class="btn btn-warning btn-sm"
+                                                   title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form action="{{ route('admin.teams.destroy', $team) }}"
+                                                      method="POST"
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('¿Estás seguro de eliminar este equipo?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                            class="btn btn-danger btn-sm"
+                                                            title="Eliminar"
+                                                            {{ ($team->analyzed_videos_count > 0 || $team->rival_videos_count > 0) ? 'disabled' : '' }}>
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
