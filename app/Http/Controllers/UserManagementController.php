@@ -65,7 +65,14 @@ class UserManagementController extends Controller
      */
     public function show(User $user)
     {
-        $user->load(['profile.category', 'videos']);
+        $user->load([
+            'profile.category',
+            'uploadedVideos.category',
+            'assignedVideos.video.category',
+            'videoComments',
+            'videoAnnotations',
+            'assignedByMe'
+        ]);
         return view('admin.users.show', compact('user'));
     }
 
