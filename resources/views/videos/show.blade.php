@@ -102,6 +102,13 @@
                         </div>
                         
                         
+                        <!-- Delete Annotation Button (visible solo cuando hay anotación) -->
+                        <button id="deleteAnnotationBtn" class="btn btn-sm btn-danger"
+                                style="position: absolute; top: 10px; right: 10px; z-index: 20; display: none;"
+                                title="Eliminar anotación visible">
+                            <i class="fas fa-times-circle"></i> Eliminar Anotación
+                        </button>
+
                         <!-- Mobile Fullscreen Button -->
                         <div class="video-controls-overlay" style="position: absolute; bottom: 60px; right: 10px; z-index: 10;">
                             <button id="mobileFullscreenBtn" class="btn btn-sm btn-dark mr-2" title="Pantalla completa" style="display: none;">
@@ -370,6 +377,23 @@
                             <p>Sé el primero en agregar un comentario de análisis.</p>
                         </div>
                     @endforelse
+                </div>
+            </div>
+
+            <!-- Annotations List -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-pen"></i>
+                        Anotaciones (<span id="annotationsCount">0</span>)
+                    </h5>
+                </div>
+                <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;" id="annotationsList">
+                    <div class="text-center p-3 text-muted" id="noAnnotationsMessage">
+                        <i class="fas fa-pen-fancy fa-2x mb-2"></i>
+                        <p>No hay anotaciones aún.</p>
+                    </div>
+                    <!-- Las anotaciones se cargarán aquí via JavaScript -->
                 </div>
             </div>
         </div>
@@ -1280,6 +1304,9 @@ $(document).ready(function() {
                     window.savedAnnotations = savedAnnotations; // DEBUG: Actualizar global
                     console.log('✅ Anotaciones cargadas:', savedAnnotations.length);
                     console.log('📋 Primera anotación:', savedAnnotations[0]);
+
+                    // Renderizar lista de anotaciones en el sidebar
+                    renderAnnotationsList();
                 }
             },
             error: function(xhr) {
@@ -1287,6 +1314,161 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Renderizar lista de anotaciones en el sidebar
+    function renderAnnotationsList() {
+        const annotationsList = document.getElementById('annotationsList');
+        const annotationsCount = document.getElementById('annotationsCount');
+        const noAnnotationsMessage = document.getElementById('noAnnotationsMessage');
+
+        // Actualizar contador
+        annotationsCount.textContent = savedAnnotations.length;
+
+        if (savedAnnotations.length === 0) {
+            // Mostrar mensaje de sin anotaciones
+            noAnnotationsMessage.style.display = 'block';
+            return;
+        }
+
+        // Ocultar mensaje y crear lista
+        noAnnotationsMessage.style.display = 'none';
+
+        // Limpiar lista actual
+        const existingItems = annotationsList.querySelectorAll('.annotation-item');
+        existingItems.forEach(item => item.remove());
+
+        // Crear items de anotaciones ordenados por timestamp
+        const sortedAnnotations = [...savedAnnotations].sort((a, b) =>
+            parseFloat(a.timestamp) - parseFloat(b.timestamp)
+        );
+
+        sortedAnnotations.forEach(annotation => {
+            const timestamp = parseFloat(annotation.timestamp);
+            const duration = parseInt(annotation.duration_seconds) || 4;
+            const isPermanent = annotation.is_permanent;
+
+            const item = document.createElement('div');
+            item.className = 'annotation-item border-bottom p-2';
+            item.setAttribute('data-annotation-id', annotation.id);
+
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <button class="btn btn-sm btn-info timestamp-btn-annotation mr-2"
+                                data-timestamp="${timestamp}"
+                                title="Ir al momento de esta anotación">
+                            <i class="fas fa-clock"></i> ${formatTime(timestamp)}
+                        </button>
+                        <span class="badge badge-${isPermanent ? 'primary' : 'secondary'} ml-1">
+                            ${isPermanent ? 'Permanente' : duration + 's'}
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> ${annotation.user ? annotation.user.name : 'Desconocido'}
+                        </small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger delete-annotation-btn"
+                            data-annotation-id="${annotation.id}"
+                            title="Eliminar anotación">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            annotationsList.appendChild(item);
+        });
+
+        // Event listeners para ir al timestamp
+        $('.timestamp-btn-annotation').on('click', function() {
+            const timestamp = $(this).data('timestamp');
+            video.currentTime = timestamp;
+            if (video.paused) {
+                video.play();
+            }
+        });
+    }
+
+    // Función para eliminar anotación
+    function deleteAnnotation(annotationId) {
+        if (!confirm('¿Estás seguro de eliminar esta anotación? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/api/annotations/${annotationId}`,
+            method: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    console.log('✅ Anotación eliminada:', annotationId);
+
+                    // Remover del array savedAnnotations
+                    const index = savedAnnotations.findIndex(a => a.id == annotationId);
+                    if (index !== -1) {
+                        savedAnnotations.splice(index, 1);
+                        window.savedAnnotations = savedAnnotations; // Actualizar global
+                    }
+
+                    // Si es la anotación actualmente mostrada, limpiar canvas
+                    if (currentDisplayedAnnotation && currentDisplayedAnnotation.id == annotationId) {
+                        clearDisplayedAnnotation();
+                        currentDisplayedAnnotation = null;
+
+                        // Ocultar botón de eliminar
+                        const deleteBtn = document.getElementById('deleteAnnotationBtn');
+                        if (deleteBtn) {
+                            deleteBtn.style.display = 'none';
+                        }
+                    }
+
+                    // Actualizar lista en sidebar
+                    renderAnnotationsList();
+
+                    // Mostrar mensaje de éxito
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Anotación eliminada exitosamente');
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('❌ Error eliminando anotación:', xhr);
+                if (xhr.status === 403) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('No tienes permisos para eliminar esta anotación');
+                    } else {
+                        alert('No tienes permisos para eliminar esta anotación');
+                    }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al eliminar la anotación');
+                    } else {
+                        alert('Error al eliminar la anotación');
+                    }
+                }
+            }
+        });
+    }
+
+    // Event listener para botón flotante de eliminar
+    $('#deleteAnnotationBtn').on('click', function() {
+        const annotationId = $(this).data('annotation-id');
+        if (annotationId) {
+            deleteAnnotation(annotationId);
+        }
+    });
+
+    // Event delegation para botones de eliminar en lista
+    $(document).on('click', '.delete-annotation-btn', function() {
+        const annotationId = $(this).data('annotation-id');
+        if (annotationId) {
+            deleteAnnotation(annotationId);
+        }
+    });
 
     // Toggle annotation mode
     $('#toggleAnnotationMode').on('click', function() {
@@ -1709,11 +1891,25 @@ $(document).ready(function() {
             console.log('✅ Mostrando nueva anotación:', activeAnnotation.id);
             displayAnnotation(activeAnnotation);
             currentDisplayedAnnotation = activeAnnotation;
+
+            // Mostrar botón de eliminar
+            const deleteBtn = document.getElementById('deleteAnnotationBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'block';
+                deleteBtn.setAttribute('data-annotation-id', activeAnnotation.id);
+            }
         } else if (!activeAnnotation && currentDisplayedAnnotation) {
             // Ocultar anotación actual
             console.log('🗑️ Ocultando anotación actual');
             clearDisplayedAnnotation();
             currentDisplayedAnnotation = null;
+
+            // Ocultar botón de eliminar
+            const deleteBtn = document.getElementById('deleteAnnotationBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'none';
+                deleteBtn.removeAttribute('data-annotation-id');
+            }
         }
     }
 
