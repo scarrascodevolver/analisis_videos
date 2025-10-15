@@ -1431,13 +1431,27 @@ $(document).ready(function() {
 
                     // Mostrar mensaje de éxito
                     if (typeof toastr !== 'undefined') {
-                        toastr.success('Anotación eliminada exitosamente');
+                        if (response.already_deleted) {
+                            toastr.info('Esta anotación ya había sido eliminada');
+                        } else {
+                            toastr.success('Anotación eliminada exitosamente');
+                        }
                     }
                 }
             },
             error: function(xhr) {
                 console.error('❌ Error eliminando anotación:', xhr);
-                if (xhr.status === 403) {
+
+                // Si el error es 500, podría ser que la anotación ya no existe
+                // Intentar recargar anotaciones desde el servidor
+                if (xhr.status === 500) {
+                    console.log('⚠️ Error 500, recargando anotaciones desde servidor...');
+                    loadExistingAnnotations();
+
+                    if (typeof toastr !== 'undefined') {
+                        toastr.warning('La anotación ya no existe. Lista actualizada.');
+                    }
+                } else if (xhr.status === 403) {
                     if (typeof toastr !== 'undefined') {
                         toastr.error('No tienes permisos para eliminar esta anotación');
                     } else {

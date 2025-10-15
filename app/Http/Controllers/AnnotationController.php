@@ -174,7 +174,17 @@ class AnnotationController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $annotation = VideoAnnotation::findOrFail($id);
+            $annotation = VideoAnnotation::find($id);
+
+            // Si la anotación no existe, asumir que ya fue eliminada
+            if (!$annotation) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Anotación ya fue eliminada previamente',
+                    'already_deleted' => true
+                ]);
+            }
+
             $user = Auth::user();
 
             // Solo el creador o staff pueden eliminar
