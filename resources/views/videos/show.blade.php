@@ -1686,8 +1686,10 @@ $(document).ready(function() {
 
         // Buscar anotaciones activas para el tiempo actual
         const activeAnnotation = savedAnnotations.find(annotation => {
-            const startTime = annotation.timestamp;
-            const endTime = annotation.is_permanent ? Infinity : startTime + annotation.duration_seconds;
+            // CONVERTIR timestamp a número (viene como string "0.00")
+            const startTime = parseFloat(annotation.timestamp);
+            const durationSeconds = parseInt(annotation.duration_seconds) || 4;
+            const endTime = annotation.is_permanent ? Infinity : startTime + durationSeconds;
 
             console.log('🔍 Verificando anotación:', {
                 id: annotation.id,
