@@ -1377,16 +1377,18 @@ $(document).ready(function() {
 
             annotationsList.appendChild(item);
         });
-
-        // Event listeners para ir al timestamp
-        $('.timestamp-btn-annotation').on('click', function() {
-            const timestamp = $(this).data('timestamp');
-            video.currentTime = timestamp;
-            if (video.paused) {
-                video.play();
-            }
-        });
     }
+
+    // Event delegation para botones de timestamp (FUERA de renderAnnotationsList)
+    $(document).on('click', '.timestamp-btn-annotation', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const timestamp = $(this).data('timestamp');
+        video.currentTime = timestamp;
+        if (video.paused) {
+            video.play();
+        }
+    });
 
     // Función para eliminar anotación
     function deleteAnnotation(annotationId) {
@@ -1477,7 +1479,9 @@ $(document).ready(function() {
     });
 
     // Event delegation para botones de eliminar en lista
-    $(document).on('click', '.delete-annotation-btn', function() {
+    $(document).on('click', '.delete-annotation-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         const annotationId = $(this).data('annotation-id');
         if (annotationId) {
             deleteAnnotation(annotationId);
