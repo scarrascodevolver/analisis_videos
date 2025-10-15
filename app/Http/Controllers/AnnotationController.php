@@ -94,7 +94,12 @@ class AnnotationController extends Controller
                         'timestamp' => $annotation->timestamp,
                         'annotation_type' => $annotation->annotation_type,
                         'annotation_data' => $annotation->annotation_data,
-                        'user_name' => $annotation->user->name,
+                        'duration_seconds' => $annotation->duration_seconds,
+                        'is_permanent' => $annotation->is_permanent,
+                        'user' => [
+                            'name' => $annotation->user->name,
+                            'id' => $annotation->user->id,
+                        ],
                         'created_at' => $annotation->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
