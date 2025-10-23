@@ -1391,12 +1391,16 @@ $(document).ready(function() {
     });
 
     // Función para eliminar anotación
+    // FIX: Simplificado para evitar race conditions con checkAndShowAnnotations()
     function deleteAnnotation(annotationId) {
         if (!confirm('¿Estás seguro de eliminar esta anotación? Esta acción no se puede deshacer.')) {
             return;
         }
 
-        console.log('🗑️ Intentando eliminar anotación:', annotationId);
+        console.log('🗑️ ===== INICIO ELIMINACIÓN =====');
+        console.log('🎯 ID a eliminar:', annotationId);
+        console.log('📦 savedAnnotations ANTES:', savedAnnotations.length, savedAnnotations.map(a => a.id));
+        console.log('🎨 currentDisplayedAnnotations ANTES:', currentDisplayedAnnotations.length, currentDisplayedAnnotations.map(a => a.id));
 
         $.ajaxSetup({
             headers: {
@@ -1409,42 +1413,25 @@ $(document).ready(function() {
             method: 'DELETE',
             success: function(response) {
                 if (response.success) {
-                    console.log('✅ Anotación eliminada del servidor:', annotationId);
+                    console.log('✅ Servidor confirmó eliminación:', annotationId);
 
-                    // 1. Remover del array savedAnnotations
+                    // 1. SOLO remover del array savedAnnotations (fuente de verdad)
                     const index = savedAnnotations.findIndex(a => a.id == annotationId);
+                    console.log('🔍 Index en savedAnnotations:', index);
+
                     if (index !== -1) {
                         savedAnnotations.splice(index, 1);
                         window.savedAnnotations = savedAnnotations;
-                        console.log('✅ Removida de savedAnnotations, quedan:', savedAnnotations.length);
+                        console.log('✅ Removida de savedAnnotations, quedan:', savedAnnotations.length, savedAnnotations.map(a => a.id));
+                    } else {
+                        console.warn('⚠️ Anotación NO ENCONTRADA en savedAnnotations!');
                     }
 
-                    // 2. Remover del array currentDisplayedAnnotations si está ahí
-                    const displayIndex = currentDisplayedAnnotations.findIndex(a => a.id == annotationId);
-                    if (displayIndex !== -1) {
-                        currentDisplayedAnnotations.splice(displayIndex, 1);
-                        window.currentDisplayedAnnotations = currentDisplayedAnnotations;
-                        console.log('✅ Removida de currentDisplayedAnnotations, quedan:', currentDisplayedAnnotations.length);
-
-                        // Si todavía quedan anotaciones activas, redesplegar
-                        if (currentDisplayedAnnotations.length > 0) {
-                            displayMultipleAnnotations(currentDisplayedAnnotations);
-                        } else {
-                            // Si ya no hay ninguna, limpiar canvas
-                            clearDisplayedAnnotation();
-
-                            // Ocultar botón de eliminar
-                            const deleteBtn = document.getElementById('deleteAnnotationBtn');
-                            if (deleteBtn) {
-                                deleteBtn.style.display = 'none';
-                            }
-                        }
-                    }
-
-                    // 3. Actualizar lista en sidebar
+                    // 2. Actualizar lista en sidebar
+                    console.log('📝 Actualizando lista del sidebar...');
                     renderAnnotationsList();
 
-                    // 4. Mostrar mensaje de éxito
+                    // 3. Mostrar mensaje de éxito
                     if (typeof toastr !== 'undefined') {
                         if (response.already_deleted) {
                             toastr.info('Esta anotación ya había sido eliminada');
@@ -1453,14 +1440,18 @@ $(document).ready(function() {
                         }
                     }
 
-                    // 5. Forzar recalculo de anotaciones activas
-                    setTimeout(() => {
-                        checkAndShowAnnotations();
-                    }, 100);
+                    // 4. CRÍTICO: Dejar que checkAndShowAnnotations() maneje currentDisplayedAnnotations
+                    // Esto previene race conditions con el evento timeupdate
+                    console.log('🔄 Forzando actualización de anotaciones visibles...');
+                    checkAndShowAnnotations();
+
+                    console.log('🗑️ ===== FIN ELIMINACIÓN =====');
                 }
             },
             error: function(xhr) {
-                console.error('❌ Error eliminando anotación:', xhr);
+                console.error('❌ ===== ERROR EN ELIMINACIÓN =====');
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseText);
 
                 if (xhr.status === 500 || xhr.status === 404) {
                     console.log('⚠️ Error 500/404, recargando anotaciones desde servidor...');
@@ -1912,25 +1903,44 @@ $(document).ready(function() {
 
         const currentTime = video.currentTime;
 
+        console.log('🔄 checkAndShowAnnotations() - tiempo:', currentTime.toFixed(2) + 's');
+        console.log('📦 savedAnnotations disponibles:', savedAnnotations.length, savedAnnotations.map(a => `${a.id}@${a.timestamp}s`));
+
         // ✨ CAMBIO PRINCIPAL: Usar .filter() para obtener TODAS las anotaciones activas
         const activeAnnotations = savedAnnotations.filter(annotation => {
             const startTime = parseFloat(annotation.timestamp);
             const durationSeconds = parseInt(annotation.duration_seconds) || 4;
             const endTime = annotation.is_permanent ? Infinity : startTime + durationSeconds;
 
-            return currentTime >= startTime && currentTime <= endTime;
+            const isActive = currentTime >= startTime && currentTime <= endTime;
+
+            if (isActive) {
+                console.log(`✅ Anotación ${annotation.id} ACTIVA (${startTime.toFixed(1)}s - ${isActive ? (annotation.is_permanent ? '∞' : endTime.toFixed(1) + 's') : ''})`);
+            }
+
+            return isActive;
         });
+
+        console.log('🎯 activeAnnotations encontradas:', activeAnnotations.length, activeAnnotations.map(a => a.id));
 
         // Comparar si el conjunto de anotaciones cambió
         const activeIds = activeAnnotations.map(a => a.id).sort().join(',');
         const displayedIds = currentDisplayedAnnotations.map(a => a.id).sort().join(',');
 
+        console.log('🔍 Comparación - Active IDs:', activeIds || '(vacío)', 'vs Displayed IDs:', displayedIds || '(vacío)');
+
         if (activeIds !== displayedIds) {
-            // El conjunto cambió, actualizar display
+            console.log('⚡ CAMBIO DETECTADO en anotaciones activas');
+
             if (activeAnnotations.length > 0) {
+                console.log('📺 Desplegando', activeAnnotations.length, 'anotación(es)');
                 // Mostrar todas las anotaciones activas
                 displayMultipleAnnotations(activeAnnotations);
+
+                // ⚠️ LÍNEA CRÍTICA - Actualizar referencia de anotaciones mostradas
+                console.log('🎨 ANTES de asignar - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
                 currentDisplayedAnnotations = activeAnnotations;
+                console.log('🎨 DESPUÉS de asignar - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
 
                 // Mostrar botón de eliminar con dropdown si hay múltiples
                 const deleteBtn = document.getElementById('deleteAnnotationBtn');
@@ -1941,13 +1951,16 @@ $(document).ready(function() {
                     if (activeAnnotations.length === 1) {
                         deleteBtn.setAttribute('data-annotation-id', activeAnnotations[0].id);
                         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i> Eliminar Anotación';
+                        console.log('🔘 Botón eliminar configurado para ID:', activeAnnotations[0].id);
                     } else {
                         // Si hay múltiples, mostrar contador
                         deleteBtn.removeAttribute('data-annotation-id');
                         deleteBtn.innerHTML = `<i class="fas fa-times-circle"></i> ${activeAnnotations.length} Anotaciones`;
+                        console.log('🔘 Botón eliminar configurado para múltiples:', activeAnnotations.length);
                     }
                 }
             } else {
+                console.log('🧹 No hay anotaciones activas, limpiando...');
                 // No hay anotaciones activas
                 clearDisplayedAnnotation();
                 currentDisplayedAnnotations = [];
@@ -1957,8 +1970,11 @@ $(document).ready(function() {
                 if (deleteBtn) {
                     deleteBtn.style.display = 'none';
                     deleteBtn.removeAttribute('data-annotation-id');
+                    console.log('🔘 Botón eliminar ocultado');
                 }
             }
+        } else {
+            console.log('✅ No hay cambios en anotaciones activas');
         }
     }
 
