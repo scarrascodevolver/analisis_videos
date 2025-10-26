@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Category;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -54,6 +55,33 @@ class RegisterController extends Controller
     }
 
     /**
+     * Handle a registration request for the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        $data = $request->all();
+
+        // Add the avatar file to data if present
+        if ($request->hasFile('avatar')) {
+            $data['avatar'] = $request->file('avatar');
+        }
+
+        $user = $this->create($data);
+
+        event(new \Illuminate\Auth\Events\Registered($user));
+
+        $this->guard()->login($user);
+
+        return $this->registered($request, $user)
+                        ?: redirect($this->redirectPath());
+    }
+
+    /**
      * Get a validator for an incoming registration request.
      *
      * @param  array  $data
@@ -67,6 +95,7 @@ class RegisterController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:jugador'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ];
 
         // Player fields validation (always required since only players can register)
@@ -106,6 +135,12 @@ class RegisterController extends Controller
                 'user_id' => $user->id,
                 'goals' => $data['goals'] ?? null,
             ];
+
+            // Handle avatar upload if present
+            if (isset($data['avatar']) && $data['avatar'] instanceof \Illuminate\Http\UploadedFile) {
+                $avatarPath = $data['avatar']->store('avatars', 'public');
+                $profileData['avatar'] = $avatarPath;
+            }
 
             // Add player fields (always since only players can register)
             $profileData = array_merge($profileData, [

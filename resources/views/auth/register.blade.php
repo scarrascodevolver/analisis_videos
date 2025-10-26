@@ -14,7 +14,7 @@
         </div>
         
         <div class="auth-body">
-            <form method="POST" action="{{ route('register') }}" id="registerForm">
+            <form method="POST" action="{{ route('register') }}" id="registerForm" enctype="multipart/form-data">
                 @csrf
                 
                 <!-- Step 1: Basic Information -->
@@ -61,8 +61,8 @@
                     <!-- Phone -->
                     <div class="form-group">
                         <div class="input-group">
-                            <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
-                                   name="phone" placeholder="Teléfono (ej: +56912345678)" 
+                            <input type="tel" class="form-control @error('phone') is-invalid @enderror"
+                                   name="phone" placeholder="Teléfono (ej: +56912345678)"
                                    value="{{ old('phone') }}">
                             <div class="input-group-append">
                                 <span class="input-group-text">
@@ -73,6 +73,30 @@
                         @error('phone')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
+                    </div>
+
+                    <!-- Avatar Upload -->
+                    <div class="form-group">
+                        <label class="text-muted small font-weight-bold">
+                            <i class="fas fa-camera"></i> Foto de Perfil (Opcional)
+                        </label>
+                        <div class="text-center mb-2">
+                            <img id="avatar-preview"
+                                 src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiNlOWVjZWYiLz48cGF0aCBkPSJtNTAgNDhjOS4yMDUgMCAxNi42NjctNy40NjIgMTYuNjY3LTE2LjY2N3MtNy40NjItMTYuNjY3LTE2LjY2Ny0xNi42NjctMTYuNjY3IDcuNDYyLTE2LjY2NyAxNi42NjcgNy40NjIgMTYuNjY3IDE2LjY2NyAxNi42Njd6bTAgOC4zMzNjLTExLjEzMyAwLTMzLjMzMyA1LjU4NC0zMy4zMzMgMTYuNjY3djguMzMzaDY2LjY2N3YtOC4zMzNjMC0xMS4wODMtMjIuMi0xNi42NjctMzMuMzM0LTE2LjY2N3oiIGZpbGw9IiM5ZWEzYTgiLz48L3N2Zz4="
+                                 alt="Preview"
+                                 class="avatar-preview-register">
+                        </div>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input @error('avatar') is-invalid @enderror"
+                                   id="avatar" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
+                            <label class="custom-file-label" for="avatar">Seleccionar imagen...</label>
+                        </div>
+                        @error('avatar')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Formatos: JPG, PNG, GIF. Tamaño máximo: 2MB
+                        </small>
                     </div>
 
                     <!-- Password -->
@@ -400,6 +424,41 @@ $(document).ready(function() {
         }
         $(this).val(value ? '+' + value : '');
     });
+
+    // Avatar preview functionality
+    $('#avatar').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size (2MB max)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 2MB permitido.');
+                $(this).val('');
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Formato no válido. Solo JPG, PNG o GIF.');
+                $(this).val('');
+                return;
+            }
+
+            // Update file label
+            $('.custom-file-label').text(file.name);
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#avatar-preview').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Reset to default if no file
+            $('.custom-file-label').text('Seleccionar imagen...');
+            $('#avatar-preview').attr('src', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiNlOWVjZWYiLz48cGF0aCBkPSJtNTAgNDhjOS4yMDUgMCAxNi42NjctNy40NjIgMTYuNjY3LTE2LjY2N3MtNy40NjItMTYuNjY3LTE2LjY2Ny0xNi42NjctMTYuNjY3IDcuNDYyLTE2LjY2NyAxNi42NjcgNy40NjIgMTYuNjY3IDE2LjY2NyAxNi42Njd6bTAgOC4zMzNjLTExLjEzMyAwLTMzLjMzMyA1LjU4NC0zMy4zMzMgMTYuNjY3djguMzMzaDY2LjY2N3YtOC4zMzNjMC0xMS4wODMtMjIuMi0xNi42NjctMzMuMzM0LTE2LjY2N3oiIGZpbGw9IiM5ZWEzYTgiLz48L3N2Zz4=');
+        }
+    });
 });
 </script>
 
@@ -576,6 +635,47 @@ select.rugby-select option {
 
 .password-toggle:hover i {
     transform: scale(1.1);
+}
+
+/* Avatar preview styles */
+.avatar-preview-register {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #1e4d2b;
+    margin: 0 auto;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.avatar-preview-register:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(30, 77, 43, 0.3);
+}
+
+.custom-file-label {
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.custom-file-label:hover {
+    border-color: #1e4d2b;
+    background-color: #f8f9fa;
+}
+
+.custom-file-input:focus ~ .custom-file-label {
+    border-color: #1e4d2b;
+    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+}
+
+.custom-file-label::after {
+    background-color: #1e4d2b;
+    color: white;
+    border-radius: 0 6px 6px 0;
+    content: "Buscar";
 }
 </style>
 @endsection
