@@ -1504,16 +1504,27 @@ $(document).ready(function() {
         });
     }
 
-    // Event listener para botón flotante de eliminar
-    $('#deleteAnnotationBtn').on('click', function() {
+    // 🔧 FIX: Event listener con delegación - lee el ID dinámicamente del botón
+    // Usar .off() antes de .on() para evitar listeners acumulados
+    $(document).off('click', '#deleteAnnotationBtn').on('click', '#deleteAnnotationBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Leer el ID dinámicamente del atributo data del botón
         const annotationId = $(this).data('annotation-id');
+
+        console.log('🔘 Click en botón eliminar');
+        console.log('   - ID leído del botón:', annotationId);
+        console.log('   - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
 
         if (annotationId) {
             // Caso 1: Solo hay una anotación visible
+            console.log('   - Eliminando anotación con ID:', annotationId);
             deleteAnnotation(annotationId);
         } else if (currentDisplayedAnnotations.length > 0) {
             // Caso 2: Hay múltiples anotaciones visibles
             // Mostrar menú para elegir cuál eliminar
+            console.log('   - Múltiples anotaciones, mostrando selector');
             let message = '¿Cuál anotación deseas eliminar?\n\n';
             currentDisplayedAnnotations.forEach((ann, index) => {
                 const userName = ann.user ? ann.user.name : 'Desconocido';
@@ -1528,10 +1539,13 @@ $(document).ready(function() {
 
             if (choiceNum >= 1 && choiceNum <= currentDisplayedAnnotations.length) {
                 const selectedAnnotation = currentDisplayedAnnotations[choiceNum - 1];
+                console.log('   - Eliminando anotación seleccionada:', selectedAnnotation.id);
                 deleteAnnotation(selectedAnnotation.id);
             } else if (choice !== null) {
                 alert('Número inválido');
             }
+        } else {
+            console.warn('   - No hay anotaciones para eliminar');
         }
     });
 
