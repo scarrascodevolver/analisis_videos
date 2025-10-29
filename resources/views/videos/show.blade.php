@@ -1315,6 +1315,13 @@ $(document).ready(function() {
 
                     // Renderizar lista de anotaciones en el sidebar
                     renderAnnotationsList();
+
+                    // 🔧 FIX: Forzar actualización del canvas basado en timestamp actual
+                    // Esto limpia dibujos temporales y muestra solo anotaciones guardadas activas
+                    if (fabricCanvas) {
+                        checkAndShowAnnotations();
+                        console.log('🔄 Canvas actualizado después de cargar anotaciones');
+                    }
                 }
             },
             error: function(xhr) {
@@ -1588,8 +1595,11 @@ $(document).ready(function() {
             .addClass('btn-warning')
             .html('<i class="fas fa-paint-brush"></i> Anotar');
 
-        // NO limpiar canvas - mantener dibujos temporales visibles
-        console.log('❌ Modo anotación desactivado - dibujos temporales mantenidos');
+        // 🔧 FIX: Resetear displayedAnnotations para forzar re-renderizado
+        // Esto asegura que checkAndShowAnnotations() detecte cambios y limpie el canvas
+        currentDisplayedAnnotations = [];
+
+        console.log('✅ Modo anotación desactivado - canvas será actualizado');
     }
 
     // Close annotation mode
