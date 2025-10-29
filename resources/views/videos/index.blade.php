@@ -151,6 +151,11 @@
                                                     <i class="fas fa-calendar"></i> {{ $video->match_date->format('d/m/Y') }}
                                                 </small>
                                             </p>
+                                            <p class="card-text mb-0">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-eye"></i> {{ $video->view_count }} vistas
+                                                </small>
+                                            </p>
                                         </div>
                                         <div class="card-footer">
                                             <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">

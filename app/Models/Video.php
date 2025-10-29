@@ -68,9 +68,43 @@ class Video extends Model
         return $this->hasMany(VideoAnnotation::class);
     }
 
+    public function views()
+    {
+        return $this->hasMany(VideoView::class);
+    }
+
     public function rugbySituation()
     {
         return $this->belongsTo(RugbySituation::class);
+    }
+
+    /**
+     * Get total view count for this video
+     */
+    public function getViewCountAttribute()
+    {
+        return $this->views()->count();
+    }
+
+    /**
+     * Get unique viewers count for this video
+     */
+    public function getUniqueViewersAttribute()
+    {
+        return $this->views()->distinct('user_id')->count('user_id');
+    }
+
+    /**
+     * Get view statistics for this video
+     */
+    public function getViewStats()
+    {
+        return $this->views()
+            ->selectRaw('user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed')
+            ->with('user:id,name')
+            ->groupBy('user_id')
+            ->orderByDesc('view_count')
+            ->get();
     }
 
     public function scopeByCategory($query, $categoryId)

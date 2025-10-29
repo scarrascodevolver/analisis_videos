@@ -17,8 +17,18 @@
                     <h3 class="card-title">
                         <i class="fas fa-play"></i>
                         {{ $video->title }}
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> <span id="viewCount">{{ $video->view_count }}</span> visualizaciones
+                            • <i class="fas fa-users"></i> <span id="uniqueViewers">{{ $video->unique_viewers }}</span> usuarios
+                        </small>
                     </h3>
                     <div class="card-tools">
+                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                            <button id="viewStatsBtn" class="btn btn-sm btn-rugby-light mr-2" data-toggle="modal" data-target="#statsModal">
+                                <i class="fas fa-chart-bar"></i> Estadísticas
+                            </button>
+                        @endif
                         <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
                             <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
                         </button>
@@ -398,6 +408,71 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Estadísticas de Visualización -->
+    @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+    <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
+                    <h5 class="modal-title" id="statsModalLabel">
+                        <i class="fas fa-chart-bar"></i> Estadísticas de Visualización
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-eye"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Visualizaciones</span>
+                                    <span class="info-box-number" id="modalTotalViews">{{ $video->view_count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-users"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Usuarios Únicos</span>
+                                    <span class="info-box-number" id="modalUniqueViewers">{{ $video->unique_viewers }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3"><i class="fas fa-list"></i> Detalle por Usuario</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm" id="statsTable">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th class="text-center">Vistas</th>
+                                    <th>Última Visualización</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando estadísticas...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-rugby" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 @endsection
 
 @section('js')
@@ -410,7 +485,131 @@ $(document).ready(function() {
     // Datos de comentarios para el timeline y notificaciones
     const commentsData = @json($comments);
 
-    
+    // ========== VIDEO VIEW TRACKING ==========
+    let currentViewId = null;
+    let trackingActive = false;
+    let durationUpdateInterval = null;
+
+    // Track view when video starts playing
+    video.addEventListener('play', function() {
+        if (!trackingActive) {
+            trackView();
+        }
+    });
+
+    function trackView() {
+        fetch('{{ route("api.videos.track-view", $video) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && !data.cooldown) {
+                currentViewId = data.view_id;
+                trackingActive = true;
+
+                // Update view count in UI
+                updateViewCount(data.total_views, data.unique_viewers);
+
+                // Start duration tracking
+                startDurationTracking();
+
+                console.log('View tracked successfully');
+            } else if (data.cooldown) {
+                console.log('View within cooldown period');
+            }
+        })
+        .catch(error => console.error('Error tracking view:', error));
+    }
+
+    function startDurationTracking() {
+        // Update duration every 10 seconds
+        if (durationUpdateInterval) {
+            clearInterval(durationUpdateInterval);
+        }
+
+        durationUpdateInterval = setInterval(() => {
+            if (currentViewId && !video.paused) {
+                updateWatchDuration();
+            }
+        }, 10000); // 10 seconds
+    }
+
+    function updateWatchDuration() {
+        if (!currentViewId) return;
+
+        fetch('{{ route("api.videos.update-duration", $video) }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                view_id: currentViewId,
+                duration: Math.floor(video.currentTime)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Duration updated');
+            }
+        })
+        .catch(error => console.error('Error updating duration:', error));
+    }
+
+    // Mark video as completed when 90% watched
+    video.addEventListener('timeupdate', function() {
+        if (currentViewId && video.duration > 0) {
+            const percentWatched = (video.currentTime / video.duration) * 100;
+
+            if (percentWatched >= 90) {
+                markVideoCompleted();
+            }
+        }
+    });
+
+    function markVideoCompleted() {
+        if (!currentViewId) return;
+
+        fetch('{{ route("api.videos.mark-completed", $video) }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                view_id: currentViewId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Video marked as completed');
+                // Only mark once
+                currentViewId = null;
+            }
+        })
+        .catch(error => console.error('Error marking completed:', error));
+    }
+
+    function updateViewCount(totalViews, uniqueViewers) {
+        const viewCountElement = document.getElementById('viewCount');
+        const uniqueViewersElement = document.getElementById('uniqueViewers');
+
+        if (viewCountElement) {
+            viewCountElement.textContent = totalViews;
+        }
+        if (uniqueViewersElement) {
+            uniqueViewersElement.textContent = uniqueViewers;
+        }
+    }
+    // ========== END VIDEO VIEW TRACKING ==========
+
+
     // Basic time formatting function
     function formatTime(seconds) {
         const hours = Math.floor(seconds / 3600);
@@ -1987,6 +2186,88 @@ $(document).ready(function() {
     window.checkAndShowAnnotations = checkAndShowAnnotations;
     window.displayAnnotation = displayAnnotation;
     window.clearDisplayedAnnotation = clearDisplayedAnnotation;
+
+    // ========== STATS MODAL HANDLER ==========
+    @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+    $('#statsModal').on('show.bs.modal', function () {
+        loadVideoStats();
+    });
+
+    function loadVideoStats() {
+        fetch('{{ route("api.videos.stats", $video) }}', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update totals
+                $('#modalTotalViews').text(data.total_views);
+                $('#modalUniqueViewers').text(data.unique_viewers);
+
+                // Update table
+                const tbody = $('#statsTableBody');
+                tbody.empty();
+
+                if (data.stats.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                <i class="fas fa-info-circle"></i> No hay visualizaciones registradas aún
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    data.stats.forEach(stat => {
+                        const lastViewed = formatRelativeTime(stat.last_viewed);
+                        tbody.append(`
+                            <tr>
+                                <td><i class="fas fa-user"></i> ${stat.user.name}</td>
+                                <td class="text-center"><span class="badge badge-success">${stat.view_count}x</span></td>
+                                <td><i class="fas fa-clock"></i> ${lastViewed}</td>
+                            </tr>
+                        `);
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            $('#statsTableBody').html(`
+                <tr>
+                    <td colspan="3" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error al cargar estadísticas
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function formatRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Hace unos segundos';
+        if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `Hace ${weeks} semana${weeks > 1 ? 's' : ''}`;
+        }
+        const months = Math.floor(diffDays / 30);
+        return `Hace ${months} mes${months > 1 ? 'es' : ''}`;
+    }
+    @endif
+    // ========== END STATS MODAL HANDLER ==========
 
 });
 </script>

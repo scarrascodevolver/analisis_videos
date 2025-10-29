@@ -9,6 +9,7 @@ use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\VideoViewController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -43,7 +44,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/video/{videoId}/timestamp', [AnnotationController::class, 'getByTimestamp'])->name('getByTimestamp');
         Route::delete('/{id}', [AnnotationController::class, 'destroy'])->name('destroy');
     });
-    
+
+    // Video View Tracking API Routes
+    Route::prefix('api/videos')->name('api.videos.')->group(function () {
+        Route::post('/{video}/track-view', [VideoViewController::class, 'track'])->name('track-view');
+        Route::patch('/{video}/update-duration', [VideoViewController::class, 'updateDuration'])->name('update-duration');
+        Route::patch('/{video}/mark-completed', [VideoViewController::class, 'markCompleted'])->name('mark-completed');
+        Route::get('/{video}/stats', [VideoViewController::class, 'getStats'])->name('stats');
+    });
+
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
     Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
