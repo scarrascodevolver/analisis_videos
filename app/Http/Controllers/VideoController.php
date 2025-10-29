@@ -28,11 +28,6 @@ class VideoController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        // Filter by division
-        if ($request->filled('division')) {
-            $query->where('division', $request->division);
-        }
-
         // Filter by team
         if ($request->filled('team')) {
             $query->where(function ($q) use ($request) {

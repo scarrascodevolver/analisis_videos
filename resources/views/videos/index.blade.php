@@ -48,13 +48,6 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-2 mb-2">
-                            <select name="division" id="division-select" class="form-control">
-                                <option value="">División</option>
-                                <option value="primera" {{ request('division') == 'primera' ? 'selected' : '' }}>Primera</option>
-                                <option value="intermedia" {{ request('division') == 'intermedia' ? 'selected' : '' }}>Intermedia</option>
-                            </select>
-                        </div>
                         @endif
                         <div class="col-md-2 mb-2">
                             <select name="team" id="team-select" class="form-control">
@@ -395,13 +388,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category-select');
     if (categorySelect) {
         categorySelect.addEventListener('change', function() {
-            document.getElementById('filter-form').submit();
-        });
-    }
-
-    const divisionSelect = document.getElementById('division-select');
-    if (divisionSelect) {
-        divisionSelect.addEventListener('change', function() {
             document.getElementById('filter-form').submit();
         });
     }
