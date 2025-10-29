@@ -410,7 +410,6 @@ $(document).ready(function() {
     // Datos de comentarios para el timeline y notificaciones
     const commentsData = @json($comments);
 
-    console.log('✅ JavaScript loaded - timeline funcional');
     
     // Basic time formatting function
     function formatTime(seconds) {
@@ -485,11 +484,9 @@ $(document).ready(function() {
         const videoDuration = video.duration;
         
         if (!videoDuration || videoDuration === 0) {
-            console.log('⚠️ No se puede crear timeline - duración no disponible');
             return;
         }
 
-        console.log('🔧 Creando timeline con duración:', videoDuration);
         
         // Clear existing content
         timeline.innerHTML = '';
@@ -583,7 +580,6 @@ $(document).ready(function() {
             const newTime = percentage * videoDuration;
             
             video.currentTime = newTime;
-            console.log('🎯 Timeline click seek to:', formatTime(newTime));
         });
         
         timeline.appendChild(progressContainer);
@@ -609,7 +605,6 @@ $(document).ready(function() {
 
     // Initialize timeline when video metadata loads
     video.addEventListener('loadedmetadata', function() {
-        console.log('📹 Video metadata loaded, duration:', video.duration);
         if (video.duration && !isNaN(video.duration)) {
             createTimelineMarkers();
         }
@@ -621,7 +616,6 @@ $(document).ready(function() {
             const timeInSeconds = parseInt(startTime);
             if (timeInSeconds > 0 && timeInSeconds < video.duration) {
                 video.currentTime = timeInSeconds;
-                console.log(`🕐 Video positioned at ${timeInSeconds}s from URL parameter`);
 
                 // Show notification that video was restored
                 if (typeof toastr !== 'undefined') {
@@ -644,7 +638,6 @@ $(document).ready(function() {
 
     // 🔧 FIX: Actualizar anotaciones cuando el usuario mueve la línea de tiempo (video pausado)
     video.addEventListener('seeked', function() {
-        console.log('⏭️ Evento seeked disparado - actualizando anotaciones');
         checkAndShowAnnotations();
         checkAndShowCommentNotifications();
         updateProgressIndicator();
@@ -652,14 +645,12 @@ $(document).ready(function() {
 
     // Force timeline creation if video is already loaded
     if (video.readyState >= 2) {
-        console.log('📹 Video already loaded');
         createTimelineMarkers();
     }
     
     // Also try after a delay
     setTimeout(function() {
         if (video.duration && !isNaN(video.duration) && !document.getElementById('progressBar')) {
-            console.log('⏰ Creating timeline after delay');
             createTimelineMarkers();
         }
     }, 1000);
@@ -865,7 +856,6 @@ $(document).ready(function() {
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let isPseudoFullscreen = false;
 
-    console.log('📱 Device detection:', isMobile ? 'MOBILE' : 'DESKTOP');
 
     // Show mobile fullscreen button only on mobile devices
     if (isMobile) {
@@ -977,7 +967,6 @@ $(document).ready(function() {
         // Update button icon
         document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
 
-        console.log('📱 Entered pseudo-fullscreen mode');
     }
 
     function exitPseudoFullscreen() {
@@ -994,7 +983,6 @@ $(document).ready(function() {
         // Update button icon
         document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
 
-        console.log('📱 Exited pseudo-fullscreen mode');
     }
 
     // Update comment notification system for pseudo-fullscreen
@@ -1102,7 +1090,6 @@ $(document).ready(function() {
         }, 8000);
     }
 
-    console.log('✅ Sistema pseudo-fullscreen inicializado');
 
     // Funcionalidad del botón "Comentar aquí"
     $('#addCommentBtn').on('click', function() {
@@ -1184,7 +1171,6 @@ $(document).ready(function() {
                     const commentIndex = commentsData.findIndex(comment => comment.id == commentId);
                     if (commentIndex !== -1) {
                         commentsData.splice(commentIndex, 1);
-                        console.log(`✅ Comentario ${commentId} removido de commentsData`);
                     }
 
                     // 2. Limpiar notificaciones activas del comentario borrado
@@ -1204,7 +1190,6 @@ $(document).ready(function() {
                     // 4. Recrear timeline sin el marcador eliminado
                     if (video.duration && !isNaN(video.duration)) {
                         createTimelineMarkers();
-                        console.log(`🔄 Timeline recreado sin comentario ${commentId}`);
                     }
 
                     // Mostrar mensaje de éxito
@@ -1284,7 +1269,6 @@ $(document).ready(function() {
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer && canvasContainer.parentElement !== videoContainer) {
                 videoContainer.appendChild(canvasContainer);
-                console.log('✅ Canvas container movido al video container');
             }
         }, 100);
 
@@ -1295,7 +1279,6 @@ $(document).ready(function() {
         window.addEventListener('resize', resizeCanvas);
         video.addEventListener('loadedmetadata', resizeCanvas);
 
-        console.log('✅ Sistema de anotaciones inicializado');
 
         // Cargar anotaciones existentes
         loadExistingAnnotations();
@@ -1310,8 +1293,6 @@ $(document).ready(function() {
                 if (response.success) {
                     savedAnnotations = response.annotations;
                     window.savedAnnotations = savedAnnotations; // DEBUG: Actualizar global
-                    console.log('✅ Anotaciones cargadas:', savedAnnotations.length);
-                    console.log('📋 Primera anotación:', savedAnnotations[0]);
 
                     // Renderizar lista de anotaciones en el sidebar
                     renderAnnotationsList();
@@ -1320,7 +1301,6 @@ $(document).ready(function() {
                     // Esto limpia dibujos temporales y muestra solo anotaciones guardadas activas
                     if (fabricCanvas) {
                         checkAndShowAnnotations();
-                        console.log('🔄 Canvas actualizado después de cargar anotaciones');
                     }
                 }
             },
@@ -1412,12 +1392,7 @@ $(document).ready(function() {
             return;
         }
 
-        console.log('🗑️ ===== INICIO ELIMINACIÓN =====');
-        console.log('🎯 ID a eliminar:', annotationId);
-        console.log('📦 savedAnnotations ANTES:', savedAnnotations.length, savedAnnotations.map(a => a.id));
-        console.log('🎨 currentDisplayedAnnotations ANTES:', currentDisplayedAnnotations.length, currentDisplayedAnnotations.map(a => a.id));
-
-        // 🔧 FIX: Deshabilitar TODOS los botones de eliminar para evitar clicks múltiples
+        // Deshabilitar botones de eliminar para evitar clicks múltiples
         $('.delete-annotation-btn').prop('disabled', true).addClass('disabled');
         $('#deleteAnnotationBtn').prop('disabled', true).addClass('disabled');
 
@@ -1432,25 +1407,18 @@ $(document).ready(function() {
             method: 'DELETE',
             success: function(response) {
                 if (response.success) {
-                    console.log('✅ Servidor confirmó eliminación:', annotationId);
-
-                    // 1. SOLO remover del array savedAnnotations (fuente de verdad)
+                    // Remover del array savedAnnotations
                     const index = savedAnnotations.findIndex(a => a.id == annotationId);
-                    console.log('🔍 Index en savedAnnotations:', index);
 
                     if (index !== -1) {
                         savedAnnotations.splice(index, 1);
                         window.savedAnnotations = savedAnnotations;
-                        console.log('✅ Removida de savedAnnotations, quedan:', savedAnnotations.length, savedAnnotations.map(a => a.id));
-                    } else {
-                        console.warn('⚠️ Anotación NO ENCONTRADA en savedAnnotations!');
                     }
 
-                    // 2. Actualizar lista en sidebar
-                    console.log('📝 Actualizando lista del sidebar...');
+                    // Actualizar lista en sidebar
                     renderAnnotationsList();
 
-                    // 3. Mostrar mensaje de éxito
+                    // Mostrar mensaje de éxito
                     if (typeof toastr !== 'undefined') {
                         if (response.already_deleted) {
                             toastr.info('Esta anotación ya había sido eliminada');
@@ -1459,29 +1427,23 @@ $(document).ready(function() {
                         }
                     }
 
-                    // 4. CRÍTICO: Dejar que checkAndShowAnnotations() maneje currentDisplayedAnnotations
-                    // Esto previene race conditions con el evento timeupdate
-                    console.log('🔄 Forzando actualización de anotaciones visibles...');
+                    // Actualizar anotaciones visibles
                     checkAndShowAnnotations();
 
-                    console.log('🗑️ ===== FIN ELIMINACIÓN =====');
-
-                    // 🔧 FIX: Re-habilitar botones de eliminar después de completar
+                    // Re-habilitar botones de eliminar
                     $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
                     $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
                 }
             },
             error: function(xhr) {
-                console.error('❌ ===== ERROR EN ELIMINACIÓN =====');
+                console.error('❌ Error eliminando anotación');
                 console.error('Status:', xhr.status);
-                console.error('Response:', xhr.responseText);
 
                 // 🔧 FIX: Re-habilitar botones de eliminar después de error
                 $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
                 $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
 
                 if (xhr.status === 500 || xhr.status === 404) {
-                    console.log('⚠️ Error 500/404, recargando anotaciones desde servidor...');
                     loadExistingAnnotations();
 
                     if (typeof toastr !== 'undefined') {
@@ -1504,27 +1466,18 @@ $(document).ready(function() {
         });
     }
 
-    // 🔧 FIX: Event listener con delegación - lee el ID dinámicamente del botón
-    // Usar .off() antes de .on() para evitar listeners acumulados
+    // Event listener con delegación - lee el ID dinámicamente del botón
     $(document).off('click', '#deleteAnnotationBtn').on('click', '#deleteAnnotationBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
 
-        // Leer el ID dinámicamente del atributo data del botón
         const annotationId = $(this).data('annotation-id');
 
-        console.log('🔘 Click en botón eliminar');
-        console.log('   - ID leído del botón:', annotationId);
-        console.log('   - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
-
         if (annotationId) {
-            // Caso 1: Solo hay una anotación visible
-            console.log('   - Eliminando anotación con ID:', annotationId);
+            // Solo hay una anotación visible
             deleteAnnotation(annotationId);
         } else if (currentDisplayedAnnotations.length > 0) {
-            // Caso 2: Hay múltiples anotaciones visibles
-            // Mostrar menú para elegir cuál eliminar
-            console.log('   - Múltiples anotaciones, mostrando selector');
+            // Hay múltiples anotaciones visibles - mostrar selector
             let message = '¿Cuál anotación deseas eliminar?\n\n';
             currentDisplayedAnnotations.forEach((ann, index) => {
                 const userName = ann.user ? ann.user.name : 'Desconocido';
@@ -1539,13 +1492,10 @@ $(document).ready(function() {
 
             if (choiceNum >= 1 && choiceNum <= currentDisplayedAnnotations.length) {
                 const selectedAnnotation = currentDisplayedAnnotations[choiceNum - 1];
-                console.log('   - Eliminando anotación seleccionada:', selectedAnnotation.id);
                 deleteAnnotation(selectedAnnotation.id);
             } else if (choice !== null) {
                 alert('Número inválido');
             }
-        } else {
-            console.warn('   - No hay anotaciones para eliminar');
         }
     });
 
@@ -1598,7 +1548,6 @@ $(document).ready(function() {
             initAnnotationSystem();
         }
 
-        console.log('🎨 Modo anotación activado');
     }
 
     function exitAnnotationMode() {
@@ -1625,7 +1574,6 @@ $(document).ready(function() {
         // Esto asegura que checkAndShowAnnotations() detecte cambios y limpie el canvas
         currentDisplayedAnnotations = [];
 
-        console.log('✅ Modo anotación desactivado - canvas será actualizado');
     }
 
     // Close annotation mode
@@ -1652,7 +1600,6 @@ $(document).ready(function() {
             }
         }
 
-        console.log('🔧 Herramienta seleccionada:', tool);
     });
 
     // Drawing functionality
@@ -1874,7 +1821,6 @@ $(document).ready(function() {
             data: JSON.stringify(postData),
             success: function(response) {
                 if (response.success) {
-                    console.log('✅ Anotación guardada:', response);
                     if (typeof toastr !== 'undefined') {
                         toastr.success('Anotación guardada exitosamente');
                     }
@@ -1888,7 +1834,6 @@ $(document).ready(function() {
                     // Reset flag temporal después de guardar
                     hasTemporaryDrawing = false;
 
-                    console.log('🎯 Guardado exitoso - saliendo del modo anotación');
                 } else {
                     console.error('❌ Error al guardar:', response);
                     alert('Error al guardar la anotación');
@@ -1930,7 +1875,6 @@ $(document).ready(function() {
         if (fabricCanvas) {
             fabricCanvas.clear();
             hasTemporaryDrawing = false; // Reset flag temporal
-            console.log('🗑️ Anotaciones limpiadas');
         }
     });
 
@@ -1947,9 +1891,6 @@ $(document).ready(function() {
 
         const currentTime = video.currentTime;
 
-        console.log('🔄 checkAndShowAnnotations() - tiempo:', currentTime.toFixed(2) + 's');
-        console.log('📦 savedAnnotations disponibles:', savedAnnotations.length, savedAnnotations.map(a => `${a.id}@${a.timestamp}s`));
-
         // ✨ CAMBIO PRINCIPAL: Usar .filter() para obtener TODAS las anotaciones activas
         const activeAnnotations = savedAnnotations.filter(annotation => {
             const startTime = parseFloat(annotation.timestamp);
@@ -1962,33 +1903,20 @@ $(document).ready(function() {
             const TOLERANCE = 0.15;
             const isActive = currentTime >= (startTime - TOLERANCE) && currentTime <= endTime;
 
-            if (isActive) {
-                console.log(`✅ Anotación ${annotation.id} ACTIVA (${(startTime - TOLERANCE).toFixed(2)}s - ${annotation.is_permanent ? '∞' : endTime.toFixed(2) + 's'})`);
-            }
-
             return isActive;
         });
-
-        console.log('🎯 activeAnnotations encontradas:', activeAnnotations.length, activeAnnotations.map(a => a.id));
 
         // Comparar si el conjunto de anotaciones cambió
         const activeIds = activeAnnotations.map(a => a.id).sort().join(',');
         const displayedIds = currentDisplayedAnnotations.map(a => a.id).sort().join(',');
 
-        console.log('🔍 Comparación - Active IDs:', activeIds || '(vacío)', 'vs Displayed IDs:', displayedIds || '(vacío)');
-
         if (activeIds !== displayedIds) {
-            console.log('⚡ CAMBIO DETECTADO en anotaciones activas');
-
             if (activeAnnotations.length > 0) {
-                console.log('📺 Desplegando', activeAnnotations.length, 'anotación(es)');
                 // Mostrar todas las anotaciones activas
                 displayMultipleAnnotations(activeAnnotations);
 
                 // ⚠️ LÍNEA CRÍTICA - Actualizar referencia de anotaciones mostradas
-                console.log('🎨 ANTES de asignar - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
                 currentDisplayedAnnotations = activeAnnotations;
-                console.log('🎨 DESPUÉS de asignar - currentDisplayedAnnotations:', currentDisplayedAnnotations.map(a => a.id));
 
                 // Mostrar botón de eliminar con dropdown si hay múltiples
                 const deleteBtn = document.getElementById('deleteAnnotationBtn');
@@ -1999,16 +1927,13 @@ $(document).ready(function() {
                     if (activeAnnotations.length === 1) {
                         $(deleteBtn).data('annotation-id', activeAnnotations[0].id);
                         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i> Eliminar Anotación';
-                        console.log('🔘 Botón eliminar configurado para ID:', activeAnnotations[0].id);
                     } else {
                         // Si hay múltiples, mostrar contador
                         $(deleteBtn).removeData('annotation-id');
                         deleteBtn.innerHTML = `<i class="fas fa-times-circle"></i> ${activeAnnotations.length} Anotaciones`;
-                        console.log('🔘 Botón eliminar configurado para múltiples:', activeAnnotations.length);
                     }
                 }
             } else {
-                console.log('🧹 No hay anotaciones activas, limpiando...');
                 // No hay anotaciones activas
                 clearDisplayedAnnotation();
                 currentDisplayedAnnotations = [];
@@ -2018,11 +1943,8 @@ $(document).ready(function() {
                 if (deleteBtn) {
                     deleteBtn.style.display = 'none';
                     deleteBtn.removeAttribute('data-annotation-id');
-                    console.log('🔘 Botón eliminar ocultado');
                 }
             }
-        } else {
-            console.log('✅ No hay cambios en anotaciones activas');
         }
     }
 
@@ -2049,7 +1971,6 @@ $(document).ready(function() {
             }
         });
 
-        console.log(`✅ Mostrando ${annotations.length} anotaciones simultáneas`);
     }
 
     // Función heredada para compatibilidad (ahora usa la nueva lógica)
@@ -2067,7 +1988,6 @@ $(document).ready(function() {
     window.displayAnnotation = displayAnnotation;
     window.clearDisplayedAnnotation = clearDisplayedAnnotation;
 
-    console.log('✅ Sistema de anotaciones configurado');
 });
 </script>
 
