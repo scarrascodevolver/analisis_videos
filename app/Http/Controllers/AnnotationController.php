@@ -94,7 +94,12 @@ class AnnotationController extends Controller
                         'timestamp' => $annotation->timestamp,
                         'annotation_type' => $annotation->annotation_type,
                         'annotation_data' => $annotation->annotation_data,
-                        'user_name' => $annotation->user->name,
+                        'duration_seconds' => $annotation->duration_seconds,
+                        'is_permanent' => $annotation->is_permanent,
+                        'user' => [
+                            'name' => $annotation->user->name,
+                            'id' => $annotation->user->id,
+                        ],
                         'created_at' => $annotation->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
@@ -174,7 +179,17 @@ class AnnotationController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $annotation = VideoAnnotation::findOrFail($id);
+            $annotation = VideoAnnotation::find($id);
+
+            // Si la anotación no existe, asumir que ya fue eliminada
+            if (!$annotation) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Anotación ya fue eliminada previamente',
+                    'already_deleted' => true
+                ]);
+            }
+
             $user = Auth::user();
 
             // Solo el creador o staff pueden eliminar

@@ -102,6 +102,13 @@
                         </div>
                         
                         
+                        <!-- Delete Annotation Button (visible solo cuando hay anotación) -->
+                        <button id="deleteAnnotationBtn" class="btn btn-sm btn-danger"
+                                style="position: absolute; top: 10px; right: 10px; z-index: 20; display: none;"
+                                title="Eliminar anotación visible">
+                            <i class="fas fa-times-circle"></i> Eliminar Anotación
+                        </button>
+
                         <!-- Mobile Fullscreen Button -->
                         <div class="video-controls-overlay" style="position: absolute; bottom: 60px; right: 10px; z-index: 10;">
                             <button id="mobileFullscreenBtn" class="btn btn-sm btn-dark mr-2" title="Pantalla completa" style="display: none;">
@@ -372,6 +379,23 @@
                     @endforelse
                 </div>
             </div>
+
+            <!-- Annotations List -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-pen"></i>
+                        Anotaciones (<span id="annotationsCount">0</span>)
+                    </h5>
+                </div>
+                <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;" id="annotationsList">
+                    <div class="text-center p-3 text-muted" id="noAnnotationsMessage">
+                        <i class="fas fa-pen-fancy fa-2x mb-2"></i>
+                        <p>No hay anotaciones aún.</p>
+                    </div>
+                    <!-- Las anotaciones se cargarán aquí via JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -386,7 +410,6 @@ $(document).ready(function() {
     // Datos de comentarios para el timeline y notificaciones
     const commentsData = @json($comments);
 
-    console.log('✅ JavaScript loaded - timeline funcional');
     
     // Basic time formatting function
     function formatTime(seconds) {
@@ -461,11 +484,9 @@ $(document).ready(function() {
         const videoDuration = video.duration;
         
         if (!videoDuration || videoDuration === 0) {
-            console.log('⚠️ No se puede crear timeline - duración no disponible');
             return;
         }
 
-        console.log('🔧 Creando timeline con duración:', videoDuration);
         
         // Clear existing content
         timeline.innerHTML = '';
@@ -559,7 +580,6 @@ $(document).ready(function() {
             const newTime = percentage * videoDuration;
             
             video.currentTime = newTime;
-            console.log('🎯 Timeline click seek to:', formatTime(newTime));
         });
         
         timeline.appendChild(progressContainer);
@@ -585,7 +605,6 @@ $(document).ready(function() {
 
     // Initialize timeline when video metadata loads
     video.addEventListener('loadedmetadata', function() {
-        console.log('📹 Video metadata loaded, duration:', video.duration);
         if (video.duration && !isNaN(video.duration)) {
             createTimelineMarkers();
         }
@@ -597,7 +616,6 @@ $(document).ready(function() {
             const timeInSeconds = parseInt(startTime);
             if (timeInSeconds > 0 && timeInSeconds < video.duration) {
                 video.currentTime = timeInSeconds;
-                console.log(`🕐 Video positioned at ${timeInSeconds}s from URL parameter`);
 
                 // Show notification that video was restored
                 if (typeof toastr !== 'undefined') {
@@ -618,16 +636,21 @@ $(document).ready(function() {
         checkAndShowAnnotations(); // Nueva función para anotaciones
     });
 
+    // 🔧 FIX: Actualizar anotaciones cuando el usuario mueve la línea de tiempo (video pausado)
+    video.addEventListener('seeked', function() {
+        checkAndShowAnnotations();
+        checkAndShowCommentNotifications();
+        updateProgressIndicator();
+    });
+
     // Force timeline creation if video is already loaded
     if (video.readyState >= 2) {
-        console.log('📹 Video already loaded');
         createTimelineMarkers();
     }
     
     // Also try after a delay
     setTimeout(function() {
         if (video.duration && !isNaN(video.duration) && !document.getElementById('progressBar')) {
-            console.log('⏰ Creating timeline after delay');
             createTimelineMarkers();
         }
     }, 1000);
@@ -833,7 +856,6 @@ $(document).ready(function() {
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let isPseudoFullscreen = false;
 
-    console.log('📱 Device detection:', isMobile ? 'MOBILE' : 'DESKTOP');
 
     // Show mobile fullscreen button only on mobile devices
     if (isMobile) {
@@ -945,7 +967,6 @@ $(document).ready(function() {
         // Update button icon
         document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
 
-        console.log('📱 Entered pseudo-fullscreen mode');
     }
 
     function exitPseudoFullscreen() {
@@ -962,7 +983,6 @@ $(document).ready(function() {
         // Update button icon
         document.getElementById('mobileFullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
 
-        console.log('📱 Exited pseudo-fullscreen mode');
     }
 
     // Update comment notification system for pseudo-fullscreen
@@ -1070,7 +1090,6 @@ $(document).ready(function() {
         }, 8000);
     }
 
-    console.log('✅ Sistema pseudo-fullscreen inicializado');
 
     // Funcionalidad del botón "Comentar aquí"
     $('#addCommentBtn').on('click', function() {
@@ -1152,7 +1171,6 @@ $(document).ready(function() {
                     const commentIndex = commentsData.findIndex(comment => comment.id == commentId);
                     if (commentIndex !== -1) {
                         commentsData.splice(commentIndex, 1);
-                        console.log(`✅ Comentario ${commentId} removido de commentsData`);
                     }
 
                     // 2. Limpiar notificaciones activas del comentario borrado
@@ -1172,7 +1190,6 @@ $(document).ready(function() {
                     // 4. Recrear timeline sin el marcador eliminado
                     if (video.duration && !isNaN(video.duration)) {
                         createTimelineMarkers();
-                        console.log(`🔄 Timeline recreado sin comentario ${commentId}`);
                     }
 
                     // Mostrar mensaje de éxito
@@ -1198,12 +1215,12 @@ $(document).ready(function() {
     let isDrawing = false;
     let currentAnnotation = null;
     let savedAnnotations = []; // Array de anotaciones guardadas
-    let currentDisplayedAnnotation = null;
+    let currentDisplayedAnnotations = []; // CAMBIADO: Array de anotaciones mostradas actualmente
     let hasTemporaryDrawing = false; // Flag para dibujos temporales
 
     // DEBUG: Hacer variables accesibles globalmente
     window.savedAnnotations = savedAnnotations;
-    window.currentDisplayedAnnotation = currentDisplayedAnnotation;
+    window.currentDisplayedAnnotations = currentDisplayedAnnotations;
     window.hasTemporaryDrawing = hasTemporaryDrawing;
 
     // Inicializar sistema de anotaciones
@@ -1252,7 +1269,6 @@ $(document).ready(function() {
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer && canvasContainer.parentElement !== videoContainer) {
                 videoContainer.appendChild(canvasContainer);
-                console.log('✅ Canvas container movido al video container');
             }
         }, 100);
 
@@ -1263,7 +1279,6 @@ $(document).ready(function() {
         window.addEventListener('resize', resizeCanvas);
         video.addEventListener('loadedmetadata', resizeCanvas);
 
-        console.log('✅ Sistema de anotaciones inicializado');
 
         // Cargar anotaciones existentes
         loadExistingAnnotations();
@@ -1278,8 +1293,15 @@ $(document).ready(function() {
                 if (response.success) {
                     savedAnnotations = response.annotations;
                     window.savedAnnotations = savedAnnotations; // DEBUG: Actualizar global
-                    console.log('✅ Anotaciones cargadas:', savedAnnotations.length);
-                    console.log('📋 Primera anotación:', savedAnnotations[0]);
+
+                    // Renderizar lista de anotaciones en el sidebar
+                    renderAnnotationsList();
+
+                    // 🔧 FIX: Forzar actualización del canvas basado en timestamp actual
+                    // Esto limpia dibujos temporales y muestra solo anotaciones guardadas activas
+                    if (fabricCanvas) {
+                        checkAndShowAnnotations();
+                    }
                 }
             },
             error: function(xhr) {
@@ -1287,6 +1309,205 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Renderizar lista de anotaciones en el sidebar
+    function renderAnnotationsList() {
+        const annotationsList = document.getElementById('annotationsList');
+        const annotationsCount = document.getElementById('annotationsCount');
+        const noAnnotationsMessage = document.getElementById('noAnnotationsMessage');
+
+        // Actualizar contador
+        annotationsCount.textContent = savedAnnotations.length;
+
+        // Limpiar solo los items de anotaciones (no borrar noAnnotationsMessage)
+        const existingItems = annotationsList.querySelectorAll('.annotation-item');
+        existingItems.forEach(item => item.remove());
+
+        if (savedAnnotations.length === 0) {
+            // Mostrar mensaje de sin anotaciones
+            noAnnotationsMessage.style.display = 'block';
+            return;
+        }
+
+        // Ocultar mensaje y crear lista
+        noAnnotationsMessage.style.display = 'none';
+
+        // Crear items de anotaciones ordenados por timestamp
+        const sortedAnnotations = [...savedAnnotations].sort((a, b) =>
+            parseFloat(a.timestamp) - parseFloat(b.timestamp)
+        );
+
+        sortedAnnotations.forEach(annotation => {
+            const timestamp = parseFloat(annotation.timestamp);
+            const duration = parseInt(annotation.duration_seconds) || 4;
+            const isPermanent = annotation.is_permanent;
+
+            const item = document.createElement('div');
+            item.className = 'annotation-item border-bottom p-2';
+            item.setAttribute('data-annotation-id', annotation.id);
+
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <button class="btn btn-sm btn-info timestamp-btn-annotation mr-2"
+                                data-timestamp="${timestamp}"
+                                title="Ir al momento de esta anotación">
+                            <i class="fas fa-clock"></i> ${formatTime(timestamp)}
+                        </button>
+                        <span class="badge badge-${isPermanent ? 'primary' : 'secondary'} ml-1">
+                            ${isPermanent ? 'Permanente' : duration + 's'}
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> ${annotation.user ? annotation.user.name : 'Desconocido'}
+                        </small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger delete-annotation-btn"
+                            data-annotation-id="${annotation.id}"
+                            title="Eliminar anotación">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            annotationsList.appendChild(item);
+        });
+    }
+
+    // Event delegation para botones de timestamp (FUERA de renderAnnotationsList)
+    $(document).on('click', '.timestamp-btn-annotation', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const timestamp = $(this).data('timestamp');
+        video.currentTime = timestamp;
+        if (video.paused) {
+            video.play();
+        }
+    });
+
+    // Función para eliminar anotación
+    // FIX: Simplificado para evitar race conditions con checkAndShowAnnotations()
+    function deleteAnnotation(annotationId) {
+        if (!confirm('¿Estás seguro de eliminar esta anotación? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        // Deshabilitar botones de eliminar para evitar clicks múltiples
+        $('.delete-annotation-btn').prop('disabled', true).addClass('disabled');
+        $('#deleteAnnotationBtn').prop('disabled', true).addClass('disabled');
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/api/annotations/${annotationId}`,
+            method: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    // Remover del array savedAnnotations
+                    const index = savedAnnotations.findIndex(a => a.id == annotationId);
+
+                    if (index !== -1) {
+                        savedAnnotations.splice(index, 1);
+                        window.savedAnnotations = savedAnnotations;
+                    }
+
+                    // Actualizar lista en sidebar
+                    renderAnnotationsList();
+
+                    // Mostrar mensaje de éxito
+                    if (typeof toastr !== 'undefined') {
+                        if (response.already_deleted) {
+                            toastr.info('Esta anotación ya había sido eliminada');
+                        } else {
+                            toastr.success('Anotación eliminada exitosamente');
+                        }
+                    }
+
+                    // Actualizar anotaciones visibles
+                    checkAndShowAnnotations();
+
+                    // Re-habilitar botones de eliminar
+                    $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
+                    $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
+                }
+            },
+            error: function(xhr) {
+                console.error('❌ Error eliminando anotación');
+                console.error('Status:', xhr.status);
+
+                // 🔧 FIX: Re-habilitar botones de eliminar después de error
+                $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
+                $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
+
+                if (xhr.status === 500 || xhr.status === 404) {
+                    loadExistingAnnotations();
+
+                    if (typeof toastr !== 'undefined') {
+                        toastr.warning('La anotación ya no existe. Lista actualizada.');
+                    }
+                } else if (xhr.status === 403) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('No tienes permisos para eliminar esta anotación');
+                    } else {
+                        alert('No tienes permisos para eliminar esta anotación');
+                    }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al eliminar la anotación');
+                    } else {
+                        alert('Error al eliminar la anotación');
+                    }
+                }
+            }
+        });
+    }
+
+    // Event listener con delegación - lee el ID dinámicamente del botón
+    $(document).off('click', '#deleteAnnotationBtn').on('click', '#deleteAnnotationBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const annotationId = $(this).data('annotation-id');
+
+        if (annotationId) {
+            // Solo hay una anotación visible
+            deleteAnnotation(annotationId);
+        } else if (currentDisplayedAnnotations.length > 0) {
+            // Hay múltiples anotaciones visibles - mostrar selector
+            let message = '¿Cuál anotación deseas eliminar?\n\n';
+            currentDisplayedAnnotations.forEach((ann, index) => {
+                const userName = ann.user ? ann.user.name : 'Desconocido';
+                const timestamp = formatTime(parseFloat(ann.timestamp));
+                const type = ann.is_permanent ? 'Permanente' : `${ann.duration_seconds}s`;
+                message += `${index + 1}. ${timestamp} - ${type} (${userName})\n`;
+            });
+            message += `\nIngresa el número (1-${currentDisplayedAnnotations.length}):`;
+
+            const choice = prompt(message);
+            const choiceNum = parseInt(choice);
+
+            if (choiceNum >= 1 && choiceNum <= currentDisplayedAnnotations.length) {
+                const selectedAnnotation = currentDisplayedAnnotations[choiceNum - 1];
+                deleteAnnotation(selectedAnnotation.id);
+            } else if (choice !== null) {
+                alert('Número inválido');
+            }
+        }
+    });
+
+    // Event delegation para botones de eliminar en lista
+    $(document).on('click', '.delete-annotation-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const annotationId = $(this).data('annotation-id');
+        if (annotationId) {
+            deleteAnnotation(annotationId);
+        }
+    });
 
     // Toggle annotation mode
     $('#toggleAnnotationMode').on('click', function() {
@@ -1327,7 +1548,6 @@ $(document).ready(function() {
             initAnnotationSystem();
         }
 
-        console.log('🎨 Modo anotación activado');
     }
 
     function exitAnnotationMode() {
@@ -1350,8 +1570,10 @@ $(document).ready(function() {
             .addClass('btn-warning')
             .html('<i class="fas fa-paint-brush"></i> Anotar');
 
-        // NO limpiar canvas - mantener dibujos temporales visibles
-        console.log('❌ Modo anotación desactivado - dibujos temporales mantenidos');
+        // 🔧 FIX: Resetear displayedAnnotations para forzar re-renderizado
+        // Esto asegura que checkAndShowAnnotations() detecte cambios y limpie el canvas
+        currentDisplayedAnnotations = [];
+
     }
 
     // Close annotation mode
@@ -1378,7 +1600,6 @@ $(document).ready(function() {
             }
         }
 
-        console.log('🔧 Herramienta seleccionada:', tool);
     });
 
     // Drawing functionality
@@ -1600,7 +1821,6 @@ $(document).ready(function() {
             data: JSON.stringify(postData),
             success: function(response) {
                 if (response.success) {
-                    console.log('✅ Anotación guardada:', response);
                     if (typeof toastr !== 'undefined') {
                         toastr.success('Anotación guardada exitosamente');
                     }
@@ -1614,7 +1834,6 @@ $(document).ready(function() {
                     // Reset flag temporal después de guardar
                     hasTemporaryDrawing = false;
 
-                    console.log('🎯 Guardado exitoso - saliendo del modo anotación');
                 } else {
                     console.error('❌ Error al guardar:', response);
                     alert('Error al guardar la anotación');
@@ -1656,96 +1875,112 @@ $(document).ready(function() {
         if (fabricCanvas) {
             fabricCanvas.clear();
             hasTemporaryDrawing = false; // Reset flag temporal
-            console.log('🗑️ Anotaciones limpiadas');
         }
     });
 
     // Función para mostrar/ocultar anotaciones según timestamp y duración
     function checkAndShowAnnotations() {
-        // DEBUG: Log cada ejecución
-        console.log('🔄 checkAndShowAnnotations ejecutándose', {
-            annotationMode: annotationMode,
-            fabricCanvas: !!fabricCanvas,
-            hasTemporaryDrawing: hasTemporaryDrawing,
-            savedAnnotationsCount: savedAnnotations.length,
-            currentTime: video.currentTime
-        });
-
         if (annotationMode || !fabricCanvas) {
-            console.log('⏸️ Saliendo: annotationMode o !fabricCanvas');
             return; // No mostrar en modo edición
         }
 
         // Si hay dibujo temporal, no interferir
         if (hasTemporaryDrawing) {
-            console.log('⏸️ Saliendo: hasTemporaryDrawing');
             return;
         }
 
         const currentTime = video.currentTime;
 
-        // Buscar anotaciones activas para el tiempo actual
-        const activeAnnotation = savedAnnotations.find(annotation => {
-            const startTime = annotation.timestamp;
-            const endTime = annotation.is_permanent ? Infinity : startTime + annotation.duration_seconds;
+        // ✨ CAMBIO PRINCIPAL: Usar .filter() para obtener TODAS las anotaciones activas
+        const activeAnnotations = savedAnnotations.filter(annotation => {
+            const startTime = parseFloat(annotation.timestamp);
+            const durationSeconds = parseInt(annotation.duration_seconds) || 4;
+            const endTime = annotation.is_permanent ? Infinity : startTime + durationSeconds;
 
-            console.log('🔍 Verificando anotación:', {
-                id: annotation.id,
-                startTime: startTime,
-                endTime: endTime,
-                currentTime: currentTime,
-                inRange: currentTime >= startTime && currentTime <= endTime
-            });
+            // 🔧 FIX: Tolerancia de 0.15 segundos para manejar imprecisiones de milisegundos
+            // Problema: currentTime puede ser 5.878967 mientras startTime es 5.88 (guardado en BD)
+            // Solución: Permitir que la anotación se active 150ms antes del timestamp exacto
+            const TOLERANCE = 0.15;
+            const isActive = currentTime >= (startTime - TOLERANCE) && currentTime <= endTime;
 
-            return currentTime >= startTime && currentTime <= endTime;
+            return isActive;
         });
 
-        console.log('🎯 Anotación activa encontrada:', activeAnnotation);
+        // Comparar si el conjunto de anotaciones cambió
+        const activeIds = activeAnnotations.map(a => a.id).sort().join(',');
+        const displayedIds = currentDisplayedAnnotations.map(a => a.id).sort().join(',');
 
-        if (activeAnnotation && activeAnnotation !== currentDisplayedAnnotation) {
-            // Mostrar nueva anotación
-            console.log('✅ Mostrando nueva anotación:', activeAnnotation.id);
-            displayAnnotation(activeAnnotation);
-            currentDisplayedAnnotation = activeAnnotation;
-        } else if (!activeAnnotation && currentDisplayedAnnotation) {
-            // Ocultar anotación actual
-            console.log('🗑️ Ocultando anotación actual');
-            clearDisplayedAnnotation();
-            currentDisplayedAnnotation = null;
+        if (activeIds !== displayedIds) {
+            if (activeAnnotations.length > 0) {
+                // Mostrar todas las anotaciones activas
+                displayMultipleAnnotations(activeAnnotations);
+
+                // ⚠️ LÍNEA CRÍTICA - Actualizar referencia de anotaciones mostradas
+                currentDisplayedAnnotations = activeAnnotations;
+
+                // Mostrar botón de eliminar con dropdown si hay múltiples
+                const deleteBtn = document.getElementById('deleteAnnotationBtn');
+                if (deleteBtn) {
+                    deleteBtn.style.display = 'block';
+
+                    // Si solo hay 1, mostrar ID directo
+                    if (activeAnnotations.length === 1) {
+                        $(deleteBtn).data('annotation-id', activeAnnotations[0].id);
+                        deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i> Eliminar Anotación';
+                    } else {
+                        // Si hay múltiples, mostrar contador
+                        $(deleteBtn).removeData('annotation-id');
+                        deleteBtn.innerHTML = `<i class="fas fa-times-circle"></i> ${activeAnnotations.length} Anotaciones`;
+                    }
+                }
+            } else {
+                // No hay anotaciones activas
+                clearDisplayedAnnotation();
+                currentDisplayedAnnotations = [];
+
+                // Ocultar botón de eliminar
+                const deleteBtn = document.getElementById('deleteAnnotationBtn');
+                if (deleteBtn) {
+                    deleteBtn.style.display = 'none';
+                    deleteBtn.removeAttribute('data-annotation-id');
+                }
+            }
         }
     }
 
-    function displayAnnotation(annotation) {
-        console.log('🎨 displayAnnotation llamada con:', annotation);
-
-        if (!fabricCanvas) {
-            console.log('❌ No hay fabricCanvas disponible');
-            return;
-        }
+    // Nueva función para mostrar múltiples anotaciones simultáneamente
+    function displayMultipleAnnotations(annotations) {
+        if (!fabricCanvas) return;
 
         // Limpiar canvas actual
         fabricCanvas.clear();
-        console.log('🧹 Canvas limpiado');
 
-        // Cargar datos de la anotación
-        if (annotation.annotation_data && annotation.annotation_data.canvas_data) {
-            console.log('📦 Cargando canvas_data:', annotation.annotation_data.canvas_data);
+        // Cargar todas las anotaciones en el canvas
+        annotations.forEach((annotation, index) => {
+            if (annotation.annotation_data && annotation.annotation_data.canvas_data) {
+                // Cargar cada anotación como un grupo de objetos
+                const canvasData = annotation.annotation_data.canvas_data;
 
-            fabricCanvas.loadFromJSON(annotation.annotation_data.canvas_data, function() {
-                fabricCanvas.renderAll();
-                console.log('✅ Anotación mostrada en timestamp:', annotation.timestamp);
-                console.log('🎯 Canvas objetos después de cargar:', fabricCanvas.getObjects().length);
-            });
-        } else {
-            console.log('⚠️ No hay canvas_data en la anotación');
-            console.log('📊 annotation_data:', annotation.annotation_data);
-        }
+                // Usar loadFromJSON con merge=true para agregar al canvas existente
+                fabric.util.enlivenObjects(canvasData.objects || [], function(objects) {
+                    objects.forEach(function(obj) {
+                        fabricCanvas.add(obj);
+                    });
+                    fabricCanvas.renderAll();
+                }, null);
+            }
+        });
+
+    }
+
+    // Función heredada para compatibilidad (ahora usa la nueva lógica)
+    function displayAnnotation(annotation) {
+        displayMultipleAnnotations([annotation]);
     }
 
     function clearDisplayedAnnotation() {
         if (!fabricCanvas) return;
         fabricCanvas.clear();
-        console.log('🗑️ Anotación ocultada');
     }
 
     // DEBUG: Hacer funciones accesibles globalmente
@@ -1753,7 +1988,6 @@ $(document).ready(function() {
     window.displayAnnotation = displayAnnotation;
     window.clearDisplayedAnnotation = clearDisplayedAnnotation;
 
-    console.log('✅ Sistema de anotaciones configurado');
 });
 </script>
 
