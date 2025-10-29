@@ -355,10 +355,10 @@ $(document).ready(function() {
         }
 
         var file = fileInput.files[0];
-        var maxSize = 1.2 * 1024 * 1024 * 1024; // 1.2GB
-        
+        var maxSize = 8 * 1024 * 1024 * 1024; // 8GB
+
         if (file.size > maxSize) {
-            alert('El archivo es demasiado grande. El tamaño máximo es 1.2GB.');
+            alert('El archivo es demasiado grande. El tamaño máximo es 8GB.');
             return false;
         }
 
