@@ -1997,12 +1997,12 @@ $(document).ready(function() {
 
                     // Si solo hay 1, mostrar ID directo
                     if (activeAnnotations.length === 1) {
-                        deleteBtn.setAttribute('data-annotation-id', activeAnnotations[0].id);
+                        $(deleteBtn).data('annotation-id', activeAnnotations[0].id);
                         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i> Eliminar Anotación';
                         console.log('🔘 Botón eliminar configurado para ID:', activeAnnotations[0].id);
                     } else {
                         // Si hay múltiples, mostrar contador
-                        deleteBtn.removeAttribute('data-annotation-id');
+                        $(deleteBtn).removeData('annotation-id');
                         deleteBtn.innerHTML = `<i class="fas fa-times-circle"></i> ${activeAnnotations.length} Anotaciones`;
                         console.log('🔘 Botón eliminar configurado para múltiples:', activeAnnotations.length);
                     }
