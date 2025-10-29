@@ -24,12 +24,22 @@ class Video extends Model
         'match_date',
         'status',
         'visibility_type',
+        // Compression fields
+        'processing_status',
+        'original_file_size',
+        'compressed_file_size',
+        'original_file_path',
+        'compression_ratio',
+        'processing_started_at',
+        'processing_completed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'match_date' => 'date',
+            'processing_started_at' => 'datetime',
+            'processing_completed_at' => 'datetime',
         ];
     }
 

@@ -34,7 +34,8 @@
                                         <label class="custom-file-label" for="video_file">Seleccionar archivo de video...</label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 1.2GB
+                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 8GB
+                                        <br><strong>Nota:</strong> Videos grandes serán comprimidos automáticamente para optimizar la reproducción.
                                     </small>
                                     @error('video_file')
                                         <div class="invalid-feedback">{{ $message }}</div>
