@@ -642,6 +642,14 @@ $(document).ready(function() {
         checkAndShowAnnotations(); // Nueva función para anotaciones
     });
 
+    // 🔧 FIX: Actualizar anotaciones cuando el usuario mueve la línea de tiempo (video pausado)
+    video.addEventListener('seeked', function() {
+        console.log('⏭️ Evento seeked disparado - actualizando anotaciones');
+        checkAndShowAnnotations();
+        checkAndShowCommentNotifications();
+        updateProgressIndicator();
+    });
+
     // Force timeline creation if video is already loaded
     if (video.readyState >= 2) {
         console.log('📹 Video already loaded');
