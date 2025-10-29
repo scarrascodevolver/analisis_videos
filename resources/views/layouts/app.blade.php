@@ -110,6 +110,29 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
+        /* Upcoming Features Styles */
+        .upcoming-feature {
+            opacity: 0.8;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upcoming-feature:hover {
+            opacity: 1;
+            background-color: rgba(30, 77, 43, 0.1) !important;
+        }
+
+        .upcoming-feature .badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         /* Sobrescribir color azul de Bootstrap para enlaces */
         .breadcrumb-item a {
             color: #1e4d2b !important;
@@ -264,6 +287,25 @@
                                     <p>Videos del Equipo</p>
                                 </a>
                             </li>
+                            <!-- Funcionalidades Futuras -->
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Jugadas">
+                                    <i class="nav-icon fas fa-football-ball"></i>
+                                    <p>
+                                        Jugadas
+                                        <span class="badge badge-success right">Próximamente</span>
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Cuota Club">
+                                    <i class="nav-icon fas fa-money-bill-wave"></i>
+                                    <p>
+                                        Cuota Club
+                                        <span class="badge badge-success right">Próximamente</span>
+                                    </p>
+                                </a>
+                            </li>
                         @endif
 
                         @if(Auth::user()->role === 'entrenador' || Auth::user()->role === 'analista')
@@ -281,6 +323,25 @@
                                 <a href="{{ route('admin.index') }}" class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-tools"></i>
                                     <p>Mantenedor</p>
+                                </a>
+                            </li>
+                            <!-- Funcionalidades Futuras -->
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Gestión de Pagos">
+                                    <i class="nav-icon fas fa-credit-card"></i>
+                                    <p>
+                                        Gestión de Pagos
+                                        <span class="badge badge-success right">Próximamente</span>
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Crear Jugadas">
+                                    <i class="nav-icon fas fa-draw-polygon"></i>
+                                    <p>
+                                        Crear Jugadas
+                                        <span class="badge badge-success right">Próximamente</span>
+                                    </p>
                                 </a>
                             </li>
                         @endif
@@ -343,6 +404,40 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
         @csrf
     </form>
+
+    <!-- Modal de Funcionalidad Próximamente -->
+    <div class="modal fade" id="upcomingFeatureModal" tabindex="-1" role="dialog" aria-labelledby="upcomingFeatureModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
+                    <h5 class="modal-title" id="upcomingFeatureModalLabel">
+                        <i class="fas fa-rocket"></i> Funcionalidad en Desarrollo
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-hammer fa-4x text-success"></i>
+                    </div>
+                    <h4 class="mb-3" id="featureName">Funcionalidad</h4>
+                    <p class="text-muted mb-4" id="featureDescription">
+                        Esta funcionalidad está en desarrollo y estará disponible próximamente.
+                    </p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Nota:</strong> Estamos trabajando para traerte las mejores herramientas de análisis rugby.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-rugby" data-dismiss="modal">
+                        <i class="fas fa-check"></i> Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -445,6 +540,24 @@
             }
         }
         @endauth
+    });
+
+    // Upcoming Features Modal Handler
+    $('.upcoming-feature').on('click', function(e) {
+        e.preventDefault();
+        const featureName = $(this).data('feature');
+
+        // Definir descripciones para cada funcionalidad
+        const featureDescriptions = {
+            'Jugadas': 'Accede a un catálogo de jugadas de rugby predefinidas y personalizadas para mejorar tu comprensión táctica del juego.',
+            'Cuota Club': 'Consulta el estado de tus cuotas mensuales, historial de pagos y mantente al día con tus compromisos con el club.',
+            'Gestión de Pagos': 'Administra las cuotas de todos los jugadores, genera reportes de pagos y envía recordatorios automáticos.',
+            'Crear Jugadas': 'Diseña y comparte jugadas personalizadas usando un editor visual interactivo con diagramas de campo.'
+        };
+
+        // Actualizar el modal
+        $('#featureName').text(featureName);
+        $('#featureDescription').text(featureDescriptions[featureName] || 'Esta funcionalidad está en desarrollo y estará disponible próximamente.');
     });
     </script>
 </body>
