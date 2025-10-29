@@ -1417,6 +1417,10 @@ $(document).ready(function() {
         console.log('📦 savedAnnotations ANTES:', savedAnnotations.length, savedAnnotations.map(a => a.id));
         console.log('🎨 currentDisplayedAnnotations ANTES:', currentDisplayedAnnotations.length, currentDisplayedAnnotations.map(a => a.id));
 
+        // 🔧 FIX: Deshabilitar TODOS los botones de eliminar para evitar clicks múltiples
+        $('.delete-annotation-btn').prop('disabled', true).addClass('disabled');
+        $('#deleteAnnotationBtn').prop('disabled', true).addClass('disabled');
+
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1461,12 +1465,20 @@ $(document).ready(function() {
                     checkAndShowAnnotations();
 
                     console.log('🗑️ ===== FIN ELIMINACIÓN =====');
+
+                    // 🔧 FIX: Re-habilitar botones de eliminar después de completar
+                    $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
+                    $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
                 }
             },
             error: function(xhr) {
                 console.error('❌ ===== ERROR EN ELIMINACIÓN =====');
                 console.error('Status:', xhr.status);
                 console.error('Response:', xhr.responseText);
+
+                // 🔧 FIX: Re-habilitar botones de eliminar después de error
+                $('.delete-annotation-btn').prop('disabled', false).removeClass('disabled');
+                $('#deleteAnnotationBtn').prop('disabled', false).removeClass('disabled');
 
                 if (xhr.status === 500 || xhr.status === 404) {
                     console.log('⚠️ Error 500/404, recargando anotaciones desde servidor...');
