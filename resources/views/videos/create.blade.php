@@ -376,34 +376,57 @@ $(document).ready(function() {
     
     function uploadWithProgress(formData) {
         var xhr = new XMLHttpRequest();
-        
+        var processingInterval = null;
+
+        // Mensajes rotativos para dar sensación de progreso
+        var processingMessages = [
+            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Preparando almacenamiento...',
+            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Verificando integridad del archivo...',
+            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Optimizando para reproducción...',
+            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Finalizando guardado...'
+        ];
+        var currentMessageIndex = 0;
+
         // Progress tracking
         xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable) {
                 var percentComplete = Math.round((e.loaded / e.total) * 100);
                 $('#progressBar').css('width', percentComplete + '%');
                 $('#progressText').text(percentComplete + '%');
-                
+
                 // Update status text
                 if (percentComplete < 100) {
                     var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
                     var total = (e.total / (1024 * 1024)).toFixed(1);
                     $('#uploadStatus').html(`<i class="fas fa-cloud-upload-alt"></i> Subiendo: ${loaded}MB / ${total}MB`);
                 } else {
-                    $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Guardando en el servidor... <small>(puede tardar 2-5 minutos para archivos grandes)</small>');
                     $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
+
+                    // Mostrar primer mensaje
+                    $('#uploadStatus').html(processingMessages[0]);
+
+                    // Rotar mensajes cada 4 segundos
+                    processingInterval = setInterval(function() {
+                        currentMessageIndex = (currentMessageIndex + 1) % processingMessages.length;
+                        $('#uploadStatus').html(processingMessages[currentMessageIndex]);
+                    }, 4000);
                 }
             }
         });
         
         // Upload completion
         xhr.addEventListener('load', function() {
+            // Detener rotación de mensajes
+            if (processingInterval) {
+                clearInterval(processingInterval);
+            }
+
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-circle"></i> <strong>Video guardado exitosamente</strong><br><small class="text-muted">Se está comprimiendo en segundo plano (45-60 min aprox)</small>');
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Listo! Video guardado exitosamente</strong><br><small class="text-muted"><i class="fas fa-compress-alt"></i> El análisis estará disponible en 45-60 minutos</small>');
 
                     // Redirect after short delay
                     setTimeout(function() {
@@ -412,30 +435,35 @@ $(document).ready(function() {
                         } else {
                             window.location.href = '/videos';
                         }
-                    }, 3000);
+                    }, 3500);
                 } catch (e) {
                     // If not JSON, assume it's a redirect response
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-circle"></i> <strong>Video guardado exitosamente</strong><br><small class="text-muted">Se está comprimiendo en segundo plano</small>');
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Listo! Video guardado exitosamente</strong><br><small class="text-muted"><i class="fas fa-compress-alt"></i> Compresión en segundo plano</small>');
 
                     setTimeout(function() {
                         window.location.href = '/videos';
-                    }, 3000);
+                    }, 3500);
                 }
             } else {
                 $('#progressBar').css('background-color', '#dc3545'); // Rojo error
                 $('#progressText').text('Error');
-                $('#uploadStatus').text('Error en la subida. Código: ' + xhr.status);
+                $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error en la subida. Código: ' + xhr.status);
                 $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
             }
         });
-        
+
         // Upload error
         xhr.addEventListener('error', function() {
+            // Detener rotación de mensajes
+            if (processingInterval) {
+                clearInterval(processingInterval);
+            }
+
             $('#progressBar').css('background-color', '#dc3545'); // Rojo error
             $('#progressText').text('Error');
-            $('#uploadStatus').text('Error de conexión durante la subida');
+            $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error de conexión durante la subida');
             $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
         });
         
