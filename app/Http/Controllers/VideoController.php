@@ -294,11 +294,11 @@ class VideoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:1048576', // 1GB max for players, más formatos
+            'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
             'category_id' => 'required|exists:categories,id',
             'analysis_request' => 'required|string'
         ], [
-            'video_file.max' => 'El archivo de video no puede superar 1GB.',
+            'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
             'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
         ]);
 
@@ -340,11 +340,17 @@ class VideoController extends Controller
             'category_id' => $request->category_id,
             'division' => 'unica', // Jugadores no especifican división, se asigna automáticamente
             'match_date' => now()->toDateString(),
-            'status' => 'pending'
+            'status' => 'pending',
+            'processing_status' => 'pending'
         ]);
 
+        // Dispatch compression job to queue
+        CompressVideoJob::dispatch($video->id);
+
+        \Log::info("Player video {$video->id} uploaded successfully, compression job dispatched to queue");
+
         return redirect()->route('player.videos')
-            ->with('success', 'Video subido exitosamente. Un analista lo revisará pronto.');
+            ->with('success', 'Video subido exitosamente. Se está comprimiendo en segundo plano. Un analista lo revisará pronto.');
     }
 
     /**
