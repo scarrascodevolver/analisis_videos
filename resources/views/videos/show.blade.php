@@ -1348,9 +1348,8 @@ $(document).ready(function() {
         // Ocultar mensaje y crear lista
         noAnnotationsMessage.style.display = 'none';
 
-        // Limpiar lista actual
-        const existingItems = annotationsList.querySelectorAll('.annotation-item');
-        existingItems.forEach(item => item.remove());
+        // Limpiar lista actual completamente (innerHTML limpia TODOS los elementos hijos)
+        annotationsList.innerHTML = '';
 
         // Crear items de anotaciones ordenados por timestamp
         const sortedAnnotations = [...savedAnnotations].sort((a, b) =>
