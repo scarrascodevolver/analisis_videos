@@ -388,9 +388,9 @@ $(document).ready(function() {
                 if (percentComplete < 100) {
                     var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
                     var total = (e.total / (1024 * 1024)).toFixed(1);
-                    $('#uploadStatus').text(`Subiendo: ${loaded}MB / ${total}MB`);
+                    $('#uploadStatus').html(`<i class="fas fa-cloud-upload-alt"></i> Subiendo: ${loaded}MB / ${total}MB`);
                 } else {
-                    $('#uploadStatus').text('Procesando archivo...');
+                    $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Guardando en el servidor... <small>(puede tardar 2-5 minutos para archivos grandes)</small>');
                     $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
                 }
             }
@@ -403,8 +403,8 @@ $(document).ready(function() {
                     var response = JSON.parse(xhr.responseText);
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').text('Video subido exitosamente');
-                    
+                    $('#uploadStatus').html('<i class="fas fa-check-circle"></i> <strong>Video guardado exitosamente</strong><br><small class="text-muted">Se está comprimiendo en segundo plano (45-60 min aprox)</small>');
+
                     // Redirect after short delay
                     setTimeout(function() {
                         if (response.redirect) {
@@ -412,16 +412,16 @@ $(document).ready(function() {
                         } else {
                             window.location.href = '/videos';
                         }
-                    }, 1500);
+                    }, 3000);
                 } catch (e) {
                     // If not JSON, assume it's a redirect response
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').text('Video subido exitosamente');
-                    
+                    $('#uploadStatus').html('<i class="fas fa-check-circle"></i> <strong>Video guardado exitosamente</strong><br><small class="text-muted">Se está comprimiendo en segundo plano</small>');
+
                     setTimeout(function() {
                         window.location.href = '/videos';
-                    }, 1500);
+                    }, 3000);
                 }
             } else {
                 $('#progressBar').css('background-color', '#dc3545'); // Rojo error
