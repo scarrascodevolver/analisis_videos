@@ -91,12 +91,17 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // Limpiar campos de contraseña vacíos antes de validar
+        if (empty($request->password)) {
+            $request->merge(['password' => null, 'password_confirmation' => null]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'role' => ['required', 'in:jugador,entrenador,analista,staff,director_club,director_tecnico'],
             'user_category_id' => ['nullable', 'exists:categories,id'],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'password' => ['nullable', 'confirmed', 'min:8'],
         ]);
 
         // Update user
