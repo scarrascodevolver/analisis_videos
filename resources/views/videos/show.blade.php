@@ -1339,6 +1339,10 @@ $(document).ready(function() {
         // Actualizar contador
         annotationsCount.textContent = savedAnnotations.length;
 
+        // Limpiar solo los items de anotaciones (no borrar noAnnotationsMessage)
+        const existingItems = annotationsList.querySelectorAll('.annotation-item');
+        existingItems.forEach(item => item.remove());
+
         if (savedAnnotations.length === 0) {
             // Mostrar mensaje de sin anotaciones
             noAnnotationsMessage.style.display = 'block';
@@ -1347,10 +1351,6 @@ $(document).ready(function() {
 
         // Ocultar mensaje y crear lista
         noAnnotationsMessage.style.display = 'none';
-
-        // Limpiar solo los items de anotaciones (no borrar noAnnotationsMessage)
-        const existingItems = annotationsList.querySelectorAll('.annotation-item');
-        existingItems.forEach(item => item.remove());
 
         // Crear items de anotaciones ordenados por timestamp
         const sortedAnnotations = [...savedAnnotations].sort((a, b) =>
