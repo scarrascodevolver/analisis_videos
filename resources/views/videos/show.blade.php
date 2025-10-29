@@ -1930,10 +1930,24 @@ $(document).ready(function() {
             const durationSeconds = parseInt(annotation.duration_seconds) || 4;
             const endTime = annotation.is_permanent ? Infinity : startTime + durationSeconds;
 
+            // 🐛 DEBUG: Ver valores exactos para diagnosticar el problema
+            console.log(`🔍 DEBUG Anotación ${annotation.id}:`);
+            console.log(`   - timestamp (raw): "${annotation.timestamp}" (type: ${typeof annotation.timestamp})`);
+            console.log(`   - startTime (parsed): ${startTime}`);
+            console.log(`   - duration_seconds (raw): "${annotation.duration_seconds}" (type: ${typeof annotation.duration_seconds})`);
+            console.log(`   - durationSeconds (parsed): ${durationSeconds}`);
+            console.log(`   - endTime: ${endTime}`);
+            console.log(`   - currentTime: ${currentTime}`);
+            console.log(`   - is_permanent: ${annotation.is_permanent}`);
+            console.log(`   - Comparación: ${currentTime} >= ${startTime} && ${currentTime} <= ${endTime}`);
+            console.log(`   - Resultado: ${currentTime >= startTime} && ${currentTime <= endTime} = ${currentTime >= startTime && currentTime <= endTime}`);
+
             const isActive = currentTime >= startTime && currentTime <= endTime;
 
             if (isActive) {
                 console.log(`✅ Anotación ${annotation.id} ACTIVA (${startTime.toFixed(1)}s - ${isActive ? (annotation.is_permanent ? '∞' : endTime.toFixed(1) + 's') : ''})`);
+            } else {
+                console.log(`❌ Anotación ${annotation.id} NO ACTIVA`);
             }
 
             return isActive;
