@@ -109,12 +109,18 @@ class Video extends Model
      */
     public function getViewStats()
     {
-        return $this->views()
+        $stats = $this->views()
             ->selectRaw('user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed')
             ->with('user:id,name')
             ->groupBy('user_id')
             ->orderByDesc('view_count')
             ->get();
+
+        // Formatear last_viewed como timestamp Unix (segundos) para evitar problemas de timezone
+        return $stats->map(function($stat) {
+            $stat->last_viewed_timestamp = strtotime($stat->last_viewed);
+            return $stat;
+        });
     }
 
     public function scopeByCategory($query, $categoryId)

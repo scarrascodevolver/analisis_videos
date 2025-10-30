@@ -2358,7 +2358,10 @@ $(document).ready(function() {
                     `);
                 } else {
                     data.stats.forEach(stat => {
-                        const lastViewed = formatRelativeTime(stat.last_viewed);
+                        // Usar timestamp Unix si está disponible, sino parsear fecha
+                        const lastViewed = stat.last_viewed_timestamp
+                            ? formatRelativeTimeFromTimestamp(stat.last_viewed_timestamp)
+                            : formatRelativeTime(stat.last_viewed);
                         tbody.append(`
                             <tr>
                                 <td><i class="fas fa-user"></i> ${stat.user.name}</td>
@@ -2382,6 +2385,43 @@ $(document).ready(function() {
         });
     }
 
+    // Función que usa timestamp Unix (independiente de timezone)
+    function formatRelativeTimeFromTimestamp(timestamp) {
+        const nowTimestamp = Math.floor(Date.now() / 1000); // Timestamp actual en segundos
+        const diffSecs = nowTimestamp - timestamp;
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Hace unos segundos';
+        if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+
+        // Mostrar horas y minutos para mayor precisión
+        if (diffHours < 24) {
+            const remainingMins = diffMins % 60;
+
+            // Si tiene horas y minutos
+            if (diffHours > 0 && remainingMins > 0) {
+                return `Hace ${diffHours}h ${remainingMins}min`;
+            }
+            // Si solo tiene horas exactas (sin minutos restantes)
+            if (diffHours > 0 && remainingMins === 0) {
+                return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            }
+            // Si tiene menos de 1 hora (solo minutos)
+            return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        }
+
+        if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `Hace ${weeks} semana${weeks > 1 ? 's' : ''}`;
+        }
+        const months = Math.floor(diffDays / 30);
+        return `Hace ${months} mes${months > 1 ? 'es' : ''}`;
+    }
+
+    // Función legacy que parsea string de fecha (puede tener problemas de timezone)
     function formatRelativeTime(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -2406,7 +2446,7 @@ $(document).ready(function() {
             if (diffHours > 0 && remainingMins === 0) {
                 return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
             }
-            // Si tiene menos de 1 hora (solo minutos) - esto no debería llegar aquí por el if anterior
+            // Si tiene menos de 1 hora (solo minutos)
             return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
         }
 
