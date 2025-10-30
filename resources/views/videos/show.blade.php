@@ -232,15 +232,6 @@
                             <label class="mb-1">Comentario <small class="text-muted">(Usa @ para mencionar usuarios)</small></label>
                             <textarea name="comment" class="form-control" rows="1"
                                       placeholder="Describe lo que observas... (Escribe @ para mencionar)" required></textarea>
-
-                            <!-- Preview de menciones -->
-                            <div id="mentionsPreview" class="mt-2" style="display: none;">
-                                <div class="alert alert-info py-2 mb-0">
-                                    <i class="fas fa-at"></i>
-                                    <strong>Mencionarás a:</strong>
-                                    <span id="mentionsList"></span>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="row">
@@ -2558,32 +2549,6 @@ $(document).ready(function() {
     // Attach tribute to comment textareas
     tribute.attach(document.querySelectorAll('textarea[name="comment"], textarea[name="reply_comment"]'));
 
-    // Función para actualizar preview de menciones
-    function updateMentionsPreview(textarea) {
-        const text = $(textarea).val();
-        // Regex mejorado: solo menciones completas (seguidas de espacio, coma, punto o fin de línea)
-        const mentions = text.match(/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)(?=\s|,|\.|\)|$)/gu);
-
-        if (mentions && mentions.length > 0) {
-            $('#mentionsPreview').show();
-            $('#mentionsList').html(mentions.map(m => `<span class="badge badge-primary mr-1">${m}</span>`).join(''));
-        } else {
-            $('#mentionsPreview').hide();
-        }
-    }
-
-    // Mostrar preview de menciones mientras escribe
-    $('textarea[name="comment"]').on('input', function() {
-        updateMentionsPreview(this);
-    });
-
-    // Actualizar preview cuando Tribute.js reemplaza el texto (después de seleccionar)
-    $('textarea[name="comment"]').on('tribute-replaced', function() {
-        // Pequeño delay para asegurar que el texto ya se reemplazó
-        setTimeout(() => {
-            updateMentionsPreview(this);
-        }, 100);
-    });
     // ========== END TRIBUTE.JS ==========
 
 });
