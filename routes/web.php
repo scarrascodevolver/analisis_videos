@@ -58,6 +58,13 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
     Route::get('assignments/{assignment}/video', [App\Http\Controllers\MyVideosController::class, 'show'])->name('assignments.show');
 
+    // Notifications Routes
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('markRead');
+        Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('markAllRead');
+    });
+
     // Analyst Routes
     Route::middleware(['role:analista'])->prefix('analyst')->name('analyst.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'analyst'])->name('dashboard');

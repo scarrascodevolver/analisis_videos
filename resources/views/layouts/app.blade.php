@@ -174,6 +174,52 @@
 
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
+                <!-- Notifications Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+                        <i class="far fa-bell"></i>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="badge badge-warning navbar-badge">
+                                {{ auth()->user()->unreadNotifications->count() }}
+                            </span>
+                        @endif
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-item dropdown-header">
+                            {{ auth()->user()->unreadNotifications->count() }} Notificaciones no leídas
+                        </span>
+                        <div class="dropdown-divider"></div>
+
+                        @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
+                            <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
+                               class="dropdown-item">
+                                <i class="fas fa-at mr-2 text-primary"></i>
+                                <strong>{{ $notification->data['mentioned_by_name'] }}</strong> te mencionó
+                                <span class="float-right text-muted text-sm">
+                                    {{ $notification->created_at->diffForHumans() }}
+                                </span>
+                                <p class="text-sm text-muted mb-0 mt-1">
+                                    {{ Str::limit($notification->data['comment_text'], 50) }}
+                                </p>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                        @empty
+                            <div class="dropdown-item text-center text-muted">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                No tienes notificaciones nuevas
+                            </div>
+                            <div class="dropdown-divider"></div>
+                        @endforelse
+
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <a href="#" class="dropdown-item dropdown-footer" onclick="event.preventDefault(); markAllNotificationsRead();">
+                                Marcar todas como leídas
+                            </a>
+                        @endif
+                    </div>
+                </li>
+
+                <!-- User Dropdown -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
                         @if(Auth::user()->profile && Auth::user()->profile->avatar)
@@ -558,6 +604,43 @@
         // Actualizar el modal
         $('#featureName').text(featureName);
         $('#featureDescription').text(featureDescriptions[featureName] || 'Esta funcionalidad está en desarrollo y estará disponible próximamente.');
+    });
+
+    // Marcar todas las notificaciones como leídas
+    function markAllNotificationsRead() {
+        $.ajax({
+            url: '/notifications/mark-all-read',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Recargar la página para actualizar el contador
+                    window.location.reload();
+                }
+            },
+            error: function() {
+                alert('Error al marcar notificaciones como leídas');
+            }
+        });
+    }
+
+    // Marcar notificación como leída al hacer click en el enlace
+    $(document).on('click', 'a[href*="notification_id"]', function() {
+        const url = new URL(this.href);
+        const notificationId = url.searchParams.get('notification_id');
+
+        if (notificationId) {
+            $.ajax({
+                url: '/notifications/' + notificationId + '/mark-read',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                async: false // Esperar a que se marque antes de navegar
+            });
+        }
     });
     </script>
 </body>
