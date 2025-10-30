@@ -1432,6 +1432,11 @@ $(document).ready(function() {
         const replyText = textarea.val().trim();
         const submitBtn = form.find('button[type="submit"]');
 
+        // Prevenir doble-submit
+        if (submitBtn.prop('disabled')) {
+            return; // Ya está enviando, ignorar
+        }
+
         // Validación
         if (!replyText) {
             toastr.error('Por favor escribe una respuesta');
