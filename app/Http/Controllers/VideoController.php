@@ -212,14 +212,14 @@ class VideoController extends Controller
     {
         $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader']);
 
-        // Cargar comentarios principales con todas las respuestas anidadas recursivamente
+        // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
             ->whereNull('parent_id')
-            ->with(['user', 'replies' => function($query) {
-                // Cargar respuestas recursivamente con todos sus niveles
-                $query->with(['user', 'replies' => function($q) {
-                    $q->with(['user', 'replies' => function($q2) {
-                        $q2->with(['user', 'replies.user']); // Nivel 4+
+            ->with(['user', 'mentionedUsers', 'replies' => function($query) {
+                // Cargar respuestas recursivamente con todos sus niveles + menciones
+                $query->with(['user', 'mentionedUsers', 'replies' => function($q) {
+                    $q->with(['user', 'mentionedUsers', 'replies' => function($q2) {
+                        $q2->with(['user', 'mentionedUsers', 'replies.user', 'replies.mentionedUsers']); // Nivel 4+
                     }]);
                 }]);
             }])

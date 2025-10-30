@@ -19,6 +19,24 @@
                     title="Responder a esta respuesta">
                 <i class="fas fa-reply"></i> Responder
             </button>
+
+            <!-- Badges de menciones -->
+            @if($reply->mentionedUsers && $reply->mentionedUsers->count() > 0)
+                <div class="mt-2">
+                    <span class="badge badge-light border">
+                        <i class="fas fa-at text-primary"></i>
+                        Menciona a:
+                        @foreach($reply->mentionedUsers as $mentionedUser)
+                            <span class="badge badge-{{
+                                $mentionedUser->role === 'jugador' ? 'info' :
+                                ($mentionedUser->role === 'entrenador' ? 'success' : 'primary')
+                            }} ml-1">
+                                {{ $mentionedUser->name }}
+                            </span>
+                        @endforeach
+                    </span>
+                </div>
+            @endif
         </div>
         @if($reply->user_id === auth()->id())
             <button class="btn btn-sm btn-outline-danger delete-comment-btn"

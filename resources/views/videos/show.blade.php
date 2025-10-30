@@ -229,9 +229,18 @@
                         </div>
 
                         <div class="form-group mb-2">
-                            <label class="mb-1">Comentario</label>
+                            <label class="mb-1">Comentario <small class="text-muted">(Usa @ para mencionar usuarios)</small></label>
                             <textarea name="comment" class="form-control" rows="1"
-                                      placeholder="Describe lo que observas..." required></textarea>
+                                      placeholder="Describe lo que observas... (Escribe @ para mencionar)" required></textarea>
+
+                            <!-- Preview de menciones -->
+                            <div id="mentionsPreview" class="mt-2" style="display: none;">
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="fas fa-at"></i>
+                                    <strong>Mencionarás a:</strong>
+                                    <span id="mentionsList"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -312,6 +321,24 @@
                                     <small class="text-muted ml-2">
                                         {{ $comment->created_at->diffForHumans() }}
                                     </small>
+
+                                    <!-- Badges de menciones -->
+                                    @if($comment->mentionedUsers && $comment->mentionedUsers->count() > 0)
+                                        <div class="mt-2">
+                                            <span class="badge badge-light border">
+                                                <i class="fas fa-at text-primary"></i>
+                                                Menciona a:
+                                                @foreach($comment->mentionedUsers as $mentionedUser)
+                                                    <span class="badge badge-{{
+                                                        $mentionedUser->role === 'jugador' ? 'info' :
+                                                        ($mentionedUser->role === 'entrenador' ? 'success' : 'primary')
+                                                    }} ml-1">
+                                                        {{ $mentionedUser->name }}
+                                                    </span>
+                                                @endforeach
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-secondary" data-toggle="dropdown">
@@ -2492,8 +2519,64 @@ $(document).ready(function() {
     @endif
     // ========== END STATS MODAL HANDLER ==========
 
+    // ========== TRIBUTE.JS - AUTOCOMPLETADO DE MENCIONES ==========
+    // Cargar usuarios disponibles para mencionar
+    const allUsers = @json(\App\Models\User::select('id', 'name', 'role')->get());
+
+    // Configurar Tribute.js para el textarea de comentarios
+    const tribute = new Tribute({
+        values: allUsers.map(user => ({
+            key: user.name,
+            value: user.name,
+            role: user.role
+        })),
+        selectTemplate: function(item) {
+            return '@' + item.original.value;
+        },
+        menuItemTemplate: function(item) {
+            const badgeClass = item.original.role === 'jugador' ? 'badge-info' :
+                              (item.original.role === 'entrenador' ? 'badge-success' :
+                              (item.original.role === 'analista' ? 'badge-primary' : 'badge-secondary'));
+
+            return `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>${item.original.value}</span>
+                    <span class="badge ${badgeClass} ml-2">${item.original.role}</span>
+                </div>
+            `;
+        },
+        noMatchTemplate: function() {
+            return '<span style="visibility: hidden;"></span>';
+        },
+        lookup: 'key',
+        fillAttr: 'value',
+        allowSpaces: true,
+        menuShowMinLength: 0
+    });
+
+    // Attach tribute to comment textareas
+    tribute.attach(document.querySelectorAll('textarea[name="comment"], textarea[name="reply_comment"]'));
+
+    // Mostrar preview de menciones mientras escribe
+    $('textarea[name="comment"]').on('input', function() {
+        const text = $(this).val();
+        const mentions = text.match(/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)/gu);
+
+        if (mentions && mentions.length > 0) {
+            $('#mentionsPreview').show();
+            $('#mentionsList').html(mentions.map(m => `<span class="badge badge-primary mr-1">${m}</span>`).join(''));
+        } else {
+            $('#mentionsPreview').hide();
+        }
+    });
+    // ========== END TRIBUTE.JS ==========
+
 });
 </script>
+
+<!-- Tribute.js CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">
+<script src="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.min.js"></script>
 
 <style>
 @keyframes fadeIn {
