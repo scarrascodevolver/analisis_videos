@@ -37,6 +37,48 @@ class VideoComment extends Model
         return $this->hasMany(VideoComment::class, 'parent_id');
     }
 
+    /**
+     * Menciones en este comentario
+     */
+    public function mentions()
+    {
+        return $this->hasMany(CommentMention::class, 'comment_id');
+    }
+
+    /**
+     * Usuarios mencionados en este comentario
+     */
+    public function mentionedUsers()
+    {
+        return $this->belongsToMany(User::class, 'comment_mentions', 'comment_id', 'mentioned_user_id')
+                    ->withPivot('is_read')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Solo jugadores mencionados
+     */
+    public function mentionedPlayers()
+    {
+        return $this->mentionedUsers()->where('role', 'jugador');
+    }
+
+    /**
+     * Staff mencionado (entrenadores, analistas)
+     */
+    public function mentionedStaff()
+    {
+        return $this->mentionedUsers()->whereIn('role', ['entrenador', 'analista', 'staff', 'director_tecnico']);
+    }
+
+    /**
+     * Assignments creados desde este comentario
+     */
+    public function assignments()
+    {
+        return $this->hasMany(VideoAssignment::class, 'comment_id');
+    }
+
     public function getFormattedTimestampAttribute()
     {
         $minutes = floor($this->timestamp_seconds / 60);
