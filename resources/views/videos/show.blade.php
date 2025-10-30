@@ -480,11 +480,22 @@ $(document).ready(function() {
     let currentViewId = null;
     let trackingActive = false;
     let durationUpdateInterval = null;
+    let viewTracked = false; // Flag para evitar contar múltiples veces
 
-    // Track view when video starts playing
-    video.addEventListener('play', function() {
-        if (!trackingActive) {
+    // Track view when user watches at least 20 seconds + auto-complete at 90%
+    video.addEventListener('timeupdate', function() {
+        // 1. Contar vista después de 20 segundos de reproducción
+        if (!viewTracked && video.currentTime >= 20) {
             trackView();
+            viewTracked = true;
+        }
+
+        // 2. Auto-completar al 90% del video
+        if (currentViewId && video.duration > 0) {
+            const percentWatched = (video.currentTime / video.duration) * 100;
+            if (percentWatched >= 90) {
+                markVideoCompleted();
+            }
         }
     });
 
@@ -551,17 +562,6 @@ $(document).ready(function() {
         })
         .catch(error => console.error('Error updating duration:', error));
     }
-
-    // Mark video as completed when 90% watched
-    video.addEventListener('timeupdate', function() {
-        if (currentViewId && video.duration > 0) {
-            const percentWatched = (video.currentTime / video.duration) * 100;
-
-            if (percentWatched >= 90) {
-                markVideoCompleted();
-            }
-        }
-    });
 
     function markVideoCompleted() {
         if (!currentViewId) return;
