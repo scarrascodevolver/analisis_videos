@@ -1406,6 +1406,146 @@ $(document).ready(function() {
     });
 
     // ===========================
+    // SISTEMA DE RESPUESTAS A COMENTARIOS
+    // ===========================
+
+    // Mostrar/ocultar formulario de respuesta
+    $(document).on('click', '.reply-btn', function() {
+        const commentId = $(this).data('comment-id');
+        const replyForm = $(`#replyForm${commentId}`);
+
+        // Ocultar otros formularios de respuesta abiertos
+        $('.reply-form').not(replyForm).slideUp();
+
+        // Toggle del formulario actual
+        replyForm.slideToggle(300, function() {
+            if (replyForm.is(':visible')) {
+                replyForm.find('textarea').focus();
+            }
+        });
+    });
+
+    // Enviar respuesta via AJAX
+    $(document).on('submit', '.reply-form-submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const commentId = form.data('comment-id');
+        const videoId = form.data('video-id');
+        const textarea = form.find('textarea[name="reply_comment"]');
+        const replyText = textarea.val().trim();
+        const submitBtn = form.find('button[type="submit"]');
+
+        // Validación
+        if (!replyText) {
+            toastr.error('Por favor escribe una respuesta');
+            return;
+        }
+
+        // Deshabilitar botón durante envío
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/videos/${videoId}/comments`,
+            type: 'POST',
+            data: {
+                comment: replyText,
+                parent_id: commentId,
+                timestamp_seconds: 0, // Las respuestas no tienen timestamp propio
+                category: 'general', // Las respuestas heredan categoría del padre
+                priority: 'media' // Prioridad por defecto para respuestas
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Limpiar textarea
+                    textarea.val('');
+
+                    // Ocultar formulario
+                    form.closest('.reply-form').slideUp();
+
+                    // Crear HTML de la respuesta
+                    const userName = '{{ auth()->user()->name }}';
+                    const userRole = '{{ auth()->user()->role }}';
+                    const userId = {{ auth()->id() }};
+                    const badgeClass = userRole === 'analista' ? 'primary' : (userRole === 'entrenador' ? 'success' : 'info');
+                    const roleLabel = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+
+                    const replyHtml = `
+                        <div class="reply border-left border-primary pl-3 mb-2" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <p class="mb-1">${replyText}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> ${userName}
+                                        <span class="badge badge-sm badge-${badgeClass}">
+                                            ${roleLabel}
+                                        </span>
+                                        - Hace unos segundos
+                                    </small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger delete-comment-btn"
+                                        data-comment-id="${response.comment.id}"
+                                        title="Eliminar respuesta">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    // Buscar o crear la sección de respuestas
+                    let repliesSection = form.closest('.comment-item').find('.replies');
+
+                    if (repliesSection.length === 0) {
+                        // Crear sección de respuestas si no existe
+                        const repliesSectionHtml = '<div class="replies ml-4 mt-3"></div>';
+                        form.after(repliesSectionHtml);
+                        repliesSection = form.next('.replies');
+                    }
+
+                    // Agregar respuesta con animación
+                    repliesSection.append(replyHtml);
+                    repliesSection.find('.reply:last').slideDown(300);
+
+                    // Incrementar contador de comentarios
+                    const commentCountElement = $('.card-title:contains("Comentarios")');
+                    const currentCountMatch = commentCountElement.text().match(/\((\d+)\)/);
+                    if (currentCountMatch) {
+                        const currentCount = parseInt(currentCountMatch[1]);
+                        const newCount = currentCount + 1;
+                        commentCountElement.html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
+                    }
+
+                    // Mostrar mensaje de éxito
+                    toastr.success('Respuesta agregada exitosamente');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error al enviar respuesta:', xhr);
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorMsg = 'Error de validación: ';
+                    Object.values(errors).forEach(error => {
+                        errorMsg += error[0] + ' ';
+                    });
+                    toastr.error(errorMsg);
+                } else {
+                    toastr.error('Error al enviar la respuesta. Por favor intenta de nuevo.');
+                }
+            },
+            complete: function() {
+                // Re-habilitar botón
+                submitBtn.prop('disabled', false).html('<i class="fas fa-reply"></i> Responder');
+            }
+        });
+    });
+
+    // ===========================
     // SISTEMA DE ANOTACIONES
     // ===========================
     let annotationMode = false;
