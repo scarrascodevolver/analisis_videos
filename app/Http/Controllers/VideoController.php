@@ -210,11 +210,19 @@ class VideoController extends Controller
 
     public function show(Video $video)
     {
-        $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'comments.user', 'comments.replies.user']);
+        $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader']);
 
+        // Cargar comentarios principales con todas las respuestas anidadas recursivamente
         $comments = $video->comments()
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user'])
+            ->with(['user', 'replies' => function($query) {
+                // Cargar respuestas recursivamente con todos sus niveles
+                $query->with(['user', 'replies' => function($q) {
+                    $q->with(['user', 'replies' => function($q2) {
+                        $q2->with(['user', 'replies.user']); // Nivel 4+
+                    }]);
+                }]);
+            }])
             ->orderBy('timestamp_seconds')
             ->get();
 
