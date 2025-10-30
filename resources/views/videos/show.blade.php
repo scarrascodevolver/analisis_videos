@@ -2440,19 +2440,27 @@ $(document).ready(function() {
 
 /* Dropdown items más pequeños y compactos */
 .dropdown-item-sm {
-    padding: 0.35rem 1rem !important;
-    font-size: 0.875rem !important;
-    line-height: 1.4 !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
 }
 
 .dropdown-item-sm i {
-    font-size: 0.85rem;
-    margin-right: 0.4rem;
+    font-size: 0.75rem !important;
+    margin-right: 0.35rem !important;
+    width: 12px !important;
 }
 
-.dropdown-menu {
-    min-width: 9rem !important;
-    font-size: 0.875rem;
+.comment-item .dropdown-menu,
+.reply .dropdown-menu {
+    min-width: 7.5rem !important;
+    font-size: 0.8125rem !important;
+    padding: 0.25rem 0 !important;
+}
+
+.comment-item .dropdown-divider {
+    margin: 0.25rem 0 !important;
 }
 
 .comment-notification {
