@@ -1498,10 +1498,10 @@ $(document).ready(function() {
                     let repliesSection = form.closest('.comment-item').find('.replies');
 
                     if (repliesSection.length === 0) {
-                        // Crear sección de respuestas si no existe
+                        // Crear sección de respuestas DESPUÉS del reply-form
                         const repliesSectionHtml = '<div class="replies ml-4 mt-3"></div>';
-                        form.after(repliesSectionHtml);
-                        repliesSection = form.next('.replies');
+                        form.closest('.reply-form').after(repliesSectionHtml);
+                        repliesSection = form.closest('.comment-item').find('.replies');
                     }
 
                     // Agregar respuesta con animación
