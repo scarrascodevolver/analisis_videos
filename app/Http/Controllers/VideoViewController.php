@@ -96,12 +96,12 @@ class VideoViewController extends Controller
     }
 
     /**
-     * Get video statistics (for analysts and coaches)
+     * Get video statistics (for analysts, coaches and players)
      */
     public function getStats(Video $video)
     {
         // Check permissions
-        if (!in_array(Auth::user()->role, ['analista', 'entrenador'])) {
+        if (!in_array(Auth::user()->role, ['analista', 'entrenador', 'jugador'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

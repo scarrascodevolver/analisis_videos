@@ -24,7 +24,7 @@
                         </small>
                     </h3>
                     <div class="card-tools">
-                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
                             <button id="viewStatsBtn" class="btn btn-sm btn-rugby-light mr-2" data-toggle="modal" data-target="#statsModal">
                                 <i class="fas fa-chart-bar"></i> Estadísticas
                             </button>
@@ -410,7 +410,7 @@
     </div>
 
     <!-- Modal de Estadísticas de Visualización -->
-    @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+    @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
     <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -2188,7 +2188,7 @@ $(document).ready(function() {
     window.clearDisplayedAnnotation = clearDisplayedAnnotation;
 
     // ========== STATS MODAL HANDLER ==========
-    @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+    @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
     $('#statsModal').on('show.bs.modal', function () {
         loadVideoStats();
     });
@@ -2257,7 +2257,16 @@ $(document).ready(function() {
 
         if (diffSecs < 60) return 'Hace unos segundos';
         if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-        if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+
+        // Mostrar horas y minutos para mayor precisión
+        if (diffHours < 24) {
+            const remainingMins = diffMins % 60;
+            if (remainingMins > 0) {
+                return `Hace ${diffHours}h ${remainingMins}min`;
+            }
+            return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        }
+
         if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
         if (diffDays < 30) {
             const weeks = Math.floor(diffDays / 7);
