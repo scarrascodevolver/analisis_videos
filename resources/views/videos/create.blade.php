@@ -376,16 +376,16 @@ $(document).ready(function() {
     
     function uploadWithProgress(formData) {
         var xhr = new XMLHttpRequest();
-        var processingInterval = null;
+        var processingTimeouts = [];
 
-        // Mensajes rotativos para dar sensación de progreso
-        var processingMessages = [
-            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Preparando almacenamiento...',
-            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Verificando integridad del archivo...',
-            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Optimizando para reproducción...',
-            '<i class="fas fa-check-circle text-success"></i> Video recibido correctamente<br><i class="fas fa-spinner fa-spin text-warning"></i> Finalizando guardado...'
+        // Mensajes progresivos - cada uno aparece UNA sola vez
+        var processingSteps = [
+            { delay: 0, message: '<i class="fas fa-spinner fa-spin text-warning"></i> Almacenando video en servidor seguro...' },
+            { delay: 6000, message: '<i class="fas fa-check text-success"></i> Video almacenado<br><i class="fas fa-spinner fa-spin text-warning"></i> Analizando duración y calidad del video...' },
+            { delay: 15000, message: '<i class="fas fa-check text-success"></i> Análisis completado<br><i class="fas fa-spinner fa-spin text-warning"></i> Creando registro del partido en el sistema...' },
+            { delay: 30000, message: '<i class="fas fa-check text-success"></i> Registro creado<br><i class="fas fa-spinner fa-spin text-warning"></i> Preparando cola de optimización automática...' },
+            { delay: 45000, message: '<i class="fas fa-check text-success"></i> Cola configurada<br><i class="fas fa-spinner fa-spin text-warning"></i> Guardando configuración final...' }
         ];
-        var currentMessageIndex = 0;
 
         // Progress tracking
         xhr.upload.addEventListener('progress', function(e) {
@@ -402,31 +402,31 @@ $(document).ready(function() {
                 } else {
                     $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
 
-                    // Mostrar primer mensaje
-                    $('#uploadStatus').html(processingMessages[0]);
-
-                    // Rotar mensajes cada 4 segundos
-                    processingInterval = setInterval(function() {
-                        currentMessageIndex = (currentMessageIndex + 1) % processingMessages.length;
-                        $('#uploadStatus').html(processingMessages[currentMessageIndex]);
-                    }, 4000);
+                    // Ejecutar secuencia de mensajes progresivos (no se repiten)
+                    processingSteps.forEach(function(step) {
+                        var timeout = setTimeout(function() {
+                            $('#uploadStatus').html(step.message);
+                        }, step.delay);
+                        processingTimeouts.push(timeout);
+                    });
                 }
             }
         });
         
         // Upload completion
         xhr.addEventListener('load', function() {
-            // Detener rotación de mensajes
-            if (processingInterval) {
-                clearInterval(processingInterval);
-            }
+            // Limpiar todos los timeouts pendientes
+            processingTimeouts.forEach(function(timeout) {
+                clearTimeout(timeout);
+            });
+            processingTimeouts = [];
 
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Listo! Video guardado exitosamente</strong><br><small class="text-muted"><i class="fas fa-compress-alt"></i> El análisis estará disponible en 45-60 minutos</small>');
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano. Estará listo para análisis en 45-60 minutos.</small>');
 
                     // Redirect after short delay
                     setTimeout(function() {
@@ -440,7 +440,7 @@ $(document).ready(function() {
                     // If not JSON, assume it's a redirect response
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Listo! Video guardado exitosamente</strong><br><small class="text-muted"><i class="fas fa-compress-alt"></i> Compresión en segundo plano</small>');
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
 
                     setTimeout(function() {
                         window.location.href = '/videos';
@@ -456,10 +456,11 @@ $(document).ready(function() {
 
         // Upload error
         xhr.addEventListener('error', function() {
-            // Detener rotación de mensajes
-            if (processingInterval) {
-                clearInterval(processingInterval);
-            }
+            // Limpiar todos los timeouts pendientes
+            processingTimeouts.forEach(function(timeout) {
+                clearTimeout(timeout);
+            });
+            processingTimeouts = [];
 
             $('#progressBar').css('background-color', '#dc3545'); // Rojo error
             $('#progressText').text('Error');
