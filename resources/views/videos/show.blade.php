@@ -1388,14 +1388,20 @@ $(document).ready(function() {
                     }
 
                     // Mostrar mensaje de éxito
-                    toastr.success('Comentario eliminado exitosamente');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Comentario eliminado exitosamente');
+                    }
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
-                    toastr.error('No tienes permisos para eliminar este comentario');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('No tienes permisos para eliminar este comentario');
+                    }
                 } else {
-                    toastr.error('Error al eliminar el comentario');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al eliminar el comentario');
+                    }
                 }
             }
         });
@@ -1439,7 +1445,9 @@ $(document).ready(function() {
 
         // Validación
         if (!replyText) {
-            toastr.error('Por favor escribe una respuesta');
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Por favor escribe una respuesta');
+            }
             return;
         }
 
@@ -1523,7 +1531,9 @@ $(document).ready(function() {
                     }
 
                     // Mostrar mensaje de éxito
-                    toastr.success('Respuesta agregada exitosamente');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Respuesta agregada exitosamente');
+                    }
                 }
             },
             error: function(xhr) {
@@ -1534,9 +1544,13 @@ $(document).ready(function() {
                     Object.values(errors).forEach(error => {
                         errorMsg += error[0] + ' ';
                     });
-                    toastr.error(errorMsg);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errorMsg);
+                    }
                 } else {
-                    toastr.error('Error al enviar la respuesta. Por favor intenta de nuevo.');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al enviar la respuesta. Por favor intenta de nuevo.');
+                    }
                 }
             },
             complete: function() {
