@@ -2531,7 +2531,8 @@ $(document).ready(function() {
             role: user.role
         })),
         selectTemplate: function(item) {
-            return '@' + item.original.value;
+            // Agregar espacio después de la mención para evitar sugerencias continuas
+            return '@' + item.original.value + ' ';
         },
         menuItemTemplate: function(item) {
             const badgeClass = item.original.role === 'jugador' ? 'badge-info' :
@@ -2557,10 +2558,11 @@ $(document).ready(function() {
     // Attach tribute to comment textareas
     tribute.attach(document.querySelectorAll('textarea[name="comment"], textarea[name="reply_comment"]'));
 
-    // Mostrar preview de menciones mientras escribe
-    $('textarea[name="comment"]').on('input', function() {
-        const text = $(this).val();
-        const mentions = text.match(/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)/gu);
+    // Función para actualizar preview de menciones
+    function updateMentionsPreview(textarea) {
+        const text = $(textarea).val();
+        // Regex mejorado: solo menciones completas (seguidas de espacio, coma, punto o fin de línea)
+        const mentions = text.match(/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)(?=\s|,|\.|\)|$)/gu);
 
         if (mentions && mentions.length > 0) {
             $('#mentionsPreview').show();
@@ -2568,6 +2570,19 @@ $(document).ready(function() {
         } else {
             $('#mentionsPreview').hide();
         }
+    }
+
+    // Mostrar preview de menciones mientras escribe
+    $('textarea[name="comment"]').on('input', function() {
+        updateMentionsPreview(this);
+    });
+
+    // Actualizar preview cuando Tribute.js reemplaza el texto (después de seleccionar)
+    $('textarea[name="comment"]').on('tribute-replaced', function() {
+        // Pequeño delay para asegurar que el texto ya se reemplazó
+        setTimeout(() => {
+            updateMentionsPreview(this);
+        }, 100);
     });
     // ========== END TRIBUTE.JS ==========
 
