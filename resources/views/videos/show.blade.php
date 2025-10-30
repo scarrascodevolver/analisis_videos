@@ -336,15 +336,11 @@
                             <div class="reply-form mt-3" id="replyForm{{ $comment->id }}" style="display: none;">
                                 <form class="reply-form-submit" data-comment-id="{{ $comment->id }}" data-video-id="{{ $video->id }}">
                                     @csrf
-                                    <div class="input-group input-group-sm">
-                                        <textarea class="form-control form-control-sm" name="reply_comment" rows="2"
-                                                  placeholder="Escribe tu respuesta..." required></textarea>
-                                        <div class="input-group-append">
-                                            <button class="btn btn-rugby btn-sm" type="submit">
-                                                <i class="fas fa-reply"></i> Responder
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
                                 </form>
                             </div>
 
