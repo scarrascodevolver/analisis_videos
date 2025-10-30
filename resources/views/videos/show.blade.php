@@ -348,7 +348,7 @@
                             @if($comment->replies->count() > 0)
                                 <div class="replies ml-4 mt-3">
                                     @foreach($comment->replies as $reply)
-                                        <div class="reply border-left border-primary pl-3 mb-2">
+                                        <div class="reply comment-item border-left border-primary pl-3 mb-2" data-reply-id="{{ $reply->id }}">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="flex-grow-1">
                                                     <p class="mb-1">{{ $reply->comment }}</p>
@@ -362,6 +362,12 @@
                                                         </span>
                                                         - {{ $reply->created_at->diffForHumans() }}
                                                     </small>
+                                                    <!-- Botón para responder a esta respuesta -->
+                                                    <button class="btn btn-sm btn-link text-rugby p-0 ml-2 reply-btn"
+                                                            data-comment-id="{{ $reply->id }}"
+                                                            title="Responder a esta respuesta">
+                                                        <i class="fas fa-reply"></i> Responder
+                                                    </button>
                                                 </div>
                                                 @if($reply->user_id === auth()->id())
                                                     <button class="btn btn-sm btn-outline-danger delete-comment-btn"
@@ -371,6 +377,25 @@
                                                     </button>
                                                 @endif
                                             </div>
+
+                                            <!-- Reply Form para respuestas anidadas -->
+                                            <div class="reply-form mt-2" id="replyForm{{ $reply->id }}" style="display: none;">
+                                                <form class="reply-form-submit" data-comment-id="{{ $reply->id }}" data-video-id="{{ $video->id }}">
+                                                    @csrf
+                                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                                        <i class="fas fa-reply"></i> Responder
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Respuestas anidadas -->
+                                            @if($reply->replies->count() > 0)
+                                                <div class="replies ml-3 mt-2">
+                                                    <!-- Las respuestas anidadas se cargarán aquí -->
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -1422,7 +1447,13 @@ $(document).ready(function() {
         // Toggle del formulario actual
         replyForm.slideToggle(300, function() {
             if (replyForm.is(':visible')) {
-                replyForm.find('textarea').focus();
+                const textarea = replyForm.find('textarea');
+                textarea.focus();
+
+                // Auto-scroll suave al textarea
+                $('html, body').animate({
+                    scrollTop: textarea.offset().top - 100
+                }, 500);
             }
         });
     });
@@ -1486,7 +1517,7 @@ $(document).ready(function() {
                     const roleLabel = userRole.charAt(0).toUpperCase() + userRole.slice(1);
 
                     const replyHtml = `
-                        <div class="reply border-left border-primary pl-3 mb-2" style="display:none;">
+                        <div class="reply comment-item border-left border-primary pl-3 mb-2" data-reply-id="${response.comment.id}" style="display:none;">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <p class="mb-1">${replyText}</p>
@@ -1497,6 +1528,12 @@ $(document).ready(function() {
                                         </span>
                                         - Hace unos segundos
                                     </small>
+                                    <!-- Botón para responder a esta respuesta -->
+                                    <button class="btn btn-sm btn-link text-rugby p-0 ml-2 reply-btn"
+                                            data-comment-id="${response.comment.id}"
+                                            title="Responder a esta respuesta">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
                                 </div>
                                 <button class="btn btn-sm btn-outline-danger delete-comment-btn"
                                         data-comment-id="${response.comment.id}"
@@ -1504,17 +1541,40 @@ $(document).ready(function() {
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
+
+                            <!-- Reply Form para respuestas anidadas -->
+                            <div class="reply-form mt-2" id="replyForm${response.comment.id}" style="display: none;">
+                                <form class="reply-form-submit" data-comment-id="${response.comment.id}" data-video-id="${videoId}">
+                                    @csrf
+                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Contenedor para respuestas anidadas -->
+                            <div class="replies ml-3 mt-2"></div>
                         </div>
                     `;
 
                     // Buscar o crear la sección de respuestas
-                    let repliesSection = form.closest('.comment-item').find('.replies');
+                    // Primero buscar el contenedor de respuestas más cercano (inmediatamente después del reply-form)
+                    let repliesSection = form.closest('.reply-form').next('.replies');
 
+                    // Si no existe, buscar dentro del comment-item padre
                     if (repliesSection.length === 0) {
-                        // Crear sección de respuestas DESPUÉS del reply-form
-                        const repliesSectionHtml = '<div class="replies ml-4 mt-3"></div>';
+                        repliesSection = form.closest('.comment-item').find('> .replies').first();
+                    }
+
+                    // Si aún no existe, crear uno nuevo
+                    if (repliesSection.length === 0) {
+                        const isNestedReply = form.closest('.reply').length > 0;
+                        const marginClass = isNestedReply ? 'ml-3' : 'ml-4';
+                        const repliesSectionHtml = `<div class="replies ${marginClass} mt-3"></div>`;
                         form.closest('.reply-form').after(repliesSectionHtml);
-                        repliesSection = form.closest('.comment-item').find('.replies');
+                        repliesSection = form.closest('.reply-form').next('.replies');
                     }
 
                     // Agregar respuesta con animación
