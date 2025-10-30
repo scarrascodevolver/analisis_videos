@@ -2397,10 +2397,17 @@ $(document).ready(function() {
         // Mostrar horas y minutos para mayor precisión
         if (diffHours < 24) {
             const remainingMins = diffMins % 60;
-            if (remainingMins > 0) {
+
+            // Si tiene horas y minutos
+            if (diffHours > 0 && remainingMins > 0) {
                 return `Hace ${diffHours}h ${remainingMins}min`;
             }
-            return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            // Si solo tiene horas exactas (sin minutos restantes)
+            if (diffHours > 0 && remainingMins === 0) {
+                return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            }
+            // Si tiene menos de 1 hora (solo minutos) - esto no debería llegar aquí por el if anterior
+            return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
         }
 
         if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
