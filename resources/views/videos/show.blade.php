@@ -317,13 +317,13 @@
                                     <button class="btn btn-sm btn-outline-secondary" data-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
-                                    <div class="dropdown-menu">
-                                        <button class="dropdown-item reply-btn" data-comment-id="{{ $comment->id }}">
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <button class="dropdown-item dropdown-item-sm reply-btn" data-comment-id="{{ $comment->id }}">
                                             <i class="fas fa-reply"></i> Responder
                                         </button>
                                         @if($comment->user_id === auth()->id())
                                             <div class="dropdown-divider"></div>
-                                            <button class="dropdown-item text-danger delete-comment-btn"
+                                            <button class="dropdown-item dropdown-item-sm text-danger delete-comment-btn"
                                                     data-comment-id="{{ $comment->id }}">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
@@ -2436,6 +2436,23 @@ $(document).ready(function() {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Dropdown items más pequeños y compactos */
+.dropdown-item-sm {
+    padding: 0.35rem 1rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+}
+
+.dropdown-item-sm i {
+    font-size: 0.85rem;
+    margin-right: 0.4rem;
+}
+
+.dropdown-menu {
+    min-width: 9rem !important;
+    font-size: 0.875rem;
 }
 
 .comment-notification {
