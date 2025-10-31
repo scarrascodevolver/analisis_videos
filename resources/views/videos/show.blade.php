@@ -230,7 +230,7 @@
 
                         <div class="form-group mb-2">
                             <label class="mb-1">Comentario <small class="text-muted">(Usa @ para mencionar usuarios)</small></label>
-                            <textarea name="comment" class="form-control" rows="1"
+                            <textarea name="comment" class="form-control" rows="3"
                                       placeholder="Describe lo que observas... (Escribe @ para mencionar)" required></textarea>
                         </div>
 
