@@ -53,21 +53,39 @@ class CompressVideoJob implements ShouldQueue
         $video = Video::find($this->videoId);
 
         if (!$video) {
-            Log::error("CompressVideoJob: Video {$this->videoId} not found");
+            Log::warning("CompressVideoJob: Video {$this->videoId} not found (probably deleted). Skipping job.");
+
+            // Delete this job from queue to prevent retries
+            $this->delete();
             return;
         }
 
         Log::info("CompressVideoJob: Starting compression for video {$video->id}: {$video->title}");
 
         try {
+            // Determine which disk is being used
+            $disk = $this->getDiskForVideo($video);
+
+            // Verify file exists before processing
+            if (!Storage::disk($disk)->exists($video->file_path)) {
+                Log::warning("CompressVideoJob: Video file not found on disk '{$disk}': {$video->file_path}. Video may have been deleted. Skipping job.");
+
+                // Mark as failed instead of retrying
+                $video->update([
+                    'processing_status' => 'failed',
+                    'processing_completed_at' => now(),
+                ]);
+
+                // Delete this job from queue
+                $this->delete();
+                return;
+            }
+
             // Update status to processing
             $video->update([
                 'processing_status' => 'processing',
                 'processing_started_at' => now(),
             ]);
-
-            // Determine which disk is being used
-            $disk = $this->getDiskForVideo($video);
 
             // Download video to temporary location for processing
             $tempOriginalPath = $this->downloadVideoToTemp($video, $disk);
