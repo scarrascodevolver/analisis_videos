@@ -179,7 +179,7 @@
                     <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
                         <i class="far fa-bell"></i>
                         @if(auth()->user()->unreadNotifications->count() > 0)
-                            <span class="badge badge-warning navbar-badge">
+                            <span class="badge badge-danger navbar-badge">
                                 {{ auth()->user()->unreadNotifications->count() }}
                             </span>
                         @endif
