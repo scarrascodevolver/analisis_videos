@@ -37,7 +37,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        @if(auth()->user()->role === 'analista')
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                         <div class="col-md-2 mb-2">
                             <select name="category" id="category-select" class="form-control">
                                 <option value="">Categoría</option>
@@ -81,7 +81,7 @@
                         Lista de Videos
                     </h3>
                     <div class="card-tools">
-                        @if(auth()->user()->role === 'analista')
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                             <a href="{{ route('videos.create') }}" class="btn btn-rugby">
                                 <i class="fas fa-plus"></i> Subir Video
                             </a>

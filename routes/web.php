@@ -65,8 +65,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('markAllRead');
     });
 
-    // Analyst Routes
-    Route::middleware(['role:analista'])->prefix('analyst')->name('analyst.')->group(function () {
+    // Analyst Routes (Analistas y Entrenadores)
+    Route::middleware(['role:analista,entrenador'])->prefix('analyst')->name('analyst.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'analyst'])->name('dashboard');
         Route::resource('assignments', App\Http\Controllers\VideoAssignmentController::class);
         Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\VideoAssignmentController::class, 'markCompleted'])->name('assignments.markCompleted');
@@ -75,8 +75,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
     });
 
-    // Admin/Mantenedor Routes (Only for Analysts)
-    Route::middleware(['role:analista'])->prefix('admin')->name('admin.')->group(function () {
+    // Admin/Mantenedor Routes (Analistas y Entrenadores)
+    Route::middleware(['role:analista,entrenador'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard del Mantenedor
         Route::get('/', [AdminController::class, 'index'])->name('index');
 

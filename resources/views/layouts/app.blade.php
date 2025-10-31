@@ -284,7 +284,7 @@
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
 
-                        @if(Auth::user()->role === 'analista')
+                        @if(in_array(Auth::user()->role, ['analista', 'entrenador']))
                             <li class="nav-item">
                                 <a href="{{ route('videos.create') }}" class="nav-link {{ request()->routeIs('videos.create') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-video"></i>

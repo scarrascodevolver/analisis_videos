@@ -47,8 +47,8 @@ class VideoController extends Controller
         // Get filter data
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
 
-        // Categories: Analysts see all, staff see only their category
-        if (auth()->user()->role === 'analista') {
+        // Categories: Analysts and coaches see all, staff see only their category
+        if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             $categories = Category::all();
         } else {
             // Staff only see their assigned category
@@ -65,8 +65,8 @@ class VideoController extends Controller
     {
         $teams = Team::all();
 
-        // Categories: Analysts see all, staff see only their category
-        if (auth()->user()->role === 'analista') {
+        // Categories: Analysts and coaches see all, staff see only their category
+        if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             $categories = Category::all();
         } else {
             // Staff only see their assigned category
