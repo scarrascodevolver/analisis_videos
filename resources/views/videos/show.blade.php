@@ -26,7 +26,7 @@
                     <div class="card-tools">
                         @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
                             <button id="viewStatsBtn" class="btn btn-sm btn-rugby-light mr-2" data-toggle="modal" data-target="#statsModal">
-                                <i class="fas fa-chart-bar"></i> Estadísticas
+                                <i class="fas fa-eye"></i> Visualizaciones
                             </button>
                         @endif
                         <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
@@ -400,14 +400,14 @@
         </div>
     </div>
 
-    <!-- Modal de Estadísticas de Visualización -->
+    <!-- Modal de Visualizaciones -->
     @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
     <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
                     <h5 class="modal-title" id="statsModalLabel">
-                        <i class="fas fa-chart-bar"></i> Estadísticas de Visualización
+                        <i class="fas fa-eye"></i> Visualizaciones del Video
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -448,7 +448,7 @@
                             <tbody id="statsTableBody">
                                 <tr>
                                     <td colspan="3" class="text-center">
-                                        <i class="fas fa-spinner fa-spin"></i> Cargando estadísticas...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando visualizaciones...
                                     </td>
                                 </tr>
                             </tbody>
@@ -2427,7 +2427,7 @@ $(document).ready(function() {
             $('#statsTableBody').html(`
                 <tr>
                     <td colspan="3" class="text-center text-danger">
-                        <i class="fas fa-exclamation-triangle"></i> Error al cargar estadísticas
+                        <i class="fas fa-exclamation-triangle"></i> Error al cargar visualizaciones
                     </td>
                 </tr>
             `);

@@ -113,7 +113,7 @@ class Video extends Model
             ->selectRaw('user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed')
             ->with('user:id,name')
             ->groupBy('user_id')
-            ->orderByDesc('view_count')
+            ->orderByDesc('last_viewed') // Ordenar por las más recientes primero
             ->get();
 
         // Formatear last_viewed como timestamp Unix (segundos) para evitar problemas de timezone
