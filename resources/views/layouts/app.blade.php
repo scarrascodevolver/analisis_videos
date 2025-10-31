@@ -371,24 +371,25 @@
                                     <p>Mantenedor</p>
                                 </a>
                             </li>
-                        @endif
-
-                        @if(Auth::user()->role === 'analista')
-                            <!-- Funcionalidades Futuras (Solo Analistas) -->
-                            <li class="nav-item">
-                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Gestión de Pagos">
-                                    <i class="nav-icon fas fa-credit-card"></i>
-                                    <p>
-                                        Gestión de Pagos
-                                        <span class="badge badge-success right">Próximamente</span>
-                                    </p>
-                                </a>
-                            </li>
+                            <!-- Funcionalidades Futuras -->
                             <li class="nav-item">
                                 <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Crear Jugadas">
                                     <i class="nav-icon fas fa-draw-polygon"></i>
                                     <p>
                                         Crear Jugadas
+                                        <span class="badge badge-success right">Próximamente</span>
+                                    </p>
+                                </a>
+                            </li>
+                        @endif
+
+                        @if(Auth::user()->role === 'analista')
+                            <!-- Gestión de Pagos (Solo Analistas) -->
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Gestión de Pagos">
+                                    <i class="nav-icon fas fa-credit-card"></i>
+                                    <p>
+                                        Gestión de Pagos
                                         <span class="badge badge-success right">Próximamente</span>
                                     </p>
                                 </a>
