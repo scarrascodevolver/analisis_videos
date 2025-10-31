@@ -363,7 +363,7 @@
                             </li>
                         @endif
 
-                        @if(Auth::user()->role === 'analista')
+                        @if(in_array(Auth::user()->role, ['analista', 'entrenador']))
                             <li class="nav-header">ADMINISTRACIÓN</li>
                             <li class="nav-item">
                                 <a href="{{ route('admin.index') }}" class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
@@ -371,7 +371,10 @@
                                     <p>Mantenedor</p>
                                 </a>
                             </li>
-                            <!-- Funcionalidades Futuras -->
+                        @endif
+
+                        @if(Auth::user()->role === 'analista')
+                            <!-- Funcionalidades Futuras (Solo Analistas) -->
                             <li class="nav-item">
                                 <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Gestión de Pagos">
                                     <i class="nav-icon fas fa-credit-card"></i>
