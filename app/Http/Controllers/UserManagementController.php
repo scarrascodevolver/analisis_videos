@@ -14,10 +14,38 @@ class UserManagementController extends Controller
     /**
      * Display a listing of users
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['profile.category'])->get();
-        return view('admin.users.index', compact('users'));
+        $query = User::with(['profile.category']);
+
+        // Búsqueda por nombre o email
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Filtro por rol
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Filtro por categoría
+        if ($request->filled('category_id')) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('user_category_id', $request->category_id);
+            });
+        }
+
+        // Paginación
+        $users = $query->orderBy('name', 'asc')->paginate(15)->withQueryString();
+
+        // Categorías para el filtro
+        $categories = Category::orderBy('name', 'asc')->get();
+
+        return view('admin.users.index', compact('users', 'categories'));
     }
 
     /**

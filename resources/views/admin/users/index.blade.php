@@ -20,6 +20,67 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Buscador y Filtros -->
+                <form action="{{ route('admin.users.index') }}" method="GET" class="mb-3">
+                    <div class="row">
+                        <!-- Buscador -->
+                        <div class="col-md-4 mb-2">
+                            <div class="input-group">
+                                <input type="text"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="Buscar por nombre o email..."
+                                       value="{{ request('search') }}">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-rugby">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro por Rol -->
+                        <div class="col-md-3 mb-2">
+                            <select name="role" class="form-control" onchange="this.form.submit()">
+                                <option value="">Todos los roles</option>
+                                <option value="jugador" {{ request('role') == 'jugador' ? 'selected' : '' }}>Jugador</option>
+                                <option value="entrenador" {{ request('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
+                                <option value="analista" {{ request('role') == 'analista' ? 'selected' : '' }}>Analista</option>
+                                <option value="staff" {{ request('role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                <option value="director_club" {{ request('role') == 'director_club' ? 'selected' : '' }}>Director Club</option>
+                                <option value="director_tecnico" {{ request('role') == 'director_tecnico' ? 'selected' : '' }}>Director Técnico</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtro por Categoría -->
+                        <div class="col-md-3 mb-2">
+                            <select name="category_id" class="form-control" onchange="this.form.submit()">
+                                <option value="">Todas las categorías</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Botón limpiar filtros -->
+                        <div class="col-md-2 mb-2">
+                            @if(request('search') || request('role') || request('category_id'))
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-block">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Contador de resultados -->
+                <div class="mb-2">
+                    <small class="text-muted">
+                        Mostrando {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} de {{ $users->total() }} usuarios
+                    </small>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover">
                         <thead class="rugby-green">
@@ -107,6 +168,11 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Paginación -->
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $users->links() }}
                 </div>
             </div>
         </div>
