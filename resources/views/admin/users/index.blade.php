@@ -139,8 +139,9 @@
 
 /* Espaciado entre botones */
 .dt-buttons .dt-button {
-    margin-left: 0.5rem !important;
-    margin-right: 0.5rem !important;
+    margin-left: 0.75rem !important;
+    margin-right: 0.75rem !important;
+    padding: 0.5rem 1rem !important;
 }
 </style>
 @endpush
