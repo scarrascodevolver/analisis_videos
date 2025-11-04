@@ -79,19 +79,17 @@
                     <table class="table table-bordered table-hover">
                         <thead class="rugby-green">
                             <tr>
-                                <th width="5%">ID</th>
-                                <th width="20%">Nombre</th>
-                                <th width="20%">Email</th>
+                                <th width="25%">Nombre</th>
+                                <th width="25%">Email</th>
                                 <th width="15%">Rol</th>
                                 <th width="15%">Categoría</th>
-                                <th width="15%" class="text-center">Registro</th>
+                                <th width="10%" class="text-center">Registro</th>
                                 <th width="10%" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($users as $user)
                                 <tr>
-                                    <td>{{ $user->id }}</td>
                                     <td>
                                         @if($user->profile && $user->profile->avatar)
                                             <img src="{{ asset('storage/' . $user->profile->avatar) }}"
