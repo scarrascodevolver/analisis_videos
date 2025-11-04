@@ -92,6 +92,7 @@
                                     <div class="duration-picker-container">
                                         <label style="color: white; font-size: 11px;">Duración:</label>
                                         <select id="annotationDuration" style="width: 60px; height: 25px; border: none; border-radius: 3px; background: white;">
+                                            <option value="1">1s</option>
                                             <option value="2">2s</option>
                                             <option value="4" selected>4s</option>
                                             <option value="6">6s</option>
