@@ -151,9 +151,9 @@
     padding: 0.5rem 1rem !important;
 }
 
-/* Redondear esquinas individuales (btn-group las quita) */
+/* Redondear esquinas individuales */
 .dt-buttons .dt-button {
-    border-radius: 0.25rem !important;
+    border-radius: 0.375rem !important;
 }
 </style>
 @endpush
