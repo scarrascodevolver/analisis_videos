@@ -45,11 +45,6 @@ class UserManagementController extends Controller
         // Categorías para el filtro
         $categories = Category::orderBy('name', 'asc')->get();
 
-        // Si es petición AJAX, devolver solo la tabla
-        if ($request->ajax() || $request->has('ajax')) {
-            return view('admin.users._table', compact('users'))->render();
-        }
-
         return view('admin.users.index', compact('users', 'categories'));
     }
 
