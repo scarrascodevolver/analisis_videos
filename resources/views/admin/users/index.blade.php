@@ -75,12 +75,6 @@
                     </div>
                 </form>
 
-                <!-- Contador de resultados -->
-                <div class="mb-2">
-                    <small class="text-muted">
-                        Mostrando {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} de {{ $users->total() }} usuarios
-                    </small>
-                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover">
                         <thead class="rugby-green">
@@ -171,8 +165,8 @@
                 </div>
 
                 <!-- Paginación -->
-                <div class="d-flex justify-content-center mt-3">
-                    {{ $users->links() }}
+                <div class="mt-3">
+                    {{ $users->links('custom.pagination') }}
                 </div>
             </div>
         </div>
