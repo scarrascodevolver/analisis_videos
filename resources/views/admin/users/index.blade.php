@@ -57,7 +57,7 @@
                     <table id="users-table" class="table table-bordered table-hover w-100">
                         <thead class="rugby-green">
                             <tr>
-                                <th width="5%"></th>
+                                <th width="5%" class="text-center">Foto</th>
                                 <th width="20%">Nombre</th>
                                 <th width="20%">Email</th>
                                 <th width="12%">Rol</th>
@@ -160,7 +160,7 @@ $(document).ready(function() {
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
         },
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>Brtip',
+        dom: '<"row"<"col-sm-12 col-md-6"f><"col-sm-12 col-md-6"l>>Brtip',
         buttons: [
             {
                 extend: 'excel',
