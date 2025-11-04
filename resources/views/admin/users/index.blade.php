@@ -121,14 +121,26 @@
 
 /* Alinear buscador a la izquierda */
 .dataTables_wrapper .dataTables_filter {
-    float: left !important;
     text-align: left !important;
+    margin-bottom: 1rem;
+}
+
+/* Centrar botones de exportación */
+.dataTables_wrapper .dt-buttons {
+    text-align: center !important;
+    margin-bottom: 1rem;
 }
 
 /* Alinear selector de registros a la derecha */
 .dataTables_wrapper .dataTables_length {
-    float: right !important;
     text-align: right !important;
+    margin-bottom: 1rem;
+}
+
+/* Espaciado entre botones */
+.dt-buttons .dt-button {
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
 }
 </style>
 @endpush
@@ -172,7 +184,7 @@ $(document).ready(function() {
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
         },
-        dom: '<"row"<"col-sm-12 col-md-6"f><"col-sm-12 col-md-6"l>>Brtip',
+        dom: '<"row"<"col-sm-12 col-md-4"f><"col-sm-12 col-md-4 text-center"B><"col-sm-12 col-md-4"l>>rtip',
         buttons: [
             {
                 extend: 'excel',
