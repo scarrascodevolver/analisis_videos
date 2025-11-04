@@ -118,6 +118,18 @@
     background-color: #28a745 !important;
     border-color: #28a745 !important;
 }
+
+/* Alinear buscador a la izquierda */
+.dataTables_wrapper .dataTables_filter {
+    float: left !important;
+    text-align: left !important;
+}
+
+/* Alinear selector de registros a la derecha */
+.dataTables_wrapper .dataTables_length {
+    float: right !important;
+    text-align: right !important;
+}
 </style>
 @endpush
 
