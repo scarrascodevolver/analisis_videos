@@ -137,11 +137,23 @@
     margin-bottom: 1rem;
 }
 
+/* Remover comportamiento de btn-group para separar botones */
+.dt-buttons.btn-group {
+    display: flex !important;
+    gap: 1rem !important;
+    justify-content: center !important;
+}
+
 /* Espaciado entre botones */
 .dt-buttons .dt-button {
-    margin-left: 0.75rem !important;
-    margin-right: 0.75rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     padding: 0.5rem 1rem !important;
+}
+
+/* Redondear esquinas individuales (btn-group las quita) */
+.dt-buttons .dt-button {
+    border-radius: 0.25rem !important;
 }
 </style>
 @endpush
