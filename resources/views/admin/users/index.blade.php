@@ -92,6 +92,15 @@
     padding: 0.375rem 0.75rem;
 }
 
+/* Paginación estilo rugby (igual a otras vistas) */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #1e4d2b !important;
+    border: 1px solid #dee2e6 !important;
+    background: white !important;
+    border-radius: 0.25rem !important;
+    margin: 0 2px !important;
+}
+
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
     background: #1e4d2b !important;
     border-color: #1e4d2b !important;
@@ -99,9 +108,15 @@
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: #28a745 !important;
-    border-color: #28a745 !important;
-    color: white !important;
+    color: #28a745 !important;
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    color: #6c757d !important;
+    background-color: #fff !important;
+    border-color: #dee2e6 !important;
 }
 
 .dt-buttons {
