@@ -161,32 +161,60 @@ Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
 });
 
 // ======================================
-// AUTOEVALUACIÓN DE JUGADORES (Prototipo UI)
+// EVALUACIÓN DE COMPAÑEROS (SPA)
 // ======================================
 Route::get('/evaluacion', function() {
-    return view('evaluations.index');
+    return view('evaluations.wizard');
 })->name('evaluations.index');
-
-Route::get('/evaluacion/paso-1', function() {
-    return view('evaluations.step1');
-})->name('evaluations.step1');
-
-Route::get('/evaluacion/paso-2', function() {
-    return view('evaluations.step2');
-})->name('evaluations.step2');
-
-Route::get('/evaluacion/paso-3', function() {
-    return view('evaluations.step3');
-})->name('evaluations.step3');
-
-Route::get('/evaluacion/paso-4', function() {
-    return view('evaluations.step4');
-})->name('evaluations.step4');
-
-Route::get('/evaluacion/paso-5', function() {
-    return view('evaluations.step5');
-})->name('evaluations.step5');
 
 Route::get('/evaluacion/completada', function() {
     return view('evaluations.success');
 })->name('evaluations.success');
+
+// API para búsqueda de jugadores
+Route::get('/api/search-players', function(Illuminate\Http\Request $request) {
+    $query = $request->input('q', '');
+
+    $players = App\Models\User::where('role', 'jugador')
+        ->where('name', 'LIKE', "%{$query}%")
+        ->with('profile.category')
+        ->limit(10)
+        ->get()
+        ->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'position' => $user->profile->position ?? 'Sin posición',
+                'category' => $user->profile->category->name ?? 'Sin categoría'
+            ];
+        });
+
+    return response()->json($players);
+});
+
+// API para jugadores de la categoría del usuario actual
+Route::get('/api/category-players', function() {
+    $currentUser = auth()->user();
+    $categoryId = $currentUser->profile->user_category_id ?? null;
+
+    $players = App\Models\User::where('role', 'jugador')
+        ->where('id', '!=', $currentUser->id)
+        ->when($categoryId, function($query) use ($categoryId) {
+            return $query->whereHas('profile', function($q) use ($categoryId) {
+                $q->where('user_category_id', $categoryId);
+            });
+        })
+        ->with('profile')
+        ->limit(5)
+        ->get()
+        ->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'position' => $user->profile->position ?? 'Sin posición',
+                'category' => $user->profile->category->name ?? 'Sin categoría'
+            ];
+        });
+
+    return response()->json($players);
+});
