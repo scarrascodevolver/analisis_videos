@@ -89,7 +89,7 @@
                             <span class="ml-3 text-muted">10</span>
                         </div>
                         <div class="text-center">
-                            <span class="badge badge-lg badge-warning evaluation-badge">0</span>
+                            <span class="badge badge-lg badge-dark text-white evaluation-badge">0</span>
                         </div>
                         <hr class="my-4">
                     </div>
@@ -105,7 +105,7 @@
                             <span class="ml-3 text-muted">10</span>
                         </div>
                         <div class="text-center">
-                            <span class="badge badge-lg badge-warning evaluation-badge">0</span>
+                            <span class="badge badge-lg badge-dark text-white evaluation-badge">0</span>
                         </div>
                         <hr class="my-4">
                     </div>
@@ -121,7 +121,7 @@
                             <span class="ml-3 text-muted">10</span>
                         </div>
                         <div class="text-center">
-                            <span class="badge badge-lg badge-warning evaluation-badge">0</span>
+                            <span class="badge badge-lg badge-dark text-white evaluation-badge">0</span>
                         </div>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
                             <input type="range" class="custom-range flex-grow-1 evaluation-slider"
                                    min="0" max="10" value="0" data-field="{{ $skill['field'] }}">
                             <span class="ml-2 text-muted small">10</span>
-                            <span class="badge badge-warning ml-2 evaluation-badge" style="min-width: 35px;">0</span>
+                            <span class="badge badge-dark text-white ml-2 evaluation-badge" style="min-width: 35px;">0</span>
                         </div>
                         @if(!$loop->last)<hr class="my-3">@endif
                     </div>
@@ -193,7 +193,7 @@
                             <span class="ml-3 text-muted">10</span>
                         </div>
                         <div class="text-center">
-                            <span class="badge badge-lg badge-warning evaluation-badge">0</span>
+                            <span class="badge badge-lg badge-dark text-white evaluation-badge">0</span>
                         </div>
                         @if(!$loop->last)<hr class="my-4">@endif
                     </div>
@@ -235,7 +235,7 @@
                             <span class="ml-3 text-muted">10</span>
                         </div>
                         <div class="text-center">
-                            <span class="badge badge-lg badge-warning evaluation-badge">0</span>
+                            <span class="badge badge-lg badge-dark text-white evaluation-badge">0</span>
                         </div>
                         @if(isset($skill['warning']))
                             <small class="text-danger d-block text-center mt-2">
@@ -497,21 +497,25 @@ $(document).ready(function() {
         $badge.text(value);
         evaluationData[field] = value;
 
-        // Colores rugby (amarillo/verde)
-        $badge.removeClass('badge-danger badge-warning badge-success bg-rugby');
+        // Colores Los Troncos (negro → verde)
+        $badge.removeClass('badge-danger badge-dark badge-secondary bg-rugby text-white');
 
         const isWarning = $(this).hasClass('warning-slider');
 
         if (isWarning) {
-            // Actitud negativa: invertir colores
+            // Actitud negativa: invertir colores (más rojo = peor)
             if (value >= 7) $badge.addClass('badge-danger');
-            else if (value >= 4) $badge.addClass('badge-warning');
-            else $badge.addClass('badge-success');
-        } else {
-            // Normal: amarillo bajo, verde alto
-            if (value <= 3) $badge.addClass('badge-warning');
-            else if (value <= 6) $badge.addClass('badge-warning');
+            else if (value >= 4) $badge.addClass('badge-secondary text-white');
             else $badge.addClass('bg-rugby text-white');
+        } else {
+            // Normal: negro bajo → verde alto
+            if (value <= 3) {
+                $badge.addClass('badge-dark text-white'); // Negro
+            } else if (value <= 6) {
+                $badge.addClass('badge-secondary text-white'); // Gris oscuro
+            } else {
+                $badge.addClass('bg-rugby text-white'); // Verde
+            }
         }
     });
 
@@ -573,21 +577,25 @@ $(document).ready(function() {
     border-color: #163d22;
 }
 
-/* Slider colores rugby (verde/amarillo) */
+/* Slider colores Los Troncos (negro → verde) */
 .custom-range::-webkit-slider-thumb {
-    background-color: #ffc107; /* Amarillo */
+    background-color: #000000; /* Negro */
 }
 
 .custom-range::-moz-range-thumb {
-    background-color: #ffc107;
+    background-color: #000000;
 }
 
 .custom-range::-ms-thumb {
-    background-color: #ffc107;
+    background-color: #000000;
 }
 
 .custom-range::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, #ffc107 0%, #1e4d2b 100%);
+    background: linear-gradient(to right, #2c2c2c 0%, #1e4d2b 100%); /* Negro → Verde */
+}
+
+.custom-range::-moz-range-track {
+    background: linear-gradient(to right, #2c2c2c 0%, #1e4d2b 100%);
 }
 
 /* Slider advertencia (rojo) */
