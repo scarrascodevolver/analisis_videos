@@ -163,16 +163,18 @@ Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
 // ======================================
 // EVALUACIÓN DE COMPAÑEROS (SPA)
 // ======================================
-Route::get('/evaluacion', function() {
-    return view('evaluations.wizard');
-})->name('evaluations.index');
+Route::middleware('auth')->group(function() {
+    Route::get('/evaluacion', function() {
+        return view('evaluations.wizard');
+    })->name('evaluations.index');
 
-Route::get('/evaluacion/completada', function() {
-    return view('evaluations.success');
-})->name('evaluations.success');
+    Route::get('/evaluacion/completada', function() {
+        return view('evaluations.success');
+    })->name('evaluations.success');
+});
 
 // API para búsqueda de jugadores (solo de la misma categoría)
-Route::get('/api/search-players', function(Illuminate\Http\Request $request) {
+Route::middleware('auth')->get('/api/search-players', function(Illuminate\Http\Request $request) {
     $query = $request->input('q', '');
     $currentUser = auth()->user();
     $categoryId = $currentUser->profile->user_category_id ?? null;
@@ -201,7 +203,7 @@ Route::get('/api/search-players', function(Illuminate\Http\Request $request) {
 });
 
 // API para jugadores de la categoría del usuario actual
-Route::get('/api/category-players', function() {
+Route::middleware('auth')->get('/api/category-players', function() {
     $currentUser = auth()->user();
     $categoryId = $currentUser->profile->user_category_id ?? null;
 
