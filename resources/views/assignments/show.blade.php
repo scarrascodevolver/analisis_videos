@@ -214,9 +214,9 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if(auth()->user()->role === 'analista')
+                    @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                         @if($assignment->status !== 'completado')
-                            <a href="{{ route('analyst.assignments.edit', $assignment) }}" 
+                            <a href="{{ route('analyst.assignments.edit', $assignment) }}"
                                class="btn btn-warning btn-block mb-2">
                                 <i class="fas fa-edit"></i> Editar Asignación
                             </a>

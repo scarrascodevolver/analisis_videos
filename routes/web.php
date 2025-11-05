@@ -9,6 +9,7 @@ use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\VideoViewController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -43,14 +44,29 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/video/{videoId}/timestamp', [AnnotationController::class, 'getByTimestamp'])->name('getByTimestamp');
         Route::delete('/{id}', [AnnotationController::class, 'destroy'])->name('destroy');
     });
-    
+
+    // Video View Tracking API Routes
+    Route::prefix('api/videos')->name('api.videos.')->group(function () {
+        Route::post('/{video}/track-view', [VideoViewController::class, 'track'])->name('track-view');
+        Route::patch('/{video}/update-duration', [VideoViewController::class, 'updateDuration'])->name('update-duration');
+        Route::patch('/{video}/mark-completed', [VideoViewController::class, 'markCompleted'])->name('mark-completed');
+        Route::get('/{video}/stats', [VideoViewController::class, 'getStats'])->name('stats');
+    });
+
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
     Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
     Route::get('assignments/{assignment}/video', [App\Http\Controllers\MyVideosController::class, 'show'])->name('assignments.show');
 
-    // Analyst Routes
-    Route::middleware(['role:analista'])->prefix('analyst')->name('analyst.')->group(function () {
+    // Notifications Routes
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('markRead');
+        Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('markAllRead');
+    });
+
+    // Analyst Routes (Analistas y Entrenadores)
+    Route::middleware(['role:analista,entrenador'])->prefix('analyst')->name('analyst.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'analyst'])->name('dashboard');
         Route::resource('assignments', App\Http\Controllers\VideoAssignmentController::class);
         Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\VideoAssignmentController::class, 'markCompleted'])->name('assignments.markCompleted');
@@ -59,8 +75,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('assignments/bulk', [App\Http\Controllers\VideoAssignmentController::class, 'bulk'])->name('assignments.bulk');
     });
 
-    // Admin/Mantenedor Routes (Only for Analysts)
-    Route::middleware(['role:analista'])->prefix('admin')->name('admin.')->group(function () {
+    // Admin/Mantenedor Routes (Analistas y Entrenadores)
+    Route::middleware(['role:analista,entrenador'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard del Mantenedor
         Route::get('/', [AdminController::class, 'index'])->name('index');
 

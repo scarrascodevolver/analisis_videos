@@ -24,12 +24,22 @@ class Video extends Model
         'match_date',
         'status',
         'visibility_type',
+        // Compression fields
+        'processing_status',
+        'original_file_size',
+        'compressed_file_size',
+        'original_file_path',
+        'compression_ratio',
+        'processing_started_at',
+        'processing_completed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'match_date' => 'date',
+            'processing_started_at' => 'datetime',
+            'processing_completed_at' => 'datetime',
         ];
     }
 
@@ -68,9 +78,49 @@ class Video extends Model
         return $this->hasMany(VideoAnnotation::class);
     }
 
+    public function views()
+    {
+        return $this->hasMany(VideoView::class);
+    }
+
     public function rugbySituation()
     {
         return $this->belongsTo(RugbySituation::class);
+    }
+
+    /**
+     * Get total view count for this video
+     */
+    public function getViewCountAttribute()
+    {
+        return $this->views()->count();
+    }
+
+    /**
+     * Get unique viewers count for this video
+     */
+    public function getUniqueViewersAttribute()
+    {
+        return $this->views()->distinct('user_id')->count('user_id');
+    }
+
+    /**
+     * Get view statistics for this video
+     */
+    public function getViewStats()
+    {
+        $stats = $this->views()
+            ->selectRaw('user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed')
+            ->with('user:id,name')
+            ->groupBy('user_id')
+            ->orderByDesc('last_viewed') // Ordenar por las más recientes primero
+            ->get();
+
+        // Formatear last_viewed como timestamp Unix (segundos) para evitar problemas de timezone
+        return $stats->map(function($stat) {
+            $stat->last_viewed_timestamp = strtotime($stat->last_viewed);
+            return $stat;
+        });
     }
 
     public function scopeByCategory($query, $categoryId)

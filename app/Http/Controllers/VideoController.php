@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CompressVideoJob;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\Team;
@@ -46,8 +47,8 @@ class VideoController extends Controller
         // Get filter data
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
 
-        // Categories: Analysts see all, staff see only their category
-        if (auth()->user()->role === 'analista') {
+        // Categories: Analysts and coaches see all, staff see only their category
+        if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             $categories = Category::all();
         } else {
             // Staff only see their assigned category
@@ -64,8 +65,8 @@ class VideoController extends Controller
     {
         $teams = Team::all();
 
-        // Categories: Analysts see all, staff see only their category
-        if (auth()->user()->role === 'analista') {
+        // Categories: Analysts and coaches see all, staff see only their category
+        if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             $categories = Category::all();
         } else {
             // Staff only see their assigned category
@@ -97,7 +98,7 @@ class VideoController extends Controller
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:1228800', // 1.2GB max
+                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
                 'analyzed_team_id' => 'required|exists:teams,id',
                 'rival_team_id' => 'nullable|exists:teams,id',
                 'category_id' => 'required|exists:categories,id',
@@ -109,7 +110,7 @@ class VideoController extends Controller
                 'assignment_notes' => 'nullable|string|max:1000',
                 'visibility_type' => 'required|in:public,forwards,backs,specific',
             ], [
-                'video_file.max' => 'El archivo de video no puede superar 1.2GB.',
+                'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -161,8 +162,14 @@ class VideoController extends Controller
             'rugby_situation_id' => $request->rugby_situation_id,
             'match_date' => $request->match_date,
             'status' => 'pending',
-            'visibility_type' => $request->visibility_type
+            'visibility_type' => $request->visibility_type,
+            'processing_status' => 'pending'
         ]);
+
+        // Dispatch compression job to queue
+        CompressVideoJob::dispatch($video->id);
+
+        \Log::info("Video {$video->id} uploaded successfully, compression job dispatched to queue");
 
         // Crear asignaciones si el tipo de visibilidad es 'specific'
         if ($request->visibility_type === 'specific' && $request->filled('assigned_players') && is_array($request->assigned_players)) {
@@ -176,15 +183,15 @@ class VideoController extends Controller
             }
 
             $assignedCount = count($request->assigned_players);
-            $successMessage = "Video subido exitosamente y asignado a {$assignedCount} jugador(es).";
+            $successMessage = "Video subido exitosamente y asignado a {$assignedCount} jugador(es). Se está comprimiendo en segundo plano para optimizar la reproducción.";
         } else {
             $visibilityMessages = [
-                'public' => 'Video subido exitosamente y visible para todo el equipo.',
-                'forwards' => 'Video subido exitosamente y visible para delanteros.',
-                'backs' => 'Video subido exitosamente y visible para backs.',
-                'specific' => 'Video subido exitosamente.'
+                'public' => 'Video subido exitosamente y visible para todo el equipo. Se está comprimiendo en segundo plano.',
+                'forwards' => 'Video subido exitosamente y visible para delanteros. Se está comprimiendo en segundo plano.',
+                'backs' => 'Video subido exitosamente y visible para backs. Se está comprimiendo en segundo plano.',
+                'specific' => 'Video subido exitosamente. Se está comprimiendo en segundo plano.'
             ];
-            $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente.';
+            $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente. Se está comprimiendo en segundo plano.';
         }
 
         // Check if request is AJAX
@@ -203,11 +210,19 @@ class VideoController extends Controller
 
     public function show(Video $video)
     {
-        $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'comments.user', 'comments.replies.user']);
+        $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader']);
 
+        // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user'])
+            ->with(['user', 'mentionedUsers', 'replies' => function($query) {
+                // Cargar respuestas recursivamente con todos sus niveles + menciones
+                $query->with(['user', 'mentionedUsers', 'replies' => function($q) {
+                    $q->with(['user', 'mentionedUsers', 'replies' => function($q2) {
+                        $q2->with(['user', 'mentionedUsers', 'replies.user', 'replies.mentionedUsers']); // Nivel 4+
+                    }]);
+                }]);
+            }])
             ->orderBy('timestamp_seconds')
             ->get();
 
@@ -287,11 +302,11 @@ class VideoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:1048576', // 1GB max for players, más formatos
+            'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
             'category_id' => 'required|exists:categories,id',
             'analysis_request' => 'required|string'
         ], [
-            'video_file.max' => 'El archivo de video no puede superar 1GB.',
+            'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
             'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
         ]);
 
@@ -333,11 +348,17 @@ class VideoController extends Controller
             'category_id' => $request->category_id,
             'division' => 'unica', // Jugadores no especifican división, se asigna automáticamente
             'match_date' => now()->toDateString(),
-            'status' => 'pending'
+            'status' => 'pending',
+            'processing_status' => 'pending'
         ]);
 
+        // Dispatch compression job to queue
+        CompressVideoJob::dispatch($video->id);
+
+        \Log::info("Player video {$video->id} uploaded successfully, compression job dispatched to queue");
+
         return redirect()->route('player.videos')
-            ->with('success', 'Video subido exitosamente. Un analista lo revisará pronto.');
+            ->with('success', 'Video subido exitosamente. Se está comprimiendo en segundo plano. Un analista lo revisará pronto.');
     }
 
     /**

@@ -17,7 +17,7 @@
                         Asignaciones de Videos
                     </h3>
                     <div class="card-tools">
-                        @if(auth()->user()->role === 'analista')
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                             <a href="{{ route('analyst.assignments.create') }}" class="btn btn-rugby">
                                 <i class="fas fa-plus"></i> Nueva Asignación
                             </a>
@@ -115,8 +115,8 @@
                                                        class="btn btn-sm btn-outline-primary" title="Ver Detalles">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    @if(auth()->user()->role === 'analista' && $assignment->status !== 'completado')
-                                                        <a href="{{ route('analyst.assignments.edit', $assignment) }}" 
+                                                    @if(in_array(auth()->user()->role, ['analista', 'entrenador']) && $assignment->status !== 'completado')
+                                                        <a href="{{ route('analyst.assignments.edit', $assignment) }}"
                                                            class="btn btn-sm btn-outline-warning" title="Editar">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
@@ -144,7 +144,7 @@
                         <div class="text-center py-5">
                             <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No hay asignaciones disponibles</h5>
-                            @if(auth()->user()->role === 'analista')
+                            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                                 <p class="text-muted">Comienza creando una nueva asignación de video</p>
                                 <a href="{{ route('analyst.assignments.create') }}" class="btn btn-rugby">
                                     <i class="fas fa-plus"></i> Nueva Asignación

@@ -34,7 +34,8 @@
                                         <label class="custom-file-label" for="video_file">Seleccionar archivo de video...</label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 1.2GB
+                                        Formatos soportados: MP4, MOV, AVI, WEBM, MKV. Tamaño máximo: 8GB
+                                        <br><strong>Nota:</strong> Videos grandes serán comprimidos automáticamente para optimizar la reproducción.
                                     </small>
                                     @error('video_file')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -354,10 +355,10 @@ $(document).ready(function() {
         }
 
         var file = fileInput.files[0];
-        var maxSize = 1.2 * 1024 * 1024 * 1024; // 1.2GB
-        
+        var maxSize = 8 * 1024 * 1024 * 1024; // 8GB
+
         if (file.size > maxSize) {
-            alert('El archivo es demasiado grande. El tamaño máximo es 1.2GB.');
+            alert('El archivo es demasiado grande. El tamaño máximo es 8GB.');
             return false;
         }
 
@@ -375,35 +376,58 @@ $(document).ready(function() {
     
     function uploadWithProgress(formData) {
         var xhr = new XMLHttpRequest();
-        
+        var processingTimeouts = [];
+
+        // Mensajes progresivos - cada uno aparece UNA sola vez
+        var processingSteps = [
+            { delay: 0, message: '<i class="fas fa-spinner fa-spin text-warning"></i> Almacenando video en servidor seguro...' },
+            { delay: 6000, message: '<i class="fas fa-check text-success"></i> Video almacenado<br><i class="fas fa-spinner fa-spin text-warning"></i> Analizando duración y calidad del video...' },
+            { delay: 15000, message: '<i class="fas fa-check text-success"></i> Análisis completado<br><i class="fas fa-spinner fa-spin text-warning"></i> Creando registro del partido en el sistema...' },
+            { delay: 30000, message: '<i class="fas fa-check text-success"></i> Registro creado<br><i class="fas fa-spinner fa-spin text-warning"></i> Preparando cola de optimización automática...' },
+            { delay: 45000, message: '<i class="fas fa-check text-success"></i> Cola configurada<br><i class="fas fa-spinner fa-spin text-warning"></i> Guardando configuración final...' }
+        ];
+
         // Progress tracking
         xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable) {
                 var percentComplete = Math.round((e.loaded / e.total) * 100);
                 $('#progressBar').css('width', percentComplete + '%');
                 $('#progressText').text(percentComplete + '%');
-                
+
                 // Update status text
                 if (percentComplete < 100) {
                     var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
                     var total = (e.total / (1024 * 1024)).toFixed(1);
-                    $('#uploadStatus').text(`Subiendo: ${loaded}MB / ${total}MB`);
+                    $('#uploadStatus').html(`<i class="fas fa-cloud-upload-alt"></i> Subiendo: ${loaded}MB / ${total}MB`);
                 } else {
-                    $('#uploadStatus').text('Procesando archivo...');
                     $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
+
+                    // Ejecutar secuencia de mensajes progresivos (no se repiten)
+                    processingSteps.forEach(function(step) {
+                        var timeout = setTimeout(function() {
+                            $('#uploadStatus').html(step.message);
+                        }, step.delay);
+                        processingTimeouts.push(timeout);
+                    });
                 }
             }
         });
         
         // Upload completion
         xhr.addEventListener('load', function() {
+            // Limpiar todos los timeouts pendientes
+            processingTimeouts.forEach(function(timeout) {
+                clearTimeout(timeout);
+            });
+            processingTimeouts = [];
+
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').text('Video subido exitosamente');
-                    
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano. Estará listo para análisis en 45-60 minutos.</small>');
+
                     // Redirect after short delay
                     setTimeout(function() {
                         if (response.redirect) {
@@ -411,30 +435,36 @@ $(document).ready(function() {
                         } else {
                             window.location.href = '/videos';
                         }
-                    }, 1500);
+                    }, 3500);
                 } catch (e) {
                     // If not JSON, assume it's a redirect response
                     $('#progressBar').css('background-color', '#28a745'); // Verde éxito
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').text('Video subido exitosamente');
-                    
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
+
                     setTimeout(function() {
                         window.location.href = '/videos';
-                    }, 1500);
+                    }, 3500);
                 }
             } else {
                 $('#progressBar').css('background-color', '#dc3545'); // Rojo error
                 $('#progressText').text('Error');
-                $('#uploadStatus').text('Error en la subida. Código: ' + xhr.status);
+                $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error en la subida. Código: ' + xhr.status);
                 $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
             }
         });
-        
+
         // Upload error
         xhr.addEventListener('error', function() {
+            // Limpiar todos los timeouts pendientes
+            processingTimeouts.forEach(function(timeout) {
+                clearTimeout(timeout);
+            });
+            processingTimeouts = [];
+
             $('#progressBar').css('background-color', '#dc3545'); // Rojo error
             $('#progressText').text('Error');
-            $('#uploadStatus').text('Error de conexión durante la subida');
+            $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error de conexión durante la subida');
             $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
         });
         

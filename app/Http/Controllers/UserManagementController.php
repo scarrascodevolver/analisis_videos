@@ -8,16 +8,95 @@ use App\Models\UserProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserManagementController extends Controller
 {
     /**
      * Display a listing of users
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['profile.category'])->get();
-        return view('admin.users.index', compact('users'));
+        // Categorías para filtros
+        $categories = Category::orderBy('name', 'asc')->get();
+
+        // Si es petición de DataTables, devolver JSON
+        if ($request->ajax()) {
+            return $this->getUsersDataTable($request);
+        }
+
+        return view('admin.users.index', compact('categories'));
+    }
+
+    /**
+     * Get users data for DataTables
+     */
+    private function getUsersDataTable(Request $request)
+    {
+        $query = User::with(['profile.category']);
+
+        // Filtro por rol
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Filtro por categoría
+        if ($request->filled('category_id')) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('user_category_id', $request->category_id);
+            });
+        }
+
+        return DataTables::of($query)
+            ->addColumn('avatar', function($user) {
+                if ($user->profile && $user->profile->avatar) {
+                    return '<img src="' . asset('storage/' . $user->profile->avatar) . '"
+                            class="img-circle"
+                            style="width: 25px; height: 25px; object-fit: cover;"
+                            alt="Avatar">';
+                }
+                return '';
+            })
+            ->editColumn('name', function($user) {
+                return '<strong>' . e($user->name) . '</strong>';
+            })
+            ->addColumn('role_badge', function($user) {
+                $roleColors = [
+                    'jugador' => 'primary',
+                    'entrenador' => 'success',
+                    'analista' => 'warning',
+                    'staff' => 'info',
+                    'director_club' => 'danger',
+                    'director_tecnico' => 'secondary'
+                ];
+                $color = $roleColors[$user->role] ?? 'dark';
+                return '<span class="badge badge-' . $color . '">' . ucfirst($user->role) . '</span>';
+            })
+            ->addColumn('category_badge', function($user) {
+                if ($user->profile && $user->profile->category) {
+                    return '<span class="badge badge-info">' . e($user->profile->category->name) . '</span>';
+                }
+                return '<span class="text-muted">-</span>';
+            })
+            ->editColumn('created_at', function($user) {
+                return '<small class="text-muted">' . $user->created_at->format('d/m/Y') . '</small>';
+            })
+            ->addColumn('actions', function($user) {
+                $canDelete = $user->id !== auth()->id();
+                return view('admin.users._actions', compact('user', 'canDelete'))->render();
+            })
+            ->filter(function ($query) use ($request) {
+                // Búsqueda global en nombre y email
+                if ($request->has('search') && $request->search['value'] != null) {
+                    $search = $request->search['value'];
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
+                }
+            })
+            ->rawColumns(['avatar', 'name', 'role_badge', 'category_badge', 'created_at', 'actions'])
+            ->make(true);
     }
 
     /**

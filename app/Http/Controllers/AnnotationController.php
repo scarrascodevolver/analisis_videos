@@ -21,6 +21,14 @@ class AnnotationController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Verificar que el usuario sea analista o entrenador
+        if (!in_array(Auth::user()->role, ['analista', 'entrenador'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para crear anotaciones. Solo analistas y entrenadores pueden anotar videos.'
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'video_id' => 'required|exists:videos,id',
             'timestamp' => 'required|numeric|min:0',

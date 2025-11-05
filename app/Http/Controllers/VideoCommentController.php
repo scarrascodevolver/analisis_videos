@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Video;
 use App\Models\VideoComment;
+use App\Models\User;
+use App\Models\VideoAssignment;
+use App\Models\CommentMention;
+use App\Notifications\VideoCommentMention as VideoCommentMentionNotification;
 use Illuminate\Http\Request;
 
 class VideoCommentController extends Controller
@@ -27,7 +31,7 @@ class VideoCommentController extends Controller
             }
         }
 
-        $comment = \App\Models\VideoComment::create([
+        $comment = VideoComment::create([
             'video_id' => $video->id,
             'user_id' => auth()->id(),
             'parent_id' => $request->parent_id,
@@ -38,11 +42,15 @@ class VideoCommentController extends Controller
             'status' => 'pendiente'
         ]);
 
+        // 🎯 DETECTAR MENCIONES con @
+        $this->processMentions($comment, $video, $request->comment);
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'comment' => $comment->load('user'),
-                'formatted_timestamp' => $comment->formatted_timestamp
+                'comment' => $comment->load('user', 'mentionedUsers'),
+                'formatted_timestamp' => $comment->formatted_timestamp,
+                'mentioned_users' => $comment->mentionedUsers->pluck('name')
             ]);
         }
 
@@ -105,5 +113,61 @@ class VideoCommentController extends Controller
         }
 
         return back()->with('success', 'Comentario marcado como completado');
+    }
+
+    /**
+     * Procesar menciones en comentarios con @
+     */
+    protected function processMentions(VideoComment $comment, Video $video, string $commentText)
+    {
+        // Regex para detectar menciones: @Nombre Apellido o @NombreApellido
+        // Soporta acentos y ñ
+        preg_match_all('/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)/u', $commentText, $matches);
+
+        if (empty($matches[1])) {
+            return; // No hay menciones
+        }
+
+        $mentionedNames = array_unique($matches[1]);
+
+        // Buscar usuarios mencionados por nombre (cualquier rol)
+        $mentionedUsers = User::whereIn('name', $mentionedNames)->get();
+
+        if ($mentionedUsers->isEmpty()) {
+            return; // Ningún usuario encontrado
+        }
+
+        foreach ($mentionedUsers as $user) {
+            // No te puedes mencionar a ti mismo
+            if ($user->id === auth()->id()) {
+                continue;
+            }
+
+            // 1. Crear registro de mención
+            CommentMention::create([
+                'comment_id' => $comment->id,
+                'mentioned_user_id' => $user->id,
+                'mentioned_by_user_id' => auth()->id(),
+                'is_read' => false,
+            ]);
+
+            // 2. Enviar notificación (email + database)
+            $user->notify(new VideoCommentMentionNotification($video, $comment, auth()->user()));
+
+            // 3. Si el mencionado es JUGADOR → crear assignment para que aparezca en "Mis Videos"
+            if ($user->role === 'jugador') {
+                VideoAssignment::firstOrCreate(
+                    [
+                        'video_id' => $video->id,
+                        'assigned_to' => $user->id,
+                    ],
+                    [
+                        'assigned_by' => auth()->id(),
+                        'comment_id' => $comment->id,
+                        'notes' => "Mencionado en comentario por " . auth()->user()->name,
+                    ]
+                );
+            }
+        }
     }
 }

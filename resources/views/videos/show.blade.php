@@ -17,8 +17,18 @@
                     <h3 class="card-title">
                         <i class="fas fa-play"></i>
                         {{ $video->title }}
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> <span id="viewCount">{{ $video->view_count }}</span> visualizaciones
+                            • <i class="fas fa-users"></i> <span id="uniqueViewers">{{ $video->unique_viewers }}</span> usuarios
+                        </small>
                     </h3>
                     <div class="card-tools">
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
+                            <button id="viewStatsBtn" class="btn btn-sm btn-rugby-light mr-2" data-toggle="modal" data-target="#statsModal">
+                                <i class="fas fa-eye"></i> Visualizaciones
+                            </button>
+                        @endif
                         <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
                             <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
                         </button>
@@ -82,6 +92,7 @@
                                     <div class="duration-picker-container">
                                         <label style="color: white; font-size: 11px;">Duración:</label>
                                         <select id="annotationDuration" style="width: 60px; height: 25px; border: none; border-radius: 3px; background: white;">
+                                            <option value="1">1s</option>
                                             <option value="2">2s</option>
                                             <option value="4" selected>4s</option>
                                             <option value="6">6s</option>
@@ -117,9 +128,11 @@
                             <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold mr-2">
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
                             </button>
-                            <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
-                                <i class="fas fa-paint-brush"></i> Anotar
-                            </button>
+                            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                                <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
+                                    <i class="fas fa-paint-brush"></i> Anotar
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -219,9 +232,9 @@
                         </div>
 
                         <div class="form-group mb-2">
-                            <label class="mb-1">Comentario</label>
-                            <textarea name="comment" class="form-control" rows="1"
-                                      placeholder="Describe lo que observas..." required></textarea>
+                            <label class="mb-1">Comentario <small class="text-muted">(Usa @ para mencionar usuarios)</small></label>
+                            <textarea name="comment" class="form-control" rows="3"
+                                      placeholder="Describe lo que observas... (Escribe @ para mencionar)" required></textarea>
                         </div>
 
                         <div class="row">
@@ -302,18 +315,36 @@
                                     <small class="text-muted ml-2">
                                         {{ $comment->created_at->diffForHumans() }}
                                     </small>
+
+                                    <!-- Badges de menciones -->
+                                    @if($comment->mentionedUsers && $comment->mentionedUsers->count() > 0)
+                                        <div class="mt-2">
+                                            <span class="badge badge-light border">
+                                                <i class="fas fa-at text-primary"></i>
+                                                Menciona a:
+                                                @foreach($comment->mentionedUsers as $mentionedUser)
+                                                    <span class="badge badge-{{
+                                                        $mentionedUser->role === 'jugador' ? 'info' :
+                                                        ($mentionedUser->role === 'entrenador' ? 'success' : 'primary')
+                                                    }} ml-1">
+                                                        {{ $mentionedUser->name }}
+                                                    </span>
+                                                @endforeach
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-secondary" data-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
-                                    <div class="dropdown-menu">
-                                        <button class="dropdown-item reply-btn" data-comment-id="{{ $comment->id }}">
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <button class="dropdown-item dropdown-item-sm reply-btn" data-comment-id="{{ $comment->id }}">
                                             <i class="fas fa-reply"></i> Responder
                                         </button>
                                         @if($comment->user_id === auth()->id())
                                             <div class="dropdown-divider"></div>
-                                            <button class="dropdown-item text-danger delete-comment-btn"
+                                            <button class="dropdown-item dropdown-item-sm text-danger delete-comment-btn"
                                                     data-comment-id="{{ $comment->id }}">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
@@ -326,15 +357,11 @@
                             <div class="reply-form mt-3" id="replyForm{{ $comment->id }}" style="display: none;">
                                 <form class="reply-form-submit" data-comment-id="{{ $comment->id }}" data-video-id="{{ $video->id }}">
                                     @csrf
-                                    <div class="input-group">
-                                        <textarea class="form-control" name="reply_comment" rows="2" 
-                                                  placeholder="Escribe tu respuesta..." required></textarea>
-                                        <div class="input-group-append">
-                                            <button class="btn btn-rugby" type="submit">
-                                                <i class="fas fa-reply"></i> Responder
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
                                 </form>
                             </div>
 
@@ -342,30 +369,7 @@
                             @if($comment->replies->count() > 0)
                                 <div class="replies ml-4 mt-3">
                                     @foreach($comment->replies as $reply)
-                                        <div class="reply border-left border-primary pl-3 mb-2">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1">
-                                                    <p class="mb-1">{{ $reply->comment }}</p>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-user"></i> {{ $reply->user->name }}
-                                                        <span class="badge badge-sm badge-{{
-                                                            $reply->user->role === 'analista' ? 'primary' :
-                                                            ($reply->user->role === 'entrenador' ? 'success' : 'info')
-                                                        }}">
-                                                            {{ ucfirst($reply->user->role) }}
-                                                        </span>
-                                                        - {{ $reply->created_at->diffForHumans() }}
-                                                    </small>
-                                                </div>
-                                                @if($reply->user_id === auth()->id())
-                                                    <button class="btn btn-sm btn-outline-danger delete-comment-btn"
-                                                            data-comment-id="{{ $reply->id }}"
-                                                            title="Eliminar respuesta">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </div>
+                                        @include('videos.partials.reply', ['reply' => $reply, 'video' => $video])
                                     @endforeach
                                 </div>
                             @endif
@@ -398,6 +402,71 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Visualizaciones -->
+    @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
+    <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
+                    <h5 class="modal-title" id="statsModalLabel">
+                        <i class="fas fa-eye"></i> Visualizaciones del Video
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-eye"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Visualizaciones</span>
+                                    <span class="info-box-number" id="modalTotalViews">{{ $video->view_count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-users"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Usuarios Únicos</span>
+                                    <span class="info-box-number" id="modalUniqueViewers">{{ $video->unique_viewers }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3"><i class="fas fa-list"></i> Detalle por Usuario</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm" id="statsTable">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th class="text-center">Vistas</th>
+                                    <th>Última Visualización</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando visualizaciones...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-rugby" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 @endsection
 
 @section('js')
@@ -410,7 +479,131 @@ $(document).ready(function() {
     // Datos de comentarios para el timeline y notificaciones
     const commentsData = @json($comments);
 
-    
+    // ========== VIDEO VIEW TRACKING ==========
+    let currentViewId = null;
+    let trackingActive = false;
+    let durationUpdateInterval = null;
+    let viewTracked = false; // Flag para evitar contar múltiples veces
+
+    // Track view when user watches at least 20 seconds + auto-complete at 90%
+    video.addEventListener('timeupdate', function() {
+        // 1. Contar vista después de 20 segundos de reproducción
+        if (!viewTracked && video.currentTime >= 20) {
+            trackView();
+            viewTracked = true;
+        }
+
+        // 2. Auto-completar al 90% del video
+        if (currentViewId && video.duration > 0) {
+            const percentWatched = (video.currentTime / video.duration) * 100;
+            if (percentWatched >= 90) {
+                markVideoCompleted();
+            }
+        }
+    });
+
+    function trackView() {
+        fetch('{{ route("api.videos.track-view", $video) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && !data.cooldown) {
+                currentViewId = data.view_id;
+                trackingActive = true;
+
+                // Update view count in UI
+                updateViewCount(data.total_views, data.unique_viewers);
+
+                // Start duration tracking
+                startDurationTracking();
+
+                console.log('View tracked successfully');
+            } else if (data.cooldown) {
+                console.log('View within cooldown period');
+            }
+        })
+        .catch(error => console.error('Error tracking view:', error));
+    }
+
+    function startDurationTracking() {
+        // Update duration every 10 seconds
+        if (durationUpdateInterval) {
+            clearInterval(durationUpdateInterval);
+        }
+
+        durationUpdateInterval = setInterval(() => {
+            if (currentViewId && !video.paused) {
+                updateWatchDuration();
+            }
+        }, 10000); // 10 seconds
+    }
+
+    function updateWatchDuration() {
+        if (!currentViewId) return;
+
+        fetch('{{ route("api.videos.update-duration", $video) }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                view_id: currentViewId,
+                duration: Math.floor(video.currentTime)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Duration updated');
+            }
+        })
+        .catch(error => console.error('Error updating duration:', error));
+    }
+
+    function markVideoCompleted() {
+        if (!currentViewId) return;
+
+        fetch('{{ route("api.videos.mark-completed", $video) }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                view_id: currentViewId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Video marked as completed');
+                // Only mark once
+                currentViewId = null;
+            }
+        })
+        .catch(error => console.error('Error marking completed:', error));
+    }
+
+    function updateViewCount(totalViews, uniqueViewers) {
+        const viewCountElement = document.getElementById('viewCount');
+        const uniqueViewersElement = document.getElementById('uniqueViewers');
+
+        if (viewCountElement) {
+            viewCountElement.textContent = totalViews;
+        }
+        if (uniqueViewersElement) {
+            uniqueViewersElement.textContent = uniqueViewers;
+        }
+    }
+    // ========== END VIDEO VIEW TRACKING ==========
+
+
     // Basic time formatting function
     function formatTime(seconds) {
         const hours = Math.floor(seconds / 3600);
@@ -1193,15 +1386,209 @@ $(document).ready(function() {
                     }
 
                     // Mostrar mensaje de éxito
-                    toastr.success('Comentario eliminado exitosamente');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Comentario eliminado exitosamente');
+                    }
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
-                    toastr.error('No tienes permisos para eliminar este comentario');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('No tienes permisos para eliminar este comentario');
+                    }
                 } else {
-                    toastr.error('Error al eliminar el comentario');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al eliminar el comentario');
+                    }
                 }
+            }
+        });
+    });
+
+    // ===========================
+    // SISTEMA DE RESPUESTAS A COMENTARIOS
+    // ===========================
+
+    // Mostrar/ocultar formulario de respuesta
+    $(document).on('click', '.reply-btn', function() {
+        const commentId = $(this).data('comment-id');
+        const replyForm = $(`#replyForm${commentId}`);
+
+        // Ocultar otros formularios de respuesta abiertos
+        $('.reply-form').not(replyForm).slideUp();
+
+        // Toggle del formulario actual
+        replyForm.slideToggle(300, function() {
+            if (replyForm.is(':visible')) {
+                const textarea = replyForm.find('textarea');
+                textarea.focus();
+
+                // Auto-scroll suave al textarea
+                $('html, body').animate({
+                    scrollTop: textarea.offset().top - 100
+                }, 500);
+            }
+        });
+    });
+
+    // Enviar respuesta via AJAX
+    $(document).on('submit', '.reply-form-submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const commentId = form.data('comment-id');
+        const videoId = form.data('video-id');
+        const textarea = form.find('textarea[name="reply_comment"]');
+        const replyText = textarea.val().trim();
+        const submitBtn = form.find('button[type="submit"]');
+
+        // Prevenir doble-submit
+        if (submitBtn.prop('disabled')) {
+            return; // Ya está enviando, ignorar
+        }
+
+        // Validación
+        if (!replyText) {
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Por favor escribe una respuesta');
+            }
+            return;
+        }
+
+        // Deshabilitar botón durante envío
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/videos/${videoId}/comments`,
+            type: 'POST',
+            data: {
+                comment: replyText,
+                parent_id: commentId,
+                timestamp_seconds: 0, // Las respuestas no tienen timestamp propio
+                category: 'general', // Las respuestas heredan categoría del padre
+                priority: 'media' // Prioridad por defecto para respuestas
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Limpiar textarea
+                    textarea.val('');
+
+                    // Ocultar formulario
+                    form.closest('.reply-form').slideUp();
+
+                    // Crear HTML de la respuesta
+                    const userName = '{{ auth()->user()->name }}';
+                    const userRole = '{{ auth()->user()->role }}';
+                    const userId = {{ auth()->id() }};
+                    const badgeClass = userRole === 'analista' ? 'primary' : (userRole === 'entrenador' ? 'success' : 'info');
+                    const roleLabel = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+
+                    const replyHtml = `
+                        <div class="reply comment-item border-left border-primary pl-3 mb-2" data-reply-id="${response.comment.id}" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <p class="mb-1">${replyText}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> ${userName}
+                                        <span class="badge badge-sm badge-${badgeClass}">
+                                            ${roleLabel}
+                                        </span>
+                                        - Hace unos segundos
+                                    </small>
+                                    <!-- Botón para responder a esta respuesta -->
+                                    <button class="btn btn-sm btn-link text-rugby p-0 ml-2 reply-btn"
+                                            data-comment-id="${response.comment.id}"
+                                            title="Responder a esta respuesta">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger delete-comment-btn"
+                                        data-comment-id="${response.comment.id}"
+                                        title="Eliminar respuesta">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Reply Form para respuestas anidadas -->
+                            <div class="reply-form mt-2" id="replyForm${response.comment.id}" style="display: none;">
+                                <form class="reply-form-submit" data-comment-id="${response.comment.id}" data-video-id="${videoId}">
+                                    @csrf
+                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Contenedor para respuestas anidadas -->
+                            <div class="replies ml-3 mt-2"></div>
+                        </div>
+                    `;
+
+                    // Buscar o crear la sección de respuestas
+                    // Primero buscar el contenedor de respuestas más cercano (inmediatamente después del reply-form)
+                    let repliesSection = form.closest('.reply-form').next('.replies');
+
+                    // Si no existe, buscar dentro del comment-item padre
+                    if (repliesSection.length === 0) {
+                        repliesSection = form.closest('.comment-item').find('> .replies').first();
+                    }
+
+                    // Si aún no existe, crear uno nuevo
+                    if (repliesSection.length === 0) {
+                        const isNestedReply = form.closest('.reply').length > 0;
+                        const marginClass = isNestedReply ? 'ml-3' : 'ml-4';
+                        const repliesSectionHtml = `<div class="replies ${marginClass} mt-3"></div>`;
+                        form.closest('.reply-form').after(repliesSectionHtml);
+                        repliesSection = form.closest('.reply-form').next('.replies');
+                    }
+
+                    // Agregar respuesta con animación
+                    repliesSection.append(replyHtml);
+                    repliesSection.find('.reply:last').slideDown(300);
+
+                    // Incrementar contador de comentarios
+                    const commentCountElement = $('.card-title:contains("Comentarios")');
+                    const currentCountMatch = commentCountElement.text().match(/\((\d+)\)/);
+                    if (currentCountMatch) {
+                        const currentCount = parseInt(currentCountMatch[1]);
+                        const newCount = currentCount + 1;
+                        commentCountElement.html(`<i class="fas fa-comments"></i> Comentarios (${newCount})`);
+                    }
+
+                    // Mostrar mensaje de éxito
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Respuesta agregada exitosamente');
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Error al enviar respuesta:', xhr);
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorMsg = 'Error de validación: ';
+                    Object.values(errors).forEach(error => {
+                        errorMsg += error[0] + ' ';
+                    });
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errorMsg);
+                    }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al enviar la respuesta. Por favor intenta de nuevo.');
+                    }
+                }
+            },
+            complete: function() {
+                // Re-habilitar botón
+                submitBtn.prop('disabled', false).html('<i class="fas fa-reply"></i> Responder');
             }
         });
     });
@@ -1988,8 +2375,191 @@ $(document).ready(function() {
     window.displayAnnotation = displayAnnotation;
     window.clearDisplayedAnnotation = clearDisplayedAnnotation;
 
+    // ========== STATS MODAL HANDLER ==========
+    @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
+    $('#statsModal').on('show.bs.modal', function () {
+        loadVideoStats();
+    });
+
+    function loadVideoStats() {
+        fetch('{{ route("api.videos.stats", $video) }}', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update totals
+                $('#modalTotalViews').text(data.total_views);
+                $('#modalUniqueViewers').text(data.unique_viewers);
+
+                // Update table
+                const tbody = $('#statsTableBody');
+                tbody.empty();
+
+                if (data.stats.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                <i class="fas fa-info-circle"></i> No hay visualizaciones registradas aún
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    data.stats.forEach(stat => {
+                        // Usar timestamp Unix si está disponible, sino parsear fecha
+                        const lastViewed = stat.last_viewed_timestamp
+                            ? formatRelativeTimeFromTimestamp(stat.last_viewed_timestamp)
+                            : formatRelativeTime(stat.last_viewed);
+                        tbody.append(`
+                            <tr>
+                                <td><i class="fas fa-user"></i> ${stat.user.name}</td>
+                                <td class="text-center"><span class="badge badge-success">${stat.view_count}x</span></td>
+                                <td><i class="fas fa-clock"></i> ${lastViewed}</td>
+                            </tr>
+                        `);
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            $('#statsTableBody').html(`
+                <tr>
+                    <td colspan="3" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error al cargar visualizaciones
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    // Función que usa timestamp Unix (independiente de timezone)
+    function formatRelativeTimeFromTimestamp(timestamp) {
+        const nowTimestamp = Math.floor(Date.now() / 1000); // Timestamp actual en segundos
+        const diffSecs = nowTimestamp - timestamp;
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Hace unos segundos';
+        if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+
+        // Mostrar horas y minutos para mayor precisión
+        if (diffHours < 24) {
+            const remainingMins = diffMins % 60;
+
+            // Si tiene horas y minutos
+            if (diffHours > 0 && remainingMins > 0) {
+                return `Hace ${diffHours}h ${remainingMins}min`;
+            }
+            // Si solo tiene horas exactas (sin minutos restantes)
+            if (diffHours > 0 && remainingMins === 0) {
+                return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            }
+            // Si tiene menos de 1 hora (solo minutos)
+            return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        }
+
+        if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `Hace ${weeks} semana${weeks > 1 ? 's' : ''}`;
+        }
+        const months = Math.floor(diffDays / 30);
+        return `Hace ${months} mes${months > 1 ? 'es' : ''}`;
+    }
+
+    // Función legacy que parsea string de fecha (puede tener problemas de timezone)
+    function formatRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Hace unos segundos';
+        if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+
+        // Mostrar horas y minutos para mayor precisión
+        if (diffHours < 24) {
+            const remainingMins = diffMins % 60;
+
+            // Si tiene horas y minutos
+            if (diffHours > 0 && remainingMins > 0) {
+                return `Hace ${diffHours}h ${remainingMins}min`;
+            }
+            // Si solo tiene horas exactas (sin minutos restantes)
+            if (diffHours > 0 && remainingMins === 0) {
+                return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            }
+            // Si tiene menos de 1 hora (solo minutos)
+            return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        }
+
+        if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `Hace ${weeks} semana${weeks > 1 ? 's' : ''}`;
+        }
+        const months = Math.floor(diffDays / 30);
+        return `Hace ${months} mes${months > 1 ? 'es' : ''}`;
+    }
+    @endif
+    // ========== END STATS MODAL HANDLER ==========
+
+    // ========== TRIBUTE.JS - AUTOCOMPLETADO DE MENCIONES ==========
+    // Cargar usuarios disponibles para mencionar
+    const allUsers = @json(\App\Models\User::select('id', 'name', 'role')->get());
+
+    // Configurar Tribute.js para el textarea de comentarios
+    const tribute = new Tribute({
+        values: allUsers.map(user => ({
+            key: user.name,
+            value: user.name,
+            role: user.role
+        })),
+        selectTemplate: function(item) {
+            // Agregar espacio después de la mención para evitar sugerencias continuas
+            return '@' + item.original.value + ' ';
+        },
+        menuItemTemplate: function(item) {
+            const badgeClass = item.original.role === 'jugador' ? 'badge-info' :
+                              (item.original.role === 'entrenador' ? 'badge-success' :
+                              (item.original.role === 'analista' ? 'badge-primary' : 'badge-secondary'));
+
+            return `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>${item.original.value}</span>
+                    <span class="badge ${badgeClass} ml-2">${item.original.role}</span>
+                </div>
+            `;
+        },
+        noMatchTemplate: function() {
+            return '<span style="visibility: hidden;"></span>';
+        },
+        lookup: 'key',
+        fillAttr: 'value',
+        allowSpaces: true,
+        menuShowMinLength: 0
+    });
+
+    // Attach tribute to comment textareas
+    tribute.attach(document.querySelectorAll('textarea[name="comment"], textarea[name="reply_comment"]'));
+
+    // ========== END TRIBUTE.JS ==========
+
 });
 </script>
+
+<!-- Tribute.js CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">
+<script src="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.min.js"></script>
 
 <style>
 @keyframes fadeIn {
@@ -2006,6 +2576,31 @@ $(document).ready(function() {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Dropdown items más pequeños y compactos */
+.dropdown-item-sm {
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+
+.dropdown-item-sm i {
+    font-size: 0.75rem !important;
+    margin-right: 0.35rem !important;
+    width: 12px !important;
+}
+
+.comment-item .dropdown-menu,
+.reply .dropdown-menu {
+    min-width: 7.5rem !important;
+    font-size: 0.8125rem !important;
+    padding: 0.25rem 0 !important;
+}
+
+.comment-item .dropdown-divider {
+    margin: 0.25rem 0 !important;
 }
 
 .comment-notification {
