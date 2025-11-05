@@ -171,12 +171,20 @@ Route::get('/evaluacion/completada', function() {
     return view('evaluations.success');
 })->name('evaluations.success');
 
-// API para búsqueda de jugadores
+// API para búsqueda de jugadores (solo de la misma categoría)
 Route::get('/api/search-players', function(Illuminate\Http\Request $request) {
     $query = $request->input('q', '');
+    $currentUser = auth()->user();
+    $categoryId = $currentUser->profile->user_category_id ?? null;
 
     $players = App\Models\User::where('role', 'jugador')
+        ->where('id', '!=', $currentUser->id) // Excluir a sí mismo
         ->where('name', 'LIKE', "%{$query}%")
+        ->when($categoryId, function($q) use ($categoryId) {
+            return $q->whereHas('profile', function($query) use ($categoryId) {
+                $query->where('user_category_id', $categoryId);
+            });
+        })
         ->with('profile.category')
         ->limit(10)
         ->get()
