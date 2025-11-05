@@ -30,7 +30,7 @@
                     <span class="badge badge-info ml-2" id="selectedPlayerPosition"></span>
                     <span class="badge badge-secondary ml-1" id="selectedPlayerCategory"></span>
                 </div>
-                <button class="btn btn-sm btn-outline-danger" id="changePlayerBtn">
+                <button class="btn btn-sm btn-outline-dark" id="changePlayerBtn">
                     <i class="fas fa-sync"></i> Cambiar
                 </button>
             </div>
@@ -577,25 +577,32 @@ $(document).ready(function() {
     border-color: #163d22;
 }
 
-/* Slider colores Los Troncos (negro → verde) */
+/* Slider colores Los Troncos (verde claro → verde oscuro) */
 .custom-range::-webkit-slider-thumb {
-    background-color: #000000; /* Negro */
+    background-color: #000000; /* Negro (círculo) */
+    border: 2px solid #1e4d2b; /* Borde verde */
 }
 
 .custom-range::-moz-range-thumb {
     background-color: #000000;
+    border: 2px solid #1e4d2b;
 }
 
 .custom-range::-ms-thumb {
     background-color: #000000;
+    border: 2px solid #1e4d2b;
 }
 
 .custom-range::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, #2c2c2c 0%, #1e4d2b 100%); /* Negro → Verde */
+    background: linear-gradient(to right, #7cb342 0%, #1e4d2b 100%); /* Verde claro → Verde oscuro */
+    height: 8px;
+    border-radius: 4px;
 }
 
 .custom-range::-moz-range-track {
-    background: linear-gradient(to right, #2c2c2c 0%, #1e4d2b 100%);
+    background: linear-gradient(to right, #7cb342 0%, #1e4d2b 100%);
+    height: 8px;
+    border-radius: 4px;
 }
 
 /* Slider advertencia (rojo) */
