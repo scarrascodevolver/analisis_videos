@@ -128,9 +128,11 @@
                             <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold mr-2">
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
                             </button>
-                            <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
-                                <i class="fas fa-paint-brush"></i> Anotar
-                            </button>
+                            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                                <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
+                                    <i class="fas fa-paint-brush"></i> Anotar
+                                </button>
+                            @endif
                         </div>
                     </div>
 
