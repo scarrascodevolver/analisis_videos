@@ -159,3 +159,34 @@ Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
         return 'VideoStreamController Error: ' . $e->getMessage();
     }
 });
+
+// ======================================
+// AUTOEVALUACIÓN DE JUGADORES (Prototipo UI)
+// ======================================
+Route::get('/evaluacion', function() {
+    return view('evaluations.index');
+})->name('evaluations.index');
+
+Route::get('/evaluacion/paso-1', function() {
+    return view('evaluations.step1');
+})->name('evaluations.step1');
+
+Route::get('/evaluacion/paso-2', function() {
+    return view('evaluations.step2');
+})->name('evaluations.step2');
+
+Route::get('/evaluacion/paso-3', function() {
+    return view('evaluations.step3');
+})->name('evaluations.step3');
+
+Route::get('/evaluacion/paso-4', function() {
+    return view('evaluations.step4');
+})->name('evaluations.step4');
+
+Route::get('/evaluacion/paso-5', function() {
+    return view('evaluations.step5');
+})->name('evaluations.step5');
+
+Route::get('/evaluacion/completada', function() {
+    return view('evaluations.success');
+})->name('evaluations.success');
