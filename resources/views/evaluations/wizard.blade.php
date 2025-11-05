@@ -15,8 +15,8 @@
                 <span class="text-muted">Progreso</span>
                 <span class="text-rugby font-weight-bold" id="progressText">Paso 1 de 5</span>
             </div>
-            <div class="progress" style="height: 10px;">
-                <div class="progress-bar bg-rugby" role="progressbar" style="width: 0%" id="progressBarFill"></div>
+            <div class="progress" style="height: 10px; background-color: #e0e0e0;">
+                <div class="progress-bar" role="progressbar" style="width: 0%; background-color: #7cb342;" id="progressBarFill"></div>
             </div>
         </div>
 
