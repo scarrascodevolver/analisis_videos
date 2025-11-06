@@ -406,22 +406,33 @@ $(document).ready(function() {
 
         // Colores Los Troncos (negro → verde)
         $badge.removeClass('badge-danger badge-dark badge-secondary bg-rugby text-white');
+        $badge.removeAttr('style'); // Limpiar estilos inline anteriores
 
         const isWarning = $(this).hasClass('warning-slider');
 
         if (isWarning) {
             // Actitud negativa: invertir colores (más rojo = peor)
-            if (value >= 7) $badge.addClass('badge-danger');
-            else if (value >= 4) $badge.addClass('badge-secondary text-white');
-            else $badge.addClass('bg-rugby text-white');
+            if (value >= 7) {
+                $badge.addClass('badge-danger');
+                $badge.css({'color': '#fff', 'background-color': '#dc3545'}); // Rojo con texto blanco
+            } else if (value >= 4) {
+                $badge.addClass('badge-secondary');
+                $badge.css({'color': '#fff', 'background-color': '#6c757d'}); // Gris con texto blanco
+            } else {
+                $badge.addClass('bg-rugby');
+                $badge.css({'color': '#fff', 'background-color': '#1e4d2b'}); // Verde con texto blanco
+            }
         } else {
             // Normal: negro bajo → verde alto
             if (value <= 3) {
-                $badge.addClass('badge-dark text-white'); // Negro
+                $badge.addClass('badge-dark');
+                $badge.css({'color': '#fff', 'background-color': '#343a40'}); // Negro con texto blanco
             } else if (value <= 6) {
-                $badge.addClass('badge-secondary text-white'); // Gris oscuro
+                $badge.addClass('badge-secondary');
+                $badge.css({'color': '#fff', 'background-color': '#6c757d'}); // Gris con texto blanco
             } else {
-                $badge.addClass('bg-rugby text-white'); // Verde
+                $badge.addClass('bg-rugby');
+                $badge.css({'color': '#fff', 'background-color': '#1e4d2b'}); // Verde con texto blanco
             }
         }
     });
@@ -434,6 +445,7 @@ $(document).ready(function() {
 /* Colores del club rugby */
 .bg-rugby {
     background-color: #1e4d2b !important;
+    color: #fff !important;
 }
 
 .text-rugby {
@@ -497,6 +509,27 @@ $(document).ready(function() {
     font-size: 1.2rem;
     padding: 0.5rem 1rem;
     min-width: 50px;
+}
+
+/* Fix para texto visible en badges de evaluación */
+.evaluation-badge.bg-rugby {
+    color: white !important;
+}
+
+.evaluation-badge.text-white {
+    color: white !important;
+}
+
+.evaluation-badge.badge-dark {
+    color: white !important;
+}
+
+.evaluation-badge.badge-secondary {
+    color: white !important;
+}
+
+.evaluation-badge.badge-danger {
+    color: white !important;
 }
 
 /* Animaciones */
