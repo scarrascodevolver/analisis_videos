@@ -161,12 +161,12 @@ Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
 });
 
 // ======================================
-// EVALUACIÓN DE COMPAÑEROS (SPA)
+// EVALUACIÓN DE COMPAÑEROS
 // ======================================
 Route::middleware('auth')->group(function() {
-    Route::get('/evaluacion', function() {
-        return view('evaluations.wizard');
-    })->name('evaluations.index');
+    Route::get('/evaluacion', [App\Http\Controllers\EvaluationController::class, 'index'])->name('evaluations.index');
+    Route::get('/evaluacion/wizard/{player}', [App\Http\Controllers\EvaluationController::class, 'wizard'])->name('evaluations.wizard');
+    Route::post('/evaluacion/store', [App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
 
     Route::get('/evaluacion/completada', function() {
         return view('evaluations.success');
