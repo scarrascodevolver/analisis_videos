@@ -335,9 +335,15 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.*') ? 'active' : '' }}">
+                                <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.index') || request()->routeIs('evaluations.wizard') || request()->routeIs('evaluations.store') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-star"></i>
                                     <p>Evaluación de Jugadores</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('evaluations.dashboard') }}" class="nav-link {{ request()->routeIs('evaluations.dashboard') || request()->routeIs('evaluations.show') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-line"></i>
+                                    <p>Mis Resultados</p>
                                 </a>
                             </li>
                             <!-- Funcionalidades Futuras -->
@@ -369,7 +375,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('evaluations.dashboard') }}" class="nav-link {{ request()->routeIs('evaluations.dashboard') ? 'active' : '' }}">
+                                <a href="{{ route('evaluations.dashboard') }}" class="nav-link {{ request()->routeIs('evaluations.dashboard') || request()->routeIs('evaluations.show') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-chart-bar"></i>
                                     <p>Resultados de Evaluaciones</p>
                                 </a>

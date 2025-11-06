@@ -207,12 +207,52 @@ class EvaluationController extends Controller
     }
 
     /**
-     * Dashboard de resultados para entrenadores
+     * Dashboard de resultados para entrenadores y jugadores
      */
     public function dashboard()
     {
         $currentUser = auth()->user();
 
+        // Si es jugador, mostrar solo sus propios resultados
+        if ($currentUser->role === 'jugador') {
+            // Obtener solo el jugador actual
+            $players = User::where('id', $currentUser->id)
+                ->with(['profile', 'receivedEvaluations'])
+                ->get();
+
+            // Obtener jugadores de su categoría para calcular total posible
+            $categoryId = $currentUser->profile->user_category_id ?? null;
+            $totalInCategory = User::where('role', 'jugador')
+                ->where('id', '!=', $currentUser->id)
+                ->whereHas('profile', function($q) use ($categoryId) {
+                    if ($categoryId) {
+                        $q->where('user_category_id', $categoryId);
+                    }
+                })
+                ->count();
+
+            // Calcular estadísticas del jugador actual
+            $playersStats = $players->map(function($player) use ($totalInCategory) {
+                $evaluations = $player->receivedEvaluations;
+
+                return [
+                    'player' => $player,
+                    'average_score' => $evaluations->avg('total_score') ?? 0,
+                    'evaluations_count' => $evaluations->count(),
+                    'total_possible' => $totalInCategory,
+                    'completion_percentage' => $totalInCategory > 0
+                        ? round(($evaluations->count() / $totalInCategory) * 100, 1)
+                        : 0,
+                ];
+            });
+
+            $categories = collect(); // No mostrar filtros para jugadores
+            $categoryId = null;
+
+            return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
+        }
+
+        // Para entrenadores/analistas: mostrar todos los resultados
         // Obtener todas las categorías para el filtro
         $categories = \App\Models\Category::all();
 
@@ -258,8 +298,13 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
-        // Solo entrenadores y analistas pueden ver detalles
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        // Jugadores solo pueden ver su propio detalle
+        if ($currentUser->role === 'jugador' && $playerId != $currentUser->id) {
+            return redirect()->route('evaluations.dashboard')->with('error', 'Solo puedes ver tus propios resultados.');
+        }
+
+        // Staff (entrenadores/analistas) pueden ver cualquier detalle
+        if (!in_array($currentUser->role, ['entrenador', 'analista', 'jugador'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para ver esta página.');
         }
 
