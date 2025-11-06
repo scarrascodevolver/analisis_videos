@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
-@section('content')
+@section('page_title', 'Evaluación de Compañeros')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active">Evaluación de Compañeros</li>
+@endsection
+
+@section('main_content')
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
@@ -161,7 +167,9 @@
         </div>
     </div>
 </div>
+@endsection
 
+@section('css')
 <style>
 /* Tabs styling */
 .nav-tabs .nav-link {
