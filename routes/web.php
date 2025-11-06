@@ -159,3 +159,72 @@ Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
         return 'VideoStreamController Error: ' . $e->getMessage();
     }
 });
+
+// ======================================
+// EVALUACIÓN DE COMPAÑEROS
+// ======================================
+Route::middleware('auth')->group(function() {
+    Route::get('/evaluacion', [App\Http\Controllers\EvaluationController::class, 'index'])->name('evaluations.index');
+    Route::get('/evaluacion/wizard/{player}', [App\Http\Controllers\EvaluationController::class, 'wizard'])->name('evaluations.wizard');
+    Route::post('/evaluacion/store', [App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
+
+    Route::get('/evaluacion/completada', function() {
+        return view('evaluations.success');
+    })->name('evaluations.success');
+});
+
+// API para búsqueda de jugadores (solo de la misma categoría)
+Route::middleware('auth')->get('/api/search-players', function(Illuminate\Http\Request $request) {
+    $query = $request->input('q', '');
+    $currentUser = auth()->user();
+    $categoryId = $currentUser->profile->user_category_id ?? null;
+
+    $players = App\Models\User::where('role', 'jugador')
+        ->where('id', '!=', $currentUser->id) // Excluir a sí mismo
+        ->where('name', 'LIKE', "%{$query}%")
+        ->when($categoryId, function($q) use ($categoryId) {
+            return $q->whereHas('profile', function($query) use ($categoryId) {
+                $query->where('user_category_id', $categoryId);
+            });
+        })
+        ->with('profile.category')
+        ->limit(10)
+        ->get()
+        ->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'position' => $user->profile->position ?? 'Sin posición',
+                'category' => $user->profile->category->name ?? 'Sin categoría'
+            ];
+        });
+
+    return response()->json($players);
+});
+
+// API para jugadores de la categoría del usuario actual
+Route::middleware('auth')->get('/api/category-players', function() {
+    $currentUser = auth()->user();
+    $categoryId = $currentUser->profile->user_category_id ?? null;
+
+    $players = App\Models\User::where('role', 'jugador')
+        ->where('id', '!=', $currentUser->id)
+        ->when($categoryId, function($query) use ($categoryId) {
+            return $query->whereHas('profile', function($q) use ($categoryId) {
+                $q->where('user_category_id', $categoryId);
+            });
+        })
+        ->with('profile')
+        ->limit(5)
+        ->get()
+        ->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'position' => $user->profile->position ?? 'Sin posición',
+                'category' => $user->profile->category->name ?? 'Sin categoría'
+            ];
+        });
+
+    return response()->json($players);
+});
