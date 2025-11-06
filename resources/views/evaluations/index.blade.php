@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('page_title', 'Evaluación de Compañeros')
+@section('page_title', 'Evaluación de Jugadores')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item active">Evaluación de Compañeros</li>
+    <li class="breadcrumb-item active">Evaluación de Jugadores</li>
 @endsection
 
 @section('main_content')
@@ -13,7 +13,7 @@
             <div class="card shadow-sm">
                 <div class="card-header" style="background-color: #1e4d2b; color: white;">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-users"></i> Evaluación de Compañeros
+                        <i class="fas fa-users"></i> Evaluación de Jugadores
                     </h3>
                     <small class="d-block mt-1">Evalúa el desempeño de tus compañeros de categoría</small>
                 </div>
@@ -88,7 +88,7 @@
                                             <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                class="btn btn-sm text-white"
                                                style="background-color: #1e4d2b;">
-                                                <i class="fas fa-star"></i> Evaluar
+                                                Evaluar
                                             </a>
                                         </div>
                                     </div>
@@ -149,7 +149,7 @@
                                             <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                class="btn btn-sm text-white"
                                                style="background-color: #1e4d2b;">
-                                                <i class="fas fa-star"></i> Evaluar
+                                                Evaluar
                                             </a>
                                         </div>
                                     </div>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page_title', 'Evaluación de Compañero')
+@section('page_title', 'Evaluación de Jugador')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ url('/evaluacion') }}">Evaluaciones</a></li>
