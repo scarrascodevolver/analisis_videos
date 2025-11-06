@@ -368,6 +368,12 @@
                                     <p>Jugadores</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('evaluations.dashboard') }}" class="nav-link {{ request()->routeIs('evaluations.dashboard') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-bar"></i>
+                                    <p>Resultados de Evaluaciones</p>
+                                </a>
+                            </li>
                         @endif
 
                         @if(in_array(Auth::user()->role, ['analista', 'entrenador']))

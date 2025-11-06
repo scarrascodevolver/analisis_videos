@@ -205,4 +205,49 @@ class EvaluationController extends Controller
             'total_score' => $evaluation->total_score
         ]);
     }
+
+    /**
+     * Dashboard de resultados para entrenadores
+     */
+    public function dashboard()
+    {
+        $currentUser = auth()->user();
+
+        // Obtener todas las categorías para el filtro
+        $categories = \App\Models\Category::all();
+
+        // Filtro de categoría (por defecto, la del entrenador)
+        $categoryId = request('category_id', $currentUser->profile->user_category_id ?? null);
+
+        // Obtener jugadores de la categoría con sus evaluaciones
+        $players = User::where('role', 'jugador')
+            ->whereHas('profile', function($q) use ($categoryId) {
+                if ($categoryId) {
+                    $q->where('user_category_id', $categoryId);
+                }
+            })
+            ->with(['profile', 'receivedEvaluations'])
+            ->get();
+
+        // Calcular estadísticas para cada jugador
+        $playersStats = $players->map(function($player) use ($players) {
+            $evaluations = $player->receivedEvaluations;
+            $totalEvaluators = $players->where('id', '!=', $player->id)->count();
+
+            return [
+                'player' => $player,
+                'average_score' => $evaluations->avg('total_score') ?? 0,
+                'evaluations_count' => $evaluations->count(),
+                'total_possible' => $totalEvaluators,
+                'completion_percentage' => $totalEvaluators > 0
+                    ? round(($evaluations->count() / $totalEvaluators) * 100, 1)
+                    : 0,
+            ];
+        });
+
+        // Ordenar por promedio descendente
+        $playersStats = $playersStats->sortByDesc('average_score')->values();
+
+        return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
+    }
 }
