@@ -370,7 +370,7 @@ $(document).ready(function() {
                 "print": "Imprimir"
             }
         },
-        order: [[{{ in_array(Auth::user()->role, ['entrenador', 'analista']) ? '3' : '2' }}, 'desc']], // Ordenar por Promedio descendente
+        order: [], // Mantener orden del backend (evaluados con mayor puntaje primero)
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         responsive: true,

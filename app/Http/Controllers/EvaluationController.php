@@ -321,8 +321,12 @@ class EvaluationController extends Controller
             ];
         });
 
-        // Ordenar por promedio descendente
-        $playersStats = $playersStats->sortByDesc('average_score')->values();
+        // Ordenar: Primero los evaluados (por puntaje total desc), luego los sin evaluar
+        $withEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] > 0)
+            ->sortByDesc('total_points_avg');
+        $withoutEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] == 0);
+
+        $playersStats = $withEvaluations->merge($withoutEvaluations)->values();
 
         return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
     }
