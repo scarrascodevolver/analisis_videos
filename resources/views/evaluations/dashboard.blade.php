@@ -54,6 +54,7 @@
                                         <th>Jugador</th>
                                         <th>Posición</th>
                                         <th class="text-center">Promedio</th>
+                                        <th class="text-center">Puntaje Total</th>
                                         <th class="text-center">Evaluaciones</th>
                                         <th class="text-center">Completado</th>
                                         <th class="text-center">Acciones</th>
@@ -95,6 +96,19 @@
                                                 </span>
                                             @else
                                                 <span class="text-muted">Sin evaluaciones</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @if($stat['evaluations_count'] > 0)
+                                                <div>
+                                                    <strong style="color: {{ $stat['total_points_percentage'] >= 70 ? '#1e4d2b' : ($stat['total_points_percentage'] >= 50 ? '#ffc107' : '#dc3545') }};">
+                                                        {{ $stat['total_points_avg'] }}/{{ $stat['total_points_max'] }}
+                                                    </strong>
+                                                    <br>
+                                                    <small class="text-muted">({{ number_format($stat['total_points_percentage'], 1) }}%)</small>
+                                                </div>
+                                            @else
+                                                <span class="text-muted">0/280<br><small>(0%)</small></span>
                                             @endif
                                         </td>
                                         <td class="text-center">
