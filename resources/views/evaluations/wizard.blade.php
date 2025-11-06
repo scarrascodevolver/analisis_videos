@@ -369,8 +369,9 @@ $(document).ready(function() {
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Redirigir a página de éxito
-                        window.location.href = '/evaluacion/completada';
+                        // Mostrar mensaje de éxito y redirigir a lista
+                        alert('✅ Evaluación guardada exitosamente.\n\nPuedes continuar evaluando a tus otros compañeros.');
+                        window.location.href = '/evaluacion';
                     } else {
                         alert('Error: ' + response.message);
                         $btn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Enviar Evaluación');

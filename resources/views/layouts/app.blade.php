@@ -334,6 +334,12 @@
                                     <p>Videos del Equipo</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-star"></i>
+                                    <p>Evaluación de Jugadores</p>
+                                </a>
+                            </li>
                             <!-- Funcionalidades Futuras -->
                             <li class="nav-item">
                                 <a href="#" class="nav-link upcoming-feature" data-toggle="modal" data-target="#upcomingFeatureModal" data-feature="Jugadas">
