@@ -314,7 +314,9 @@
 <script>
 $(document).ready(function() {
     let currentStep = 1;
-    let evaluationData = {};
+    let evaluationData = {
+        'evaluated_player_id': {{ $player->id }}
+    };
 
     // Configuración de pasos
     const totalSteps = 5;
@@ -353,8 +355,42 @@ $(document).ready(function() {
 
     $('#btnSubmit').on('click', function() {
         if (confirm('¿Enviar evaluación? No podrás modificarla después.')) {
-            // TODO: Enviar datos vía AJAX en Fase 2
-            window.location.href = '/evaluacion/completada';
+            // Deshabilitar botón para evitar doble submit
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+            // Enviar datos vía AJAX
+            $.ajax({
+                url: '/evaluacion/store',
+                method: 'POST',
+                data: evaluationData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Redirigir a página de éxito
+                        window.location.href = '/evaluacion/completada';
+                    } else {
+                        alert('Error: ' + response.message);
+                        $btn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Enviar Evaluación');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Error al guardar la evaluación.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Errores de validación
+                        const errors = Object.values(xhr.responseJSON.errors).flat();
+                        errorMsg = errors.join('\n');
+                    }
+
+                    alert(errorMsg);
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Enviar Evaluación');
+                }
+            });
         }
     });
 

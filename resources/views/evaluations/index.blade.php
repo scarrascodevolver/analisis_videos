@@ -69,8 +69,11 @@
                                             <!-- Info del jugador -->
                                             <div style="min-width: 0; flex: 1;">
                                                 <div class="player-name-truncate">
-                                                    {{-- TODO: Agregar check cuando implementemos backend --}}
-                                                    <span style="font-size: 1.2em;">☐</span>
+                                                    @if($player->evaluated)
+                                                        <span style="font-size: 1.2em; color: #1e4d2b;">✅</span>
+                                                    @else
+                                                        <span style="font-size: 1.2em;">☐</span>
+                                                    @endif
                                                     <strong>{{ $player->name }}</strong>
                                                 </div>
                                                 <small class="text-muted">
@@ -84,12 +87,17 @@
 
                                         <!-- Botones -->
                                         <div class="flex-shrink-0">
-                                            {{-- TODO: Cambiar a "Ver" si ya fue evaluado --}}
-                                            <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
-                                               class="btn btn-sm text-white"
-                                               style="background-color: #1e4d2b;">
-                                                Evaluar
-                                            </a>
+                                            @if($player->evaluated)
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check"></i> Evaluado
+                                                </span>
+                                            @else
+                                                <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
+                                                   class="btn btn-sm text-white"
+                                                   style="background-color: #1e4d2b;">
+                                                    Evaluar
+                                                </a>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -130,8 +138,11 @@
                                             <!-- Info del jugador -->
                                             <div style="min-width: 0; flex: 1;">
                                                 <div class="player-name-truncate">
-                                                    {{-- TODO: Agregar check cuando implementemos backend --}}
-                                                    <span style="font-size: 1.2em;">☐</span>
+                                                    @if($player->evaluated)
+                                                        <span style="font-size: 1.2em; color: #1e4d2b;">✅</span>
+                                                    @else
+                                                        <span style="font-size: 1.2em;">☐</span>
+                                                    @endif
                                                     <strong>{{ $player->name }}</strong>
                                                 </div>
                                                 <small class="text-muted">
@@ -145,12 +156,17 @@
 
                                         <!-- Botones -->
                                         <div class="flex-shrink-0">
-                                            {{-- TODO: Cambiar a "Ver" si ya fue evaluado --}}
-                                            <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
-                                               class="btn btn-sm text-white"
-                                               style="background-color: #1e4d2b;">
-                                                Evaluar
-                                            </a>
+                                            @if($player->evaluated)
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check"></i> Evaluado
+                                                </span>
+                                            @else
+                                                <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
+                                                   class="btn btn-sm text-white"
+                                                   style="background-color: #1e4d2b;">
+                                                    Evaluar
+                                                </a>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

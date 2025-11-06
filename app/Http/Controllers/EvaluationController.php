@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\PlayerEvaluation;
 
 class EvaluationController extends Controller
 {
@@ -47,20 +48,31 @@ class EvaluationController extends Controller
             'Fullback'
         ];
 
+        // Obtener evaluaciones ya realizadas por el usuario actual
+        $evaluatedPlayerIds = PlayerEvaluation::where('evaluator_id', $currentUser->id)
+            ->pluck('evaluated_player_id')
+            ->toArray();
+
         // Separar en forwards y backs
         $forwards = $players->filter(function($player) use ($forwardsPositions) {
             $position = $player->profile->position ?? '';
             return in_array($position, $forwardsPositions);
-        })->values();
+        })->values()->map(function($player) use ($evaluatedPlayerIds) {
+            $player->evaluated = in_array($player->id, $evaluatedPlayerIds);
+            return $player;
+        });
 
         $backs = $players->filter(function($player) use ($backsPositions) {
             $position = $player->profile->position ?? '';
             return in_array($position, $backsPositions);
-        })->values();
+        })->values()->map(function($player) use ($evaluatedPlayerIds) {
+            $player->evaluated = in_array($player->id, $evaluatedPlayerIds);
+            return $player;
+        });
 
-        // TODO: Calcular progreso cuando implementemos backend
-        $forwardsProgress = 0;
-        $backsProgress = 0;
+        // Calcular progreso real
+        $forwardsProgress = $forwards->where('evaluated', true)->count();
+        $backsProgress = $backs->where('evaluated', true)->count();
 
         return view('evaluations.index', compact('forwards', 'backs', 'forwardsProgress', 'backsProgress'));
     }
@@ -102,11 +114,95 @@ class EvaluationController extends Controller
     }
 
     /**
-     * Guardar evaluación (Fase 2 - Backend)
+     * Guardar evaluación
      */
     public function store(Request $request)
     {
-        // TODO: Implementar en Fase 2
-        return redirect()->route('evaluations.success');
+        $currentUser = auth()->user();
+
+        // Validar datos
+        $validated = $request->validate([
+            'evaluated_player_id' => 'required|exists:users,id',
+            // Acondicionamiento Físico
+            'resistencia' => 'required|integer|min:0|max:10',
+            'velocidad' => 'required|integer|min:0|max:10',
+            'musculatura' => 'required|integer|min:0|max:10',
+            // Destrezas Básicas
+            'recepcion_pelota' => 'required|integer|min:0|max:10',
+            'pase_dos_lados' => 'required|integer|min:0|max:10',
+            'juego_aereo' => 'required|integer|min:0|max:10',
+            'tackle' => 'required|integer|min:0|max:10',
+            'ruck' => 'required|integer|min:0|max:10',
+            'duelos' => 'required|integer|min:0|max:10',
+            'carreras' => 'required|integer|min:0|max:10',
+            'conocimiento_plan' => 'required|integer|min:0|max:10',
+            'entendimiento_juego' => 'required|integer|min:0|max:10',
+            'reglamento' => 'required|integer|min:0|max:10',
+            // Destrezas Mentales
+            'autocontrol' => 'required|integer|min:0|max:10',
+            'concentracion' => 'required|integer|min:0|max:10',
+            'toma_decisiones' => 'required|integer|min:0|max:10',
+            'liderazgo' => 'required|integer|min:0|max:10',
+            // Otros Aspectos
+            'disciplina' => 'required|integer|min:0|max:10',
+            'compromiso' => 'required|integer|min:0|max:10',
+            'puntualidad' => 'required|integer|min:0|max:10',
+            'actitud_positiva' => 'required|integer|min:0|max:10',
+            'actitud_negativa' => 'required|integer|min:0|max:10',
+            'comunicacion' => 'required|integer|min:0|max:10',
+            // Habilidades específicas (opcionales)
+            'scrum_tecnica' => 'nullable|integer|min:0|max:10',
+            'scrum_empuje' => 'nullable|integer|min:0|max:10',
+            'line_levantar' => 'nullable|integer|min:0|max:10',
+            'line_saltar' => 'nullable|integer|min:0|max:10',
+            'line_lanzamiento' => 'nullable|integer|min:0|max:10',
+            'kick_salidas' => 'nullable|integer|min:0|max:10',
+            'kick_aire' => 'nullable|integer|min:0|max:10',
+            'kick_rastron' => 'nullable|integer|min:0|max:10',
+            'kick_palos' => 'nullable|integer|min:0|max:10',
+            'kick_drop' => 'nullable|integer|min:0|max:10',
+        ]);
+
+        // Validar que no se evalúe a sí mismo
+        if ($validated['evaluated_player_id'] == $currentUser->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No puedes evaluarte a ti mismo.'
+            ], 403);
+        }
+
+        // Validar que sea de la misma categoría
+        $evaluatedPlayer = User::with('profile')->findOrFail($validated['evaluated_player_id']);
+        $categoryId = $currentUser->profile->user_category_id ?? null;
+
+        if ($evaluatedPlayer->profile->user_category_id !== $categoryId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes evaluar jugadores de tu misma categoría.'
+            ], 403);
+        }
+
+        // Verificar si ya evaluó a este jugador
+        $existingEvaluation = PlayerEvaluation::where('evaluator_id', $currentUser->id)
+            ->where('evaluated_player_id', $validated['evaluated_player_id'])
+            ->first();
+
+        if ($existingEvaluation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya evaluaste a este jugador.'
+            ], 409);
+        }
+
+        // Crear evaluación
+        $validated['evaluator_id'] = $currentUser->id;
+        $evaluation = PlayerEvaluation::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Evaluación guardada exitosamente.',
+            'evaluation_id' => $evaluation->id,
+            'total_score' => $evaluation->total_score
+        ]);
     }
 }
