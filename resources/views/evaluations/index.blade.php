@@ -54,21 +54,21 @@
                             @if(count($forwards) > 0)
                                 @foreach($forwards as $player)
                                 <div class="card mb-2 shadow-sm">
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="d-flex align-items-center flex-grow-1 mr-3" style="min-width: 0;">
                                             <!-- Avatar -->
                                             @if($player->profile && $player->profile->avatar)
                                                 <img src="{{ asset('storage/' . $player->profile->avatar) }}"
                                                      alt="Avatar"
-                                                     class="img-circle elevation-2 mr-3"
+                                                     class="img-circle elevation-2 mr-3 flex-shrink-0"
                                                      style="width: 50px; height: 50px; object-fit: cover;">
                                             @else
-                                                <i class="fas fa-user-circle fa-3x text-muted mr-3"></i>
+                                                <i class="fas fa-user-circle fa-3x text-muted mr-3 flex-shrink-0"></i>
                                             @endif
 
                                             <!-- Info del jugador -->
-                                            <div>
-                                                <div>
+                                            <div style="min-width: 0; flex: 1;">
+                                                <div class="player-name-truncate">
                                                     {{-- TODO: Agregar check cuando implementemos backend --}}
                                                     <span style="font-size: 1.2em;">☐</span>
                                                     <strong>{{ $player->name }}</strong>
@@ -83,7 +83,7 @@
                                         </div>
 
                                         <!-- Botones -->
-                                        <div>
+                                        <div class="flex-shrink-0">
                                             {{-- TODO: Cambiar a "Ver" si ya fue evaluado --}}
                                             <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                class="btn btn-sm text-white"
@@ -115,21 +115,21 @@
                             @if(count($backs) > 0)
                                 @foreach($backs as $player)
                                 <div class="card mb-2 shadow-sm">
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="d-flex align-items-center flex-grow-1 mr-3" style="min-width: 0;">
                                             <!-- Avatar -->
                                             @if($player->profile && $player->profile->avatar)
                                                 <img src="{{ asset('storage/' . $player->profile->avatar) }}"
                                                      alt="Avatar"
-                                                     class="img-circle elevation-2 mr-3"
+                                                     class="img-circle elevation-2 mr-3 flex-shrink-0"
                                                      style="width: 50px; height: 50px; object-fit: cover;">
                                             @else
-                                                <i class="fas fa-user-circle fa-3x text-muted mr-3"></i>
+                                                <i class="fas fa-user-circle fa-3x text-muted mr-3 flex-shrink-0"></i>
                                             @endif
 
                                             <!-- Info del jugador -->
-                                            <div>
-                                                <div>
+                                            <div style="min-width: 0; flex: 1;">
+                                                <div class="player-name-truncate">
                                                     {{-- TODO: Agregar check cuando implementemos backend --}}
                                                     <span style="font-size: 1.2em;">☐</span>
                                                     <strong>{{ $player->name }}</strong>
@@ -144,7 +144,7 @@
                                         </div>
 
                                         <!-- Botones -->
-                                        <div>
+                                        <div class="flex-shrink-0">
                                             {{-- TODO: Cambiar a "Ver" si ya fue evaluado --}}
                                             <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                class="btn btn-sm text-white"
@@ -195,6 +195,23 @@
 .card:hover {
     transform: translateY(-2px);
     transition: all 0.2s ease;
+}
+
+/* Truncar nombres largos */
+.player-name-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* Asegurar que botones estén alineados */
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
 }
 </style>
 @endsection
