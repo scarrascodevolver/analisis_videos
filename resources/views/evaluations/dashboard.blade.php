@@ -45,7 +45,7 @@
                     <!-- Tabla de resultados -->
                     @if($playersStats->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table id="resultsTable" class="table table-striped table-hover">
                                 <thead style="background-color: #1e4d2b; color: white;">
                                     <tr>
                                         @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
@@ -184,6 +184,10 @@
 @endsection
 
 @section('css')
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+
 <style>
 .table-responsive {
     overflow-x: auto;
@@ -192,6 +196,36 @@
 .badge-lg {
     font-size: 1.1rem;
     padding: 0.4rem 0.8rem;
+}
+
+/* Estilos para botones de DataTables */
+.dt-buttons {
+    margin-bottom: 1rem;
+}
+
+.dt-button {
+    background-color: #1e4d2b !important;
+    border-color: #1e4d2b !important;
+    color: white !important;
+    margin-right: 0.5rem;
+}
+
+.dt-button:hover {
+    background-color: #154020 !important;
+    border-color: #154020 !important;
+}
+
+/* Ajustar el wrapper de DataTables */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
 }
 
 @media (max-width: 768px) {
@@ -203,6 +237,138 @@
         font-size: 0.9rem;
         padding: 0.3rem 0.6rem;
     }
+
+    .dt-buttons {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .dt-button {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
 }
 </style>
+@endsection
+
+@section('js')
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- DataTables Buttons -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    @if($playersStats->count() > 0)
+    $('#resultsTable').DataTable({
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-12"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        buttons: [
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-success btn-sm',
+                title: '{{ Auth::user()->role === "jugador" ? "Mis Resultados de Evaluación" : "Resultados de Evaluaciones" }}',
+                exportOptions: {
+                    columns: ':visible:not(:last-child)' // Excluir columna de acciones
+                }
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-danger btn-sm',
+                title: '{{ Auth::user()->role === "jugador" ? "Mis Resultados de Evaluación" : "Resultados de Evaluaciones" }}',
+                exportOptions: {
+                    columns: ':visible:not(:last-child)'
+                },
+                customize: function(doc) {
+                    doc.styles.title = {
+                        color: '#1e4d2b',
+                        fontSize: '16',
+                        alignment: 'center',
+                        bold: true
+                    };
+                    doc.styles.tableHeader = {
+                        fillColor: '#1e4d2b',
+                        color: 'white',
+                        bold: true
+                    };
+                }
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Imprimir',
+                className: 'btn btn-info btn-sm',
+                title: '{{ Auth::user()->role === "jugador" ? "Mis Resultados de Evaluación" : "Resultados de Evaluaciones" }}',
+                exportOptions: {
+                    columns: ':visible:not(:last-child)'
+                },
+                customize: function(win) {
+                    $(win.document.body)
+                        .css('font-size', '10pt')
+                        .prepend(
+                            '<div style="text-align:center; margin-bottom: 20px;">' +
+                            '<h2 style="color: #1e4d2b;">Club Los Troncos</h2>' +
+                            '</div>'
+                        );
+
+                    $(win.document.body).find('table')
+                        .addClass('compact')
+                        .css('font-size', 'inherit');
+                }
+            }
+        ],
+        language: {
+            "sProcessing": "Procesando...",
+            "sLengthMenu": "Mostrar _MENU_ registros",
+            "sZeroRecords": "No se encontraron resultados",
+            "sEmptyTable": "Ningún dato disponible en esta tabla",
+            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "sSearch": "Buscar:",
+            "sUrl": "",
+            "sInfoThousands": ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst": "Primero",
+                "sLast": "Último",
+                "sNext": "Siguiente",
+                "sPrevious": "Anterior"
+            },
+            "oAria": {
+                "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+            },
+            "buttons": {
+                "copy": "Copiar",
+                "colvis": "Visibilidad",
+                "print": "Imprimir"
+            }
+        },
+        order: [[{{ in_array(Auth::user()->role, ['entrenador', 'analista']) ? '3' : '2' }}, 'desc']], // Ordenar por Promedio descendente
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        responsive: true,
+        columnDefs: [
+            {
+                targets: -1, // Última columna (Acciones)
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+    @endif
+});
+</script>
 @endsection
