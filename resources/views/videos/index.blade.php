@@ -373,35 +373,28 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Filtros automáticos
-    let filterTimeout;
 
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filter-form');
+    if (!form) return; // 🚫 si no existen los filtros (jugadores), no se ejecuta nada
+
+    let filterTimeout;
     function autoFilter() {
         clearTimeout(filterTimeout);
-        filterTimeout = setTimeout(function() {
-            document.getElementById('filter-form').submit();
-        }, 500);
+        filterTimeout = setTimeout(() => form.submit(), 500);
     }
 
-    // Event listeners para filtros
-    document.getElementById('search-input').addEventListener('input', autoFilter);
-    document.getElementById('situation-select').addEventListener('change', function() {
-        document.getElementById('filter-form').submit();
-    });
+    const on = (id, evt, cb) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(evt, cb);
+    };
 
-    const categorySelect = document.getElementById('category-select');
-    if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
-            document.getElementById('filter-form').submit();
-        });
-    }
-
-    document.getElementById('team-select').addEventListener('change', function() {
-        document.getElementById('filter-form').submit();
-    });
-
+    on('search-input', 'input', autoFilter);
+    on('situation-select', 'change', () => form.submit());
+    on('category-select', 'change', () => form.submit());
+    on('team-select', 'change', () => form.submit());
 });
+
 </script>
 
 @endsection
