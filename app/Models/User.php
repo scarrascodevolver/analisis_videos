@@ -84,6 +84,16 @@ class User extends Authenticatable
         return $this->assignedVideos(); // Ya no hay estados, todas las asignaciones están "activas"
     }
 
+    public function receivedEvaluations()
+    {
+        return $this->hasMany(PlayerEvaluation::class, 'evaluated_player_id');
+    }
+
+    public function givenEvaluations()
+    {
+        return $this->hasMany(PlayerEvaluation::class, 'evaluator_id');
+    }
+
     public function isAnalyst()
     {
         return $this->role === 'analista';

@@ -19,18 +19,18 @@
                 </div>
                 <div class="card-body">
                     <!-- Tabs -->
-                    <ul class="nav nav-tabs" id="evaluationTabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="forwards-tab" data-toggle="tab" href="#forwards" role="tab">
-                                <i class="fas fa-shield-alt"></i> Forwards
+                    <ul class="nav nav-tabs nav-tabs-horizontal" id="evaluationTabs" role="tablist">
+                        <li class="nav-item flex-fill">
+                            <a class="nav-link active text-center" id="forwards-tab" data-toggle="tab" href="#forwards" role="tab">
+                                <i class="fas fa-shield-alt"></i> <span class="d-none d-sm-inline">Forwards</span><span class="d-inline d-sm-none">Fwd</span>
                                 <span class="badge badge-pill" style="background-color: #1e4d2b; color: white;">
                                     {{ $forwardsProgress }}/{{ count($forwards) }}
                                 </span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="backs-tab" data-toggle="tab" href="#backs" role="tab">
-                                <i class="fas fa-running"></i> Backs
+                        <li class="nav-item flex-fill">
+                            <a class="nav-link text-center" id="backs-tab" data-toggle="tab" href="#backs" role="tab">
+                                <i class="fas fa-running"></i> <span class="d-none d-sm-inline">Backs</span><span class="d-inline d-sm-none">Bks</span>
                                 <span class="badge badge-pill" style="background-color: #1e4d2b; color: white;">
                                     {{ $backsProgress }}/{{ count($backs) }}
                                 </span>
@@ -205,6 +205,29 @@
     border-color: transparent;
     border-bottom-color: #1e4d2b;
     background-color: transparent;
+}
+
+/* Tabs horizontales en móvil */
+.nav-tabs-horizontal {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.nav-tabs-horizontal .nav-item {
+    flex: 1;
+}
+
+/* Responsive para tabs en móvil */
+@media (max-width: 576px) {
+    .nav-tabs-horizontal .nav-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-tabs-horizontal .badge {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.4rem;
+    }
 }
 
 /* Card hover effect */
