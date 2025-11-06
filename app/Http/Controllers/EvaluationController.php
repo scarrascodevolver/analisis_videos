@@ -214,7 +214,7 @@ class EvaluationController extends Controller
         $currentUser = auth()->user();
 
         // Obtener todas las categorías para el filtro
-        $categories = \App\Models\UserCategory::all();
+        $categories = \App\Models\Category::all();
 
         // Filtro de categoría (por defecto, la del entrenador)
         $categoryId = request('category_id', $currentUser->profile->user_category_id ?? null);
