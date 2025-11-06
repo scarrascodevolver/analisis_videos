@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('page_title', 'Resultados de Evaluaciones')
+@section('page_title', Auth::user()->role === 'jugador' ? 'Mis Resultados' : 'Resultados de Evaluaciones')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item active">Resultados de Evaluaciones</li>
+    <li class="breadcrumb-item active">{{ Auth::user()->role === 'jugador' ? 'Mis Resultados' : 'Resultados de Evaluaciones' }}</li>
 @endsection
 
 @section('main_content')
@@ -13,12 +13,18 @@
             <div class="card shadow-sm">
                 <div class="card-header" style="background-color: #1e4d2b; color: white;">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-chart-bar"></i> Resultados de Evaluaciones
+                        <i class="fas {{ Auth::user()->role === 'jugador' ? 'fa-chart-line' : 'fa-chart-bar' }}"></i>
+                        {{ Auth::user()->role === 'jugador' ? 'Mis Resultados de Evaluación' : 'Resultados de Evaluaciones' }}
                     </h3>
-                    <small class="d-block mt-1">Visualiza el desempeño de los jugadores según evaluaciones de compañeros</small>
+                    <small class="d-block mt-1">
+                        {{ Auth::user()->role === 'jugador'
+                            ? 'Visualiza cómo te han evaluado tus compañeros de categoría'
+                            : 'Visualiza el desempeño de los jugadores según evaluaciones de compañeros' }}
+                    </small>
                 </div>
                 <div class="card-body">
-                    <!-- Filtros -->
+                    <!-- Filtros (solo para entrenadores/analistas) -->
+                    @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                     <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-4">
                         <div class="row">
                             <div class="col-md-4">
@@ -34,6 +40,7 @@
                             </div>
                         </div>
                     </form>
+                    @endif
 
                     <!-- Tabla de resultados -->
                     @if($playersStats->count() > 0)
@@ -41,7 +48,9 @@
                             <table class="table table-striped table-hover">
                                 <thead style="background-color: #1e4d2b; color: white;">
                                     <tr>
+                                        @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                                         <th>#</th>
+                                        @endif
                                         <th>Jugador</th>
                                         <th>Posición</th>
                                         <th class="text-center">Promedio</th>
@@ -53,7 +62,9 @@
                                 <tbody>
                                     @foreach($playersStats as $index => $stat)
                                     <tr>
+                                        @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                                         <td>{{ $index + 1 }}</td>
+                                        @endif
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 @if($stat['player']->profile && $stat['player']->profile->avatar)
