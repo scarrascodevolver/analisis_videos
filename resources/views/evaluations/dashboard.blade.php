@@ -102,11 +102,11 @@
                                         </td>
                                         <td class="text-center">
                                             @if($stat['evaluations_count'] > 0)
-                                                <button class="btn btn-sm btn-info"
-                                                        data-toggle="modal"
-                                                        data-target="#detailModal{{ $stat['player']->id }}">
+                                                <a href="{{ route('evaluations.show', $stat['player']->id) }}"
+                                                   class="btn btn-sm text-white"
+                                                   style="background-color: #1e4d2b;">
                                                     <i class="fas fa-eye"></i> Ver Detalle
-                                                </button>
+                                                </a>
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif

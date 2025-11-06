@@ -168,6 +168,7 @@ Route::middleware('auth')->group(function() {
     Route::get('/evaluacion/wizard/{player}', [App\Http\Controllers\EvaluationController::class, 'wizard'])->name('evaluations.wizard');
     Route::post('/evaluacion/store', [App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
     Route::get('/evaluacion/resultados', [App\Http\Controllers\EvaluationController::class, 'dashboard'])->name('evaluations.dashboard');
+    Route::get('/evaluacion/jugador/{player}', [App\Http\Controllers\EvaluationController::class, 'show'])->name('evaluations.show');
 
     Route::get('/evaluacion/completada', function() {
         return view('evaluations.success');

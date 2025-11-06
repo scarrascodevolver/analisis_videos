@@ -250,4 +250,96 @@ class EvaluationController extends Controller
 
         return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
     }
+
+    /**
+     * Mostrar detalle de evaluación individual
+     */
+    public function show($playerId)
+    {
+        $currentUser = auth()->user();
+
+        // Solo entrenadores y analistas pueden ver detalles
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return redirect()->route('dashboard')->with('error', 'No tienes permisos para ver esta página.');
+        }
+
+        // Obtener el jugador evaluado
+        $player = User::with('profile.category')->findOrFail($playerId);
+
+        // Obtener todas las evaluaciones del jugador
+        $evaluations = PlayerEvaluation::where('evaluated_player_id', $playerId)
+            ->with(['evaluator.profile'])
+            ->get();
+
+        if ($evaluations->isEmpty()) {
+            return redirect()->route('evaluations.dashboard')->with('error', 'Este jugador no tiene evaluaciones aún.');
+        }
+
+        // Calcular promedios por categoría
+        $averages = [
+            'acondicionamiento' => [
+                'resistencia' => $evaluations->avg('resistencia'),
+                'velocidad' => $evaluations->avg('velocidad'),
+                'musculatura' => $evaluations->avg('musculatura'),
+            ],
+            'destrezas_basicas' => [
+                'recepcion_pelota' => $evaluations->avg('recepcion_pelota'),
+                'pase_dos_lados' => $evaluations->avg('pase_dos_lados'),
+                'juego_aereo' => $evaluations->avg('juego_aereo'),
+                'tackle' => $evaluations->avg('tackle'),
+                'ruck' => $evaluations->avg('ruck'),
+                'duelos' => $evaluations->avg('duelos'),
+                'carreras' => $evaluations->avg('carreras'),
+                'conocimiento_plan' => $evaluations->avg('conocimiento_plan'),
+                'entendimiento_juego' => $evaluations->avg('entendimiento_juego'),
+                'reglamento' => $evaluations->avg('reglamento'),
+            ],
+            'destrezas_mentales' => [
+                'autocontrol' => $evaluations->avg('autocontrol'),
+                'concentracion' => $evaluations->avg('concentracion'),
+                'toma_decisiones' => $evaluations->avg('toma_decisiones'),
+                'liderazgo' => $evaluations->avg('liderazgo'),
+            ],
+            'otros_aspectos' => [
+                'disciplina' => $evaluations->avg('disciplina'),
+                'compromiso' => $evaluations->avg('compromiso'),
+                'puntualidad' => $evaluations->avg('puntualidad'),
+                'actitud_positiva' => $evaluations->avg('actitud_positiva'),
+                'actitud_negativa' => $evaluations->avg('actitud_negativa'),
+                'comunicacion' => $evaluations->avg('comunicacion'),
+            ],
+        ];
+
+        // Determinar si es Forward o Back y agregar habilidades específicas
+        $forwardsPositions = [
+            'Pilar Izquierdo', 'Hooker', 'Pilar Derecho',
+            'Segunda Línea', 'Ala', 'Número 8'
+        ];
+        $playerPosition = $player->profile->position ?? '';
+        $isForward = in_array($playerPosition, $forwardsPositions);
+
+        if ($isForward) {
+            $averages['habilidades_forwards'] = [
+                'scrum_tecnica' => $evaluations->avg('scrum_tecnica'),
+                'scrum_empuje' => $evaluations->avg('scrum_empuje'),
+                'line_levantar' => $evaluations->avg('line_levantar'),
+                'line_saltar' => $evaluations->avg('line_saltar'),
+                'line_lanzamiento' => $evaluations->avg('line_lanzamiento'),
+            ];
+        } else {
+            $averages['habilidades_backs'] = [
+                'kick_salidas' => $evaluations->avg('kick_salidas'),
+                'kick_aire' => $evaluations->avg('kick_aire'),
+                'kick_rastron' => $evaluations->avg('kick_rastron'),
+                'kick_palos' => $evaluations->avg('kick_palos'),
+                'kick_drop' => $evaluations->avg('kick_drop'),
+            ];
+        }
+
+        // Calcular promedio total
+        $totalScore = $evaluations->avg('total_score');
+        $evaluationCount = $evaluations->count();
+
+        return view('evaluations.show', compact('player', 'evaluations', 'averages', 'totalScore', 'evaluationCount', 'isForward'));
+    }
 }
