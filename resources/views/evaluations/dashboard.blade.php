@@ -72,7 +72,7 @@
                                                     <img src="{{ asset('storage/' . $stat['player']->profile->avatar) }}"
                                                          alt="Avatar"
                                                          class="img-circle elevation-2 mr-2"
-                                                         style="width: 35px; height: 35px; object-fit: cover;">
+                                                         style="width: 35px; height: 35px; object-fit: cover; object-position: center;">
                                                 @else
                                                     <i class="fas fa-user-circle fa-2x text-muted mr-2"></i>
                                                 @endif
