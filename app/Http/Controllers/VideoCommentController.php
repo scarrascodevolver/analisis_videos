@@ -120,9 +120,13 @@ class VideoCommentController extends Controller
      */
     protected function processMentions(VideoComment $comment, Video $video, string $commentText)
     {
-        // Regex para detectar menciones: @Nombre Apellido o @NombreApellido
-        // Soporta acentos y ñ
-        preg_match_all('/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+)*)/u', $commentText, $matches);
+        // Regex mejorado: Captura @NombrePalabra hasta encontrar:
+        // - Un espacio seguido de palabra minúscula (ej: "que", "mira", "prueba")
+        // - Doble espacio
+        // - Signos de puntuación (. , ! ? ;)
+        // - Final de línea
+        // Máximo 4 palabras para evitar capturar frases completas
+        preg_match_all('/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúÁÉÍÓÚñÑ]*){0,3})(?=\s+[a-záéíóúñ]|\s{2,}|[.,!?;\n]|$)/u', $commentText, $matches);
 
         if (empty($matches[1])) {
             return; // No hay menciones
