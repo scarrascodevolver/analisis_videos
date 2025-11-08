@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\VideoAssignment;
 
-class VideoAssigned extends Notification
+class VideoAssigned extends Notification implements ShouldQueue
 {
     use Queueable;
 
