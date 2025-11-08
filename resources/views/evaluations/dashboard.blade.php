@@ -23,10 +23,10 @@
                     </small>
                 </div>
                 <div class="card-body">
-                    <!-- Filtros (solo para entrenadores/analistas) -->
+                    <!-- Filtros y Toggle de Evaluaciones (solo para entrenadores/analistas) -->
                     @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                     <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-4">
-                        <div class="row">
+                        <div class="row align-items-end">
                             <div class="col-md-4">
                                 <label for="category_id">Filtrar por Categoría:</label>
                                 <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
@@ -37,6 +37,12 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" id="toggleEvaluationsBtn" class="btn btn-block" style="background-color: #1e4d2b; color: white;">
+                                    <i class="fas fa-circle" id="statusIcon"></i>
+                                    <span id="statusText">Cargando...</span>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -381,6 +387,81 @@ $(document).ready(function() {
                 searchable: false
             }
         ]
+    });
+    @endif
+
+    // Toggle de evaluaciones (solo para entrenadores/analistas)
+    @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
+    // Función para actualizar el estado visual del botón
+    function updateToggleButton(enabled) {
+        const btn = $('#toggleEvaluationsBtn');
+        const icon = $('#statusIcon');
+        const text = $('#statusText');
+
+        if (enabled) {
+            icon.removeClass('text-danger').addClass('text-success');
+            text.text('Evaluaciones Habilitadas');
+            btn.attr('title', 'Click para deshabilitar evaluaciones');
+        } else {
+            icon.removeClass('text-success').addClass('text-danger');
+            text.text('Evaluaciones Deshabilitadas');
+            btn.attr('title', 'Click para habilitar evaluaciones');
+        }
+    }
+
+    // Cargar estado inicial
+    $.ajax({
+        url: '{{ route("evaluations.toggle") }}',
+        method: 'GET',
+        success: function(response) {
+            updateToggleButton(response.enabled);
+        },
+        error: function() {
+            $('#statusText').text('Error al cargar estado');
+        }
+    });
+
+    // Manejar click en botón toggle
+    $('#toggleEvaluationsBtn').on('click', function() {
+        const btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: '{{ route("evaluations.toggle") }}',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    updateToggleButton(response.enabled);
+
+                    // Mostrar notificación
+                    const alertClass = response.enabled ? 'alert-success' : 'alert-warning';
+                    const alertHtml = `
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> ${response.message}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                    `;
+                    $('.card-body').prepend(alertHtml);
+
+                    // Auto-cerrar después de 3 segundos
+                    setTimeout(function() {
+                        $('.alert').fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                }
+                btn.prop('disabled', false);
+            },
+            error: function(xhr) {
+                alert('Error al cambiar estado: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                btn.prop('disabled', false);
+            }
+        });
     });
     @endif
 });
