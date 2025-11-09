@@ -307,6 +307,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de errores de validación -->
+    <div class="modal fade" id="validationErrorsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Faltan campos por completar
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Por favor, completa los siguientes campos obligatorios:</p>
+                    <div id="errorsList" class="alert alert-light border">
+                        <!-- Lista de errores se insertará aquí -->
+                    </div>
+                    <p class="text-muted mb-0">
+                        <small><i class="fas fa-info-circle"></i> Todos los campos deben tener un valor entre 0 y 10.</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">
+                        <i class="fas fa-check"></i> Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -320,6 +350,43 @@ $(document).ready(function() {
 
     // Configuración de pasos
     const totalSteps = 5;
+
+    // Diccionario de traducción de campos
+    const fieldTranslations = {
+        'resistencia': 'Resistencia',
+        'velocidad': 'Velocidad',
+        'musculatura': 'Musculatura',
+        'recepcion_pelota': 'Recepción de Pelota',
+        'pase_dos_lados': 'Pase a Dos Lados',
+        'juego_aereo': 'Juego Aéreo',
+        'tackle': 'Tackle',
+        'ruck': 'Ruck',
+        'duelos': 'Duelos',
+        'carreras': 'Carreras',
+        'conocimiento_plan': 'Conocimiento del Plan',
+        'entendimiento_juego': 'Entendimiento del Juego',
+        'reglamento': 'Reglamento',
+        'autocontrol': 'Autocontrol',
+        'concentracion': 'Concentración',
+        'toma_decisiones': 'Toma de Decisiones',
+        'liderazgo': 'Liderazgo',
+        'disciplina': 'Disciplina',
+        'compromiso': 'Compromiso',
+        'puntualidad': 'Puntualidad',
+        'actitud_positiva': 'Actitud Positiva',
+        'actitud_negativa': 'Actitud Negativa',
+        'comunicacion': 'Comunicación',
+        'scrum_tecnica': 'Scrum - Técnica',
+        'scrum_empuje': 'Scrum - Empuje',
+        'line_levantar': 'Lineout - Levantar',
+        'line_saltar': 'Lineout - Saltar',
+        'line_lanzamiento': 'Lineout - Lanzamiento',
+        'kick_salidas': 'Kick - Salidas',
+        'kick_aire': 'Kick - Aire',
+        'kick_rastron': 'Kick - Rastrón',
+        'kick_palos': 'Kick - Palos',
+        'kick_drop': 'Kick - Drop'
+    };
 
     // Inicializar en el paso 1
     showStep(1);
@@ -378,17 +445,33 @@ $(document).ready(function() {
                     }
                 },
                 error: function(xhr) {
-                    let errorMsg = 'Error al guardar la evaluación.';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Errores de validación - Mostrar modal
+                        const errors = xhr.responseJSON.errors;
+                        let errorListHtml = '<ul class="mb-0">';
+                        let errorCount = 0;
 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        // Errores de validación
-                        const errors = Object.values(xhr.responseJSON.errors).flat();
-                        errorMsg = errors.join('\n');
+                        for (const [field, messages] of Object.entries(errors)) {
+                            const fieldName = fieldTranslations[field] || field;
+                            errorListHtml += `<li><strong>${fieldName}</strong></li>`;
+                            errorCount++;
+                        }
+
+                        errorListHtml += '</ul>';
+
+                        // Agregar contador si hay muchos errores
+                        if (errorCount > 5) {
+                            errorListHtml = `<p class="text-danger mb-2"><strong>${errorCount} campos faltantes</strong></p>` + errorListHtml;
+                        }
+
+                        $('#errorsList').html(errorListHtml);
+                        $('#validationErrorsModal').modal('show');
+                    } else {
+                        // Otro tipo de error
+                        const errorMsg = xhr.responseJSON?.message || 'Error al guardar la evaluación.';
+                        alert(errorMsg);
                     }
 
-                    alert(errorMsg);
                     $btn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Enviar Evaluación');
                 }
             });
@@ -561,6 +644,35 @@ $(document).ready(function() {
     .badge {
         font-size: 0.9rem;
     }
+}
+
+/* Modal de validación */
+#validationErrorsModal .modal-header {
+    border-bottom: 3px solid #ffc107;
+}
+
+#validationErrorsModal #errorsList {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#validationErrorsModal #errorsList ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+#validationErrorsModal #errorsList li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#validationErrorsModal #errorsList li:last-child {
+    border-bottom: none;
+}
+
+#validationErrorsModal #errorsList li:before {
+    content: "⚠️ ";
+    margin-right: 0.5rem;
 }
 </style>
 @endsection
