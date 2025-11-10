@@ -22,9 +22,11 @@ class EvaluationController extends Controller
             return redirect()->route('dashboard')->with('error', 'No tienes una categoría asignada.');
         }
 
-        // Verificar si las evaluaciones están habilitadas (solo para jugadores)
-        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
-            return redirect()->route('dashboard')->with('warning', 'Las evaluaciones están deshabilitadas actualmente. Consulta con tu entrenador.');
+        // Verificar si hay un período activo
+        $activePeriod = EvaluationPeriod::getActive();
+
+        if (!$activePeriod || !$activePeriod->isOpen()) {
+            return redirect()->route('dashboard')->with('warning', 'No hay un período de evaluación activo actualmente. Consulta con tu entrenador.');
         }
 
         // Obtener jugadores de la misma categoría (excepto el usuario actual)
@@ -55,8 +57,9 @@ class EvaluationController extends Controller
             'Fullback'
         ];
 
-        // Obtener evaluaciones ya realizadas por el usuario actual
+        // Obtener evaluaciones ya realizadas EN EL PERÍODO ACTIVO
         $evaluatedPlayerIds = PlayerEvaluation::where('evaluator_id', $currentUser->id)
+            ->where('evaluation_period_id', $activePeriod->id)
             ->pluck('evaluated_player_id')
             ->toArray();
 
