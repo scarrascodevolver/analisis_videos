@@ -175,6 +175,14 @@ Route::middleware('auth')->group(function() {
         ->middleware('role:entrenador,analista')
         ->name('evaluations.toggle');
 
+    // Gestión de períodos de evaluación (entrenadores/analistas)
+    Route::middleware('role:entrenador,analista')->group(function() {
+        Route::get('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'listPeriods'])->name('evaluations.periods.list');
+        Route::post('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'createPeriod'])->name('evaluations.periods.create');
+        Route::post('/evaluacion/periodos/{period}/activar', [App\Http\Controllers\EvaluationController::class, 'activatePeriod'])->name('evaluations.periods.activate');
+        Route::post('/evaluacion/periodos/{period}/cerrar', [App\Http\Controllers\EvaluationController::class, 'closePeriod'])->name('evaluations.periods.close');
+    });
+
     Route::get('/evaluacion/completada', function() {
         return view('evaluations.success');
     })->name('evaluations.success');

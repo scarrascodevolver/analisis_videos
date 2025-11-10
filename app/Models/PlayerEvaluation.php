@@ -10,6 +10,7 @@ class PlayerEvaluation extends Model
     protected $fillable = [
         'evaluator_id',
         'evaluated_player_id',
+        'evaluation_period_id',
         // Acondicionamiento Físico
         'resistencia',
         'velocidad',
@@ -71,6 +72,14 @@ class PlayerEvaluation extends Model
     public function evaluatedPlayer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'evaluated_player_id');
+    }
+
+    /**
+     * Relación con el período de evaluación
+     */
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(EvaluationPeriod::class, 'evaluation_period_id');
     }
 
     /**

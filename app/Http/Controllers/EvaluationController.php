@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\PlayerEvaluation;
 use App\Models\Setting;
+use App\Models\EvaluationPeriod;
 
 class EvaluationController extends Controller
 {
@@ -201,20 +202,32 @@ class EvaluationController extends Controller
             ], 403);
         }
 
-        // Verificar si ya evaluó a este jugador
+        // Obtener período activo
+        $activePeriod = EvaluationPeriod::getActive();
+
+        if (!$activePeriod) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay un período de evaluación activo.'
+            ], 403);
+        }
+
+        // Verificar si ya evaluó a este jugador EN ESTE PERÍODO
         $existingEvaluation = PlayerEvaluation::where('evaluator_id', $currentUser->id)
             ->where('evaluated_player_id', $validated['evaluated_player_id'])
+            ->where('evaluation_period_id', $activePeriod->id)
             ->first();
 
         if ($existingEvaluation) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ya evaluaste a este jugador.'
+                'message' => 'Ya evaluaste a este jugador en el período actual.'
             ], 409);
         }
 
-        // Crear evaluación
+        // Crear evaluación con el período activo
         $validated['evaluator_id'] = $currentUser->id;
+        $validated['evaluation_period_id'] = $activePeriod->id;
         $evaluation = PlayerEvaluation::create($validated);
 
         return response()->json([
@@ -479,6 +492,111 @@ class EvaluationController extends Controller
             'message' => $isEnabled
                 ? 'Evaluaciones habilitadas correctamente.'
                 : 'Evaluaciones deshabilitadas correctamente.'
+        ]);
+    }
+
+    /**
+     * Crear nuevo período de evaluación (entrenadores/analistas)
+     */
+    public function createPeriod(Request $request)
+    {
+        $currentUser = auth()->user();
+
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
+
+        // Crear nuevo período
+        $period = EvaluationPeriod::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'started_at' => now(),
+            'ended_at' => null,
+            'is_active' => false
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Período creado exitosamente.',
+            'period' => $period
+        ]);
+    }
+
+    /**
+     * Activar un período específico (entrenadores/analistas)
+     */
+    public function activatePeriod(Request $request, $periodId)
+    {
+        $currentUser = auth()->user();
+
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+
+        $period = EvaluationPeriod::findOrFail($periodId);
+        $period->activate();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Período activado correctamente. Los jugadores pueden evaluar ahora.',
+            'period' => $period->fresh()
+        ]);
+    }
+
+    /**
+     * Cerrar período activo (entrenadores/analistas)
+     */
+    public function closePeriod(Request $request, $periodId)
+    {
+        $currentUser = auth()->user();
+
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+
+        $period = EvaluationPeriod::findOrFail($periodId);
+        $period->close();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Período cerrado correctamente.',
+            'period' => $period->fresh()
+        ]);
+    }
+
+    /**
+     * Listar todos los períodos (entrenadores/analistas)
+     */
+    public function listPeriods()
+    {
+        $currentUser = auth()->user();
+
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+
+        $periods = EvaluationPeriod::orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'periods' => $periods
         ]);
     }
 }
