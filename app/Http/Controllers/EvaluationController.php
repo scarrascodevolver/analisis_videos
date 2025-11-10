@@ -235,9 +235,27 @@ class EvaluationController extends Controller
             $playersStats = $players->map(function($player) use ($totalInCategory) {
                 $evaluations = $player->receivedEvaluations;
 
+                // Calcular puntaje total promedio
+                $totalPointsSum = 0;
+                $maxPossible = 280; // Máximo fijo para todos
+
+                if ($evaluations->count() > 0) {
+                    foreach ($evaluations as $eval) {
+                        $totalPointsSum += $eval->getTotalPoints();
+                    }
+                    $avgTotalPoints = round($totalPointsSum / $evaluations->count(), 0);
+                    $totalPointsPercentage = round(($avgTotalPoints / $maxPossible) * 100, 1);
+                } else {
+                    $avgTotalPoints = 0;
+                    $totalPointsPercentage = 0;
+                }
+
                 return [
                     'player' => $player,
                     'average_score' => $evaluations->avg('total_score') ?? 0,
+                    'total_points_avg' => $avgTotalPoints,
+                    'total_points_max' => $maxPossible,
+                    'total_points_percentage' => $totalPointsPercentage,
                     'evaluations_count' => $evaluations->count(),
                     'total_possible' => $totalInCategory,
                     'completion_percentage' => $totalInCategory > 0
@@ -274,9 +292,27 @@ class EvaluationController extends Controller
             $evaluations = $player->receivedEvaluations;
             $totalEvaluators = $players->where('id', '!=', $player->id)->count();
 
+            // Calcular puntaje total promedio
+            $totalPointsSum = 0;
+            $maxPossible = 280; // Máximo fijo para todos
+
+            if ($evaluations->count() > 0) {
+                foreach ($evaluations as $eval) {
+                    $totalPointsSum += $eval->getTotalPoints();
+                }
+                $avgTotalPoints = round($totalPointsSum / $evaluations->count(), 0);
+                $totalPointsPercentage = round(($avgTotalPoints / $maxPossible) * 100, 1);
+            } else {
+                $avgTotalPoints = 0;
+                $totalPointsPercentage = 0;
+            }
+
             return [
                 'player' => $player,
                 'average_score' => $evaluations->avg('total_score') ?? 0,
+                'total_points_avg' => $avgTotalPoints,
+                'total_points_max' => $maxPossible,
+                'total_points_percentage' => $totalPointsPercentage,
                 'evaluations_count' => $evaluations->count(),
                 'total_possible' => $totalEvaluators,
                 'completion_percentage' => $totalEvaluators > 0
@@ -285,8 +321,12 @@ class EvaluationController extends Controller
             ];
         });
 
-        // Ordenar por promedio descendente
-        $playersStats = $playersStats->sortByDesc('average_score')->values();
+        // Ordenar: Primero los evaluados (por puntaje total desc), luego los sin evaluar
+        $withEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] > 0)
+            ->sortByDesc('total_points_avg');
+        $withoutEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] == 0);
+
+        $playersStats = $withEvaluations->merge($withoutEvaluations)->values();
 
         return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
     }
