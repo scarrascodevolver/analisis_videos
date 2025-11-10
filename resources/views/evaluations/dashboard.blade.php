@@ -23,11 +23,11 @@
                     </small>
                 </div>
                 <div class="card-body">
-                    <!-- Filtros y Gestión de Evaluaciones (solo para entrenadores/analistas) -->
-                    @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
+                    <!-- Filtro de Período (para todos los usuarios) -->
                     <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-4">
                         <div class="row">
-                            <div class="col-md-4">
+                            @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
+                            <div class="col-md-3">
                                 <label for="category_id">Filtrar por Categoría:</label>
                                 <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
                                     <option value="">Todas las categorías</option>
@@ -38,7 +38,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-8">
+                            @endif
+
+                            <div class="col-md-{{ in_array(Auth::user()->role, ['entrenador', 'analista']) ? '3' : '6' }}">
+                                <label for="period_id">Filtrar por Período:</label>
+                                <select name="period_id" id="period_id" class="form-control" onchange="this.form.submit()">
+                                    <option value="">Período Actual</option>
+                                    <option value="all" {{ $periodId === 'all' ? 'selected' : '' }}>Todos los períodos</option>
+                                    @foreach($allPeriods as $period)
+                                        <option value="{{ $period->id }}" {{ $periodId == $period->id ? 'selected' : '' }}>
+                                            {{ $period->name }}
+                                            @if($period->isOpen())
+                                                🟢 (Abierto)
+                                            @else
+                                                🔴 (Cerrado)
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
+                            <div class="col-md-6">
                                 <label>Gestión de Períodos de Evaluación:</label>
                                 <div class="card" style="border: 2px solid #1e4d2b; margin-bottom: 0;">
                                     <div class="card-body p-3">
@@ -61,9 +82,9 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </form>
-                    @endif
 
                     <!-- Tabla de resultados -->
                     @if($playersStats->count() > 0)

@@ -248,11 +248,29 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
+        // Obtener todos los períodos disponibles para el selector
+        $allPeriods = EvaluationPeriod::orderBy('started_at', 'desc')->get();
+
+        // Filtro de período (por defecto, el activo)
+        $periodId = request('period_id');
+
+        if ($periodId === 'all') {
+            // Ver todos los períodos
+            $selectedPeriod = null;
+        } elseif ($periodId) {
+            // Ver un período específico
+            $selectedPeriod = EvaluationPeriod::find($periodId);
+        } else {
+            // Por defecto, ver el período activo
+            $selectedPeriod = EvaluationPeriod::getActive();
+            $periodId = $selectedPeriod ? $selectedPeriod->id : null;
+        }
+
         // Si es jugador, mostrar solo sus propios resultados
         if ($currentUser->role === 'jugador') {
             // Obtener solo el jugador actual
             $players = User::where('id', $currentUser->id)
-                ->with(['profile', 'receivedEvaluations'])
+                ->with(['profile'])
                 ->get();
 
             // Obtener jugadores de su categoría para calcular total posible
@@ -266,9 +284,16 @@ class EvaluationController extends Controller
                 })
                 ->count();
 
-            // Calcular estadísticas del jugador actual
-            $playersStats = $players->map(function($player) use ($totalInCategory) {
-                $evaluations = $player->receivedEvaluations;
+            // Calcular estadísticas del jugador actual con filtro de período
+            $playersStats = $players->map(function($player) use ($totalInCategory, $periodId) {
+                // Filtrar evaluaciones por período
+                $evaluationsQuery = $player->receivedEvaluations();
+
+                if ($periodId && $periodId !== 'all') {
+                    $evaluationsQuery->where('evaluation_period_id', $periodId);
+                }
+
+                $evaluations = $evaluationsQuery->get();
 
                 // Calcular puntaje total promedio
                 $totalPointsSum = 0;
@@ -302,7 +327,7 @@ class EvaluationController extends Controller
             $categories = collect(); // No mostrar filtros para jugadores
             $categoryId = null;
 
-            return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
+            return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId', 'allPeriods', 'periodId', 'selectedPeriod'));
         }
 
         // Para entrenadores/analistas: mostrar todos los resultados
@@ -312,19 +337,26 @@ class EvaluationController extends Controller
         // Filtro de categoría (por defecto, la del entrenador)
         $categoryId = request('category_id', $currentUser->profile->user_category_id ?? null);
 
-        // Obtener jugadores de la categoría con sus evaluaciones
+        // Obtener jugadores de la categoría
         $players = User::where('role', 'jugador')
             ->whereHas('profile', function($q) use ($categoryId) {
                 if ($categoryId) {
                     $q->where('user_category_id', $categoryId);
                 }
             })
-            ->with(['profile', 'receivedEvaluations'])
+            ->with(['profile'])
             ->get();
 
-        // Calcular estadísticas para cada jugador
-        $playersStats = $players->map(function($player) use ($players) {
-            $evaluations = $player->receivedEvaluations;
+        // Calcular estadísticas para cada jugador con filtro de período
+        $playersStats = $players->map(function($player) use ($players, $periodId) {
+            // Filtrar evaluaciones por período
+            $evaluationsQuery = $player->receivedEvaluations();
+
+            if ($periodId && $periodId !== 'all') {
+                $evaluationsQuery->where('evaluation_period_id', $periodId);
+            }
+
+            $evaluations = $evaluationsQuery->get();
             $totalEvaluators = $players->where('id', '!=', $player->id)->count();
 
             // Calcular puntaje total promedio
@@ -363,7 +395,7 @@ class EvaluationController extends Controller
 
         $playersStats = $withEvaluations->merge($withoutEvaluations)->values();
 
-        return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId'));
+        return view('evaluations.dashboard', compact('playersStats', 'categories', 'categoryId', 'allPeriods', 'periodId', 'selectedPeriod'));
     }
 
     /**
