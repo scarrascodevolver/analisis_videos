@@ -14,6 +14,16 @@ class TestEvaluationsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Verificar que hay un período activo
+        $activePeriod = \App\Models\EvaluationPeriod::getActive();
+
+        if (!$activePeriod) {
+            $this->command->error('No hay un período de evaluación activo. Crea uno primero desde el dashboard.');
+            return;
+        }
+
+        $this->command->info("Período activo: {$activePeriod->name} (ID: {$activePeriod->id})");
+
         // Buscar ID de categoría "Adulta Primera"
         $categoriaAdultaPrimera = \App\Models\Category::where('name', 'Adulta Primera')->first();
 
@@ -65,6 +75,7 @@ class TestEvaluationsSeeder extends Seeder
                 $data = [
                     'evaluator_id' => $evaluador->id,
                     'evaluated_player_id' => $evaluado->id,
+                    'evaluation_period_id' => $activePeriod->id,
 
                     // Acondicionamiento Físico
                     'resistencia' => $this->getScore($nivelBase),
