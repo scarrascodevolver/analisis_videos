@@ -23,11 +23,11 @@
                     </small>
                 </div>
                 <div class="card-body">
-                    <!-- Filtro de Período (para todos los usuarios) -->
-                    <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-4">
+                    <!-- Filtros (Fila 1) -->
+                    <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-3">
                         <div class="row">
                             @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="category_id">Filtrar por Categoría:</label>
                                 <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
                                     <option value="">Todas las categorías</option>
@@ -40,7 +40,7 @@
                             </div>
                             @endif
 
-                            <div class="col-md-{{ in_array(Auth::user()->role, ['entrenador', 'analista']) ? '3' : '6' }}">
+                            <div class="col-md-{{ in_array(Auth::user()->role, ['entrenador', 'analista']) ? '4' : '6' }}">
                                 <label for="period_id">Filtrar por Período:</label>
                                 <select name="period_id" id="period_id" class="form-control" onchange="this.form.submit()">
                                     <option value="">Período Actual</option>
@@ -57,34 +57,36 @@
                                     @endforeach
                                 </select>
                             </div>
+                        </div>
+                    </form>
 
-                            @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
-                            <div class="col-md-6">
-                                <label>Gestión de Períodos de Evaluación:</label>
-                                <div class="card" style="border: 2px solid #1e4d2b; margin-bottom: 0;">
-                                    <div class="card-body p-3">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-6">
-                                                <div id="periodInfo">
-                                                    <strong id="periodName">Cargando...</strong><br>
-                                                    <small class="text-muted" id="periodStatus">Verificando estado...</small>
-                                                </div>
+                    <!-- Gestión de Períodos (Fila 2 - solo para entrenadores/analistas) -->
+                    @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card" style="border: 2px solid #1e4d2b;">
+                                <div class="card-body p-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <div id="periodInfo">
+                                                <strong id="periodName">Cargando...</strong><br>
+                                                <small class="text-muted" id="periodStatus">Verificando estado...</small>
                                             </div>
-                                            <div class="col-md-6 text-right">
-                                                <button type="button" id="closePeriodBtn" class="btn btn-danger" disabled>
-                                                    <i class="fas fa-times-circle"></i> Cerrar Período
-                                                </button>
-                                                <button type="button" id="newPeriodBtn" class="btn btn-success" disabled>
-                                                    <i class="fas fa-plus-circle"></i> Nuevo Período
-                                                </button>
-                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <button type="button" id="closePeriodBtn" class="btn btn-danger mr-3" disabled>
+                                                <i class="fas fa-times-circle"></i> Cerrar Período
+                                            </button>
+                                            <button type="button" id="newPeriodBtn" class="btn btn-success" disabled>
+                                                <i class="fas fa-plus-circle"></i> Nuevo Período
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            @endif
                         </div>
-                    </form>
+                    </div>
+                    @endif
 
                     <!-- Tabla de resultados -->
                     @if($playersStats->count() > 0)
@@ -286,6 +288,11 @@
     padding: 0.375rem 0.75rem;
 }
 
+/* Espaciado de botones de gestión de períodos */
+#closePeriodBtn, #newPeriodBtn {
+    min-width: 150px;
+}
+
 @media (max-width: 768px) {
     .table {
         font-size: 0.85rem;
@@ -304,6 +311,14 @@
     .dt-button {
         margin-bottom: 0.5rem;
         font-size: 0.85rem;
+    }
+
+    /* Botones de períodos en mobile: uno debajo del otro */
+    #closePeriodBtn, #newPeriodBtn {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.5rem;
+        margin-right: 0 !important;
     }
 }
 </style>
