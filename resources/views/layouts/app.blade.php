@@ -341,7 +341,7 @@
                             @if($canEvaluate)
                             <li class="nav-item">
                                 <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.index') || request()->routeIs('evaluations.wizard') || request()->routeIs('evaluations.store') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-star"></i>
+                                    <i class="nav-icon fas fa-clipboard-check"></i>
                                     <p>Evaluación de Jugadores</p>
                                 </a>
                             </li>
