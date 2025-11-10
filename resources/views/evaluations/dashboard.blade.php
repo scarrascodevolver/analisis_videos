@@ -23,10 +23,10 @@
                     </small>
                 </div>
                 <div class="card-body">
-                    <!-- Filtros y Toggle de Evaluaciones (solo para entrenadores/analistas) -->
+                    <!-- Filtros y Gestión de Evaluaciones (solo para entrenadores/analistas) -->
                     @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                     <form method="GET" action="{{ route('evaluations.dashboard') }}" class="mb-4">
-                        <div class="row align-items-end">
+                        <div class="row">
                             <div class="col-md-4">
                                 <label for="category_id">Filtrar por Categoría:</label>
                                 <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
@@ -38,11 +38,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <button type="button" id="toggleEvaluationsBtn" class="btn btn-block" style="background-color: #1e4d2b; color: white;">
-                                    <i class="fas fa-circle" id="statusIcon"></i>
-                                    <span id="statusText">Cargando...</span>
-                                </button>
+                            <div class="col-md-8">
+                                <label>Gestión de Períodos de Evaluación:</label>
+                                <div class="card" style="border: 2px solid #1e4d2b; margin-bottom: 0;">
+                                    <div class="card-body p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <div id="periodInfo">
+                                                    <strong id="periodName">Cargando...</strong><br>
+                                                    <small class="text-muted" id="periodStatus">Verificando estado...</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 text-right">
+                                                <button type="button" id="closePeriodBtn" class="btn btn-danger" disabled>
+                                                    <i class="fas fa-times-circle"></i> Cerrar Período
+                                                </button>
+                                                <button type="button" id="newPeriodBtn" class="btn btn-success" disabled>
+                                                    <i class="fas fa-plus-circle"></i> Nuevo Período
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -390,23 +407,28 @@ $(document).ready(function() {
     });
     @endif
 
-    // Toggle de evaluaciones (solo para entrenadores/analistas)
+    // Gestión de períodos con 2 botones (solo para entrenadores/analistas)
     @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
-    // Función para actualizar el estado visual del botón
-    function updateToggleButton(enabled, period = null) {
-        const btn = $('#toggleEvaluationsBtn');
-        const icon = $('#statusIcon');
-        const text = $('#statusText');
 
-        if (enabled) {
-            icon.removeClass('text-danger').addClass('text-success');
-            const periodName = period ? period.name : 'Evaluaciones';
-            text.html(`<strong>${periodName}</strong><br><small>Habilitadas - Click para cerrar</small>`);
-            btn.attr('title', 'Click para cerrar período actual');
+    // Función para actualizar UI según estado del período
+    function updatePeriodUI(enabled, period = null) {
+        const periodName = $('#periodName');
+        const periodStatus = $('#periodStatus');
+        const closeBtn = $('#closePeriodBtn');
+        const newBtn = $('#newPeriodBtn');
+
+        if (enabled && period) {
+            // Hay período activo
+            periodName.html(`<i class="fas fa-circle text-success"></i> ${period.name}`);
+            periodStatus.html(`🟢 Abierto desde ${period.started_at}`);
+            closeBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+            newBtn.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
         } else {
-            icon.removeClass('text-success').addClass('text-danger');
-            text.html('<strong>Evaluaciones Deshabilitadas</strong><br><small>Click para crear nuevo período</small>');
-            btn.attr('title', 'Click para crear nuevo período de evaluación');
+            // No hay período activo
+            periodName.html(`<i class="fas fa-circle text-danger"></i> Sin período activo`);
+            periodStatus.html('🔴 Evaluaciones deshabilitadas - Crea un nuevo período para habilitar');
+            closeBtn.prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+            newBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
         }
     }
 
@@ -415,15 +437,19 @@ $(document).ready(function() {
         url: '{{ route("evaluations.toggle") }}',
         method: 'GET',
         success: function(response) {
-            updateToggleButton(response.enabled, response.period);
+            updatePeriodUI(response.enabled, response.period);
         },
         error: function() {
-            $('#statusText').text('Error al cargar estado');
+            $('#periodStatus').text('Error al cargar estado');
         }
     });
 
-    // Manejar click en botón toggle
-    $('#toggleEvaluationsBtn').on('click', function() {
+    // Botón: Cerrar Período
+    $('#closePeriodBtn').on('click', function() {
+        if (!confirm('¿Estás seguro de cerrar el período actual?\n\nLas evaluaciones se guardarán como histórico y los jugadores no podrán evaluar hasta que crees un nuevo período.')) {
+            return;
+        }
+
         const btn = $(this);
         btn.prop('disabled', true);
 
@@ -435,14 +461,12 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    updateToggleButton(response.enabled, response.period);
+                    updatePeriodUI(response.enabled, response.period);
 
-                    // Mostrar notificación con más detalle
-                    const alertClass = response.enabled ? 'alert-success' : 'alert-warning';
-                    const icon = response.enabled ? 'fa-check-circle' : 'fa-info-circle';
+                    // Mostrar notificación
                     const alertHtml = `
-                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                            <i class="fas ${icon}"></i> ${response.message}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle"></i> ${response.message}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
@@ -450,17 +474,55 @@ $(document).ready(function() {
                     `;
                     $('.card-body').prepend(alertHtml);
 
-                    // Auto-cerrar después de 5 segundos
                     setTimeout(function() {
                         $('.alert').fadeOut('slow', function() {
                             $(this).remove();
                         });
                     }, 5000);
                 }
-                btn.prop('disabled', false);
             },
             error: function(xhr) {
-                alert('Error al cambiar estado: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                alert('Error al cerrar período: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // Botón: Nuevo Período
+    $('#newPeriodBtn').on('click', function() {
+        const btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: '{{ route("evaluations.toggle") }}',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    updatePeriodUI(response.enabled, response.period);
+
+                    // Mostrar notificación
+                    const alertHtml = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> ${response.message}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                    `;
+                    $('.card-body').prepend(alertHtml);
+
+                    setTimeout(function() {
+                        $('.alert').fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 5000);
+                }
+            },
+            error: function(xhr) {
+                alert('Error al crear nuevo período: ' + (xhr.responseJSON?.message || 'Error desconocido'));
                 btn.prop('disabled', false);
             }
         });
