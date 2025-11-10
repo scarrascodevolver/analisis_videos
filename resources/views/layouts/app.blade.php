@@ -334,12 +334,18 @@
                                     <p>Videos del Equipo</p>
                                 </a>
                             </li>
+                            @php
+                                $activePeriod = \App\Models\EvaluationPeriod::getActive();
+                                $canEvaluate = $activePeriod && $activePeriod->isOpen();
+                            @endphp
+                            @if($canEvaluate)
                             <li class="nav-item">
                                 <a href="{{ route('evaluations.index') }}" class="nav-link {{ request()->routeIs('evaluations.index') || request()->routeIs('evaluations.wizard') || request()->routeIs('evaluations.store') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-star"></i>
                                     <p>Evaluación de Jugadores</p>
                                 </a>
                             </li>
+                            @endif
                             <li class="nav-item">
                                 <a href="{{ route('evaluations.dashboard') }}" class="nav-link {{ request()->routeIs('evaluations.dashboard') || request()->routeIs('evaluations.show') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-chart-line"></i>
