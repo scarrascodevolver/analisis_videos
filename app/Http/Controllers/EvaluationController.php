@@ -531,15 +531,31 @@ class EvaluationController extends Controller
         $activePeriod = EvaluationPeriod::getActive();
 
         if ($activePeriod && $activePeriod->isOpen()) {
-            // DESHABILITAR: Cerrar período actual
-            $activePeriod->close();
+            // DESHABILITAR: Verificar si el período tiene evaluaciones
+            $evaluationsCount = PlayerEvaluation::where('evaluation_period_id', $activePeriod->id)->count();
 
-            return response()->json([
-                'success' => true,
-                'enabled' => false,
-                'message' => 'Período "' . $activePeriod->name . '" cerrado. Las evaluaciones han sido deshabilitadas.',
-                'period' => null
-            ]);
+            if ($evaluationsCount === 0) {
+                // Si no tiene evaluaciones, eliminar el período vacío
+                $periodName = $activePeriod->name;
+                $activePeriod->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'enabled' => false,
+                    'message' => 'Período "' . $periodName . '" eliminado (sin evaluaciones). Las evaluaciones han sido deshabilitadas.',
+                    'period' => null
+                ]);
+            } else {
+                // Si tiene evaluaciones, cerrar normalmente
+                $activePeriod->close();
+
+                return response()->json([
+                    'success' => true,
+                    'enabled' => false,
+                    'message' => 'Período "' . $activePeriod->name . '" cerrado con ' . $evaluationsCount . ' evaluaciones. Las evaluaciones han sido deshabilitadas.',
+                    'period' => null
+                ]);
+            }
         } else {
             // HABILITAR: Crear y activar nuevo período
             $newPeriod = EvaluationPeriod::create([
