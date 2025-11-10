@@ -393,19 +393,20 @@ $(document).ready(function() {
     // Toggle de evaluaciones (solo para entrenadores/analistas)
     @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
     // Función para actualizar el estado visual del botón
-    function updateToggleButton(enabled) {
+    function updateToggleButton(enabled, period = null) {
         const btn = $('#toggleEvaluationsBtn');
         const icon = $('#statusIcon');
         const text = $('#statusText');
 
         if (enabled) {
             icon.removeClass('text-danger').addClass('text-success');
-            text.text('Evaluaciones Habilitadas');
-            btn.attr('title', 'Click para deshabilitar evaluaciones');
+            const periodName = period ? period.name : 'Evaluaciones';
+            text.html(`<strong>${periodName}</strong><br><small>Habilitadas - Click para cerrar</small>`);
+            btn.attr('title', 'Click para cerrar período actual');
         } else {
             icon.removeClass('text-success').addClass('text-danger');
-            text.text('Evaluaciones Deshabilitadas');
-            btn.attr('title', 'Click para habilitar evaluaciones');
+            text.html('<strong>Evaluaciones Deshabilitadas</strong><br><small>Click para crear nuevo período</small>');
+            btn.attr('title', 'Click para crear nuevo período de evaluación');
         }
     }
 
@@ -414,7 +415,7 @@ $(document).ready(function() {
         url: '{{ route("evaluations.toggle") }}',
         method: 'GET',
         success: function(response) {
-            updateToggleButton(response.enabled);
+            updateToggleButton(response.enabled, response.period);
         },
         error: function() {
             $('#statusText').text('Error al cargar estado');
@@ -434,13 +435,14 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    updateToggleButton(response.enabled);
+                    updateToggleButton(response.enabled, response.period);
 
-                    // Mostrar notificación
+                    // Mostrar notificación con más detalle
                     const alertClass = response.enabled ? 'alert-success' : 'alert-warning';
+                    const icon = response.enabled ? 'fa-check-circle' : 'fa-info-circle';
                     const alertHtml = `
                         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> ${response.message}
+                            <i class="fas ${icon}"></i> ${response.message}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
@@ -448,12 +450,12 @@ $(document).ready(function() {
                     `;
                     $('.card-body').prepend(alertHtml);
 
-                    // Auto-cerrar después de 3 segundos
+                    // Auto-cerrar después de 5 segundos
                     setTimeout(function() {
                         $('.alert').fadeOut('slow', function() {
                             $(this).remove();
                         });
-                    }, 3000);
+                    }, 5000);
                 }
                 btn.prop('disabled', false);
             },

@@ -462,6 +462,7 @@ class EvaluationController extends Controller
 
     /**
      * Alternar habilitación de evaluaciones (solo entrenadores/analistas)
+     * Ahora gestiona períodos automáticamente
      */
     public function toggleEvaluations(Request $request)
     {
@@ -475,24 +476,56 @@ class EvaluationController extends Controller
             ], 403);
         }
 
-        // Si es GET, solo retornar el estado actual
+        // Si es GET, retornar estado actual basado en período activo
         if ($request->isMethod('get')) {
+            $activePeriod = EvaluationPeriod::getActive();
+            $isEnabled = $activePeriod && $activePeriod->isOpen();
+
             return response()->json([
                 'success' => true,
-                'enabled' => Setting::areEvaluationsEnabled()
+                'enabled' => $isEnabled,
+                'period' => $activePeriod ? [
+                    'id' => $activePeriod->id,
+                    'name' => $activePeriod->name,
+                    'started_at' => $activePeriod->started_at->format('d/m/Y H:i')
+                ] : null
             ]);
         }
 
-        // Si es POST, alternar el estado
-        $isEnabled = Setting::toggleEvaluations();
+        // Si es POST, gestionar períodos
+        $activePeriod = EvaluationPeriod::getActive();
 
-        return response()->json([
-            'success' => true,
-            'enabled' => $isEnabled,
-            'message' => $isEnabled
-                ? 'Evaluaciones habilitadas correctamente.'
-                : 'Evaluaciones deshabilitadas correctamente.'
-        ]);
+        if ($activePeriod && $activePeriod->isOpen()) {
+            // DESHABILITAR: Cerrar período actual
+            $activePeriod->close();
+
+            return response()->json([
+                'success' => true,
+                'enabled' => false,
+                'message' => 'Período "' . $activePeriod->name . '" cerrado. Las evaluaciones han sido deshabilitadas.',
+                'period' => null
+            ]);
+        } else {
+            // HABILITAR: Crear y activar nuevo período
+            $newPeriod = EvaluationPeriod::create([
+                'name' => 'Evaluación ' . now()->format('d M Y'),
+                'description' => 'Período creado automáticamente el ' . now()->format('d/m/Y \a \l\a\s H:i'),
+                'started_at' => now(),
+                'ended_at' => null,
+                'is_active' => true
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'enabled' => true,
+                'message' => 'Nuevo período "' . $newPeriod->name . '" creado. Los jugadores pueden evaluar ahora.',
+                'period' => [
+                    'id' => $newPeriod->id,
+                    'name' => $newPeriod->name,
+                    'started_at' => $newPeriod->started_at->format('d/m/Y H:i')
+                ]
+            ]);
+        }
     }
 
     /**
