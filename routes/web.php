@@ -170,6 +170,11 @@ Route::middleware('auth')->group(function() {
     Route::get('/evaluacion/resultados', [App\Http\Controllers\EvaluationController::class, 'dashboard'])->name('evaluations.dashboard');
     Route::get('/evaluacion/jugador/{player}', [App\Http\Controllers\EvaluationController::class, 'show'])->name('evaluations.show');
 
+    // Toggle de evaluaciones (entrenadores/analistas)
+    Route::match(['get', 'post'], '/evaluacion/toggle', [App\Http\Controllers\EvaluationController::class, 'toggleEvaluations'])
+        ->middleware('role:entrenador,analista')
+        ->name('evaluations.toggle');
+
     Route::get('/evaluacion/completada', function() {
         return view('evaluations.success');
     })->name('evaluations.success');

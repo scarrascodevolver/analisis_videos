@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\PlayerEvaluation;
+use App\Models\Setting;
 
 class EvaluationController extends Controller
 {
@@ -18,6 +19,11 @@ class EvaluationController extends Controller
 
         if (!$categoryId) {
             return redirect()->route('dashboard')->with('error', 'No tienes una categoría asignada.');
+        }
+
+        // Verificar si las evaluaciones están habilitadas (solo para jugadores)
+        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
+            return redirect()->route('dashboard')->with('warning', 'Las evaluaciones están deshabilitadas actualmente. Consulta con tu entrenador.');
         }
 
         // Obtener jugadores de la misma categoría (excepto el usuario actual)
@@ -85,6 +91,11 @@ class EvaluationController extends Controller
         $currentUser = auth()->user();
         $categoryId = $currentUser->profile->user_category_id ?? null;
 
+        // Verificar si las evaluaciones están habilitadas (solo para jugadores)
+        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
+            return redirect()->route('evaluations.index')->with('error', 'Las evaluaciones están deshabilitadas actualmente.');
+        }
+
         // Obtener el jugador a evaluar
         $player = User::with('profile')->findOrFail($playerId);
 
@@ -119,6 +130,14 @@ class EvaluationController extends Controller
     public function store(Request $request)
     {
         $currentUser = auth()->user();
+
+        // Verificar si las evaluaciones están habilitadas (solo para jugadores)
+        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Las evaluaciones están deshabilitadas actualmente.'
+            ], 403);
+        }
 
         // Validar datos
         $validated = $request->validate([
@@ -426,5 +445,40 @@ class EvaluationController extends Controller
         $evaluationCount = $evaluations->count();
 
         return view('evaluations.show', compact('player', 'evaluations', 'averages', 'totalScore', 'evaluationCount', 'isForward'));
+    }
+
+    /**
+     * Alternar habilitación de evaluaciones (solo entrenadores/analistas)
+     */
+    public function toggleEvaluations(Request $request)
+    {
+        $currentUser = auth()->user();
+
+        // Solo entrenadores y analistas pueden toggle
+        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+
+        // Si es GET, solo retornar el estado actual
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'success' => true,
+                'enabled' => Setting::areEvaluationsEnabled()
+            ]);
+        }
+
+        // Si es POST, alternar el estado
+        $isEnabled = Setting::toggleEvaluations();
+
+        return response()->json([
+            'success' => true,
+            'enabled' => $isEnabled,
+            'message' => $isEnabled
+                ? 'Evaluaciones habilitadas correctamente.'
+                : 'Evaluaciones deshabilitadas correctamente.'
+        ]);
     }
 }
