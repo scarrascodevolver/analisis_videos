@@ -6,11 +6,23 @@ use App\Models\Video;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VideoStreamController extends Controller
 {
+    /**
+     * CDN Health Check Cache Duration (in seconds)
+     * Check CDN health every 5 minutes instead of every request
+     */
+    private const CDN_HEALTH_CACHE_SECONDS = 300;
+
+    /**
+     * CDN Health Check Timeout (in seconds)
+     */
+    private const CDN_HEALTH_TIMEOUT = 3;
+
     /**
      * Get optimal chunk size based on file size and operation type
      */
@@ -29,32 +41,121 @@ class VideoStreamController extends Controller
         // For large files (> 500MB): smaller chunks for memory safety
         return $isRangeRequest ? 32768 : 8192; // 32KB for seeking, 8KB for full stream
     }
+
+    /**
+     * Check if CDN is healthy (with cache to avoid checking every request)
+     * Returns true if CDN is accessible, false otherwise
+     */
+    private function isCdnHealthy(): bool
+    {
+        $cacheKey = 'cdn_health_status';
+
+        // Return cached status if available
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        // Perform health check
+        $cdnBaseUrl = config('filesystems.disks.spaces.url');
+        if (!$cdnBaseUrl) {
+            return false;
+        }
+
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => self::CDN_HEALTH_TIMEOUT,
+                    'user_agent' => 'HealthCheck/1.0'
+                ],
+                'ssl' => [
+                    'verify_peer' => true,
+                    'verify_peer_name' => true,
+                ]
+            ]);
+
+            // Check CDN base URL accessibility
+            $headers = @get_headers($cdnBaseUrl, true, $context);
+            $isHealthy = $headers && (
+                strpos($headers[0], '200') !== false ||
+                strpos($headers[0], '403') !== false || // 403 is OK - means CDN is responding
+                strpos($headers[0], '404') !== false    // 404 is OK - means CDN is responding
+            );
+
+            // Cache result
+            Cache::put($cacheKey, $isHealthy, self::CDN_HEALTH_CACHE_SECONDS);
+
+            if (!$isHealthy) {
+                \Log::warning('CDN health check failed - Response: ' . ($headers[0] ?? 'No response'));
+            }
+
+            return $isHealthy;
+
+        } catch (Exception $e) {
+            \Log::error('CDN health check exception: ' . $e->getMessage());
+            Cache::put($cacheKey, false, 60); // Cache failure for 1 minute only
+            return false;
+        }
+    }
+
+    /**
+     * Force CDN health check (clears cache and re-checks)
+     */
+    public function refreshCdnHealth(): bool
+    {
+        Cache::forget('cdn_health_status');
+        return $this->isCdnHealthy();
+    }
+
+    /**
+     * API endpoint to check CDN health status
+     * Useful for monitoring and debugging
+     */
+    public function cdnStatus(Request $request)
+    {
+        $forceRefresh = $request->has('refresh');
+
+        if ($forceRefresh) {
+            $isHealthy = $this->refreshCdnHealth();
+        } else {
+            $isHealthy = $this->isCdnHealthy();
+        }
+
+        $cdnUrl = config('filesystems.disks.spaces.url');
+
+        return response()->json([
+            'cdn_healthy' => $isHealthy,
+            'cdn_url' => $cdnUrl,
+            'cached' => !$forceRefresh && Cache::has('cdn_health_status'),
+            'cache_ttl_seconds' => self::CDN_HEALTH_CACHE_SECONDS,
+            'fallback_available' => true,
+            'fallback_method' => 'Spaces SDK Direct Streaming',
+            'checked_at' => now()->toIso8601String(),
+        ]);
+    }
+
     public function stream(Video $video, Request $request)
     {
         // Check if file is in DigitalOcean Spaces (new uploads)
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
-                // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
-                if ($cdnBaseUrl) {
+                // Try CDN first if configured and healthy
+                if ($cdnBaseUrl && $this->isCdnHealthy()) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    // Detect Chrome browser for maximum speed
-                    $userAgent = $request->header('User-Agent', '');
-                    $isChrome = strpos($userAgent, 'Chrome') !== false && strpos($userAgent, 'Edg') === false;
-
-                    \Log::info('Browser detection - UA: ' . substr($userAgent, 0, 100) . ' | isChrome: ' . ($isChrome ? 'YES' : 'NO'));
-
-                    // Direct CDN redirect for maximum speed (all videos are now public)
-                    \Log::info('CDN direct redirect for ' . ($isChrome ? 'Chrome' : 'other') . ' browser - video: ' . $video->id . ' -> ' . $cdnUrl);
+                    \Log::debug('CDN redirect - video: ' . $video->id);
 
                     return redirect($cdnUrl);
-                } else {
-                    // No CDN configured, stream directly from Spaces
-                    \Log::info('No CDN URL configured, streaming directly from Spaces for video: ' . $video->id);
-                    return $this->streamFromSpaces($video, $request);
                 }
+
+                // CDN not available - use direct Spaces streaming as fallback
+                if ($cdnBaseUrl && !$this->isCdnHealthy()) {
+                    \Log::warning('CDN unhealthy - using Spaces SDK fallback for video: ' . $video->id);
+                }
+
+                return $this->streamFromSpaces($video, $request);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback
@@ -65,6 +166,7 @@ class VideoStreamController extends Controller
         $path = storage_path('app/public/' . $video->file_path);
 
         if (!file_exists($path)) {
+            \Log::error('Video file not found anywhere - video: ' . $video->id . ' path: ' . $video->file_path);
             abort(404, 'Video file not found');
         }
 
@@ -215,27 +317,23 @@ class VideoStreamController extends Controller
         try {
             $spacesPath = 'videos/' . $filename;
             if (Storage::disk('spaces')->exists($spacesPath)) {
-                // Simple direct redirect to CDN for maximum speed
                 $cdnBaseUrl = config('filesystems.disks.spaces.url');
-                if ($cdnBaseUrl) {
+
+                // Try CDN first if configured and healthy
+                if ($cdnBaseUrl && $this->isCdnHealthy()) {
                     $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
-                    // Log for monitoring
-                    \Log::info('Direct redirect to CDN for maximum speed - file: ' . $filename . ' -> ' . $cdnUrl);
+                    \Log::debug('CDN redirect by path - file: ' . $filename);
 
-                    // CloudFlare-compatible redirect with cookie prevention headers
-                    return redirect($cdnUrl)->withHeaders([
-                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                        'Pragma' => 'no-cache',
-                        'Expires' => '0',
-                        'Set-Cookie' => '', // Prevent cookie conflicts
-                        'Access-Control-Allow-Credentials' => 'false'
-                    ]);
-                } else {
-                    // No CDN configured, stream directly from Spaces
-                    \Log::info('No CDN URL configured, streaming directly from Spaces for file: ' . $filename);
-                    return $this->streamFileFromSpaces($spacesPath, $request);
+                    return redirect($cdnUrl);
                 }
+
+                // CDN not available - use direct Spaces streaming as fallback
+                if ($cdnBaseUrl && !$this->isCdnHealthy()) {
+                    \Log::warning('CDN unhealthy - using Spaces SDK fallback for file: ' . $filename);
+                }
+
+                return $this->streamFileFromSpaces($spacesPath, $request);
             }
         } catch (Exception $e) {
             // Log error and continue to local fallback

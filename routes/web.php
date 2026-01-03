@@ -21,6 +21,9 @@ Auth::routes();
 Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
 Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
 
+// CDN Health Status (for monitoring - protected)
+Route::get('api/cdn-status', [VideoStreamController::class, 'cdnStatus'])->middleware('auth')->name('api.cdn.status');
+
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
     // Main Dashboard
