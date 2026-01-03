@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototipo Editor de Jugadas - Los Troncos Rugby</title>
+    <title>Editor de Jugadas Rugby - Los Troncos</title>
 
     <!-- Bootstrap 4 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
@@ -36,7 +36,6 @@
             border: 3px solid #1e4d2b !important;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            background: #2d5a2d;
         }
 
         .btn-rugby {
@@ -63,28 +62,27 @@
         .tools-panel {
             background: white;
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
         }
 
-        .saved-play-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
+        .tools-panel .btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
         }
 
-        .saved-play-item:hover {
-            background: #e9ecef;
-            border-color: #1e4d2b;
-            transform: translateX(5px);
+        .tools-panel .form-control {
+            font-size: 0.85rem;
         }
 
-        .saved-play-item strong {
-            color: #1e4d2b;
+        .tools-panel optgroup {
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        .tools-panel option {
+            padding-left: 0.5rem;
         }
 
         .canvas-wrapper {
@@ -94,30 +92,79 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .alert-rugby {
+        .section-header {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e4d2b;
+            margin-top: 0.75rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid #1e4d2b;
+            padding-bottom: 0.2rem;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        .section-header i {
+            font-size: 0.7rem;
+        }
+
+        #playNameInput, #formacionSelect {
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+        }
+
+        #playNameInput:focus, #formacionSelect:focus {
+            border-color: #1e4d2b;
+            box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.15);
+        }
+
+        .saved-play-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-bottom: 0.4rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .saved-play-item:hover {
+            background: #e9ecef;
+            border-color: #1e4d2b;
+            transform: translateX(3px);
+        }
+
+        .saved-play-item strong {
+            color: #1e4d2b;
+            font-size: 0.85rem;
+        }
+
+        .saved-play-item small {
+            font-size: 0.7rem;
+        }
+
+        .saved-play-item .btn-sm {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+        }
+
+        .badge-rugby {
+            background: #1e4d2b;
+        }
+
+        .alert-info-rugby {
             background: #d4edda;
             border: 1px solid #1e4d2b;
             color: #155724;
             border-radius: 6px;
-        }
-
-        #playNameInput, #formacionSelect {
-            border: 2px solid #1e4d2b;
-            border-radius: 6px;
-        }
-
-        #playNameInput:focus, #formacionSelect:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
-        }
-
-        .section-header {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #1e4d2b;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
+            padding: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -125,7 +172,10 @@
     <!-- Navbar -->
     <div class="navbar-rugby">
         <div class="container-fluid">
-            <h3>🏉 Prototipo - Editor de Jugadas Rugby "Los Troncos"</h3>
+            <h3>
+                <i class="fas fa-chalkboard-teacher"></i>
+                Editor de Jugadas Rugby - Los Troncos (FASE 1: Posiciones Fijas)
+            </h3>
         </div>
     </div>
 
@@ -133,99 +183,136 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Canvas Area -->
-            <div class="col-md-9">
+            <div class="col-md-10">
                 <div class="canvas-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="mb-0">
-                            <i class="fas fa-chalkboard"></i> Cancha de Rugby
+                            <i class="fas fa-football-ball"></i> Cancha de Rugby
+                            <small class="text-muted">(Ataque: Izquierda → Derecha)</small>
                         </h4>
-                        <div class="btn-group" role="group">
-                            <button id="btnPlay" class="btn btn-success btn-sm">
-                                <i class="fas fa-play"></i> Play
-                            </button>
-                            <button id="btnPause" class="btn btn-warning btn-sm" disabled>
-                                <i class="fas fa-pause"></i> Pause
-                            </button>
-                            <button id="btnReset" class="btn btn-info btn-sm">
-                                <i class="fas fa-redo"></i> Reset
-                            </button>
-                            <button id="btnClear" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i> Limpiar
-                            </button>
-                        </div>
+                        <button id="btnClearCanvas" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Limpiar Todo
+                        </button>
                     </div>
-                    <canvas id="playCanvas" width="1000" height="600"></canvas>
+                    <canvas id="playCanvas" width="1200" height="650"></canvas>
                 </div>
             </div>
 
             <!-- Tools Panel -->
-            <div class="col-md-3">
-                <div class="tools-panel mb-3">
-                    <h5 class="mb-3">
-                        <i class="fas fa-tools"></i> Herramientas
-                    </h5>
+            <div class="col-md-2">
+                <!-- Info Alert -->
+                <div class="alert-info-rugby">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Fase 1:</strong> Posiciones fijas. Arrastra para mover.
+                </div>
 
-                    <!-- Formaciones Predefinidas -->
+                <!-- Panel 1: Agregar Jugadores -->
+                <div class="tools-panel">
+                    <div class="section-header">
+                        <i class="fas fa-user-plus"></i> Jugadores
+                    </div>
+                    <button id="btnAddForward" class="btn btn-rugby btn-block mb-2">
+                        <i class="fas fa-user"></i> Forward
+                    </button>
+                    <button id="btnAddBack" class="btn btn-rugby btn-block mb-2">
+                        <i class="fas fa-running"></i> Back
+                    </button>
+                    <button id="btnAddBall" class="btn btn-warning btn-block mb-2">
+                        🏈 Balón
+                    </button>
+                    <button id="btnAssignPossession" class="btn btn-outline-warning btn-block mb-2" disabled>
+                        <i class="fas fa-hand-holding"></i> Asignar posesión
+                    </button>
+                    <button id="btnReleasePossession" class="btn btn-outline-secondary btn-block mb-2" style="display: none;">
+                        <i class="fas fa-hand-paper"></i> Soltar balón
+                    </button>
+                    <button id="btnDeleteSelected" class="btn btn-danger btn-block">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                </div>
+
+                <!-- Panel 2: Trayectorias -->
+                <div class="tools-panel">
+                    <div class="section-header">
+                        <i class="fas fa-route"></i> Trayectorias
+                    </div>
+                    <button id="btnDrawMovement" class="btn btn-info btn-block mb-2" disabled>
+                        <i class="fas fa-pencil-alt"></i> Dibujar movimiento
+                    </button>
+                    <button id="btnCreatePass" class="btn btn-primary btn-block mb-2" disabled>
+                        🔗 Crear Pase
+                    </button>
+                    <div class="btn-group btn-block mb-2" role="group">
+                        <button id="btnPlay" class="btn btn-success" disabled>
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                        <button id="btnReset" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                    <button id="btnClearMovements" class="btn btn-outline-danger btn-block btn-sm">
+                        <i class="fas fa-eraser"></i> Borrar trayectorias
+                    </button>
+                    <small id="animationStatus" class="text-muted d-block mt-2">
+                        <i class="fas fa-info-circle"></i> Selecciona jugador/balón primero
+                    </small>
+                </div>
+
+                <!-- Panel 3: Formaciones -->
+                <div class="tools-panel">
                     <div class="section-header">
                         <i class="fas fa-users"></i> Formaciones
                     </div>
                     <select id="formacionSelect" class="form-control form-control-sm mb-2">
-                        <option value="">Selecciona formación...</option>
-                        <option value="lineout5">🔵 Lineout 5 Jugadores</option>
-                        <option value="lineout8">🔵 Lineout 8 Completo</option>
-                        <option value="backsAtaque">🟢 Backs Línea Ataque</option>
-                        <option value="scrum">🟣 Scrum 3-4-1</option>
-                        <option value="full15">⚪ Formación 15 Completo</option>
+                        <option value="">-- Selecciona --</option>
+                        <optgroup label="🟣 Forwards">
+                            <option value="scrum">Scrum</option>
+                            <option value="lineout">Lineout 5</option>
+                            <option value="lineout_completo">Lineout completo</option>
+                            <option value="ruck">Ruck</option>
+                            <option value="maul">Maul</option>
+                        </optgroup>
+                        <optgroup label="🟢 Backs">
+                            <option value="backs">Backs línea ataque</option>
+                        </optgroup>
+                        <optgroup label="🟡 Situaciones Especiales">
+                            <option value="kickoff">Kick-off (recepción)</option>
+                        </optgroup>
+                        <optgroup label="⚪ Equipo Completo">
+                            <option value="full15">15 jugadores</option>
+                        </optgroup>
                     </select>
-                    <button id="btnApplyFormacion" class="btn btn-rugby btn-sm btn-block mb-3">
-                        <i class="fas fa-check"></i> Aplicar Formación
-                    </button>
-
-                    <!-- Agregar Jugadores -->
-                    <div class="section-header">
-                        <i class="fas fa-plus"></i> Agregar Individual
-                    </div>
-                    <button id="btnAddForward" class="btn btn-rugby btn-sm btn-block mb-2">
-                        <i class="fas fa-user"></i> Agregar Forward
-                    </button>
-
-                    <button id="btnAddBack" class="btn btn-rugby btn-sm btn-block mb-2">
-                        <i class="fas fa-user"></i> Agregar Back
-                    </button>
-
-                    <button id="btnAddBall" class="btn btn-rugby btn-sm btn-block mb-3">
-                        <i class="fas fa-football-ball"></i> Agregar Pelota
-                    </button>
-
-                    <!-- Dibujar -->
-                    <div class="section-header">
-                        <i class="fas fa-pencil-alt"></i> Dibujar
-                    </div>
-                    <button id="btnDrawLine" class="btn btn-rugby btn-sm btn-block mb-3">
-                        <i class="fas fa-arrows-alt"></i> Dibujar Movimiento
-                    </button>
-
-                    <hr>
-
-                    <!-- Guardar -->
-                    <h6 class="mb-2">Nombre de la jugada:</h6>
-                    <input type="text" id="playNameInput" class="form-control form-control-sm mb-2"
-                           placeholder="Ej: Ataque desde lineout">
-
-                    <button id="btnSave" class="btn btn-rugby btn-block">
-                        <i class="fas fa-save"></i> Guardar Jugada
+                    <button id="btnApplyFormacion" class="btn btn-rugby btn-block btn-sm">
+                        <i class="fas fa-check-circle"></i> Aplicar
                     </button>
                 </div>
 
-                <!-- Saved Plays -->
+                <!-- Panel 3: Guardar -->
                 <div class="tools-panel">
-                    <h5 class="mb-3">
-                        <i class="fas fa-list"></i> Jugadas Guardadas
-                        <span class="badge badge-success" id="playCount">0</span>
-                    </h5>
-                    <div id="savedPlays" style="max-height: 400px; overflow-y: auto;">
-                        <p class="text-muted small">
-                            <i class="fas fa-info-circle"></i> No hay jugadas guardadas aún
+                    <div class="section-header">
+                        <i class="fas fa-save"></i> Guardar
+                    </div>
+                    <input type="text" id="playNameInput" class="form-control form-control-sm mb-2"
+                           placeholder="Nombre...">
+                    <select id="playCategory" class="form-control form-control-sm mb-2">
+                        <option value="forwards">🟣 Forwards</option>
+                        <option value="backs">🟢 Backs</option>
+                        <option value="full_team">⚪ Equipo completo</option>
+                    </select>
+                    <button id="btnSavePlay" class="btn btn-rugby btn-block btn-sm">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+
+                <!-- Panel 4: Jugadas Guardadas -->
+                <div class="tools-panel">
+                    <div class="section-header">
+                        <i class="fas fa-folder-open"></i> Guardadas
+                        <span class="badge badge-rugby float-right" id="playCount">0</span>
+                    </div>
+                    <div id="savedPlaysList" style="max-height: 250px; overflow-y: auto;">
+                        <p class="text-muted text-center small mb-0">
+                            <i class="fas fa-info-circle"></i> Sin jugadas
                         </p>
                     </div>
                 </div>
@@ -239,93 +326,121 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ===========================
-        // INICIALIZACIÓN
-        // ===========================
+        // ============================================
+        // 🏉 RUGBY PLAY EDITOR - FASE 1
+        // Sistema simple de posiciones fijas
+        // ============================================
+
         const canvas = new fabric.Canvas('playCanvas', {
             backgroundColor: '#2d5a2d',
             selection: true
         });
 
-        let isDrawingMode = false;
         let playerCounter = 1;
-        let players = []; // Array para trackear jugadores
-        let movements = []; // Array para trackear movimientos
+        let players = [];
+        let selectedPlayer = null;
+        let rugbyBall = null;  // Variable para el balón
 
-        // ===========================
-        // DIBUJAR CANCHA DE RUGBY
-        // ===========================
+        // Variables para sistema de trayectorias
+        let movements = [];           // Array de todos los movimientos
+        let isDrawingMode = false;    // Modo dibujo activo
+        let currentPath = [];         // Puntos del trazo actual
+        let selectedForDrawing = null; // Objeto seleccionado para dibujar
+
+        // Variables para sistema de animación
+        let originalPositions = {};      // Posiciones iniciales {playerId: {left, top}}
+        let isPlaying = false;           // Estado de reproducción
+        let currentAnimationIndex = 0;   // Índice del movimiento actual
+
+        // Variables para sistema de posesión del balón
+        let ballPossession = null;       // ID del jugador que tiene el balón (null = libre)
+        let isAssigningPossession = false; // Modo asignación activo
+
+        // Variables para sistema de pases
+        let isCreatingPass = false;      // Modo crear pase activo
+        let passFromPlayer = null;       // Jugador origen del pase
+
+        // Offsets globales para posición del balón (relativo al jugador)
+        const BALL_OFFSET_X = 30;
+        const BALL_OFFSET_Y = 0;
+
+        // ============================================
+        // 1. CARGAR CANCHA DE RUGBY EN EL CANVAS
+        // ============================================
         function drawRugbyField() {
-            const lineColor = 'white';
-            const lineWidth = 2;
+            fabric.Image.fromURL('cancha_rugby.png', function(img) {
+                // Configurar la imagen para que cubra todo el canvas
+                img.set({
+                    left: 0,
+                    top: 0,
+                    scaleX: canvas.width / img.width,
+                    scaleY: canvas.height / img.height,
+                    selectable: false,
+                    evented: false,
+                    hasControls: false,
+                    hasBorders: false
+                });
 
-            // Líneas laterales
-            canvas.add(new fabric.Line([50, 50, 50, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, selectable: false
-            }));
-            canvas.add(new fabric.Line([950, 50, 950, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, selectable: false
-            }));
+                // Agregar como primer objeto (estará en el fondo)
+                canvas.add(img);
+                img.sendToBack();
 
-            // Líneas de fondo
-            canvas.add(new fabric.Line([50, 50, 950, 50], {
-                stroke: lineColor, strokeWidth: lineWidth, selectable: false
-            }));
-            canvas.add(new fabric.Line([50, 550, 950, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, selectable: false
-            }));
-
-            // Línea central
-            canvas.add(new fabric.Line([500, 50, 500, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, strokeDashArray: [10, 5], selectable: false
-            }));
-
-            // Líneas de 22 metros
-            canvas.add(new fabric.Line([230, 50, 230, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, strokeDashArray: [5, 5], selectable: false, opacity: 0.7
-            }));
-            canvas.add(new fabric.Line([770, 50, 770, 550], {
-                stroke: lineColor, strokeWidth: lineWidth, strokeDashArray: [5, 5], selectable: false, opacity: 0.7
-            }));
-
-            // Texto
-            canvas.add(new fabric.Text('LOS TRONCOS RUGBY', {
-                left: 500, top: 300, fontSize: 40, fill: 'rgba(255, 255, 255, 0.1)',
-                fontWeight: 'bold', originX: 'center', originY: 'center', selectable: false
-            }));
+                canvas.renderAll();
+                console.log('✅ Cancha de rugby cargada en canvas');
+            });
         }
 
-        // ===========================
-        // AGREGAR JUGADOR
-        // ===========================
-        function addPlayer(type = 'forward', x = null, y = null, num = null) {
+        // ============================================
+        // 2. AGREGAR JUGADORES
+        // ============================================
+        function addPlayer(type, x = null, y = null, num = null) {
             const color = type === 'forward' ? '#1e4d2b' : '#28a745';
-            const playerNum = num || playerCounter;
+            const playerNum = num !== null ? num : playerCounter;
 
-            const player = new fabric.Group([
-                new fabric.Circle({
-                    radius: 20,
-                    fill: color,
-                    stroke: 'white',
-                    strokeWidth: 2
-                }),
-                new fabric.Text(playerNum.toString(), {
-                    fontSize: 16,
-                    fill: 'white',
-                    fontWeight: 'bold',
-                    originX: 'center',
-                    originY: 'center'
+            // Círculo del jugador con sombra
+            const circle = new fabric.Circle({
+                radius: 20,
+                fill: color,
+                stroke: 'white',
+                strokeWidth: 3,
+                originX: 'center',
+                originY: 'center',
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0, 0, 0, 0.8)',
+                    blur: 10,
+                    offsetX: 2,
+                    offsetY: 2
                 })
-            ], {
-                left: x !== null ? x : 300 + Math.random() * 100,
-                top: y !== null ? y : 300 + Math.random() * 100,
-                hasControls: true,
+            });
+
+            // Número del jugador
+            const text = new fabric.Text(playerNum.toString(), {
+                fontSize: 18,
+                fill: 'white',
+                fontWeight: 'bold',
+                originX: 'center',
+                originY: 'center'
+            });
+
+            // Grupo (círculo + texto)
+            const player = new fabric.Group([circle, text], {
+                left: x !== null ? x : 300 + Math.random() * 400,
+                top: y !== null ? y : 200 + Math.random() * 200,
+                hasControls: false,
                 hasBorders: true,
+                borderColor: '#ffeb3b',
+                borderScaleFactor: 3,
                 cornerColor: color,
-                cornerSize: 10,
                 transparentCorners: false,
+                lockRotation: true,
                 playerType: type,
-                playerNumber: playerNum
+                playerNumber: playerNum,
+                isPlayer: true
+            });
+
+            // Event: Selección
+            player.on('selected', function() {
+                selectedPlayer = player;
             });
 
             canvas.add(player);
@@ -339,384 +454,1474 @@
             return player;
         }
 
-        // ===========================
-        // FORMACIONES PREDEFINIDAS
-        // ===========================
+        // ============================================
+        // 2.5 AGREGAR BALÓN DE RUGBY
+        // ============================================
+        function crearBalon(x = 600, y = 325) {
+            // Si ya existe un balón, no crear otro
+            if (rugbyBall) {
+                alert('⚠️ Ya existe un balón en la cancha');
+                return null;
+            }
 
-        function applyFormacion() {
-            const formacion = $('#formacionSelect').val();
-            if (!formacion) {
-                alert('Selecciona una formación primero');
+            // Crear elipse (forma de balón de rugby inclinado)
+            const ball = new fabric.Ellipse({
+                rx: 15,  // radio horizontal
+                ry: 10,  // radio vertical
+                fill: '#FFD700',  // amarillo
+                stroke: '#8B4513',  // marrón
+                strokeWidth: 2,
+                left: x,
+                top: y,
+                angle: -30,  // inclinación del balón
+                originX: 'center',
+                originY: 'center',
+                hasControls: false,
+                hasBorders: true,
+                borderColor: '#FF0000',
+                borderScaleFactor: 3,
+                lockRotation: true,
+                isBall: true,  // identificador
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0, 0, 0, 0.5)',
+                    blur: 8,
+                    offsetX: 2,
+                    offsetY: 2
+                })
+            });
+
+            canvas.add(ball);
+            rugbyBall = ball;
+            canvas.renderAll();
+
+            // Actualizar UI de posesión
+            updatePossessionUI();
+
+            console.log('🏈 Balón agregado en:', x, y);
+            return ball;
+        }
+
+        function eliminarBalon() {
+            if (rugbyBall) {
+                // Limpiar posesión primero
+                clearPossession();
+
+                canvas.remove(rugbyBall);
+                rugbyBall = null;
+                canvas.renderAll();
+
+                // Actualizar UI
+                updatePossessionUI();
+
+                console.log('🏈 Balón eliminado');
+            }
+        }
+
+        // ============================================
+        // 2.6 SISTEMA DE TRAYECTORIAS/MOVIMIENTOS
+        // ============================================
+
+        // Activar modo dibujo
+        function activateDrawingMode() {
+            const activeObject = canvas.getActiveObject();
+
+            if (!activeObject || (!activeObject.isPlayer && !activeObject.isBall)) {
+                alert('⚠️ Selecciona un jugador o balón primero');
                 return;
             }
 
-            // Limpiar jugadores existentes
-            clearPlayers();
+            selectedForDrawing = activeObject;
+            isDrawingMode = true;
+            currentPath = [];
+
+            // Cambiar cursor y estilo del canvas
+            canvas.defaultCursor = 'crosshair';
+            canvas.hoverCursor = 'crosshair';
+            canvas.selection = false;
+
+            // Cambiar estilo del botón
+            $('#btnDrawMovement').removeClass('btn-info').addClass('btn-warning')
+                .html('<i class="fas fa-times"></i> Cancelar dibujo');
+
+            console.log('✏️ Modo dibujo activado para:',
+                activeObject.isBall ? 'Balón' : `Jugador ${activeObject.playerNumber}`);
+        }
+
+        // Desactivar modo dibujo
+        function deactivateDrawingMode() {
+            isDrawingMode = false;
+            currentPath = [];
+            selectedForDrawing = null;
+
+            // Restaurar cursor y canvas
+            canvas.defaultCursor = 'default';
+            canvas.hoverCursor = 'move';
+            canvas.selection = true;
+
+            // Restaurar estilo del botón
+            const hasSelection = canvas.getActiveObject();
+            $('#btnDrawMovement').removeClass('btn-warning').addClass('btn-info')
+                .html('<i class="fas fa-pencil-alt"></i> Dibujar movimiento')
+                .prop('disabled', !hasSelection);
+
+            canvas.renderAll();
+        }
+
+        // Obtener color según tipo de objeto
+        function getPathColor(obj) {
+            if (obj.isBall) return '#FF8C00';  // Naranja para balón
+            if (obj.playerType === 'forward') return '#1e4d2b';  // Verde oscuro
+            return '#28a745';  // Verde claro para backs
+        }
+
+        // Dibujar el path con flecha
+        function createPathWithArrow(points, color) {
+            if (points.length < 2) return null;
+
+            // Crear string del path SVG
+            let pathString = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 1; i < points.length; i++) {
+                pathString += ` L ${points[i].x} ${points[i].y}`;
+            }
+
+            // Crear el path principal
+            const path = new fabric.Path(pathString, {
+                fill: null,
+                stroke: color,
+                strokeWidth: 3,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round',
+                selectable: false,
+                evented: false,
+                opacity: 0.8
+            });
+
+            // Calcular ángulo para la flecha (últimos 2 puntos)
+            const lastPoint = points[points.length - 1];
+            const prevPoint = points[points.length - 2];
+            const angle = Math.atan2(lastPoint.y - prevPoint.y, lastPoint.x - prevPoint.x) * 180 / Math.PI;
+
+            // Crear triángulo de la flecha
+            const arrowHead = new fabric.Triangle({
+                left: lastPoint.x,
+                top: lastPoint.y,
+                width: 12,
+                height: 15,
+                fill: color,
+                angle: angle + 90,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+
+            // Agrupar path y flecha
+            const group = new fabric.Group([path, arrowHead], {
+                selectable: false,
+                evented: false,
+                isMovement: true  // Identificador
+            });
+
+            return group;
+        }
+
+        // Guardar movimiento
+        function saveMovement(obj, points, pathObject) {
+            // Verificar si el jugador tiene el balón
+            const hasBall = obj.isPlayer && ballPossession === obj.playerNumber;
+
+            const movement = {
+                type: 'movement',  // Tipo de acción (movement o pass)
+                playerId: obj.isBall ? 'ball' : obj.playerNumber,
+                playerType: obj.isBall ? 'ball' : obj.playerType,
+                points: points.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) })),
+                hasBall: hasBall,
+                pathObject: pathObject
+            };
+
+            movements.push(movement);
+            console.log('💾 Movimiento guardado:', movement.playerId,
+                `(${points.length} puntos)`, hasBall ? '🏈 con balón' : '');
+
+            // Actualizar botones
+            updatePlayButton();
+            updatePassButton();
+
+            return movement;
+        }
+
+        // Limpiar todos los movimientos y pases
+        function clearAllMovements() {
+            // Remover paths y pases del canvas
+            movements.forEach(action => {
+                if (action.type === 'movement' && action.pathObject) {
+                    canvas.remove(action.pathObject);
+                } else if (action.type === 'pass') {
+                    if (action.passPath) canvas.remove(action.passPath);
+                    if (action.passArrow) canvas.remove(action.passArrow);
+                }
+            });
+            movements = [];
+            canvas.renderAll();
+            console.log('🧹 Todas las trayectorias y pases eliminados');
+
+            // Actualizar botones
+            updatePlayButton();
+            updatePassButton();
+        }
+
+        // Event handlers para dibujo
+        let isMouseDown = false;
+
+        canvas.on('mouse:down', function(opt) {
+            if (!isDrawingMode) return;
+
+            const pointer = canvas.getPointer(opt.e);
+
+            // Verificar que empiece cerca del jugador seleccionado
+            const objCenter = selectedForDrawing.getCenterPoint();
+            const distance = Math.sqrt(
+                Math.pow(pointer.x - objCenter.x, 2) +
+                Math.pow(pointer.y - objCenter.y, 2)
+            );
+
+            if (distance > 60) {
+                console.log('⚠️ Comienza más cerca del jugador/balón');
+                return;
+            }
+
+            isMouseDown = true;
+            currentPath = [{ x: pointer.x, y: pointer.y }];
+        });
+
+        canvas.on('mouse:move', function(opt) {
+            if (!isDrawingMode || !isMouseDown) return;
+
+            const pointer = canvas.getPointer(opt.e);
+            const lastPoint = currentPath[currentPath.length - 1];
+
+            // Solo agregar punto si hay suficiente distancia (suavizado)
+            const distance = Math.sqrt(
+                Math.pow(pointer.x - lastPoint.x, 2) +
+                Math.pow(pointer.y - lastPoint.y, 2)
+            );
+
+            if (distance > 8) {
+                currentPath.push({ x: pointer.x, y: pointer.y });
+
+                // Dibujar preview temporal
+                drawPreviewLine();
+            }
+        });
+
+        canvas.on('mouse:up', function(opt) {
+            if (!isDrawingMode || !isMouseDown) return;
+
+            isMouseDown = false;
+
+            // Limpiar preview
+            clearPreviewLine();
+
+            // Verificar longitud mínima
+            if (currentPath.length < 3) {
+                console.log('⚠️ Trazo muy corto, no guardado');
+                deactivateDrawingMode();
+                return;
+            }
+
+            // Calcular longitud total del trazo
+            let totalLength = 0;
+            for (let i = 1; i < currentPath.length; i++) {
+                totalLength += Math.sqrt(
+                    Math.pow(currentPath[i].x - currentPath[i-1].x, 2) +
+                    Math.pow(currentPath[i].y - currentPath[i-1].y, 2)
+                );
+            }
+
+            if (totalLength < 20) {
+                console.log('⚠️ Trazo muy corto (<20px), no guardado');
+                deactivateDrawingMode();
+                return;
+            }
+
+            // Crear path con flecha
+            const color = getPathColor(selectedForDrawing);
+            const pathGroup = createPathWithArrow(currentPath, color);
+
+            if (pathGroup) {
+                canvas.add(pathGroup);
+
+                // Enviar atrás de los jugadores pero adelante de la cancha
+                pathGroup.sendToBack();
+                // Traer la cancha al fondo
+                canvas.getObjects().forEach(obj => {
+                    if (obj.type === 'image') {
+                        obj.sendToBack();
+                    }
+                });
+
+                // Guardar movimiento
+                saveMovement(selectedForDrawing, currentPath, pathGroup);
+
+                canvas.renderAll();
+            }
+
+            // Desactivar modo dibujo
+            deactivateDrawingMode();
+        });
+
+        // Preview temporal mientras dibuja
+        let previewLine = null;
+
+        function drawPreviewLine() {
+            clearPreviewLine();
+
+            if (currentPath.length < 2) return;
+
+            let pathString = `M ${currentPath[0].x} ${currentPath[0].y}`;
+            for (let i = 1; i < currentPath.length; i++) {
+                pathString += ` L ${currentPath[i].x} ${currentPath[i].y}`;
+            }
+
+            const color = getPathColor(selectedForDrawing);
+
+            previewLine = new fabric.Path(pathString, {
+                fill: null,
+                stroke: color,
+                strokeWidth: 3,
+                strokeDashArray: [5, 5],
+                selectable: false,
+                evented: false,
+                opacity: 0.6
+            });
+
+            canvas.add(previewLine);
+            canvas.renderAll();
+        }
+
+        function clearPreviewLine() {
+            if (previewLine) {
+                canvas.remove(previewLine);
+                previewLine = null;
+            }
+        }
+
+        // ============================================
+        // 2.7 SISTEMA DE ANIMACIÓN
+        // ============================================
+
+        // Guardar posiciones originales de todos los objetos
+        function saveOriginalPositions() {
+            originalPositions = {};
+
+            // Guardar posiciones de jugadores
+            players.forEach(p => {
+                originalPositions[p.playerNumber] = {
+                    left: p.left,
+                    top: p.top
+                };
+            });
+
+            // Guardar posición del balón
+            if (rugbyBall) {
+                originalPositions['ball'] = {
+                    left: rugbyBall.left,
+                    top: rugbyBall.top
+                };
+            }
+
+            console.log('💾 Posiciones originales guardadas:', Object.keys(originalPositions).length, 'objetos');
+        }
+
+        // Encontrar objeto por ID
+        function findObjectById(id) {
+            if (id === 'ball') {
+                return rugbyBall;
+            }
+            return players.find(p => p.playerNumber === id);
+        }
+
+        // Animar un objeto siguiendo un path de puntos
+        // hasBall: si es true, también mueve el balón junto con el jugador
+        function animateObjectAlongPath(obj, points, duration, callback, hasBall = false) {
+            if (!obj || points.length < 2) {
+                if (callback) callback();
+                return;
+            }
+
+            const totalPoints = points.length;
+            const timePerSegment = duration / (totalPoints - 1);
+            let currentPointIndex = 0;
+
+            function animateToNextPoint() {
+                if (currentPointIndex >= totalPoints - 1) {
+                    // Animación completada
+                    if (callback) callback();
+                    return;
+                }
+
+                const startPoint = points[currentPointIndex];
+                const endPoint = points[currentPointIndex + 1];
+
+                // Calcular distancia para ajustar velocidad
+                const distance = Math.sqrt(
+                    Math.pow(endPoint.x - startPoint.x, 2) +
+                    Math.pow(endPoint.y - startPoint.y, 2)
+                );
+
+                // Tiempo proporcional a la distancia (mínimo 20ms)
+                const segmentTime = Math.max(20, timePerSegment * (distance / 20));
+
+                // Animar hacia el siguiente punto
+                fabric.util.animate({
+                    startValue: 0,
+                    endValue: 1,
+                    duration: segmentTime,
+                    easing: fabric.util.ease.easeInOutQuad,
+                    onChange: function(value) {
+                        const newLeft = startPoint.x + (endPoint.x - startPoint.x) * value;
+                        const newTop = startPoint.y + (endPoint.y - startPoint.y) * value;
+
+                        // Mover jugador
+                        obj.set({
+                            left: newLeft,
+                            top: newTop
+                        });
+                        obj.setCoords();
+
+                        // Si tiene balón, moverlo también
+                        if (hasBall && rugbyBall) {
+                            rugbyBall.set({
+                                left: newLeft + BALL_OFFSET_X,
+                                top: newTop + BALL_OFFSET_Y
+                            });
+                            rugbyBall.dirty = true;
+                            rugbyBall.setCoords();
+                        }
+
+                        canvas.renderAll();
+                    },
+                    onComplete: function() {
+                        currentPointIndex++;
+                        animateToNextPoint();
+                    }
+                });
+            }
+
+            // Iniciar animación
+            animateToNextPoint();
+        }
+
+        // ============================================
+        // SISTEMA DE FASES AUTOMÁTICO
+        // ============================================
+
+        // Agrupar movimientos y pases en fases
+        function groupIntoPhases(actions) {
+            const phases = [];
+            let currentGroup = [];
+
+            actions.forEach(action => {
+                if (action.type === 'movement') {
+                    // Agregar a grupo actual de movimientos
+                    currentGroup.push(action);
+                } else if (action.type === 'pass') {
+                    // Cerrar grupo actual (movimientos simultáneos)
+                    if (currentGroup.length > 0) {
+                        phases.push({
+                            type: 'simultaneous',
+                            actions: currentGroup
+                        });
+                        currentGroup = [];
+                    }
+
+                    // Agregar pase como fase secuencial
+                    phases.push({
+                        type: 'pass',
+                        actions: [action]
+                    });
+                }
+            });
+
+            // Cerrar último grupo si existe
+            if (currentGroup.length > 0) {
+                phases.push({
+                    type: 'simultaneous',
+                    actions: currentGroup
+                });
+            }
+
+            return phases;
+        }
+
+        // Reproducir todos los movimientos (controlador principal con fases)
+        function playAllMovements() {
+            if (isPlaying || movements.length === 0) {
+                return;
+            }
+
+            // Guardar posiciones originales antes de animar
+            saveOriginalPositions();
+
+            isPlaying = true;
+            currentAnimationIndex = 0;
+
+            // Actualizar UI
+            $('#btnPlay').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Reproduciendo...');
+            $('#btnReset').prop('disabled', true);
+            $('#btnDrawMovement').prop('disabled', true);
+            $('#btnCreatePass').prop('disabled', true);
+
+            // Agrupar en fases
+            const phases = groupIntoPhases(movements);
+            let currentPhaseIndex = 0;
+
+            console.log('▶️ Iniciando reproducción:', phases.length, 'fases');
+
+            function playNextPhase() {
+                if (currentPhaseIndex >= phases.length) {
+                    finishPlayback();
+                    return;
+                }
+
+                const phase = phases[currentPhaseIndex];
+                const phaseNum = currentPhaseIndex + 1;
+                const totalPhases = phases.length;
+
+                if (phase.type === 'simultaneous') {
+                    // Movimientos simultáneos
+                    const count = phase.actions.length;
+                    $('#animationStatus').html(
+                        `<i class="fas fa-bolt text-warning"></i> Fase ${phaseNum}/${totalPhases} (${count} movimientos simultáneos)...`
+                    );
+                    console.log(`  📍 Fase ${phaseNum}: ${count} movimientos simultáneos`);
+
+                    playSimultaneousPhase(phase.actions, () => {
+                        currentPhaseIndex++;
+                        setTimeout(playNextPhase, 300);
+                    });
+                } else if (phase.type === 'pass') {
+                    // Pase individual
+                    const passAction = phase.actions[0];
+                    $('#animationStatus').html(
+                        `<i class="fas fa-football-ball text-primary"></i> Fase ${phaseNum}/${totalPhases} (Pase ${passAction.from}→${passAction.to})...`
+                    );
+                    console.log(`  🏈 Fase ${phaseNum}: Pase ${passAction.from} → ${passAction.to}`);
+
+                    animatePass(passAction, () => {
+                        currentPhaseIndex++;
+                        setTimeout(playNextPhase, 300);
+                    });
+                }
+            }
+
+            // Iniciar
+            playNextPhase();
+        }
+
+        // Reproducir fase de movimientos simultáneos
+        function playSimultaneousPhase(actions, callback) {
+            const animationPromises = [];
+            const duration = 2000;
+
+            actions.forEach(movement => {
+                if (movement.type !== 'movement') return;
+
+                const obj = findObjectById(movement.playerId);
+                if (!obj) {
+                    console.warn('⚠️ Objeto no encontrado:', movement.playerId);
+                    return;
+                }
+
+                const promise = new Promise((resolve) => {
+                    const hasBall = movement.hasBall || false;
+                    animateObjectAlongPath(obj, movement.points, duration, () => {
+                        console.log(`    ✓ ${movement.playerId} completado`);
+                        resolve();
+                    }, hasBall);
+                });
+
+                animationPromises.push(promise);
+            });
+
+            if (animationPromises.length === 0) {
+                callback();
+                return;
+            }
+
+            Promise.all(animationPromises).then(() => {
+                callback();
+            });
+        }
+
+        // Animar un pase (balón viaja de jugador a jugador)
+        function animatePass(passAction, callback) {
+            const fromPlayer = findObjectById(passAction.from);
+            const toPlayer = findObjectById(passAction.to);
+
+            if (!rugbyBall || !fromPlayer || !toPlayer) {
+                console.error('❌ Error: Objetos no encontrados para el pase');
+                callback();
+                return;
+            }
+
+            // Calcular posición destino del balón
+            const toCenter = toPlayer.getCenterPoint();
+            const targetX = toCenter.x + BALL_OFFSET_X;
+            const targetY = toCenter.y + BALL_OFFSET_Y;
+
+            console.log(`    🏈 Balón: (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${targetX.toFixed(0)},${targetY.toFixed(0)})`);
+
+            // Animar balón en línea recta
+            fabric.util.animate({
+                startValue: 0,
+                endValue: 1,
+                duration: 500,  // 0.5 segundos
+                easing: fabric.util.ease.easeInOutQuad,
+                onChange: function(value) {
+                    const startX = rugbyBall.left;
+                    const startY = rugbyBall.top;
+
+                    // Solo en la primera iteración guardamos el inicio
+                    if (value === 0 || !rugbyBall._passStartX) {
+                        rugbyBall._passStartX = rugbyBall.left;
+                        rugbyBall._passStartY = rugbyBall.top;
+                    }
+
+                    const newX = rugbyBall._passStartX + (targetX - rugbyBall._passStartX) * value;
+                    const newY = rugbyBall._passStartY + (targetY - rugbyBall._passStartY) * value;
+
+                    rugbyBall.set({ left: newX, top: newY });
+                    rugbyBall.dirty = true;
+                    rugbyBall.setCoords();
+                    canvas.renderAll();
+                },
+                onComplete: function() {
+                    // Limpiar variables temporales
+                    delete rugbyBall._passStartX;
+                    delete rugbyBall._passStartY;
+
+                    // Posición final exacta
+                    rugbyBall.set({ left: targetX, top: targetY });
+                    rugbyBall.setCoords();
+                    canvas.renderAll();
+
+                    console.log('    ✓ Pase completado');
+                    callback();
+                }
+            });
+        }
+
+        // Finalizar reproducción
+        function finishPlayback() {
+            isPlaying = false;
+            currentAnimationIndex = 0;
+
+            // Restaurar UI
+            $('#btnPlay').prop('disabled', false).html('<i class="fas fa-play"></i> Play');
+            $('#btnReset').prop('disabled', false);
+            updatePlayButton();
+            updatePassButton();
+
+            $('#animationStatus').html('<i class="fas fa-check-circle text-success"></i> Reproducción completa');
+
+            console.log('✅ Reproducción completada');
+
+            // Restaurar mensaje después de 2 segundos
+            setTimeout(() => {
+                if (!isPlaying) {
+                    $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+                }
+            }, 2000);
+        }
+
+        // Resetear a posiciones originales
+        function resetToOriginalPositions() {
+            if (isPlaying) {
+                alert('⚠️ Espera a que termine la reproducción');
+                return;
+            }
+
+            // Si no hay posiciones guardadas, guardar las actuales como referencia
+            if (Object.keys(originalPositions).length === 0) {
+                if (players.length === 0) {
+                    alert('⚠️ No hay jugadores en el canvas');
+                    return;
+                }
+                saveOriginalPositions();
+                console.log('💾 Posiciones actuales guardadas como referencia');
+                $('#animationStatus').html('<i class="fas fa-save text-info"></i> Posiciones guardadas como referencia');
+                setTimeout(() => {
+                    $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+                }, 1500);
+                return;
+            }
+
+            console.log('⟲ Restaurando posiciones originales...');
+            let restoredCount = 0;
+
+            // Restaurar posiciones de jugadores
+            players.forEach(p => {
+                const origPos = originalPositions[p.playerNumber];
+                if (origPos) {
+                    console.log(`  └─ Jugador ${p.playerNumber}: (${p.left.toFixed(0)},${p.top.toFixed(0)}) → (${origPos.left.toFixed(0)},${origPos.top.toFixed(0)})`);
+                    p.set({
+                        left: origPos.left,
+                        top: origPos.top
+                    });
+                    p.dirty = true;
+                    p.setCoords();
+                    restoredCount++;
+                }
+            });
+
+            // Restaurar posición del balón
+            if (rugbyBall && originalPositions['ball']) {
+                const ballOrig = originalPositions['ball'];
+                console.log(`  └─ Balón: (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${ballOrig.left.toFixed(0)},${ballOrig.top.toFixed(0)})`);
+                rugbyBall.set({
+                    left: ballOrig.left,
+                    top: ballOrig.top
+                });
+                rugbyBall.dirty = true;
+                rugbyBall.setCoords();
+                restoredCount++;
+            }
+
+            // Forzar re-renderizado completo
+            canvas.requestRenderAll();
+            canvas.renderAll();
+
+            console.log(`✅ ${restoredCount} objetos restaurados`);
+
+            $('#animationStatus').html(`<i class="fas fa-undo text-success"></i> ${restoredCount} posiciones restauradas`);
+            setTimeout(() => {
+                $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+            }, 1500);
+        }
+
+        // Actualizar estado del botón Play
+        function updatePlayButton() {
+            const hasMovements = movements.length > 0;
+            $('#btnPlay').prop('disabled', !hasMovements || isPlaying);
+        }
+
+        // ============================================
+        // 2.8 SISTEMA DE POSESIÓN DEL BALÓN
+        // ============================================
+
+        // Actualizar UI de posesión
+        function updatePossessionUI() {
+            // Habilitar botón asignar si hay balón
+            $('#btnAssignPossession').prop('disabled', !rugbyBall);
+
+            // Mostrar/ocultar botón soltar
+            if (ballPossession !== null) {
+                $('#btnReleasePossession').show();
+                $('#btnAssignPossession').hide();
+            } else {
+                $('#btnReleasePossession').hide();
+                if (rugbyBall) {
+                    $('#btnAssignPossession').show();
+                }
+            }
+        }
+
+        // Activar modo asignación de posesión
+        function activateAssignPossessionMode() {
+            if (!rugbyBall) {
+                alert('⚠️ Primero agrega un balón al canvas');
+                return;
+            }
+
+            isAssigningPossession = true;
+            canvas.defaultCursor = 'crosshair';
+            canvas.hoverCursor = 'crosshair';
+
+            $('#btnAssignPossession')
+                .removeClass('btn-outline-warning')
+                .addClass('btn-warning')
+                .html('<i class="fas fa-times"></i> Cancelar');
+
+            console.log('🏈 Modo asignación: Click en un jugador para darle el balón');
+        }
+
+        // Desactivar modo asignación
+        function deactivateAssignPossessionMode() {
+            isAssigningPossession = false;
+            canvas.defaultCursor = 'default';
+            canvas.hoverCursor = 'move';
+
+            $('#btnAssignPossession')
+                .removeClass('btn-warning')
+                .addClass('btn-outline-warning')
+                .html('<i class="fas fa-hand-holding"></i> Asignar posesión');
+        }
+
+        // Asignar posesión a un jugador
+        function assignPossessionTo(player) {
+            if (!rugbyBall || !player || !player.isPlayer) {
+                console.log('⚠️ No se puede asignar: rugbyBall=', !!rugbyBall, 'player=', !!player);
+                return;
+            }
+
+            console.log('🏈 Iniciando asignación de balón a jugador', player.playerNumber);
+
+            // Si ya tenía posesión otro jugador, quitar su listener
+            if (ballPossession !== null) {
+                const prevPlayer = players.find(p => p.playerNumber === ballPossession);
+                if (prevPlayer) {
+                    prevPlayer.off('moving');  // Quitar listener anterior
+                    prevPlayer.hasBallPossession = false;
+                    console.log('  └─ Removido listener del jugador anterior:', ballPossession);
+                }
+            }
+
+            // Asignar nuevo poseedor
+            ballPossession = player.playerNumber;
+            player.hasBallPossession = true;
+
+            // Obtener posición real del centro del jugador
+            const playerCenter = player.getCenterPoint();
+            console.log('  └─ Centro del jugador:', playerCenter.x.toFixed(0), playerCenter.y.toFixed(0));
+
+            // Guardar posición anterior del balón para debug
+            const oldPos = { left: rugbyBall.left, top: rugbyBall.top };
+
+            // MOVER BALÓN FÍSICAMENTE cerca del jugador
+            const newLeft = playerCenter.x + BALL_OFFSET_X;
+            const newTop = playerCenter.y + BALL_OFFSET_Y;
+
+            rugbyBall.set({
+                left: newLeft,
+                top: newTop
+            });
+
+            // Forzar que Fabric.js reconozca el cambio
+            rugbyBall.dirty = true;
+            rugbyBall.setCoords();
+
+            // Traer balón al frente para asegurar visibilidad
+            canvas.bringToFront(rugbyBall);
+
+            console.log('  └─ Balón movido de (' + oldPos.left.toFixed(0) + ',' + oldPos.top.toFixed(0) +
+                ') a (' + newLeft.toFixed(0) + ',' + newTop.toFixed(0) + ')');
+
+            // Agregar listener para cuando el jugador se mueva
+            player.on('moving', function() {
+                if (ballPossession === this.playerNumber && rugbyBall) {
+                    const center = this.getCenterPoint();
+                    rugbyBall.set({
+                        left: center.x + BALL_OFFSET_X,
+                        top: center.y + BALL_OFFSET_Y
+                    });
+                    rugbyBall.dirty = true;
+                    rugbyBall.setCoords();
+                }
+            });
+
+            // Forzar renderizado SÍNCRONO
+            canvas.renderAll();
+
+            updatePossessionUI();
+
+            console.log('✅ Posesión asignada a jugador', ballPossession);
+        }
+
+        // Remover listener de movimiento (sin indicador visual)
+        function removePossessionListener(playerId) {
+            const player = players.find(p => p.playerNumber === playerId);
+            if (player) {
+                player.off('moving');
+                player.hasBallPossession = false;
+            }
+        }
+
+        // Soltar balón (liberar posesión)
+        function releasePossession() {
+            if (ballPossession === null) {
+                return;
+            }
+
+            // Quitar listener de movimiento
+            removePossessionListener(ballPossession);
+
+            // Liberar posesión
+            const previousOwner = ballPossession;
+            ballPossession = null;
+
+            updatePossessionUI();
+            canvas.renderAll();
+
+            console.log('🏈 Balón soltado por jugador', previousOwner);
+        }
+
+        // Limpiar posesión (para usar en clearAllPlayers)
+        function clearPossession() {
+            if (ballPossession !== null) {
+                removePossessionListener(ballPossession);
+                ballPossession = null;
+            }
+            updatePossessionUI();
+        }
+
+        // ============================================
+        // 2.9 SISTEMA DE PASES
+        // ============================================
+
+        // Actualizar estado del botón Crear Pase
+        function updatePassButton() {
+            // Habilitar solo si hay balón asignado a un jugador
+            const canCreatePass = ballPossession !== null && rugbyBall !== null;
+            $('#btnCreatePass').prop('disabled', !canCreatePass);
+        }
+
+        // Activar modo crear pase
+        function activateCreatePassMode() {
+            if (ballPossession === null) {
+                alert('⚠️ Primero asigna el balón a un jugador');
+                return;
+            }
+
+            isCreatingPass = true;
+            passFromPlayer = null;
+            canvas.defaultCursor = 'crosshair';
+            canvas.hoverCursor = 'crosshair';
+
+            // Cambiar estilo del botón
+            $('#btnCreatePass')
+                .removeClass('btn-primary')
+                .addClass('btn-warning')
+                .html('❌ Cancelar Pase');
+
+            // Deshabilitar otros botones
+            $('#btnDrawMovement').prop('disabled', true);
+            $('#btnAssignPossession').prop('disabled', true);
+
+            console.log('🔗 Modo pase activado. Click en jugador con balón, luego en destino.');
+            $('#animationStatus').html('<i class="fas fa-hand-point-up text-primary"></i> Click en jugador con balón...');
+        }
+
+        // Desactivar modo crear pase
+        function deactivateCreatePassMode() {
+            isCreatingPass = false;
+            passFromPlayer = null;
+            canvas.defaultCursor = 'default';
+            canvas.hoverCursor = 'move';
+
+            // Restaurar estilo del botón
+            $('#btnCreatePass')
+                .removeClass('btn-warning')
+                .addClass('btn-primary')
+                .html('🔗 Crear Pase');
+
+            // Rehabilitar botones
+            const hasSelection = canvas.getActiveObject();
+            $('#btnDrawMovement').prop('disabled', !hasSelection);
+            updatePossessionUI();
+
+            $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+        }
+
+        // Crear pase entre dos jugadores
+        function createPass(fromPlayer, toPlayer) {
+            if (!fromPlayer || !toPlayer) {
+                console.error('❌ Error: Jugadores no válidos para el pase');
+                return;
+            }
+
+            console.log(`🔗 Creando pase: ${fromPlayer.playerNumber} → ${toPlayer.playerNumber}`);
+
+            // Obtener centros de los jugadores
+            const fromCenter = fromPlayer.getCenterPoint();
+            const toCenter = toPlayer.getCenterPoint();
+
+            // 1. Crear línea punteada azul
+            const passLine = new fabric.Line([
+                fromCenter.x, fromCenter.y,
+                toCenter.x, toCenter.y
+            ], {
+                stroke: '#0066CC',
+                strokeWidth: 3,
+                strokeDashArray: [8, 4],
+                selectable: false,
+                evented: false,
+                isPassPath: true,
+                fromId: fromPlayer.playerNumber,
+                toId: toPlayer.playerNumber
+            });
+
+            // 2. Calcular ángulo para la flecha
+            const angle = Math.atan2(
+                toCenter.y - fromCenter.y,
+                toCenter.x - fromCenter.x
+            ) * 180 / Math.PI;
+
+            // 3. Crear punta de flecha
+            const arrowHead = new fabric.Triangle({
+                left: toCenter.x,
+                top: toCenter.y,
+                fill: '#0066CC',
+                width: 15,
+                height: 18,
+                angle: angle + 90,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false,
+                isPassArrow: true
+            });
+
+            // 4. Agregar al canvas
+            canvas.add(passLine);
+            canvas.add(arrowHead);
+
+            // Enviar detrás de jugadores
+            passLine.sendToBack();
+            arrowHead.sendToBack();
+            // Mantener cancha al fondo
+            canvas.getObjects().forEach(obj => {
+                if (obj.type === 'image') obj.sendToBack();
+            });
+
+            // 5. Guardar en movements[] como tipo 'pass'
+            movements.push({
+                type: 'pass',
+                from: fromPlayer.playerNumber,
+                to: toPlayer.playerNumber,
+                passPath: passLine,
+                passArrow: arrowHead
+            });
+
+            // 6. Transferir posesión al receptor
+            releasePossession();
+            assignPossessionTo(toPlayer);
+
+            console.log(`✅ Pase creado: ${fromPlayer.playerNumber} → ${toPlayer.playerNumber}`);
+
+            // Actualizar botones
+            updatePlayButton();
+            updatePassButton();
+
+            canvas.renderAll();
+        }
+
+        // ============================================
+        // 3. ELIMINAR JUGADOR SELECCIONADO
+        // ============================================
+        function deleteSelectedPlayer() {
+            const activeObject = canvas.getActiveObject();
+
+            if (activeObject && activeObject.isPlayer) {
+                canvas.remove(activeObject);
+                players = players.filter(p => p !== activeObject);
+                selectedPlayer = null;
+                canvas.renderAll();
+            } else if (activeObject && activeObject.isBall) {
+                // Eliminar balón si está seleccionado
+                eliminarBalon();
+            } else {
+                alert('⚠️ Selecciona un jugador o balón primero (click sobre él)');
+            }
+        }
+
+        // ============================================
+        // 4. LIMPIAR JUGADORES
+        // ============================================
+        function clearAllPlayers() {
+            players.forEach(player => canvas.remove(player));
+            players = [];
+            playerCounter = 1;
+            selectedPlayer = null;
+            // También eliminar el balón
+            eliminarBalon();
+            // También limpiar movimientos/trayectorias
+            clearAllMovements();
+            canvas.renderAll();
+        }
+
+        // ============================================
+        // 5. FORMACIONES PREDEFINIDAS
+        // ============================================
+        function applyFormacion() {
+            const formacion = $('#formacionSelect').val();
+
+            if (!formacion) {
+                alert('⚠️ Selecciona una formación primero');
+                return;
+            }
+
+            clearAllPlayers();
 
             switch(formacion) {
-                case 'lineout5':
-                    formacionLineout5();
-                    break;
-                case 'lineout8':
-                    formacionLineout8();
-                    break;
-                case 'backsAtaque':
-                    formacionBacksAtaque();
-                    break;
                 case 'scrum':
                     formacionScrum();
+                    break;
+                case 'lineout':
+                    formacionLineout();
+                    break;
+                case 'lineout_completo':
+                    formacionLineoutCompleto();
+                    break;
+                case 'ruck':
+                    formacionRuck();
+                    break;
+                case 'maul':
+                    formacionMaul();
+                    break;
+                case 'backs':
+                    formacionBacks();
+                    break;
+                case 'kickoff':
+                    formacionKickoff();
                     break;
                 case 'full15':
                     formacionFull15();
                     break;
             }
+
+            // Guardar posiciones originales después de aplicar formación
+            setTimeout(() => {
+                saveOriginalPositions();
+            }, 100);
         }
 
-        function clearPlayers() {
-            canvas.getObjects().forEach(obj => {
-                if (obj.type === 'group' && obj.playerNumber) {
-                    canvas.remove(obj);
-                }
-            });
-            players = [];
-            playerCounter = 1;
-        }
+        // ============== FORMACIONES FORWARDS ==============
 
-        // Lineout de 5 jugadores
-        function formacionLineout5() {
-            const positions = [
-                { x: 350, y: 150, num: 4, type: 'forward' },  // Saltador 1
-                { x: 350, y: 220, num: 5, type: 'forward' },  // Saltador 2
-                { x: 350, y: 290, num: 6, type: 'forward' },  // Saltador 3
-                { x: 350, y: 360, num: 2, type: 'forward' },  // Hooker
-                { x: 450, y: 290, num: 9, type: 'back' },     // Medio scrum
-            ];
-
-            positions.forEach(pos => {
-                addPlayer(pos.type, pos.x, pos.y, pos.num);
-            });
-
-            playerCounter = 16;
-        }
-
-        // Lineout completo de 8
-        function formacionLineout8() {
-            const positions = [
-                { x: 350, y: 120, num: 4, type: 'forward' },
-                { x: 350, y: 180, num: 5, type: 'forward' },
-                { x: 350, y: 240, num: 6, type: 'forward' },
-                { x: 350, y: 300, num: 7, type: 'forward' },
-                { x: 350, y: 360, num: 8, type: 'forward' },
-                { x: 350, y: 420, num: 2, type: 'forward' },
-                { x: 350, y: 480, num: 1, type: 'forward' },
-                { x: 450, y: 300, num: 9, type: 'back' },
-                // Backs detrás
-                { x: 550, y: 250, num: 10, type: 'back' },
-                { x: 650, y: 200, num: 12, type: 'back' },
-                { x: 650, y: 300, num: 13, type: 'back' },
-            ];
-
-            positions.forEach(pos => {
-                addPlayer(pos.type, pos.x, pos.y, pos.num);
-            });
-
-            playerCounter = 16;
-        }
-
-        // Backs en línea de ataque
-        function formacionBacksAtaque() {
-            const positions = [
-                { x: 500, y: 250, num: 9, type: 'back' },   // Medio scrum
-                { x: 600, y: 250, num: 10, type: 'back' },  // Apertura
-                { x: 700, y: 230, num: 12, type: 'back' },  // Centro 1
-                { x: 800, y: 210, num: 13, type: 'back' },  // Centro 2
-                { x: 880, y: 190, num: 11, type: 'back' },  // Wing
-                { x: 650, y: 350, num: 15, type: 'back' },  // Fullback
-            ];
-
-            positions.forEach(pos => {
-                addPlayer(pos.type, pos.x, pos.y, pos.num);
-            });
-
-            playerCounter = 16;
-        }
-
-        // Scrum 3-4-1
+        // Scrum 3-4-1 (atacando de izquierda → derecha)
         function formacionScrum() {
-            // Primera línea (3)
-            const positions = [
-                { x: 300, y: 270, num: 1, type: 'forward' },  // Pilar izq
-                { x: 300, y: 300, num: 2, type: 'forward' },  // Hooker
-                { x: 300, y: 330, num: 3, type: 'forward' },  // Pilar der
-                // Segunda línea (4 + 5)
-                { x: 340, y: 280, num: 4, type: 'forward' },
-                { x: 340, y: 320, num: 5, type: 'forward' },
-                // Tercera línea (6, 7, 8)
-                { x: 380, y: 270, num: 6, type: 'forward' },
-                { x: 380, y: 330, num: 7, type: 'forward' },
-                { x: 420, y: 300, num: 8, type: 'forward' },
-                // Medio scrum
-                { x: 480, y: 300, num: 9, type: 'back' },
-            ];
+            console.log(`
+╔═══════════════════════════════════════════════════════════╗
+║  SCRUM 3-4-1 - Atacando IZQUIERDA → DERECHA              ║
+╠═══════════════════════════════════════════════════════════╣
+║                                                            ║
+║  ATRÁS (izquierda)              ADELANTE (derecha)        ║
+║                                                            ║
+║                        6                1                  ║
+║                        4                2                  ║
+║    9 ── 8                                                  ║
+║                        5                3                  ║
+║                        7                                   ║
+║                                                            ║
+║  Dirección de ataque:  ────────────────────►              ║
+║                                                            ║
+║  1,2,3 = Primera línea (más adelante)                     ║
+║  4,5 = Segunda línea                                       ║
+║  6 = Flanker (arriba del 4, misma columna)                ║
+║  7 = Flanker (abajo del 5, misma columna)                 ║
+║  8 = Octavo (cerca del 9)                                  ║
+║  9 = Medio scrum                                           ║
+╚═══════════════════════════════════════════════════════════╝
+            `);
 
-            positions.forEach(pos => {
-                addPlayer(pos.type, pos.x, pos.y, pos.num);
-            });
+            const baseX = 350;
+            const baseY = 325;
+
+            // Medio scrum (alejado) y Octavo (pegado al scrum)
+            addPlayer('back', baseX - 50, baseY, 9);
+            addPlayer('forward', baseX + 70, baseY, 8);
+
+            // SEGUNDA línea (segundas líneas)
+            addPlayer('forward', baseX + 110, baseY - 20, 4);
+            addPlayer('forward', baseX + 110, baseY + 20, 5);
+
+            // TERCERA línea (flankers) - misma columna X que 4 y 5
+            addPlayer('forward', baseX + 110, baseY - 55, 6);  // Flanker arriba del 4
+            addPlayer('forward', baseX + 110, baseY + 55, 7);  // Flanker abajo del 5
+
+            // PRIMERA línea (pegada a la segunda)
+            addPlayer('forward', baseX + 150, baseY - 35, 1);  // Pilar arriba
+            addPlayer('forward', baseX + 150, baseY, 2);       // Hooker centro
+            addPlayer('forward', baseX + 150, baseY + 35, 3);  // Pilar abajo
+
+            playerCounter = 10;
+        }
+
+        // Lineout 5 jugadores (simplificado)
+        function formacionLineout() {
+            const baseX = 500;
+            const startY = 180;
+            const spacing = 75;
+
+            // Línea vertical de forwards en el lateral (5 saltadores)
+            addPlayer('forward', baseX, startY, 4);           // 1er saltador
+            addPlayer('forward', baseX, startY + spacing, 5); // 2do saltador
+            addPlayer('forward', baseX, startY + spacing * 2, 6); // 3er saltador
+            addPlayer('forward', baseX, startY + spacing * 3, 7); // 4to saltador
+            addPlayer('forward', baseX, startY + spacing * 4, 2); // Hooker
+
+            // Medio scrum ATRÁS esperando el balón (más a la izquierda)
+            addPlayer('back', baseX - 100, startY + spacing * 2, 9);
+
+            playerCounter = 10;
+        }
+
+        // Lineout completo (8 forwards)
+        function formacionLineoutCompleto() {
+            const baseX = 550;
+            const startY = 130;
+            const spacing = 60;
+
+            // Línea de lineout (8 forwards) en el lateral
+            addPlayer('forward', baseX, startY, 1);
+            addPlayer('forward', baseX, startY + spacing, 4);
+            addPlayer('forward', baseX, startY + spacing * 2, 5);
+            addPlayer('forward', baseX, startY + spacing * 3, 6);
+            addPlayer('forward', baseX, startY + spacing * 4, 7);
+            addPlayer('forward', baseX, startY + spacing * 5, 8);
+            addPlayer('forward', baseX, startY + spacing * 6, 3);
+            addPlayer('forward', baseX, startY + spacing * 7, 2); // Hooker
+
+            // Medio scrum ATRÁS (más a la izquierda)
+            addPlayer('back', baseX - 100, startY + spacing * 3.5, 9);
+
+            playerCounter = 10;
+        }
+
+        // Ruck - Agrupamiento tras tackle (basado en imagen proporcionada)
+        function formacionRuck() {
+            // === FULLBACK - MUY ATRÁS (alineado con 10) ===
+            addPlayer('back', 350, 305, 15);
+
+            // === WINGS Y BACKS PROFUNDOS ===
+            addPlayer('back', 470, 50, 11);       // Wing arriba
+            addPlayer('back', 530, 130, 13);      // Centro ext
+            addPlayer('back', 560, 560, 14);      // Wing abajo
+
+            // === BACKS SOPORTE MEDIO ===
+            addPlayer('back', 590, 220, 12);      // Centro int
+            addPlayer('back', 650, 305, 10);      // Apertura
+
+            // === FORWARDS ATRÁS DEL RUCK ===
+            addPlayer('forward', 680, 450, 1);    // Prop
+            addPlayer('forward', 680, 500, 2);    // Hooker
+
+            // === EL RUCK (agrupamiento central) ===
+            addPlayer('forward', 740, 220, 4);    // Lock - adelante
+            addPlayer('forward', 710, 270, 3);    // Prop - atrás
+            addPlayer('forward', 710, 195, 5);    // Lock - atrás
+
+            // === FORWARDS ADELANTE (derecha del ruck) ===
+            addPlayer('back', 830, 390, 9);       // Medio scrum
+            addPlayer('forward', 880, 385, 8);    // Número 8
+            addPlayer('forward', 920, 360, 7);    // Flanker
+            addPlayer('forward', 920, 430, 6);    // Flanker - alineado con 7
 
             playerCounter = 16;
         }
 
-        // Formación completa 15
+        // Maul - Forwards agrupados pero separados, backs espaciados
+        function formacionMaul() {
+            // === BACKS ESPACIADOS (igual que formación 15 jugadores) ===
+            addPlayer('back', 370, 340, 15);     // Fullback izquierda
+            addPlayer('back', 490, 70, 11);      // Wing arriba
+            addPlayer('back', 550, 150, 13);     // Centro ext
+            addPlayer('back', 580, 235, 12);     // Centro int
+            addPlayer('back', 640, 300, 10);     // Apertura
+            addPlayer('back', 580, 550, 14);     // Wing abajo
+
+            // === EL MAUL - FORWARDS AGRUPADOS PERO MÁS SEPARADOS ===
+            addPlayer('back', 710, 400, 9);      // Medio scrum (borde izq maul)
+            addPlayer('forward', 750, 395, 8);   // Número 8 (centro-izq)
+            addPlayer('forward', 770, 360, 1);   // Prop (arriba-centro)
+            addPlayer('forward', 780, 410, 2);   // Hooker (centro)
+            addPlayer('forward', 770, 460, 6);   // Flanker (abajo-centro)
+            addPlayer('forward', 810, 340, 4);   // Lock (arriba-der)
+            addPlayer('forward', 820, 390, 5);   // Lock (centro-der)
+            addPlayer('forward', 830, 440, 7);   // Flanker (abajo-der)
+            addPlayer('forward', 850, 415, 3);   // Prop (extremo der)
+
+            playerCounter = 16;
+        }
+
+        // ============== SITUACIONES ESPECIALES ==============
+
+        // Kick-off - Formación de recepción (basada en imagen de referencia)
+        function formacionKickoff() {
+            // === JUGADORES SUPERIORES (arriba de la cancha) ===
+            addPlayer('back', 380, 80, 11);      // Wing izquierdo arriba
+            addPlayer('back', 750, 140, 14);     // Wing derecho arriba
+
+            // === SEGUNDA LÍNEA ===
+            addPlayer('back', 380, 190, 13);     // Centro exterior
+            addPlayer('back', 750, 230, 12);     // Centro interior
+
+            // === TERCERA LÍNEA / ZONA CENTRAL ===
+            addPlayer('back', 180, 280, 15);     // Fullback izquierda profundo
+            addPlayer('back', 550, 280, 10);     // Apertura
+
+            // === AGRUPAMIENTO CENTRAL (FORWARDS) ===
+            addPlayer('forward', 650, 380, 1);   // Prop
+            addPlayer('forward', 680, 410, 2);   // Hooker
+            addPlayer('forward', 710, 380, 3);   // Prop
+            addPlayer('forward', 780, 400, 4);   // Lock
+            addPlayer('forward', 820, 370, 5);   // Lock
+
+            // === ZONA INFERIOR DISPERSA ===
+            addPlayer('back', 380, 420, 9);      // Medio scrum
+            addPlayer('forward', 620, 480, 6);   // Flanker
+            addPlayer('forward', 750, 480, 7);   // Flanker
+            addPlayer('forward', 380, 540, 8);   // Número 8
+
+            playerCounter = 16;
+        }
+
+        // ============== FORMACIONES BACKS ==============
+
+        // Backs en línea de ataque (profundidad correcta, atacando izquierda → derecha)
+        function formacionBacks() {
+            const baseX = 500;  // 9 más adelante (cerca del scrum)
+            const baseY = 325;
+
+            // 9 más ADELANTE (derecha) - recibe del 8
+            addPlayer('back', baseX, baseY, 9);
+
+            // 10 detrás del 9, un poco arriba
+            addPlayer('back', baseX - 60, baseY - 50, 10);
+
+            // 12 detrás del 10
+            addPlayer('back', baseX - 120, baseY - 100, 12);
+
+            // 13 detrás del 12
+            addPlayer('back', baseX - 180, baseY - 150, 13);
+
+            // 11 wing arriba (extremo, más atrás)
+            addPlayer('back', baseX - 240, baseY - 200, 11);
+
+            // 15 fullback detrás del 9 como apoyo
+            addPlayer('back', baseX - 60, baseY + 50, 15);
+
+            // 14 wing abajo (extremo)
+            addPlayer('back', baseX - 180, baseY + 150, 14);
+
+            playerCounter = 16;
+        }
+
+        // ============== FORMACIONES COMPLETAS ==============
+
+        // 15 jugadores completos (Scrum + Backs en línea de ataque)
         function formacionFull15() {
-            // Forwards (scrum)
-            const positions = [
-                { x: 300, y: 270, num: 1, type: 'forward' },
-                { x: 300, y: 300, num: 2, type: 'forward' },
-                { x: 300, y: 330, num: 3, type: 'forward' },
-                { x: 340, y: 280, num: 4, type: 'forward' },
-                { x: 340, y: 320, num: 5, type: 'forward' },
-                { x: 380, y: 270, num: 6, type: 'forward' },
-                { x: 380, y: 330, num: 7, type: 'forward' },
-                { x: 420, y: 300, num: 8, type: 'forward' },
-                // Backs
-                { x: 500, y: 300, num: 9, type: 'back' },
-                { x: 580, y: 300, num: 10, type: 'back' },
-                { x: 660, y: 280, num: 12, type: 'back' },
-                { x: 740, y: 260, num: 13, type: 'back' },
-                { x: 820, y: 240, num: 11, type: 'back' },
-                { x: 820, y: 360, num: 14, type: 'back' },
-                { x: 700, y: 400, num: 15, type: 'back' },
-            ];
+            const scrumX = 750;
+            const scrumY = 420;  // Scrum un poco más arriba
+            const backsY = 320;  // Backs arriba
 
-            positions.forEach(pos => {
-                addPlayer(pos.type, pos.x, pos.y, pos.num);
-            });
+            // === FORWARDS ADELANTE (derecha) - Scrum más abajo ===
+            // Primera línea (más adelante)
+            addPlayer('forward', scrumX, scrumY - 35, 1);
+            addPlayer('forward', scrumX, scrumY, 2);
+            addPlayer('forward', scrumX, scrumY + 35, 3);
+
+            // Segunda línea + Flankers (misma línea X, más separados)
+            addPlayer('forward', scrumX - 40, scrumY - 55, 6);
+            addPlayer('forward', scrumX - 40, scrumY - 20, 4);
+            addPlayer('forward', scrumX - 40, scrumY + 20, 5);
+            addPlayer('forward', scrumX - 40, scrumY + 55, 7);
+
+            // Octavo (más cerca del scrum)
+            addPlayer('forward', scrumX - 70, scrumY, 8);
+
+            // === BACKS ATRÁS (izquierda) - Arriba en la cancha ===
+            // 9 detrás del 8 (más cerca)
+            addPlayer('back', scrumX - 120, scrumY, 9);
+
+            // 10 detrás del 9, arriba
+            addPlayer('back', scrumX - 230, backsY, 10);
+
+            // 12 detrás del 10 (menos profundo)
+            addPlayer('back', scrumX - 280, backsY - 70, 12);
+
+            // 13 detrás del 12 (menos profundo)
+            addPlayer('back', scrumX - 330, backsY - 140, 13);
+
+            // 11 wing arriba (extremo)
+            addPlayer('back', scrumX - 380, backsY - 210, 11);
+
+            // 15 fullback más atrás que el 11
+            addPlayer('back', scrumX - 430, backsY, 15);
+
+            // 14 wing abajo
+            addPlayer('back', scrumX - 330, scrumY + 100, 14);
 
             playerCounter = 16;
         }
 
-        // ===========================
-        // AGREGAR PELOTA
-        // ===========================
-        function addBall() {
-            const ball = new fabric.Ellipse({
-                left: 500,
-                top: 300,
-                rx: 12,
-                ry: 16,
-                fill: '#8B4513',
-                stroke: 'white',
-                strokeWidth: 2,
-                hasControls: true,
-                isBall: true
-            });
-
-            canvas.add(ball);
-            canvas.renderAll();
-        }
-
-        // ===========================
-        // DIBUJAR LÍNEA DE MOVIMIENTO
-        // ===========================
-        let line, isDown, startPoint;
-
-        function enableDrawing() {
-            isDrawingMode = !isDrawingMode;
-
-            if (isDrawingMode) {
-                $('#btnDrawLine').addClass('btn-warning').removeClass('btn-rugby').html('<i class="fas fa-times"></i> Cancelar Dibujo');
-                canvas.selection = false;
-                canvas.forEachObject(obj => obj.selectable = false);
-
-                canvas.on('mouse:down', function(o) {
-                    isDown = true;
-                    var pointer = canvas.getPointer(o.e);
-                    startPoint = { x: pointer.x, y: pointer.y };
-                    var points = [pointer.x, pointer.y, pointer.x, pointer.y];
-                    line = new fabric.Line(points, {
-                        strokeWidth: 4,
-                        fill: '#ffeb3b',
-                        stroke: '#ffeb3b',
-                        originX: 'center',
-                        originY: 'center',
-                        selectable: true,
-                        isMovement: true
-                    });
-                    canvas.add(line);
-                });
-
-                canvas.on('mouse:move', function(o) {
-                    if (!isDown) return;
-                    var pointer = canvas.getPointer(o.e);
-                    line.set({ x2: pointer.x, y2: pointer.y });
-                    canvas.renderAll();
-                });
-
-                canvas.on('mouse:up', function(o) {
-                    isDown = false;
-
-                    // Encontrar jugador más cercano al punto inicial
-                    const nearestPlayer = findNearestPlayer(startPoint.x, startPoint.y);
-                    if (nearestPlayer) {
-                        line.playerRef = nearestPlayer;
-                        movements.push({
-                            player: nearestPlayer,
-                            line: line,
-                            startX: line.x1,
-                            startY: line.y1,
-                            endX: line.x2,
-                            endY: line.y2
-                        });
-                    }
-
-                    // Agregar flecha
-                    addArrowHead(line);
-                });
-            } else {
-                $('#btnDrawLine').removeClass('btn-warning').addClass('btn-rugby').html('<i class="fas fa-arrows-alt"></i> Dibujar Movimiento');
-                canvas.selection = true;
-                canvas.forEachObject(obj => obj.selectable = true);
-                canvas.off('mouse:down');
-                canvas.off('mouse:move');
-                canvas.off('mouse:up');
-            }
-        }
-
-        function findNearestPlayer(x, y) {
-            let nearest = null;
-            let minDistance = Infinity;
-
-            players.forEach(player => {
-                const distance = Math.sqrt(
-                    Math.pow(player.left - x, 2) +
-                    Math.pow(player.top - y, 2)
-                );
-
-                if (distance < minDistance && distance < 100) {
-                    minDistance = distance;
-                    nearest = player;
-                }
-            });
-
-            return nearest;
-        }
-
-        function addArrowHead(line) {
-            const angle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
-            const headlen = 15;
-
-            const arrow = new fabric.Triangle({
-                left: line.x2,
-                top: line.y2,
-                width: headlen,
-                height: headlen,
-                fill: '#ffeb3b',
-                angle: (angle * 180 / Math.PI) + 90,
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                isArrow: true
-            });
-
-            canvas.add(arrow);
-            line.arrowRef = arrow;
-        }
-
-        // ===========================
-        // ANIMACIÓN REAL - SEGUIR FLECHAS
-        // ===========================
-        let isAnimating = false;
-        let originalPositions = new Map();
-
-        function playAnimationReal() {
-            if (isAnimating) return;
-            if (movements.length === 0) {
-                alert('Dibuja algunos movimientos primero');
-                return;
-            }
-
-            isAnimating = true;
-            $('#btnPlay').prop('disabled', true);
-            $('#btnPause').prop('disabled', false);
-            $('#btnReset').prop('disabled', true);
-
-            // Guardar posiciones originales
-            originalPositions.clear();
-            players.forEach(player => {
-                originalPositions.set(player, {
-                    left: player.left,
-                    top: player.top
-                });
-            });
-
-            // Animar todos los movimientos simultáneamente
-            movements.forEach(movement => {
-                const player = movement.player;
-                const distance = Math.sqrt(
-                    Math.pow(movement.endX - movement.startX, 2) +
-                    Math.pow(movement.endY - movement.startY, 2)
-                );
-
-                const duration = distance * 3; // 3ms por pixel
-
-                player.animate({
-                    left: movement.endX,
-                    top: movement.endY
-                }, {
-                    duration: duration,
-                    easing: fabric.util.ease.easeInOutCubic,
-                    onChange: canvas.renderAll.bind(canvas),
-                    onComplete: () => {
-                        // Al completar la última animación
-                        setTimeout(() => {
-                            isAnimating = false;
-                            $('#btnPlay').prop('disabled', false);
-                            $('#btnPause').prop('disabled', true);
-                            $('#btnReset').prop('disabled', false);
-                        }, 100);
-                    }
-                });
-            });
-        }
-
-        function resetAnimation() {
-            // Restaurar posiciones originales
-            originalPositions.forEach((pos, player) => {
-                player.set({
-                    left: pos.left,
-                    top: pos.top
-                });
-            });
-
-            canvas.renderAll();
-            isAnimating = false;
-            $('#btnPlay').prop('disabled', false);
-            $('#btnPause').prop('disabled', true);
-            $('#btnReset').prop('disabled', true);
-        }
-
-        // ===========================
-        // GUARDAR JUGADA (LocalStorage)
-        // ===========================
+        // ============================================
+        // 6. GUARDAR JUGADA
+        // ============================================
         function savePlay() {
             const playName = $('#playNameInput').val().trim();
+            const playCategory = $('#playCategory').val();
 
             if (!playName) {
-                alert('Por favor ingresa un nombre para la jugada');
+                alert('⚠️ Ingresa un nombre para la jugada');
                 return;
             }
 
-            const canvasData = canvas.toJSON(['playerRef', 'isMovement', 'playerType', 'playerNumber', 'isBall', 'isArrow']);
-            const thumbnail = canvas.toDataURL({ format: 'png', quality: 0.5 });
+            if (players.length === 0) {
+                alert('⚠️ Agrega al menos un jugador antes de guardar');
+                return;
+            }
 
+            // Extraer datos simples de los jugadores
+            const playersData = players.map(p => ({
+                number: p.playerNumber,
+                type: p.playerType,
+                x: Math.round(p.left),
+                y: Math.round(p.top)
+            }));
+
+            // Crear thumbnail
+            const thumbnail = canvas.toDataURL({ format: 'png', quality: 0.6 });
+
+            // Determinar icono de categoría
+            const categoryIcon = {
+                'forwards': '🟣',
+                'backs': '🟢',
+                'full_team': '⚪'
+            }[playCategory] || '⚪';
+
+            // Extraer datos del balón si existe
+            const ballData = rugbyBall ? {
+                x: Math.round(rugbyBall.left),
+                y: Math.round(rugbyBall.top),
+                isBall: true
+            } : null;
+
+            // Extraer datos de movimientos y pases (sin objetos Fabric no serializables)
+            const movementsData = movements.map(action => {
+                if (action.type === 'movement') {
+                    return {
+                        type: 'movement',
+                        playerId: action.playerId,
+                        playerType: action.playerType,
+                        points: action.points,
+                        hasBall: action.hasBall || false
+                    };
+                } else if (action.type === 'pass') {
+                    return {
+                        type: 'pass',
+                        from: action.from,
+                        to: action.to
+                    };
+                }
+                return action;
+            });
+
+            // Crear objeto de jugada
             const play = {
                 id: Date.now(),
                 name: playName,
-                canvasData: canvasData,
+                category: playCategory,
+                categoryIcon: categoryIcon,
+                players: playersData,
+                ball: ballData,  // Incluir balón
+                ballPossession: ballPossession,  // Quién tiene el balón
+                movements: movementsData,  // Incluir movimientos
                 thumbnail: thumbnail,
                 created_at: new Date().toISOString()
             };
 
+            // Guardar en localStorage
             let plays = JSON.parse(localStorage.getItem('rugbyPlays') || '[]');
             plays.push(play);
             localStorage.setItem('rugbyPlays', JSON.stringify(plays));
@@ -724,18 +1929,18 @@
             $('#playNameInput').val('');
             loadPlays();
 
-            alert('✅ Jugada guardada exitosamente: ' + playName);
+            alert(`✅ Jugada guardada: ${playName} (${categoryIcon} ${playCategory})`);
         }
 
-        // ===========================
-        // CARGAR JUGADAS
-        // ===========================
+        // ============================================
+        // 7. CARGAR JUGADAS
+        // ============================================
         function loadPlays() {
             const plays = JSON.parse(localStorage.getItem('rugbyPlays') || '[]');
-            const container = $('#savedPlays');
+            const container = $('#savedPlaysList');
 
             if (plays.length === 0) {
-                container.html('<p class="text-muted small"><i class="fas fa-info-circle"></i> No hay jugadas guardadas aún</p>');
+                container.html('<p class="text-muted text-center small mb-0"><i class="fas fa-info-circle"></i> Sin jugadas</p>');
                 $('#playCount').text('0');
                 return;
             }
@@ -744,22 +1949,23 @@
 
             let html = '';
             plays.reverse().forEach(play => {
-                const date = new Date(play.created_at).toLocaleDateString('es-ES');
+                const date = new Date(play.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                const categoryIcon = play.categoryIcon || '⚪';
+                const categoryLabel = play.category ? play.category.replace('_', ' ') : 'general';
+
                 html += `
-                    <div class="saved-play-item" data-play-id="${play.id}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${play.name}</strong><br>
-                                <small class="text-muted">${date}</small>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-info load-play" data-play-id="${play.id}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger delete-play" data-play-id="${play.id}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                    <div class="saved-play-item">
+                        <strong>${categoryIcon} ${play.name}</strong><br>
+                        <small class="text-muted">
+                            ${play.players.length} jug. · ${date}
+                        </small>
+                        <div class="mt-1">
+                            <button class="btn btn-sm btn-info load-play" data-id="${play.id}" title="Cargar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-play" data-id="${play.id}" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -768,94 +1974,326 @@
             container.html(html);
         }
 
-        // ===========================
-        // CARGAR JUGADA ESPECÍFICA
-        // ===========================
+        // ============================================
+        // 8. CARGAR JUGADA ESPECÍFICA
+        // ============================================
         $(document).on('click', '.load-play', function() {
-            const playId = $(this).data('play-id');
+            const playId = $(this).data('id');
             const plays = JSON.parse(localStorage.getItem('rugbyPlays') || '[]');
             const play = plays.find(p => p.id === playId);
 
-            if (play) {
-                canvas.clear();
-                drawRugbyField();
-                players = [];
-                movements = [];
+            if (!play) {
+                alert('❌ Jugada no encontrada');
+                return;
+            }
 
-                canvas.loadFromJSON(play.canvasData, function() {
-                    // Re-construir arrays de players y movements
-                    canvas.forEachObject(obj => {
-                        if (obj.type === 'group' && obj.playerNumber) {
-                            players.push(obj);
+            clearAllPlayers();
+
+            // Recrear jugadores desde los datos guardados
+            play.players.forEach(p => {
+                addPlayer(p.type, p.x, p.y, p.number);
+            });
+
+            // Restaurar balón si existía
+            if (play.ball && play.ball.isBall) {
+                crearBalon(play.ball.x, play.ball.y);
+            }
+
+            // Restaurar movimientos y pases si existían
+            if (play.movements && play.movements.length > 0) {
+                play.movements.forEach(action => {
+                    if (action.type === 'movement' || !action.type) {
+                        // Es un movimiento (compatibilidad con datos antiguos sin type)
+                        let color;
+                        if (action.playerType === 'ball') {
+                            color = '#FF8C00';
+                        } else if (action.playerType === 'forward') {
+                            color = '#1e4d2b';
+                        } else {
+                            color = '#28a745';
                         }
-                        if (obj.isMovement && obj.playerRef) {
+
+                        // Recrear path con flecha
+                        const pathGroup = createPathWithArrow(action.points, color);
+                        if (pathGroup) {
+                            canvas.add(pathGroup);
+                            pathGroup.sendToBack();
+
+                            // Guardar en array de movimientos
                             movements.push({
-                                player: obj.playerRef,
-                                line: obj,
-                                startX: obj.x1,
-                                startY: obj.y1,
-                                endX: obj.x2,
-                                endY: obj.y2
+                                type: 'movement',
+                                playerId: action.playerId,
+                                playerType: action.playerType,
+                                points: action.points,
+                                hasBall: action.hasBall || false,
+                                pathObject: pathGroup
                             });
                         }
-                    });
+                    } else if (action.type === 'pass') {
+                        // Es un pase - recrear visualmente
+                        const fromPlayer = findObjectById(action.from);
+                        const toPlayer = findObjectById(action.to);
 
-                    canvas.renderAll();
+                        if (fromPlayer && toPlayer) {
+                            const fromCenter = fromPlayer.getCenterPoint();
+                            const toCenter = toPlayer.getCenterPoint();
+
+                            // Crear línea punteada azul
+                            const passLine = new fabric.Line([
+                                fromCenter.x, fromCenter.y,
+                                toCenter.x, toCenter.y
+                            ], {
+                                stroke: '#0066CC',
+                                strokeWidth: 3,
+                                strokeDashArray: [8, 4],
+                                selectable: false,
+                                evented: false,
+                                isPassPath: true
+                            });
+
+                            // Crear flecha
+                            const angle = Math.atan2(
+                                toCenter.y - fromCenter.y,
+                                toCenter.x - fromCenter.x
+                            ) * 180 / Math.PI;
+
+                            const arrowHead = new fabric.Triangle({
+                                left: toCenter.x,
+                                top: toCenter.y,
+                                fill: '#0066CC',
+                                width: 15,
+                                height: 18,
+                                angle: angle + 90,
+                                originX: 'center',
+                                originY: 'center',
+                                selectable: false,
+                                evented: false,
+                                isPassArrow: true
+                            });
+
+                            canvas.add(passLine);
+                            canvas.add(arrowHead);
+                            passLine.sendToBack();
+                            arrowHead.sendToBack();
+
+                            // Guardar en array
+                            movements.push({
+                                type: 'pass',
+                                from: action.from,
+                                to: action.to,
+                                passPath: passLine,
+                                passArrow: arrowHead
+                            });
+                        }
+                    }
                 });
-                $('#playNameInput').val(play.name);
+
+                // Enviar cancha al fondo
+                canvas.getObjects().forEach(obj => {
+                    if (obj.type === 'image') {
+                        obj.sendToBack();
+                    }
+                });
+
+                canvas.renderAll();
+
+                // Actualizar botones
+                updatePlayButton();
+                updatePassButton();
             }
+
+            // Restaurar posesión del balón si existía
+            if (play.ballPossession !== null && play.ballPossession !== undefined) {
+                const playerWithBall = players.find(p => p.playerNumber === play.ballPossession);
+                if (playerWithBall && rugbyBall) {
+                    assignPossessionTo(playerWithBall);
+                }
+            }
+
+            // Guardar posiciones originales al cargar
+            saveOriginalPositions();
+
+            // Actualizar UI de posesión
+            updatePossessionUI();
+
+            $('#playNameInput').val(play.name);
+
+            alert('✅ Jugada cargada: ' + play.name);
         });
 
-        // ===========================
-        // ELIMINAR JUGADA
-        // ===========================
+        // ============================================
+        // 9. ELIMINAR JUGADA
+        // ============================================
         $(document).on('click', '.delete-play', function() {
-            const playId = $(this).data('play-id');
+            const playId = $(this).data('id');
 
-            if (confirm('¿Estás seguro de eliminar esta jugada?')) {
-                let plays = JSON.parse(localStorage.getItem('rugbyPlays') || '[]');
-                plays = plays.filter(p => p.id !== playId);
-                localStorage.setItem('rugbyPlays', JSON.stringify(plays));
-                loadPlays();
-            }
+            if (!confirm('¿Eliminar esta jugada?')) return;
+
+            let plays = JSON.parse(localStorage.getItem('rugbyPlays') || '[]');
+            plays = plays.filter(p => p.id !== playId);
+            localStorage.setItem('rugbyPlays', JSON.stringify(plays));
+
+            loadPlays();
         });
 
-        // ===========================
-        // LIMPIAR CANVAS
-        // ===========================
+        // ============================================
+        // 10. LIMPIAR CANVAS COMPLETO
+        // ============================================
         function clearCanvas() {
-            if (confirm('¿Estás seguro de limpiar toda la cancha?')) {
-                canvas.clear();
-                drawRugbyField();
-                playerCounter = 1;
-                players = [];
-                movements = [];
+            if (players.length === 0) {
+                alert('⚠️ El canvas ya está vacío');
+                return;
+            }
+
+            if (confirm('¿Limpiar toda la cancha y jugadores?')) {
+                clearAllPlayers();
             }
         }
 
-        // ===========================
-        // EVENT LISTENERS
-        // ===========================
+        // ============================================
+        // 11. EVENT LISTENERS
+        // ============================================
         $('#btnAddForward').on('click', () => addPlayer('forward'));
         $('#btnAddBack').on('click', () => addPlayer('back'));
-        $('#btnAddBall').on('click', addBall);
-        $('#btnDrawLine').on('click', enableDrawing);
-        $('#btnSave').on('click', savePlay);
-        $('#btnClear').on('click', clearCanvas);
-        $('#btnPlay').on('click', playAnimationReal);
-        $('#btnReset').on('click', resetAnimation);
+        $('#btnAddBall').on('click', () => crearBalon());
+        $('#btnDeleteSelected').on('click', deleteSelectedPlayer);
         $('#btnApplyFormacion').on('click', applyFormacion);
+        $('#btnSavePlay').on('click', savePlay);
+        $('#btnClearCanvas').on('click', clearCanvas);
 
-        // ===========================
-        // INICIALIZACIÓN AL CARGAR
-        // ===========================
+        // Botones de trayectorias
+        $('#btnDrawMovement').on('click', function() {
+            if (isDrawingMode) {
+                deactivateDrawingMode();
+            } else {
+                activateDrawingMode();
+            }
+        });
+
+        $('#btnClearMovements').on('click', function() {
+            if (movements.length === 0) {
+                alert('⚠️ No hay trayectorias para borrar');
+                return;
+            }
+            if (confirm('¿Borrar todas las trayectorias?')) {
+                clearAllMovements();
+                updatePlayButton();
+            }
+        });
+
+        // Botones de animación
+        $('#btnPlay').on('click', function() {
+            if (!isPlaying && movements.length > 0) {
+                playAllMovements();
+            }
+        });
+
+        $('#btnReset').on('click', function() {
+            resetToOriginalPositions();
+        });
+
+        // Botones de posesión del balón
+        $('#btnAssignPossession').on('click', function() {
+            if (isAssigningPossession) {
+                deactivateAssignPossessionMode();
+            } else {
+                activateAssignPossessionMode();
+            }
+        });
+
+        $('#btnReleasePossession').on('click', function() {
+            releasePossession();
+        });
+
+        // Botón crear pase
+        $('#btnCreatePass').on('click', function() {
+            if (isCreatingPass) {
+                deactivateCreatePassMode();
+            } else {
+                activateCreatePassMode();
+            }
+        });
+
+        // Handler para asignar posesión y crear pases al hacer click en jugador
+        canvas.on('mouse:down', function(opt) {
+            const target = opt.target;
+
+            // Modo asignar posesión
+            if (isAssigningPossession) {
+                if (target && target.isPlayer) {
+                    assignPossessionTo(target);
+                    deactivateAssignPossessionMode();
+                }
+                return;
+            }
+
+            // Modo crear pase
+            if (isCreatingPass) {
+                if (target && target.isPlayer) {
+                    if (!passFromPlayer) {
+                        // Primer click: Seleccionar origen (debe tener el balón)
+                        if (target.playerNumber === ballPossession) {
+                            passFromPlayer = target;
+                            console.log('🔗 Origen seleccionado: Jugador', passFromPlayer.playerNumber);
+                            $('#animationStatus').html(`<i class="fas fa-hand-point-right text-primary"></i> Origen: ${passFromPlayer.playerNumber}. Click en destino...`);
+                        } else {
+                            alert('⚠️ El jugador seleccionado no tiene el balón.\n\nSelecciona al jugador ' + ballPossession + ' que tiene el balón.');
+                        }
+                    } else {
+                        // Segundo click: Seleccionar destino
+                        if (target.playerNumber === passFromPlayer.playerNumber) {
+                            alert('⚠️ No puedes pasar el balón a ti mismo');
+                            return;
+                        }
+
+                        // Crear el pase
+                        createPass(passFromPlayer, target);
+
+                        // Desactivar modo
+                        deactivateCreatePassMode();
+                    }
+                }
+                return;
+            }
+        });
+
+        // Habilitar/deshabilitar botón de dibujo según selección
+        canvas.on('selection:created', function(e) {
+            const obj = e.selected[0];
+            if (obj && (obj.isPlayer || obj.isBall)) {
+                $('#btnDrawMovement').prop('disabled', false);
+            }
+        });
+
+        canvas.on('selection:updated', function(e) {
+            const obj = e.selected[0];
+            if (obj && (obj.isPlayer || obj.isBall)) {
+                $('#btnDrawMovement').prop('disabled', false);
+            }
+        });
+
+        // Deseleccionar al hacer click en el fondo
+        canvas.on('selection:cleared', function() {
+            selectedPlayer = null;
+            if (!isDrawingMode) {
+                $('#btnDrawMovement').prop('disabled', true);
+            }
+        });
+
+        // ============================================
+        // 12. INICIALIZACIÓN
+        // ============================================
         $(document).ready(function() {
             drawRugbyField();
             loadPlays();
 
-            console.log('✅ Editor de Jugadas Rugby inicializado');
-            console.log('🏉 Formaciones disponibles: 5');
-            console.log('🎬 Animación: Siguiendo flechas');
+            console.log('✅ Editor de Jugadas Rugby - FASE 2 Inicializado');
+            console.log('🏉 Funcionalidades: Posiciones fijas, formaciones, guardar/cargar');
+            console.log('🏈 Balón: Agregar, arrastrar, eliminar, posesión');
+            console.log('✏️ Trayectorias: Dibujar movimientos para jugadores/balón');
+            console.log('🔗 Pases: Crear pases entre jugadores con flecha azul');
+            console.log('▶️ Animación: Sistema de fases (movimientos simultáneos + pases secuenciales)');
+            console.log('📐 Orientación: Izquierda → Derecha');
         });
     </script>
 </body>
