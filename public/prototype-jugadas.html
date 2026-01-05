@@ -206,59 +206,7 @@
                     <strong>Fase 1:</strong> Posiciones fijas. Arrastra para mover.
                 </div>
 
-                <!-- Panel 1: Agregar Jugadores -->
-                <div class="tools-panel">
-                    <div class="section-header">
-                        <i class="fas fa-user-plus"></i> Jugadores
-                    </div>
-                    <button id="btnAddForward" class="btn btn-rugby btn-block mb-2">
-                        <i class="fas fa-user"></i> Forward
-                    </button>
-                    <button id="btnAddBack" class="btn btn-rugby btn-block mb-2">
-                        <i class="fas fa-running"></i> Back
-                    </button>
-                    <button id="btnAddBall" class="btn btn-warning btn-block mb-2">
-                        🏈 Balón
-                    </button>
-                    <button id="btnAssignPossession" class="btn btn-outline-warning btn-block mb-2" disabled>
-                        <i class="fas fa-hand-holding"></i> Asignar posesión
-                    </button>
-                    <button id="btnReleasePossession" class="btn btn-outline-secondary btn-block mb-2" style="display: none;">
-                        <i class="fas fa-hand-paper"></i> Soltar balón
-                    </button>
-                    <button id="btnDeleteSelected" class="btn btn-danger btn-block">
-                        <i class="fas fa-trash-alt"></i> Eliminar
-                    </button>
-                </div>
-
-                <!-- Panel 2: Trayectorias -->
-                <div class="tools-panel">
-                    <div class="section-header">
-                        <i class="fas fa-route"></i> Trayectorias
-                    </div>
-                    <button id="btnDrawMovement" class="btn btn-info btn-block mb-2" disabled>
-                        <i class="fas fa-pencil-alt"></i> Dibujar movimiento
-                    </button>
-                    <button id="btnCreatePass" class="btn btn-primary btn-block mb-2" disabled>
-                        🔗 Crear Pase
-                    </button>
-                    <div class="btn-group btn-block mb-2" role="group">
-                        <button id="btnPlay" class="btn btn-success" disabled>
-                            <i class="fas fa-play"></i> Play
-                        </button>
-                        <button id="btnReset" class="btn btn-secondary">
-                            <i class="fas fa-undo"></i> Reset
-                        </button>
-                    </div>
-                    <button id="btnClearMovements" class="btn btn-outline-danger btn-block btn-sm">
-                        <i class="fas fa-eraser"></i> Borrar trayectorias
-                    </button>
-                    <small id="animationStatus" class="text-muted d-block mt-2">
-                        <i class="fas fa-info-circle"></i> Selecciona jugador/balón primero
-                    </small>
-                </div>
-
-                <!-- Panel 3: Formaciones -->
+                <!-- Panel 1: Formaciones -->
                 <div class="tools-panel">
                     <div class="section-header">
                         <i class="fas fa-users"></i> Formaciones
@@ -287,7 +235,62 @@
                     </button>
                 </div>
 
-                <!-- Panel 3: Guardar -->
+                <!-- Panel 2: Agregar Jugadores -->
+                <div class="tools-panel">
+                    <div class="section-header">
+                        <i class="fas fa-user-plus"></i> Jugadores
+                    </div>
+                    <button id="btnAddPlayer" class="btn btn-danger btn-block mb-2">
+                        <i class="fas fa-user-plus"></i> Agregar Jugador
+                    </button>
+                    <button id="btnAddBall" class="btn btn-warning btn-block mb-2">
+                        🏈 Balón
+                    </button>
+                    <button id="btnAssignPossession" class="btn btn-outline-warning btn-block mb-2" disabled>
+                        <i class="fas fa-hand-holding"></i> Asignar posesión
+                    </button>
+                    <button id="btnReleasePossession" class="btn btn-outline-secondary btn-block mb-2" style="display: none;">
+                        <i class="fas fa-hand-paper"></i> Soltar balón
+                    </button>
+                    <button id="btnDeleteSelected" class="btn btn-danger btn-block">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                </div>
+
+                <!-- Panel 3: Trayectorias -->
+                <div class="tools-panel">
+                    <div class="section-header">
+                        <i class="fas fa-route"></i> Trayectorias
+                    </div>
+                    <button id="btnDrawMovement" class="btn btn-info btn-block mb-2" disabled
+                            title="Dibuja la trayectoria del jugador. Puedes dibujar múltiples trayectorias para el mismo jugador (antes y después de pases).">
+                        <i class="fas fa-pencil-alt"></i> Dibujar movimiento
+                    </button>
+                    <button id="btnCreatePass" class="btn btn-primary btn-block mb-2" disabled
+                            title="Click aquí y luego en el jugador que recibirá el pase">
+                        🔗 Crear Pase
+                    </button>
+                    <div class="btn-group btn-block mb-2" role="group">
+                        <button id="btnPlay" class="btn btn-success" disabled>
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                        <button id="btnReset" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                    <!-- Lista de movimientos -->
+                    <div id="movementsList" class="movements-list mt-2 mb-2" style="max-height: 150px; overflow-y: auto; font-size: 12px;">
+                        <small class="text-muted">Sin movimientos</small>
+                    </div>
+                    <button id="btnClearMovements" class="btn btn-outline-danger btn-block btn-sm">
+                        <i class="fas fa-eraser"></i> Borrar todas
+                    </button>
+                    <small id="animationStatus" class="text-muted d-block mt-2">
+                        <i class="fas fa-info-circle"></i> Selecciona jugador/balón primero
+                    </small>
+                </div>
+
+                <!-- Panel 4: Guardar -->
                 <div class="tools-panel">
                     <div class="section-header">
                         <i class="fas fa-save"></i> Guardar
@@ -304,7 +307,7 @@
                     </button>
                 </div>
 
-                <!-- Panel 4: Jugadas Guardadas -->
+                <!-- Panel 5: Jugadas Guardadas -->
                 <div class="tools-panel">
                     <div class="section-header">
                         <i class="fas fa-folder-open"></i> Guardadas
@@ -354,11 +357,15 @@
 
         // Variables para sistema de posesión del balón
         let ballPossession = null;       // ID del jugador que tiene el balón (null = libre)
+        let originalBallHolder = null;   // ID del jugador que recibió el balón ORIGINALMENTE (antes de pases)
         let isAssigningPossession = false; // Modo asignación activo
 
         // Variables para sistema de pases
         let isCreatingPass = false;      // Modo crear pase activo
-        let passFromPlayer = null;       // Jugador origen del pase
+        // Origen siempre es ballPossession (autoselección)
+
+        // Contador para IDs únicos de movimientos/pases
+        let movementIdCounter = 0;
 
         // Offsets globales para posición del balón (relativo al jugador)
         const BALL_OFFSET_X = 30;
@@ -393,8 +400,8 @@
         // ============================================
         // 2. AGREGAR JUGADORES
         // ============================================
-        function addPlayer(type, x = null, y = null, num = null) {
-            const color = type === 'forward' ? '#1e4d2b' : '#28a745';
+        function addPlayer(type = 'player', x = null, y = null, num = null) {
+            const color = '#DC3545'; // Rojo para mejor visibilidad en cancha verde
             const playerNum = num !== null ? num : playerCounter;
 
             // Círculo del jugador con sombra
@@ -430,7 +437,7 @@
                 hasBorders: true,
                 borderColor: '#ffeb3b',
                 borderScaleFactor: 3,
-                cornerColor: color,
+                cornerColor: '#DC3545',
                 transparentCorners: false,
                 lockRotation: true,
                 playerType: type,
@@ -570,8 +577,7 @@
         // Obtener color según tipo de objeto
         function getPathColor(obj) {
             if (obj.isBall) return '#FF8C00';  // Naranja para balón
-            if (obj.playerType === 'forward') return '#1e4d2b';  // Verde oscuro
-            return '#28a745';  // Verde claro para backs
+            return '#DC3545';  // Rojo para mejor visibilidad en cancha verde
         }
 
         // Dibujar el path con flecha
@@ -631,6 +637,7 @@
             const hasBall = obj.isPlayer && ballPossession === obj.playerNumber;
 
             const movement = {
+                id: ++movementIdCounter,  // ID único para eliminar correctamente
                 type: 'movement',  // Tipo de acción (movement o pass)
                 playerId: obj.isBall ? 'ball' : obj.playerNumber,
                 playerType: obj.isBall ? 'ball' : obj.playerType,
@@ -640,34 +647,172 @@
             };
 
             movements.push(movement);
-            console.log('💾 Movimiento guardado:', movement.playerId,
-                `(${points.length} puntos)`, hasBall ? '🏈 con balón' : '');
 
-            // Actualizar botones
+            // Log informativo
+            if (hasBall) {
+                console.log(`💾 Movimiento guardado: J${movement.playerId} (${points.length} puntos) 🏈 con balón`);
+            } else {
+                console.log(`💾 Movimiento guardado: J${movement.playerId} (${points.length} puntos)`);
+            }
+            console.log(`💡 Puedes dibujar otro movimiento para J${movement.playerId} o crear un pase`);
+
+            // Actualizar botones y lista
             updatePlayButton();
             updatePassButton();
+            renderMovementsList();
 
             return movement;
         }
 
         // Limpiar todos los movimientos y pases
         function clearAllMovements() {
-            // Remover paths y pases del canvas
+            // Remover paths del canvas (solo movimientos tienen objetos visuales)
+            // Los pases ya no tienen objetos visuales permanentes
             movements.forEach(action => {
                 if (action.type === 'movement' && action.pathObject) {
                     canvas.remove(action.pathObject);
-                } else if (action.type === 'pass') {
-                    if (action.passPath) canvas.remove(action.passPath);
-                    if (action.passArrow) canvas.remove(action.passArrow);
                 }
+                // type: 'pass' ya no tiene objetos visuales permanentes
             });
-            movements = [];
-            canvas.renderAll();
-            console.log('🧹 Todas las trayectorias y pases eliminados');
 
-            // Actualizar botones
+            movements = [];
+            movementIdCounter = 0;  // Resetear contador de IDs
+            canvas.renderAll();
+            console.log('🧹 Trayectorias borradas');
+
+            // Actualizar botones y lista
             updatePlayButton();
             updatePassButton();
+            renderMovementsList();
+        }
+
+        // Eliminar un movimiento individual por ID único
+        function deleteMovementById(id) {
+            const index = movements.findIndex(m => m.id === id);
+            if (index === -1) {
+                console.warn(`⚠️ No se encontró elemento con ID ${id}`);
+                return;
+            }
+
+            const action = movements[index];
+            const wasPass = action.type === 'pass';
+
+            // Si es movimiento, remover el path del canvas
+            if (action.type === 'movement' && action.pathObject) {
+                canvas.remove(action.pathObject);
+                canvas.renderAll();
+                console.log(`🗑️ Movimiento J${action.playerId} eliminado (ID: ${id})`);
+            } else if (action.type === 'pass') {
+                console.log(`🗑️ Pase ${action.from}→${action.to} eliminado (ID: ${id})`);
+            }
+
+            // Remover del array
+            movements.splice(index, 1);
+
+            // Si se eliminó un pase, recalcular quién tiene el balón
+            if (wasPass) {
+                recalculateBallPossession();
+            }
+
+            // Actualizar UI
+            updatePlayButton();
+            updatePassButton();
+            renderMovementsList();
+        }
+
+        // Recalcular quién tiene el balón basándose en los pases restantes
+        function recalculateBallPossession() {
+            const passes = movements.filter(m => m.type === 'pass');
+
+            let newHolder;
+
+            if (passes.length === 0) {
+                // Sin pases - volver al poseedor original
+                newHolder = originalBallHolder;
+                console.log(`🔄 Sin pases, balón vuelve al poseedor original: J${originalBallHolder}`);
+            } else {
+                // Seguir la cadena de pases para encontrar quién termina con el balón
+                // Construir mapa de pases
+                const passMap = {};
+                passes.forEach(p => {
+                    passMap[p.from] = p.to;
+                });
+
+                // Empezar desde el poseedor original y seguir la cadena
+                let currentHolder = originalBallHolder;
+                while (passMap[currentHolder]) {
+                    currentHolder = passMap[currentHolder];
+                }
+                newHolder = currentHolder;
+                console.log(`🔄 Recalculando cadena de pases → balón con J${newHolder}`);
+            }
+
+            // Actualizar si cambió
+            if (newHolder !== ballPossession) {
+                // Quitar listener del anterior
+                if (ballPossession !== null) {
+                    const oldPlayer = players.find(p => p.playerNumber === ballPossession);
+                    if (oldPlayer) {
+                        oldPlayer.off('moving');
+                        oldPlayer.hasBallPossession = false;
+                    }
+                }
+
+                // Asignar nuevo poseedor lógico
+                ballPossession = newHolder;
+                const newPlayer = players.find(p => p.playerNumber === ballPossession);
+                if (newPlayer) {
+                    newPlayer.hasBallPossession = true;
+                }
+
+                console.log(`✅ Posesión actualizada a J${ballPossession}`);
+                updatePossessionUI();
+            }
+        }
+
+        // Renderizar lista de movimientos en el panel
+        function renderMovementsList() {
+            const container = document.getElementById('movementsList');
+            if (!container) return;
+
+            if (movements.length === 0) {
+                container.innerHTML = '<small class="text-muted">Sin movimientos</small>';
+                return;
+            }
+
+            let html = '<div class="list-group list-group-flush">';
+            movements.forEach((action) => {
+                if (action.type === 'movement') {
+                    const ballIcon = action.hasBall ? ' 🏈' : '';
+                    const ballClass = action.hasBall ? 'border-warning' : 'border-success';
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${ballClass}"
+                             style="background: #2d2d2d; border-left: 3px solid; margin-bottom: 2px;">
+                            <span style="color: #28a745; font-weight: bold;">
+                                Jugador ${action.playerId}${ballIcon}
+                            </span>
+                            <button class="btn btn-sm text-danger p-0 ml-2" onclick="deleteMovementById(${action.id})" title="Eliminar movimiento">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                } else if (action.type === 'pass') {
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 border-primary"
+                             style="background: #1a3a5c; border-left: 3px solid; margin-bottom: 2px;">
+                            <span style="color: #66b3ff; font-weight: bold;">
+                                🔗 Pase ${action.from}→${action.to} <small>(${action.timing || 50}%)</small>
+                            </span>
+                            <button class="btn btn-sm text-danger p-0 ml-2" onclick="deleteMovementById(${action.id})" title="Eliminar pase">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
         }
 
         // Event handlers para dibujo
@@ -685,8 +830,8 @@
                 Math.pow(pointer.y - objCenter.y, 2)
             );
 
-            if (distance > 60) {
-                console.log('⚠️ Comienza más cerca del jugador/balón');
+            if (distance > 100) {
+                console.log('⚠️ Comienza más cerca del jugador/balón (máx 100px)');
                 return;
             }
 
@@ -722,8 +867,8 @@
             // Limpiar preview
             clearPreviewLine();
 
-            // Verificar longitud mínima
-            if (currentPath.length < 3) {
+            // Verificar longitud mínima (solo 2 puntos necesarios)
+            if (currentPath.length < 2) {
                 console.log('⚠️ Trazo muy corto, no guardado');
                 deactivateDrawingMode();
                 return;
@@ -738,8 +883,8 @@
                 );
             }
 
-            if (totalLength < 20) {
-                console.log('⚠️ Trazo muy corto (<20px), no guardado');
+            if (totalLength < 10) {
+                console.log('⚠️ Trazo muy corto (<10px), no guardado');
                 deactivateDrawingMode();
                 return;
             }
@@ -812,6 +957,10 @@
 
         // Guardar posiciones originales de todos los objetos
         function saveOriginalPositions() {
+            // Desagrupar selección múltiple para obtener posiciones absolutas
+            canvas.discardActiveObject();
+            canvas.renderAll();
+
             originalPositions = {};
 
             // Guardar posiciones de jugadores
@@ -913,58 +1062,59 @@
         }
 
         // ============================================
-        // SISTEMA DE FASES AUTOMÁTICO
+        // SISTEMA DE EJECUCIÓN UNIFICADA
         // ============================================
 
-        // Agrupar movimientos y pases en fases
-        function groupIntoPhases(actions) {
-            const phases = [];
-            let currentGroup = [];
+        /**
+         * NUEVO SISTEMA:
+         * - TODOS los movimientos son simultáneos
+         * - Los pases ocurren DURANTE los movimientos, en el % definido
+         *
+         * EJEMPLO:
+         * 1. Dibuja trayectorias para J9, J10, J12 (todas simultáneas)
+         * 2. Define pase 9→10 al 40%
+         * 3. Define pase 10→12 al 70%
+         * 4. Play: Todos corren, pases ocurren en su % definido
+         */
 
-            actions.forEach(action => {
-                if (action.type === 'movement') {
-                    // Agregar a grupo actual de movimientos
-                    currentGroup.push(action);
-                } else if (action.type === 'pass') {
-                    // Cerrar grupo actual (movimientos simultáneos)
-                    if (currentGroup.length > 0) {
-                        phases.push({
-                            type: 'simultaneous',
-                            actions: currentGroup
-                        });
-                        currentGroup = [];
-                    }
-
-                    // Agregar pase como fase secuencial
-                    phases.push({
-                        type: 'pass',
-                        actions: [action]
-                    });
-                }
-            });
-
-            // Cerrar último grupo si existe
-            if (currentGroup.length > 0) {
-                phases.push({
-                    type: 'simultaneous',
-                    actions: currentGroup
-                });
-            }
-
-            return phases;
+        // Separar movimientos y pases de la lista de actions
+        function getMovementsAndPasses() {
+            const movementsList = movements.filter(m => m.type === 'movement');
+            const passesList = movements.filter(m => m.type === 'pass');
+            return { movementsList, passesList };
         }
 
-        // Reproducir todos los movimientos (controlador principal con fases)
+        // Variable para rastrear quién tiene el balón DURANTE la reproducción
+        let playbackBallHolder = null;
+
+        // Duración total de la animación (ms)
+        const ANIMATION_DURATION = 3000;
+
+        // Reproducir todos los movimientos (NUEVO: ejecución unificada)
         function playAllMovements() {
             if (isPlaying || movements.length === 0) {
                 return;
             }
 
-            // Guardar posiciones originales antes de animar
-            saveOriginalPositions();
+            // Guardar posiciones originales solo la PRIMERA vez
+            if (Object.keys(originalPositions).length === 0) {
+                saveOriginalPositions();
+            }
 
             isPlaying = true;
-            currentAnimationIndex = 0;
+
+            // Separar movimientos y pases
+            const { movementsList, passesList } = getMovementsAndPasses();
+
+            // Determinar quién tiene el balón al INICIO
+            const firstPass = passesList[0];
+            if (firstPass) {
+                playbackBallHolder = firstPass.from;
+                console.log(`🏈 Poseedor inicial (del primer pase): J${playbackBallHolder}`);
+            } else {
+                playbackBallHolder = ballPossession;
+                console.log(`🏈 Poseedor inicial (actual): J${playbackBallHolder}`);
+            }
 
             // Actualizar UI
             $('#btnPlay').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Reproduciendo...');
@@ -972,51 +1122,251 @@
             $('#btnDrawMovement').prop('disabled', true);
             $('#btnCreatePass').prop('disabled', true);
 
-            // Agrupar en fases
-            const phases = groupIntoPhases(movements);
-            let currentPhaseIndex = 0;
+            console.log('▶️ Iniciando reproducción UNIFICADA');
+            console.log(`   📍 ${movementsList.length} movimientos simultáneos`);
+            console.log(`   🏈 ${passesList.length} pases programados`);
 
-            console.log('▶️ Iniciando reproducción:', phases.length, 'fases');
+            // Mostrar info de pases
+            passesList.forEach((pass, i) => {
+                const timing = pass.timing || 50;
+                console.log(`      Pase ${i+1}: ${pass.from}→${pass.to} al ${timing}%`);
+            });
 
-            function playNextPhase() {
-                if (currentPhaseIndex >= phases.length) {
+            $('#animationStatus').html(
+                `<i class="fas fa-bolt text-warning"></i> Ejecutando ${movementsList.length} movimientos + ${passesList.length} pases...`
+            );
+
+            // Programar pases para que ocurran en su % del tiempo
+            // Pases al mismo timing se ejecutan en SECUENCIA (no paralelo)
+            const PASS_DURATION = 800; // Duración de cada pase en ms
+            let lastTiming = -1;
+            let sameTimingCount = 0;
+
+            passesList.forEach((pass, index) => {
+                const timing = Math.min(pass.timing || 50, 99); // Máximo 99% para evitar race condition
+
+                // Contar cuántos pases anteriores tienen el mismo timing
+                if (timing === lastTiming) {
+                    sameTimingCount++;
+                } else {
+                    sameTimingCount = 0;
+                    lastTiming = timing;
+                }
+
+                // Delay base + offset para pases en secuencia
+                const baseDelay = (timing / 100) * ANIMATION_DURATION;
+                const sequenceOffset = sameTimingCount * (PASS_DURATION + 100); // 900ms entre pases del mismo timing
+                const delay = baseDelay + sequenceOffset;
+
+                setTimeout(() => {
+                    if (isPlaying) {
+                        console.log(`    🏈 Ejecutando pase ${pass.from}→${pass.to} (al ${timing}%)`);
+                        executePassDuringAnimation(pass);
+                    }
+                }, delay);
+            });
+
+            // Calcular tiempo extra necesario para pases en secuencia al final
+            const passesAtEnd = passesList.filter(p => (p.timing || 50) >= 90).length;
+            const extraTimeForPasses = passesAtEnd * (PASS_DURATION + 100);
+
+            // Ejecutar todos los movimientos simultáneamente
+            playAllMovementsSimultaneously(movementsList, () => {
+                // Esperar a que terminen los pases finales antes de finalizar
+                setTimeout(() => {
                     finishPlayback();
+                }, extraTimeForPasses);
+            });
+        }
+
+        // Ejecutar pase durante la animación (sin detener movimientos)
+        function executePassDuringAnimation(passAction) {
+            const fromPlayer = findObjectById(passAction.from);
+            const toPlayer = findObjectById(passAction.to);
+
+            if (!rugbyBall || !fromPlayer || !toPlayer) {
+                console.error('❌ Error: Objetos no encontrados para el pase');
+                return;
+            }
+
+            // Obtener posiciones ACTUALES (durante la animación)
+            const fromCenter = fromPlayer.getCenterPoint();
+            const toCenter = toPlayer.getCenterPoint();
+
+            // Crear flecha temporal
+            const passLine = new fabric.Line([
+                fromCenter.x, fromCenter.y,
+                toCenter.x, toCenter.y
+            ], {
+                stroke: '#0066CC',
+                strokeWidth: 3,
+                strokeDashArray: [8, 4],
+                selectable: false,
+                evented: false,
+                opacity: 0.9
+            });
+
+            const angle = Math.atan2(toCenter.y - fromCenter.y, toCenter.x - fromCenter.x);
+            const arrowHead = new fabric.Triangle({
+                left: toCenter.x,
+                top: toCenter.y,
+                fill: '#0066CC',
+                width: 15,
+                height: 18,
+                angle: (angle * 180 / Math.PI) + 90,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false,
+                opacity: 0.9
+            });
+
+            canvas.add(passLine, arrowHead);
+            canvas.renderAll();
+
+            // Mover balón al receptor actual
+            const targetX = toCenter.x + BALL_OFFSET_X;
+            const targetY = toCenter.y + BALL_OFFSET_Y;
+            const startX = rugbyBall.left;
+            const startY = rugbyBall.top;
+
+            fabric.util.animate({
+                startValue: 0,
+                endValue: 1,
+                duration: 800,  // 800ms para pase más visible
+                easing: fabric.util.ease.easeInOutQuad,
+                onChange: function(value) {
+                    rugbyBall.set({
+                        left: startX + (targetX - startX) * value,
+                        top: startY + (targetY - startY) * value
+                    });
+                    rugbyBall.dirty = true;
+                    canvas.renderAll();
+                },
+                onComplete: function() {
+                    // Eliminar flecha temporal
+                    canvas.remove(passLine);
+                    canvas.remove(arrowHead);
+
+                    // Actualizar poseedor
+                    playbackBallHolder = passAction.to;
+                    console.log(`    ✓ Pase completado → J${playbackBallHolder}`);
+
+                    canvas.renderAll();
+                }
+            });
+        }
+
+        // Ejecutar todos los movimientos simultáneamente
+        function playAllMovementsSimultaneously(movementsList, callback) {
+            if (movementsList.length === 0) {
+                callback();
+                return;
+            }
+
+            const animationPromises = [];
+
+            movementsList.forEach(movement => {
+                const obj = findObjectById(movement.playerId);
+                if (!obj) {
+                    console.warn('⚠️ Objeto no encontrado:', movement.playerId);
                     return;
                 }
 
-                const phase = phases[currentPhaseIndex];
-                const phaseNum = currentPhaseIndex + 1;
-                const totalPhases = phases.length;
+                const promise = new Promise((resolve) => {
+                    // El balón sigue dinámicamente a playbackBallHolder
+                    animateObjectAlongPathUnified(obj, movement.points, ANIMATION_DURATION, () => {
+                        console.log(`    ✓ J${movement.playerId} completado`);
+                        resolve();
+                    }, movement.playerId);
+                });
 
-                if (phase.type === 'simultaneous') {
-                    // Movimientos simultáneos
-                    const count = phase.actions.length;
-                    $('#animationStatus').html(
-                        `<i class="fas fa-bolt text-warning"></i> Fase ${phaseNum}/${totalPhases} (${count} movimientos simultáneos)...`
+                animationPromises.push(promise);
+            });
+
+            Promise.all(animationPromises).then(() => {
+                callback();
+            });
+        }
+
+        // Animar objeto con seguimiento dinámico del balón
+        // DURACIÓN FIJA: Todos los movimientos duran exactamente 'duration' ms
+        function animateObjectAlongPathUnified(obj, points, duration, callback, playerId) {
+            if (!obj || points.length < 2) {
+                if (callback) callback();
+                return;
+            }
+
+            // Calcular distancia total del trazo
+            let totalDistance = 0;
+            for (let i = 1; i < points.length; i++) {
+                totalDistance += Math.sqrt(
+                    Math.pow(points[i].x - points[i-1].x, 2) +
+                    Math.pow(points[i].y - points[i-1].y, 2)
+                );
+            }
+
+            const startTime = Date.now();
+            const endTime = startTime + duration;
+
+            function animate() {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1); // 0 a 1
+
+                // Calcular qué distancia corresponde a este progreso
+                const targetDistance = progress * totalDistance;
+
+                // Encontrar el punto en el trazo que corresponde a esta distancia
+                let accumulatedDistance = 0;
+                let currentPoint = points[0];
+
+                for (let i = 1; i < points.length; i++) {
+                    const segmentDistance = Math.sqrt(
+                        Math.pow(points[i].x - points[i-1].x, 2) +
+                        Math.pow(points[i].y - points[i-1].y, 2)
                     );
-                    console.log(`  📍 Fase ${phaseNum}: ${count} movimientos simultáneos`);
 
-                    playSimultaneousPhase(phase.actions, () => {
-                        currentPhaseIndex++;
-                        setTimeout(playNextPhase, 300);
-                    });
-                } else if (phase.type === 'pass') {
-                    // Pase individual
-                    const passAction = phase.actions[0];
-                    $('#animationStatus').html(
-                        `<i class="fas fa-football-ball text-primary"></i> Fase ${phaseNum}/${totalPhases} (Pase ${passAction.from}→${passAction.to})...`
-                    );
-                    console.log(`  🏈 Fase ${phaseNum}: Pase ${passAction.from} → ${passAction.to}`);
+                    if (accumulatedDistance + segmentDistance >= targetDistance) {
+                        // El punto está en este segmento
+                        const segmentProgress = (targetDistance - accumulatedDistance) / segmentDistance;
+                        currentPoint = {
+                            x: points[i-1].x + (points[i].x - points[i-1].x) * segmentProgress,
+                            y: points[i-1].y + (points[i].y - points[i-1].y) * segmentProgress
+                        };
+                        break;
+                    }
 
-                    animatePass(passAction, () => {
-                        currentPhaseIndex++;
-                        setTimeout(playNextPhase, 300);
+                    accumulatedDistance += segmentDistance;
+                    currentPoint = points[i];
+                }
+
+                // Mover objeto
+                obj.set({ left: currentPoint.x, top: currentPoint.y });
+                obj.setCoords();
+
+                // Si ESTE jugador tiene el balón, moverlo también
+                if (playerId === playbackBallHolder && rugbyBall) {
+                    rugbyBall.set({
+                        left: currentPoint.x + BALL_OFFSET_X,
+                        top: currentPoint.y + BALL_OFFSET_Y
                     });
+                    rugbyBall.dirty = true;
+                    rugbyBall.setCoords();
+                }
+
+                canvas.renderAll();
+
+                // Continuar o terminar
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    if (callback) callback();
                 }
             }
 
-            // Iniciar
-            playNextPhase();
+            // Iniciar animación
+            requestAnimationFrame(animate);
         }
 
         // Reproducir fase de movimientos simultáneos
@@ -1034,7 +1384,14 @@
                 }
 
                 const promise = new Promise((resolve) => {
-                    const hasBall = movement.hasBall || false;
+                    // DINÁMICO: Calcular si tiene balón basándose en playbackBallHolder
+                    // (no usar movement.hasBall que puede estar desactualizado)
+                    const hasBall = (movement.playerId === playbackBallHolder);
+
+                    if (hasBall) {
+                        console.log(`    → J${movement.playerId} se mueve CON balón 🏈`);
+                    }
+
                     animateObjectAlongPath(obj, movement.points, duration, () => {
                         console.log(`    ✓ ${movement.playerId} completado`);
                         resolve();
@@ -1054,8 +1411,10 @@
             });
         }
 
-        // Animar un pase (balón viaja de jugador a jugador)
+        // Animar un pase (balón viaja de jugador a jugador) con FLECHA TEMPORAL
         function animatePass(passAction, callback) {
+            console.log(`🏈 Animando pase: ${passAction.from} → ${passAction.to}`);
+
             const fromPlayer = findObjectById(passAction.from);
             const toPlayer = findObjectById(passAction.to);
 
@@ -1065,31 +1424,72 @@
                 return;
             }
 
-            // Calcular posición destino del balón
+            // Obtener posiciones actuales
+            const fromCenter = fromPlayer.getCenterPoint();
             const toCenter = toPlayer.getCenterPoint();
+
+            // 1. CREAR FLECHA TEMPORAL
+            const passLine = new fabric.Line([
+                fromCenter.x, fromCenter.y,
+                toCenter.x, toCenter.y
+            ], {
+                stroke: '#0066CC',
+                strokeWidth: 3,
+                strokeDashArray: [8, 4],
+                selectable: false,
+                evented: false,
+                opacity: 0.9
+            });
+
+            // Calcular ángulo para la punta de flecha
+            const angle = Math.atan2(
+                toCenter.y - fromCenter.y,
+                toCenter.x - fromCenter.x
+            );
+
+            const arrowHead = new fabric.Triangle({
+                left: toCenter.x,
+                top: toCenter.y,
+                fill: '#0066CC',
+                width: 15,
+                height: 18,
+                angle: (angle * 180 / Math.PI) + 90,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false,
+                opacity: 0.9
+            });
+
+            // 2. AGREGAR flecha al canvas (temporal)
+            canvas.add(passLine, arrowHead);
+            passLine.sendToBack();
+            arrowHead.sendToBack();
+            // Mantener cancha al fondo
+            canvas.getObjects().forEach(obj => {
+                if (obj.type === 'image') obj.sendToBack();
+            });
+            canvas.renderAll();
+
+            // Calcular posición destino del balón (donde está el receptor AHORA)
             const targetX = toCenter.x + BALL_OFFSET_X;
             const targetY = toCenter.y + BALL_OFFSET_Y;
 
             console.log(`    🏈 Balón: (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${targetX.toFixed(0)},${targetY.toFixed(0)})`);
 
-            // Animar balón en línea recta
+            // Guardar posición inicial ANTES de animar
+            const startX = rugbyBall.left;
+            const startY = rugbyBall.top;
+
+            // 3. ANIMAR BALÓN
             fabric.util.animate({
                 startValue: 0,
                 endValue: 1,
                 duration: 500,  // 0.5 segundos
                 easing: fabric.util.ease.easeInOutQuad,
                 onChange: function(value) {
-                    const startX = rugbyBall.left;
-                    const startY = rugbyBall.top;
-
-                    // Solo en la primera iteración guardamos el inicio
-                    if (value === 0 || !rugbyBall._passStartX) {
-                        rugbyBall._passStartX = rugbyBall.left;
-                        rugbyBall._passStartY = rugbyBall.top;
-                    }
-
-                    const newX = rugbyBall._passStartX + (targetX - rugbyBall._passStartX) * value;
-                    const newY = rugbyBall._passStartY + (targetY - rugbyBall._passStartY) * value;
+                    const newX = startX + (targetX - startX) * value;
+                    const newY = startY + (targetY - startY) * value;
 
                     rugbyBall.set({ left: newX, top: newY });
                     rugbyBall.dirty = true;
@@ -1097,16 +1497,31 @@
                     canvas.renderAll();
                 },
                 onComplete: function() {
-                    // Limpiar variables temporales
-                    delete rugbyBall._passStartX;
-                    delete rugbyBall._passStartY;
-
                     // Posición final exacta
                     rugbyBall.set({ left: targetX, top: targetY });
                     rugbyBall.setCoords();
+
+                    // 4. ELIMINAR flecha temporal
+                    canvas.remove(passLine);
+                    canvas.remove(arrowHead);
+
                     canvas.renderAll();
 
-                    console.log('    ✓ Pase completado');
+                    // AHORA que el balón llegó al receptor, agregar listener de movimiento
+                    // para que el balón lo siga en fases posteriores
+                    toPlayer.on('moving', function() {
+                        if (ballPossession === this.playerNumber && rugbyBall) {
+                            const center = this.getCenterPoint();
+                            rugbyBall.set({
+                                left: center.x + BALL_OFFSET_X,
+                                top: center.y + BALL_OFFSET_Y
+                            });
+                            rugbyBall.dirty = true;
+                            rugbyBall.setCoords();
+                        }
+                    });
+
+                    console.log('    ✓ Pase completado - balón ahora sigue a J' + toPlayer.playerNumber);
                     callback();
                 }
             });
@@ -1141,6 +1556,10 @@
                 alert('⚠️ Espera a que termine la reproducción');
                 return;
             }
+
+            // Desagrupar selección múltiple para restaurar posiciones correctamente
+            canvas.discardActiveObject();
+            canvas.renderAll();
 
             // Si no hay posiciones guardadas, guardar las actuales como referencia
             if (Object.keys(originalPositions).length === 0) {
@@ -1279,6 +1698,7 @@
 
             // Asignar nuevo poseedor
             ballPossession = player.playerNumber;
+            originalBallHolder = player.playerNumber; // Guardar como poseedor original
             player.hasBallPossession = true;
 
             // Obtener posición real del centro del jugador
@@ -1337,6 +1757,43 @@
             }
         }
 
+        // ============================================
+        // TRANSFERIR POSESIÓN LÓGICAMENTE (SIN MOVER BALÓN FÍSICO)
+        // Usada al crear pases - el balón se moverá durante Play
+        // ============================================
+        function transferPossessionLogically(toPlayer) {
+            if (!rugbyBall || !toPlayer || !toPlayer.isPlayer) {
+                console.log('⚠️ No se puede transferir: rugbyBall=', !!rugbyBall, 'toPlayer=', !!toPlayer);
+                return;
+            }
+
+            console.log(`🔄 Transferencia LÓGICA de posesión a jugador ${toPlayer.playerNumber}`);
+            console.log(`   ⚠️ El balón NO se moverá hasta Play`);
+
+            // Si ya tenía posesión otro jugador, quitar su listener
+            if (ballPossession !== null) {
+                const prevPlayer = players.find(p => p.playerNumber === ballPossession);
+                if (prevPlayer) {
+                    prevPlayer.off('moving');  // Quitar listener anterior
+                    prevPlayer.hasBallPossession = false;
+                    console.log(`   └─ Removido listener del jugador anterior: ${ballPossession}`);
+                }
+            }
+
+            // Asignar nuevo poseedor (SOLO LÓGICAMENTE)
+            ballPossession = toPlayer.playerNumber;
+            toPlayer.hasBallPossession = true;
+
+            // NO mover el balón físicamente
+            // NO agregar listener de movimiento (el balón no está con él todavía)
+
+            // Actualizar UI
+            updatePossessionUI();
+
+            console.log(`✅ Posesión LÓGICA transferida a jugador ${ballPossession}`);
+            console.log(`   📍 Balón físico sigue en: (${rugbyBall.left.toFixed(0)}, ${rugbyBall.top.toFixed(0)})`);
+        }
+
         // Soltar balón (liberar posesión)
         function releasePossession() {
             if (ballPossession === null) {
@@ -1349,6 +1806,7 @@
             // Liberar posesión
             const previousOwner = ballPossession;
             ballPossession = null;
+            originalBallHolder = null; // También resetear poseedor original
 
             updatePossessionUI();
             canvas.renderAll();
@@ -1362,6 +1820,7 @@
                 removePossessionListener(ballPossession);
                 ballPossession = null;
             }
+            originalBallHolder = null; // También resetear poseedor original
             updatePossessionUI();
         }
 
@@ -1376,7 +1835,7 @@
             $('#btnCreatePass').prop('disabled', !canCreatePass);
         }
 
-        // Activar modo crear pase
+        // Activar modo crear pase (simplificado: origen = ballPossession automático)
         function activateCreatePassMode() {
             if (ballPossession === null) {
                 alert('⚠️ Primero asigna el balón a un jugador');
@@ -1384,7 +1843,6 @@
             }
 
             isCreatingPass = true;
-            passFromPlayer = null;
             canvas.defaultCursor = 'crosshair';
             canvas.hoverCursor = 'crosshair';
 
@@ -1398,14 +1856,18 @@
             $('#btnDrawMovement').prop('disabled', true);
             $('#btnAssignPossession').prop('disabled', true);
 
-            console.log('🔗 Modo pase activado. Click en jugador con balón, luego en destino.');
-            $('#animationStatus').html('<i class="fas fa-hand-point-up text-primary"></i> Click en jugador con balón...');
+            // Mensaje claro indicando quién tiene el balón
+            console.log(`🏈 Modo pase activado. Jugador ${ballPossession} tiene el balón.`);
+            console.log('👉 Haz click en el jugador DESTINO del pase');
+
+            // Mostrar mensaje visual
+            showPassMessage(`Jugador ${ballPossession} pasará. Click en destino...`);
+            $('#animationStatus').html(`<i class="fas fa-football-ball text-primary"></i> J${ballPossession} pasará. Click destino...`);
         }
 
-        // Desactivar modo crear pase
-        function deactivateCreatePassMode() {
+        // Desactivar modo crear pase (con info opcional del pase creado)
+        function deactivateCreatePassMode(fromPlayerId = null, toPlayerId = null, timing = null) {
             isCreatingPass = false;
-            passFromPlayer = null;
             canvas.defaultCursor = 'default';
             canvas.hoverCursor = 'move';
 
@@ -1420,90 +1882,141 @@
             $('#btnDrawMovement').prop('disabled', !hasSelection);
             updatePossessionUI();
 
-            $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+            // Ocultar mensaje visual anterior
+            hidePassMessage();
+
+            // Mensaje informativo mejorado con tip de uso
+            if (fromPlayerId && toPlayerId && timing !== null) {
+                showPassMessage(
+                    `✅ Pase ${fromPlayerId}→${toPlayerId} al ${timing}% creado. Todos los movimientos serán simultáneos.`,
+                    4000
+                );
+                $('#animationStatus').html(
+                    `<i class="fas fa-check-circle text-success"></i> Pase al ${timing}% creado. Dibuja más movimientos...`
+                );
+            } else {
+                showPassMessage('✅ Pase creado. Puedes seguir dibujando movimientos.', 3000);
+                $('#animationStatus').html('<i class="fas fa-check-circle text-success"></i> Pase creado. Dibuja más movimientos...');
+            }
+
+            // Restaurar mensaje después de 4 segundos
+            setTimeout(() => {
+                if (!isCreatingPass && !isDrawingMode) {
+                    $('#animationStatus').html('<i class="fas fa-info-circle"></i> Selecciona jugador/balón primero');
+                }
+            }, 4000);
+
+            console.log('🔗 Modo pase desactivado');
         }
 
-        // Crear pase entre dos jugadores
-        function createPass(fromPlayer, toPlayer) {
+        // Mostrar mensaje flotante para pases (con duración opcional en ms)
+        function showPassMessage(text, duration = 0) {
+            let messageDiv = document.getElementById('passMessage');
+
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'passMessage';
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 102, 204, 0.95);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    z-index: 9999;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    border: 2px solid white;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(messageDiv);
+            }
+
+            // Cambiar color si es mensaje de éxito
+            if (text.includes('✅')) {
+                messageDiv.style.background = 'rgba(40, 167, 69, 0.95)';
+            } else {
+                messageDiv.style.background = 'rgba(0, 102, 204, 0.95)';
+            }
+
+            messageDiv.textContent = '🏈 ' + text;
+            messageDiv.style.display = 'block';
+            messageDiv.style.opacity = '1';
+
+            // Auto-ocultar si se especifica duración
+            if (duration > 0) {
+                setTimeout(() => {
+                    messageDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 300);
+                }, duration);
+            }
+        }
+
+        // Ocultar mensaje flotante
+        function hidePassMessage() {
+            const messageDiv = document.getElementById('passMessage');
+            if (messageDiv) {
+                messageDiv.style.display = 'none';
+            }
+        }
+
+        // Crear pase entre dos jugadores (SIN objetos visuales - flecha aparece durante Play)
+        function createPass(fromPlayer, toPlayer, timing = null) {
             if (!fromPlayer || !toPlayer) {
                 console.error('❌ Error: Jugadores no válidos para el pase');
                 return;
             }
 
-            console.log(`🔗 Creando pase: ${fromPlayer.playerNumber} → ${toPlayer.playerNumber}`);
+            // Si no se especificó timing, preguntar al usuario
+            if (timing === null) {
+                const inputTiming = prompt(
+                    `🏈 Pase ${fromPlayer.playerNumber} → ${toPlayer.playerNumber}\n\n` +
+                    `¿En qué momento del movimiento ocurre el pase?\n` +
+                    `(0% = inicio, 50% = mitad, 100% = final)\n\n` +
+                    `Ingresa un número entre 0 y 100:`,
+                    '50'
+                );
 
-            // Obtener centros de los jugadores
-            const fromCenter = fromPlayer.getCenterPoint();
-            const toCenter = toPlayer.getCenterPoint();
+                if (inputTiming === null) {
+                    console.log('❌ Pase cancelado');
+                    return; // Usuario canceló
+                }
 
-            // 1. Crear línea punteada azul
-            const passLine = new fabric.Line([
-                fromCenter.x, fromCenter.y,
-                toCenter.x, toCenter.y
-            ], {
-                stroke: '#0066CC',
-                strokeWidth: 3,
-                strokeDashArray: [8, 4],
-                selectable: false,
-                evented: false,
-                isPassPath: true,
-                fromId: fromPlayer.playerNumber,
-                toId: toPlayer.playerNumber
-            });
+                timing = parseInt(inputTiming) || 50;
+                timing = Math.max(0, Math.min(100, timing)); // Limitar 0-100
+            }
 
-            // 2. Calcular ángulo para la flecha
-            const angle = Math.atan2(
-                toCenter.y - fromCenter.y,
-                toCenter.x - fromCenter.x
-            ) * 180 / Math.PI;
+            console.log(`🏈 Creando pase: ${fromPlayer.playerNumber} → ${toPlayer.playerNumber} al ${timing}%`);
 
-            // 3. Crear punta de flecha
-            const arrowHead = new fabric.Triangle({
-                left: toCenter.x,
-                top: toCenter.y,
-                fill: '#0066CC',
-                width: 15,
-                height: 18,
-                angle: angle + 90,
-                originX: 'center',
-                originY: 'center',
-                selectable: false,
-                evented: false,
-                isPassArrow: true
-            });
-
-            // 4. Agregar al canvas
-            canvas.add(passLine);
-            canvas.add(arrowHead);
-
-            // Enviar detrás de jugadores
-            passLine.sendToBack();
-            arrowHead.sendToBack();
-            // Mantener cancha al fondo
-            canvas.getObjects().forEach(obj => {
-                if (obj.type === 'image') obj.sendToBack();
-            });
-
-            // 5. Guardar en movements[] como tipo 'pass'
+            // 1. Guardar en movements[] (SIN objetos visuales)
             movements.push({
+                id: ++movementIdCounter,  // ID único para eliminar correctamente
                 type: 'pass',
                 from: fromPlayer.playerNumber,
                 to: toPlayer.playerNumber,
-                passPath: passLine,
-                passArrow: arrowHead
+                timing: timing  // Porcentaje del momento del pase
             });
 
-            // 6. Transferir posesión al receptor
-            releasePossession();
-            assignPossessionTo(toPlayer);
+            // 2. Transferir posesión LÓGICAMENTE al receptor (SIN mover balón físico)
+            // El balón se moverá durante la animación (Play)
+            transferPossessionLogically(toPlayer);
 
-            console.log(`✅ Pase creado: ${fromPlayer.playerNumber} → ${toPlayer.playerNumber}`);
+            console.log(`✅ Pase creado al ${timing}% (flecha se mostrará durante Play)`);
+            console.log(`💡 Tip: Ahora puedes dibujar más movimientos para J${fromPlayer.playerNumber} o J${toPlayer.playerNumber}`);
 
-            // Actualizar botones
+            // Actualizar botones y lista
             updatePlayButton();
             updatePassButton();
+            renderMovementsList();
 
             canvas.renderAll();
+
+            return timing; // Retornar para mostrar en mensaje
         }
 
         // ============================================
@@ -1915,7 +2428,8 @@
                 categoryIcon: categoryIcon,
                 players: playersData,
                 ball: ballData,  // Incluir balón
-                ballPossession: ballPossession,  // Quién tiene el balón
+                ballPossession: ballPossession,  // Quién tiene el balón actualmente
+                originalBallHolder: originalBallHolder,  // Quién tuvo el balón originalmente
                 movements: movementsData,  // Incluir movimientos
                 thumbnail: thumbnail,
                 created_at: new Date().toISOString()
@@ -2019,8 +2533,9 @@
                             canvas.add(pathGroup);
                             pathGroup.sendToBack();
 
-                            // Guardar en array de movimientos
+                            // Guardar en array de movimientos con ID único
                             movements.push({
+                                id: ++movementIdCounter,
                                 type: 'movement',
                                 playerId: action.playerId,
                                 playerType: action.playerType,
@@ -2030,61 +2545,14 @@
                             });
                         }
                     } else if (action.type === 'pass') {
-                        // Es un pase - recrear visualmente
-                        const fromPlayer = findObjectById(action.from);
-                        const toPlayer = findObjectById(action.to);
-
-                        if (fromPlayer && toPlayer) {
-                            const fromCenter = fromPlayer.getCenterPoint();
-                            const toCenter = toPlayer.getCenterPoint();
-
-                            // Crear línea punteada azul
-                            const passLine = new fabric.Line([
-                                fromCenter.x, fromCenter.y,
-                                toCenter.x, toCenter.y
-                            ], {
-                                stroke: '#0066CC',
-                                strokeWidth: 3,
-                                strokeDashArray: [8, 4],
-                                selectable: false,
-                                evented: false,
-                                isPassPath: true
-                            });
-
-                            // Crear flecha
-                            const angle = Math.atan2(
-                                toCenter.y - fromCenter.y,
-                                toCenter.x - fromCenter.x
-                            ) * 180 / Math.PI;
-
-                            const arrowHead = new fabric.Triangle({
-                                left: toCenter.x,
-                                top: toCenter.y,
-                                fill: '#0066CC',
-                                width: 15,
-                                height: 18,
-                                angle: angle + 90,
-                                originX: 'center',
-                                originY: 'center',
-                                selectable: false,
-                                evented: false,
-                                isPassArrow: true
-                            });
-
-                            canvas.add(passLine);
-                            canvas.add(arrowHead);
-                            passLine.sendToBack();
-                            arrowHead.sendToBack();
-
-                            // Guardar en array
-                            movements.push({
-                                type: 'pass',
-                                from: action.from,
-                                to: action.to,
-                                passPath: passLine,
-                                passArrow: arrowHead
-                            });
-                        }
+                        // Es un pase - solo guardar datos (sin visual, flecha aparece durante Play)
+                        movements.push({
+                            id: ++movementIdCounter,
+                            type: 'pass',
+                            from: action.from,
+                            to: action.to
+                            // Sin objetos visuales - la flecha se crea durante animación
+                        });
                     }
                 });
 
@@ -2104,9 +2572,20 @@
 
             // Restaurar posesión del balón si existía
             if (play.ballPossession !== null && play.ballPossession !== undefined) {
-                const playerWithBall = players.find(p => p.playerNumber === play.ballPossession);
-                if (playerWithBall && rugbyBall) {
-                    assignPossessionTo(playerWithBall);
+                // Primero restaurar el poseedor original (el que tuvo el balón antes de pases)
+                const originalHolder = play.originalBallHolder || play.ballPossession;
+                const playerOriginal = players.find(p => p.playerNumber === originalHolder);
+                if (playerOriginal && rugbyBall) {
+                    assignPossessionTo(playerOriginal); // Esto setea originalBallHolder
+                }
+
+                // Si hay pases, actualizar ballPossession al receptor final
+                if (play.ballPossession !== originalHolder) {
+                    ballPossession = play.ballPossession;
+                    const finalHolder = players.find(p => p.playerNumber === play.ballPossession);
+                    if (finalHolder) {
+                        finalHolder.hasBallPossession = true;
+                    }
                 }
             }
 
@@ -2153,8 +2632,7 @@
         // ============================================
         // 11. EVENT LISTENERS
         // ============================================
-        $('#btnAddForward').on('click', () => addPlayer('forward'));
-        $('#btnAddBack').on('click', () => addPlayer('back'));
+        $('#btnAddPlayer').on('click', () => addPlayer());
         $('#btnAddBall').on('click', () => crearBalon());
         $('#btnDeleteSelected').on('click', deleteSelectedPlayer);
         $('#btnApplyFormacion').on('click', applyFormacion);
@@ -2227,33 +2705,53 @@
                 return;
             }
 
-            // Modo crear pase
+            // Modo crear pase - se maneja en mouse:up para evitar arrastre
             if (isCreatingPass) {
-                if (target && target.isPlayer) {
-                    if (!passFromPlayer) {
-                        // Primer click: Seleccionar origen (debe tener el balón)
-                        if (target.playerNumber === ballPossession) {
-                            passFromPlayer = target;
-                            console.log('🔗 Origen seleccionado: Jugador', passFromPlayer.playerNumber);
-                            $('#animationStatus').html(`<i class="fas fa-hand-point-right text-primary"></i> Origen: ${passFromPlayer.playerNumber}. Click en destino...`);
-                        } else {
-                            alert('⚠️ El jugador seleccionado no tiene el balón.\n\nSelecciona al jugador ' + ballPossession + ' que tiene el balón.');
-                        }
-                    } else {
-                        // Segundo click: Seleccionar destino
-                        if (target.playerNumber === passFromPlayer.playerNumber) {
-                            alert('⚠️ No puedes pasar el balón a ti mismo');
-                            return;
-                        }
+                return; // No hacer nada en mouse:down, esperar mouse:up
+            }
+        });
 
-                        // Crear el pase
-                        createPass(passFromPlayer, target);
+        // Handler para crear pases en mouse:up (evita que el jugador quede "pegado")
+        canvas.on('mouse:up', function(opt) {
+            if (!isCreatingPass) return;
 
-                        // Desactivar modo
-                        deactivateCreatePassMode();
-                    }
+            const target = opt.target;
+            if (target && target.isPlayer) {
+                const destinationPlayer = target;
+
+                // Validar que no sea el mismo jugador
+                if (destinationPlayer.playerNumber === ballPossession) {
+                    alert('⚠️ No puedes pasar a ti mismo.\n\nSelecciona otro jugador como destino.');
+                    return;
                 }
-                return;
+
+                // Buscar jugador origen (el que tiene el balón)
+                const originPlayer = findObjectById(ballPossession);
+
+                if (!originPlayer) {
+                    alert('⚠️ Error: No se encontró el jugador con balón');
+                    deactivateCreatePassMode();
+                    return;
+                }
+
+                // Guardar IDs antes de crear el pase (para mostrar tip)
+                const fromId = originPlayer.playerNumber;
+                const toId = destinationPlayer.playerNumber;
+
+                // Deseleccionar para evitar problemas
+                canvas.discardActiveObject();
+                canvas.renderAll();
+
+                // CREAR EL PASE (pide timing al usuario)
+                const timing = createPass(originPlayer, destinationPlayer);
+
+                // Si el usuario canceló, no desactivar modo
+                if (timing === undefined) {
+                    return;
+                }
+
+                // Desactivar modo (pasar IDs y timing para mostrar tip informativo)
+                deactivateCreatePassMode(fromId, toId, timing);
             }
         });
 
