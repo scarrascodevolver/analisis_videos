@@ -110,6 +110,57 @@ class User extends Authenticatable
     }
 
     /**
+     * Organizaciones a las que pertenece el usuario
+     */
+    public function organizations()
+    {
+        return $this->belongsToMany(Organization::class)
+                    ->withPivot(['role', 'is_current'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Obtener la organización actualmente seleccionada
+     */
+    public function currentOrganization()
+    {
+        return $this->organizations()
+                    ->wherePivot('is_current', true)
+                    ->first();
+    }
+
+    /**
+     * Cambiar a una organización específica
+     */
+    public function switchOrganization(Organization $organization): bool
+    {
+        // Verificar que el usuario pertenece a esta organización
+        if (!$this->organizations()->where('organizations.id', $organization->id)->exists()) {
+            return false;
+        }
+
+        // Desmarcar todas las organizaciones como current
+        $this->organizations()->updateExistingPivot(
+            $this->organizations()->pluck('organizations.id')->toArray(),
+            ['is_current' => false]
+        );
+
+        // Marcar la nueva organización como current
+        $this->organizations()->updateExistingPivot($organization->id, ['is_current' => true]);
+
+        return true;
+    }
+
+    /**
+     * Obtener el rol del usuario en la organización actual
+     */
+    public function currentOrganizationRole(): ?string
+    {
+        $org = $this->currentOrganization();
+        return $org ? $org->pivot->role : null;
+    }
+
+    /**
      * Send the password reset notification.
      *
      * @param  string  $token
