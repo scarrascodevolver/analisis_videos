@@ -133,14 +133,18 @@ class VideoController extends Controller
 
         $filename = time() . '_' . $sanitizedName;
 
+        // Obtener el slug de la organización actual para el path
+        $currentOrg = auth()->user()->currentOrganization();
+        $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
+
         // Try to store in DigitalOcean Spaces, fallback to local if it fails
         try {
-            $path = $file->storeAs('videos', $filename, 'spaces');
+            $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
             Storage::disk('spaces')->setVisibility($path, 'public');
         } catch (Exception $e) {
             // Log the error and fallback to local storage
             \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
-            $path = $file->storeAs('videos', $filename, 'public');
+            $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
         }
 
         // Generate thumbnail placeholder
@@ -319,14 +323,18 @@ class VideoController extends Controller
 
         $filename = time() . '_player_' . $sanitizedName;
 
+        // Obtener el slug de la organización actual para el path
+        $currentOrg = auth()->user()->currentOrganization();
+        $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
+
         // Try to store in DigitalOcean Spaces, fallback to local if it fails
         try {
-            $path = $file->storeAs('videos/player-uploads', $filename, 'spaces');
+            $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'spaces');
             Storage::disk('spaces')->setVisibility($path, 'public');
         } catch (Exception $e) {
             // Log the error and fallback to local storage
             \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
-            $path = $file->storeAs('videos/player-uploads', $filename, 'public');
+            $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
         }
 
         // Generate thumbnail placeholder
