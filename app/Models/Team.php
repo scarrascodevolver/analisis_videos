@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class Team extends Model
 {
+    use BelongsToOrganization;
     protected $fillable = [
         'name',
         'abbreviation',

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PlayerEvaluation extends Model
 {
+    use BelongsToOrganization;
     protected $fillable = [
         'evaluator_id',
         'evaluated_player_id',

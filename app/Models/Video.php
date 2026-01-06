@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class Video extends Model
 {
+    use BelongsToOrganization;
     protected $fillable = [
         'title',
         'description',
