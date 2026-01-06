@@ -175,6 +175,45 @@
 
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
+                <!-- Organization Dropdown (solo si tiene múltiples orgs) -->
+                @php
+                    $userOrganizations = auth()->user()->organizations;
+                    $currentOrg = auth()->user()->currentOrganization();
+                @endphp
+                @if($userOrganizations->count() > 1)
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                        <i class="fas fa-building mr-1"></i>
+                        {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <span class="dropdown-header">Cambiar Organizacion</span>
+                        <div class="dropdown-divider"></div>
+                        @foreach($userOrganizations as $org)
+                            <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="dropdown-item {{ $currentOrg && $currentOrg->id === $org->id ? 'active bg-success' : '' }}">
+                                    @if($currentOrg && $currentOrg->id === $org->id)
+                                        <i class="fas fa-check mr-2"></i>
+                                    @else
+                                        <i class="fas fa-building mr-2"></i>
+                                    @endif
+                                    {{ $org->name }}
+                                    <small class="text-muted ml-2">({{ ucfirst($org->pivot->role) }})</small>
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
+                </li>
+                @elseif($currentOrg)
+                <li class="nav-item">
+                    <span class="nav-link text-light">
+                        <i class="fas fa-building mr-1"></i>
+                        {{ Str::limit($currentOrg->name, 20) }}
+                    </span>
+                </li>
+                @endif
+
                 <!-- Notifications Dropdown -->
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">

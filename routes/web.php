@@ -10,12 +10,19 @@ use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VideoViewController;
+use App\Http\Controllers\OrganizationController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
 
 // Authentication Routes
 Auth::routes();
+
+// Organization Selection Routes (auth required, but excluded from organization middleware)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/select-organization', [OrganizationController::class, 'select'])->name('select-organization');
+    Route::post('/set-organization/{organization}', [OrganizationController::class, 'switch'])->name('set-organization');
+});
 
 // Video Streaming Routes (PUBLIC - no auth needed for video tags)
 Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
