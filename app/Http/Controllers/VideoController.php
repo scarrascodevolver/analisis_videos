@@ -99,8 +99,9 @@ class VideoController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
-                'analyzed_team_id' => 'required|exists:teams,id',
+                'analyzed_team_id' => 'nullable|exists:teams,id', // Ahora es opcional
                 'rival_team_id' => 'nullable|exists:teams,id',
+                'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
                 'category_id' => 'required|exists:categories,id',
                 'division' => 'nullable|in:primera,intermedia,unica',
                 'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -166,6 +167,7 @@ class VideoController extends Controller
             'uploaded_by' => auth()->id(),
             'analyzed_team_id' => $request->analyzed_team_id,
             'rival_team_id' => $request->rival_team_id,
+            'rival_team_name' => $request->rival_team_name, // Texto libre para rival
             'category_id' => $request->category_id,
             'division' => $request->division,
             'rugby_situation_id' => $request->rugby_situation_id,
@@ -253,8 +255,9 @@ class VideoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'analyzed_team_id' => 'required|exists:teams,id',
+            'analyzed_team_id' => 'nullable|exists:teams,id', // Ahora es opcional
             'rival_team_id' => 'nullable|exists:teams,id',
+            'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
             'category_id' => 'required|exists:categories,id',
             'match_date' => 'required|date',
         ]);
@@ -264,6 +267,7 @@ class VideoController extends Controller
             'description',
             'analyzed_team_id',
             'rival_team_id',
+            'rival_team_name',
             'category_id',
             'match_date'
         ]));

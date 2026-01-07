@@ -73,24 +73,25 @@
                             </div>
                         </div>
 
-                        <!-- Team Selection -->
+                        <!-- Team Selection (Opcional) -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="analyzed_team_id">
-                                        <i class="fas fa-users"></i> Equipo Analizado *
+                                        <i class="fas fa-users"></i> Equipo Analizado
+                                        <small class="text-muted">(Opcional)</small>
                                     </label>
-                                    <select class="form-control @error('analyzed_team_id') is-invalid @enderror" 
-                                            id="analyzed_team_id" name="analyzed_team_id" required>
-                                        <option value="">Seleccionar equipo...</option>
+                                    <select class="form-control @error('analyzed_team_id') is-invalid @enderror"
+                                            id="analyzed_team_id" name="analyzed_team_id">
+                                        <option value="">Sin especificar</option>
                                         @if($ownTeam)
-                                            <option value="{{ $ownTeam->id }}" 
+                                            <option value="{{ $ownTeam->id }}"
                                                     {{ old('analyzed_team_id', $ownTeam->id) == $ownTeam->id ? 'selected' : '' }}>
                                                 {{ $ownTeam->name }} (Nuestro Equipo)
                                             </option>
                                         @endif
                                         @foreach($rivalTeams as $team)
-                                            <option value="{{ $team->id }}" 
+                                            <option value="{{ $team->id }}"
                                                     {{ old('analyzed_team_id') == $team->id ? 'selected' : '' }}>
                                                 {{ $team->name }}
                                             </option>
@@ -105,23 +106,59 @@
                                 <div class="form-group">
                                     <label for="rival_team_id">
                                         <i class="fas fa-shield-alt"></i> Equipo Rival
+                                        <small class="text-muted">(Opcional)</small>
                                     </label>
-                                    <select class="form-control @error('rival_team_id') is-invalid @enderror" 
-                                            id="rival_team_id" name="rival_team_id">
-                                        <option value="">Sin rival (entrenamiento)</option>
-                                        @foreach($rivalTeams as $team)
-                                            <option value="{{ $team->id }}" 
-                                                    {{ old('rival_team_id') == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    @if($rivalTeams->count() > 0)
+                                        <select class="form-control @error('rival_team_id') is-invalid @enderror"
+                                                id="rival_team_id" name="rival_team_id">
+                                            <option value="">Sin rival / Entrenamiento</option>
+                                            @foreach($rivalTeams as $team)
+                                                <option value="{{ $team->id }}"
+                                                        {{ old('rival_team_id') == $team->id ? 'selected' : '' }}>
+                                                    {{ $team->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        {{-- Si no hay equipos rivales, mostrar campo de texto --}}
+                                        <input type="text"
+                                               class="form-control @error('rival_team_name') is-invalid @enderror"
+                                               id="rival_team_name"
+                                               name="rival_team_name"
+                                               value="{{ old('rival_team_name') }}"
+                                               placeholder="Ej: Club Rugby Rival">
+                                    @endif
                                     @error('rival_team_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    @error('rival_team_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Campo de texto para rival si hay dropdown pero quiere escribir otro --}}
+                        @if($rivalTeams->count() > 0)
+                        <div class="row">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="form-group">
+                                    <label for="rival_team_name">
+                                        <i class="fas fa-edit"></i> O escribe el nombre del rival
+                                    </label>
+                                    <input type="text"
+                                           class="form-control @error('rival_team_name') is-invalid @enderror"
+                                           id="rival_team_name"
+                                           name="rival_team_name"
+                                           value="{{ old('rival_team_name') }}"
+                                           placeholder="Si el rival no está en la lista...">
+                                    <small class="form-text text-muted">
+                                        Usa este campo si el equipo rival no está en la lista
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
                         <!-- Category Selection -->
                         <div class="row">

@@ -20,6 +20,7 @@ class Video extends Model
         'uploaded_by',
         'analyzed_team_id',
         'rival_team_id',
+        'rival_team_name', // Texto libre alternativo para rival
         'category_id',
         'division',
         'rugby_situation_id',
@@ -58,6 +59,34 @@ class Video extends Model
     public function rivalTeam()
     {
         return $this->belongsTo(Team::class, 'rival_team_id');
+    }
+
+    /**
+     * Obtener nombre del equipo analizado (con fallback)
+     */
+    public function getAnalyzedTeamNameAttribute(): string
+    {
+        return $this->analyzedTeam?->name ?? 'Sin equipo';
+    }
+
+    /**
+     * Obtener nombre del rival (relación o texto libre)
+     */
+    public function getRivalNameAttribute(): ?string
+    {
+        // Prioridad: relación > texto libre
+        if ($this->rivalTeam) {
+            return $this->rivalTeam->name;
+        }
+        return $this->rival_team_name;
+    }
+
+    /**
+     * Verificar si tiene rival (por relación o texto)
+     */
+    public function hasRival(): bool
+    {
+        return $this->rival_team_id !== null || !empty($this->rival_team_name);
     }
 
     public function category()

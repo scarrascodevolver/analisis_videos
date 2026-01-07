@@ -110,9 +110,9 @@
                                             <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
                                             <p class="card-text mb-1">
                                                 <small class="text-muted">
-                                                    {{ $video->analyzedTeam->name ?? 'Sin equipo' }}
-                                                    @if($video->rivalTeam)
-                                                        vs {{ $video->rivalTeam->name }}
+                                                    {{ $video->analyzed_team_name }}
+                                                    @if($video->rival_name)
+                                                        vs {{ $video->rival_name }}
                                                     @endif
                                                 </small>
                                             </p>

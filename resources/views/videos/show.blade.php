@@ -165,9 +165,9 @@
                                 <tr>
                                     <td><strong>Equipos:</strong></td>
                                     <td>
-                                        {{ $video->analyzedTeam->name }}
-                                        @if($video->rivalTeam)
-                                            vs {{ $video->rivalTeam->name }}
+                                        {{ $video->analyzed_team_name }}
+                                        @if($video->rival_name)
+                                            vs {{ $video->rival_name }}
                                         @endif
                                     </td>
                                 </tr>
