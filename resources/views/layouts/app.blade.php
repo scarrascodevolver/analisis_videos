@@ -4,8 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('page_title', 'Dashboard') - Los Troncos</title>
-    <link rel="icon" type="image/png" href="{{ asset('logo_lt.png') }}">
+    @php
+        $currentOrganization = auth()->check() ? auth()->user()->currentOrganization() : null;
+        $orgName = $currentOrganization ? $currentOrganization->name : 'RugbyHub';
+        $orgLogo = $currentOrganization && $currentOrganization->logo_path
+            ? asset('storage/' . $currentOrganization->logo_path)
+            : asset('favicon.png');
+    @endphp
+    <title>@yield('page_title', 'Dashboard') - {{ $orgName }}</title>
+    <link rel="icon" type="image/png" href="{{ $orgLogo }}">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -357,10 +364,10 @@
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <a href="{{ route('videos.index') }}" class="brand-link">
-                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" 
-                     class="brand-image img-circle elevation-3" 
+                <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo"
+                     class="brand-image img-circle elevation-3"
                      style="width: 33px; height: 33px; object-fit: cover;">
-                <span class="brand-text" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 3px; vertical-align: middle; margin-left: 10px;">Los Troncos</span>
+                <span class="brand-text" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; vertical-align: middle; margin-left: 10px;">{{ Str::limit($orgName, 15) }}</span>
             </a>
 
             <!-- Sidebar -->
@@ -602,7 +609,7 @@
 
         <!-- Footer -->
         <footer class="main-footer">
-            Sistema de Análisis de Video Rugby Los Troncos
+            RugbyHub - Sistema de Análisis de Video
             <div class="float-right d-none d-sm-inline-block">
                 <b>Versión</b> 1.0.0
             </div>

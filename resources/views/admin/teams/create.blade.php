@@ -25,7 +25,7 @@
                                id="name"
                                name="name"
                                value="{{ old('name') }}"
-                               placeholder="Ej: Los Troncos, Rival A, Club XYZ"
+                               placeholder="Ej: Mi Club, Rival A, Club XYZ"
                                required>
                         @error('name')
                             <span class="invalid-feedback">{{ $message }}</span>

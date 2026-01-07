@@ -37,7 +37,7 @@
                                    id="name"
                                    name="name"
                                    value="{{ old('name') }}"
-                                   placeholder="Ej: Club Deportivo Los Troncos"
+                                   placeholder="Ej: Club Deportivo Rugby"
                                    required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>

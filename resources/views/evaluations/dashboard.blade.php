@@ -389,7 +389,7 @@ $(document).ready(function() {
                         .css('font-size', '10pt')
                         .prepend(
                             '<div style="text-align:center; margin-bottom: 20px;">' +
-                            '<h2 style="color: #005461;">Club Los Troncos</h2>' +
+                            '<h2 style="color: #005461;">Resultados de Evaluaciones</h2>' +
                             '</div>'
                         );
 

@@ -233,7 +233,7 @@ $(document).ready(function() {
                         fontSize: '16',
                         alignment: 'center'
                     };
-                    doc.content[0].text = 'Usuarios del Sistema - Los Troncos';
+                    doc.content[0].text = 'Usuarios del Sistema';
                 }
             },
             {

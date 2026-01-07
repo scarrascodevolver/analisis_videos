@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Contraseña - Los Troncos Rugby Club</title>
+    <title>Recuperar Contraseña - RugbyHub</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -142,8 +142,8 @@
             <div style="width: 80px; height: 80px; margin: 0 auto 15px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 48px; color: white;">🏉</span>
             </div>
-            <h1>LOS TRONCOS</h1>
-            <p>Rugby Club</p>
+            <h1>RUGBYHUB</h1>
+            <p>Sistema de Análisis de Video</p>
         </div>
 
         <!-- Body -->
@@ -152,7 +152,7 @@
 
             <p>¡Hola!</p>
 
-            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en el <strong>Sistema de Análisis de Video Rugby Los Troncos</strong>.</p>
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>RugbyHub</strong>.</p>
 
             <p>Si solicitaste este cambio, haz clic en el botón de abajo para crear una nueva contraseña:</p>
 
@@ -173,15 +173,15 @@
 
             <p>Si no solicitaste este restablecimiento de contraseña, no es necesario que hagas nada. Tu contraseña actual seguirá siendo válida.</p>
 
-            <p><strong>Saludos,<br>El equipo de Los Troncos Rugby Club</strong></p>
+            <p><strong>Saludos,<br>El equipo de RugbyHub</strong></p>
         </div>
 
         <!-- Footer -->
         <div class="email-footer">
-            <p><strong>Los Troncos Rugby Club</strong></p>
-            <p>Sistema de Análisis de Video Rugby</p>
+            <p><strong>RugbyHub</strong></p>
+            <p>Sistema de Análisis de Video</p>
             <p>Este es un email automático, por favor no respondas a este mensaje.</p>
-            <p>© {{ date('Y') }} Los Troncos Rugby Club. Todos los derechos reservados.</p>
+            <p>© {{ date('Y') }} RugbyHub. Todos los derechos reservados.</p>
         </div>
     </div>
 </body>
