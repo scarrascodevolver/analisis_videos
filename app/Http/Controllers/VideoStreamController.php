@@ -194,10 +194,27 @@ class VideoStreamController extends Controller
 
             $length = $end - $start + 1;
 
-            return response()->stream(function () use ($path, $start, $length) {
+            return response()->stream(function () use ($path, $start, $length, $fileSize) {
                 $file = fopen($path, 'rb');
                 fseek($file, $start);
-                echo fread($file, $length);
+
+                $chunkSize = $this->getOptimalChunkSize($fileSize, true);
+                $bytesRead = 0;
+
+                while (!feof($file) && $bytesRead < $length) {
+                    $remainingBytes = $length - $bytesRead;
+                    $currentChunkSize = min($chunkSize, $remainingBytes);
+
+                    $chunk = fread($file, $currentChunkSize);
+                    if ($chunk === false || strlen($chunk) === 0) {
+                        break;
+                    }
+
+                    echo $chunk;
+                    flush();
+                    $bytesRead += strlen($chunk);
+                }
+
                 fclose($file);
             }, 206, [
                 'Content-Type' => $mimeType,
@@ -208,9 +225,23 @@ class VideoStreamController extends Controller
             ]);
         }
 
-        // No range request - serve full file
-        return response()->stream(function () use ($path) {
-            readfile($path);
+        // No range request - serve full file using chunks
+        return response()->stream(function () use ($path, $fileSize) {
+            $file = fopen($path, 'rb');
+
+            $chunkSize = $this->getOptimalChunkSize($fileSize, false);
+
+            while (!feof($file)) {
+                $chunk = fread($file, $chunkSize);
+                if ($chunk === false || strlen($chunk) === 0) {
+                    break;
+                }
+
+                echo $chunk;
+                flush();
+            }
+
+            fclose($file);
         }, 200, [
             'Content-Type' => $mimeType,
             'Content-Length' => $fileSize,
@@ -368,10 +399,27 @@ class VideoStreamController extends Controller
 
             $length = $end - $start + 1;
 
-            return response()->stream(function () use ($path, $start, $length) {
+            return response()->stream(function () use ($path, $start, $length, $fileSize) {
                 $file = fopen($path, 'rb');
                 fseek($file, $start);
-                echo fread($file, $length);
+
+                $chunkSize = $this->getOptimalChunkSize($fileSize, true);
+                $bytesRead = 0;
+
+                while (!feof($file) && $bytesRead < $length) {
+                    $remainingBytes = $length - $bytesRead;
+                    $currentChunkSize = min($chunkSize, $remainingBytes);
+
+                    $chunk = fread($file, $currentChunkSize);
+                    if ($chunk === false || strlen($chunk) === 0) {
+                        break;
+                    }
+
+                    echo $chunk;
+                    flush();
+                    $bytesRead += strlen($chunk);
+                }
+
                 fclose($file);
             }, 206, [
                 'Content-Type' => $mimeType,
@@ -382,9 +430,23 @@ class VideoStreamController extends Controller
             ]);
         }
 
-        // No range request - serve full file
-        return response()->stream(function () use ($path) {
-            readfile($path);
+        // No range request - serve full file using chunks
+        return response()->stream(function () use ($path, $fileSize) {
+            $file = fopen($path, 'rb');
+
+            $chunkSize = $this->getOptimalChunkSize($fileSize, false);
+
+            while (!feof($file)) {
+                $chunk = fread($file, $chunkSize);
+                if ($chunk === false || strlen($chunk) === 0) {
+                    break;
+                }
+
+                echo $chunk;
+                flush();
+            }
+
+            fclose($file);
         }, 200, [
             'Content-Type' => $mimeType,
             'Content-Length' => $fileSize,

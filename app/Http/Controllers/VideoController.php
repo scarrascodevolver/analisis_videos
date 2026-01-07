@@ -137,13 +137,18 @@ class VideoController extends Controller
         $currentOrg = auth()->user()->currentOrganization();
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
 
-        // Try to store in DigitalOcean Spaces, fallback to local if it fails
-        try {
-            $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
-            Storage::disk('spaces')->setVisibility($path, 'public');
-        } catch (Exception $e) {
-            // Log the error and fallback to local storage
-            \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
+        // En producción: usar Spaces con fallback a local
+        // En desarrollo: usar storage local directamente (más rápido)
+        if (app()->environment('production')) {
+            try {
+                $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
+                Storage::disk('spaces')->setVisibility($path, 'public');
+            } catch (Exception $e) {
+                \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
+                $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
+            }
+        } else {
+            // Desarrollo/local: storage local directo
             $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
         }
 
@@ -327,13 +332,18 @@ class VideoController extends Controller
         $currentOrg = auth()->user()->currentOrganization();
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
 
-        // Try to store in DigitalOcean Spaces, fallback to local if it fails
-        try {
-            $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'spaces');
-            Storage::disk('spaces')->setVisibility($path, 'public');
-        } catch (Exception $e) {
-            // Log the error and fallback to local storage
-            \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
+        // En producción: usar Spaces con fallback a local
+        // En desarrollo: usar storage local directamente (más rápido)
+        if (app()->environment('production')) {
+            try {
+                $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'spaces');
+                Storage::disk('spaces')->setVisibility($path, 'public');
+            } catch (Exception $e) {
+                \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
+                $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
+            }
+        } else {
+            // Desarrollo/local: storage local directo
             $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
         }
 
