@@ -25,8 +25,13 @@ class SuperAdminController extends Controller
             'recent_users' => User::latest()->take(5)->get(),
         ];
 
-        // Estadísticas por organización
-        $orgStats = Organization::withCount(['users', 'videos'])->get();
+        // Estadísticas por organización (sin Global Scope para contar videos de TODAS las orgs)
+        $orgStats = Organization::withCount([
+            'users',
+            'videos' => function ($query) {
+                $query->withoutGlobalScope('organization');
+            }
+        ])->get();
 
         return view('super-admin.dashboard', compact('stats', 'orgStats'));
     }
@@ -36,7 +41,12 @@ class SuperAdminController extends Controller
      */
     public function organizations()
     {
-        $organizations = Organization::withCount(['users', 'videos'])
+        $organizations = Organization::withCount([
+            'users',
+            'videos' => function ($query) {
+                $query->withoutGlobalScope('organization');
+            }
+        ])
             ->latest()
             ->paginate(10);
 
