@@ -110,15 +110,15 @@
                                             <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
                                             <p class="card-text mb-1">
                                                 <small class="text-muted">
-                                                    {{ $video->analyzedTeam->name }}
+                                                    {{ $video->analyzedTeam->name ?? 'Sin equipo' }}
                                                     @if($video->rivalTeam)
                                                         vs {{ $video->rivalTeam->name }}
                                                     @endif
                                                 </small>
                                             </p>
                                             <div class="mb-1">
-                                                <span class="badge badge-rugby badge-sm">{{ $video->category->name }}</span>
-                                                @if($video->division && $video->category->name === 'Adultas')
+                                                <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin categoría' }}</span>
+                                                @if($video->division && $video->category && $video->category->name === 'Adultas')
                                                     <span class="badge badge-secondary badge-sm ml-1">
                                                         {{ ucfirst($video->division) }}
                                                     </span>
