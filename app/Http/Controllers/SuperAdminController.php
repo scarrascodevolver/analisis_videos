@@ -213,8 +213,10 @@ class SuperAdminController extends Controller
      */
     public function assignAdminForm(Organization $organization)
     {
-        // Usuarios disponibles: no están en esta organización Y no son super_admin
+        // Usuarios disponibles: solo analistas que no están en esta organización
+        // (Los analistas son los únicos que pueden trabajar para múltiples clubes)
         $availableUsers = User::where('is_super_admin', false)
+            ->where('role', 'analista')
             ->whereDoesntHave('organizations', function ($query) use ($organization) {
                 $query->where('organizations.id', $organization->id);
             })
