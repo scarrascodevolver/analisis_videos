@@ -18,6 +18,37 @@ Route::redirect('/', '/login');
 // Authentication Routes
 Auth::routes();
 
+// API Pública para validar código de invitación (sin auth - para registro)
+Route::post('/api/validate-invitation-code', function (Illuminate\Http\Request $request) {
+    $code = strtoupper($request->input('code', ''));
+
+    if (empty($code)) {
+        return response()->json(['valid' => false, 'message' => 'Código requerido']);
+    }
+
+    $organization = App\Models\Organization::active()->byInvitationCode($code)->first();
+
+    if (!$organization) {
+        return response()->json(['valid' => false, 'message' => 'Código inválido o inactivo']);
+    }
+
+    // Obtener categorías de esta organización (sin global scope)
+    $categories = App\Models\Category::withoutGlobalScope('organization')
+        ->where('organization_id', $organization->id)
+        ->orderBy('name')
+        ->get(['id', 'name']);
+
+    return response()->json([
+        'valid' => true,
+        'organization' => [
+            'id' => $organization->id,
+            'name' => $organization->name,
+            'logo_url' => $organization->logo_path ? asset('storage/' . $organization->logo_path) : null,
+        ],
+        'categories' => $categories,
+    ]);
+});
+
 // Organization Selection Routes (auth required, but excluded from organization middleware)
 Route::middleware(['auth'])->group(function () {
     Route::get('/select-organization', [OrganizationController::class, 'select'])->name('select-organization');
@@ -102,6 +133,11 @@ Route::middleware(['auth'])->group(function () {
 
         // Gestión de Usuarios
         Route::resource('users', App\Http\Controllers\UserManagementController::class);
+
+        // Gestión de Organización (código de invitación)
+        Route::get('organization', [AdminController::class, 'organization'])->name('organization');
+        Route::put('organization/invitation-code', [AdminController::class, 'updateInvitationCode'])->name('organization.update-code');
+        Route::post('organization/regenerate-code', [AdminController::class, 'regenerateInvitationCode'])->name('organization.regenerate-code');
     });
 
     // Player Routes

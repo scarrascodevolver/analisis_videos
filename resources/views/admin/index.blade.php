@@ -112,6 +112,14 @@
                             <i class="fas fa-cog"></i> Gestionar Usuarios
                         </a>
                     </div>
+
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-ticket-alt text-secondary"></i> Código de Invitación</h5>
+                        <p class="text-muted">Gestiona el código de invitación para que nuevos jugadores puedan registrarse en tu organización.</p>
+                        <a href="{{ route('admin.organization') }}" class="btn btn-secondary btn-sm mb-3">
+                            <i class="fas fa-cog"></i> Configurar Código
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

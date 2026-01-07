@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Organization extends Model
 {
@@ -13,6 +14,7 @@ class Organization extends Model
         'slug',
         'logo_path',
         'is_active',
+        'invitation_code',
     ];
 
     protected function casts(): array
@@ -20,6 +22,61 @@ class Organization extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Boot del modelo
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Auto-generar código de invitación al crear organización
+        static::creating(function ($organization) {
+            if (empty($organization->invitation_code)) {
+                $organization->invitation_code = self::generateUniqueInvitationCode();
+            }
+        });
+    }
+
+    /**
+     * Genera un código de invitación único de 8 caracteres
+     */
+    public static function generateUniqueInvitationCode(): string
+    {
+        do {
+            // Código de 8 caracteres: letras mayúsculas y números
+            $code = strtoupper(Str::random(8));
+            $exists = self::where('invitation_code', $code)->exists();
+        } while ($exists);
+
+        return $code;
+    }
+
+    /**
+     * Regenera el código de invitación
+     */
+    public function regenerateInvitationCode(): string
+    {
+        $this->invitation_code = self::generateUniqueInvitationCode();
+        $this->save();
+        return $this->invitation_code;
+    }
+
+    /**
+     * Scope para buscar por código de invitación
+     */
+    public function scopeByInvitationCode($query, string $code)
+    {
+        return $query->where('invitation_code', strtoupper($code));
+    }
+
+    /**
+     * Buscar organización activa por código de invitación
+     */
+    public static function findByInvitationCode(string $code): ?self
+    {
+        return self::active()->byInvitationCode($code)->first();
     }
 
     /**

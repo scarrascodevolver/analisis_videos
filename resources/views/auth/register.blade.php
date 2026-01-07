@@ -1,29 +1,84 @@
 @extends('layouts.auth')
 
-@section('title', 'Registro - Los Troncos')
+@section('title', 'Registro de Jugador')
 
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <div class="logo-icon">
-                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" style="width: 80px; height: 80px; object-fit: contain;">
-            </div>
-            <h3>Los Troncos</h3>
-            <p>Registro en el Sistema</p>
+            @if($organization)
+                {{-- Código válido: mostrar logo y nombre del club --}}
+                <div class="logo-icon">
+                    @if($organization->logo_path)
+                        <img src="{{ asset('storage/' . $organization->logo_path) }}" alt="{{ $organization->name }}" style="width: 80px; height: 80px; object-fit: contain;">
+                    @else
+                        <i class="fas fa-shield-alt fa-3x text-success"></i>
+                    @endif
+                </div>
+                <h3>{{ $organization->name }}</h3>
+                <p>Registro de Jugador</p>
+            @else
+                {{-- Sin código: mostrar logo genérico --}}
+                <div class="logo-icon">
+                    <i class="fas fa-football-ball fa-3x text-success"></i>
+                </div>
+                <h3>Rugby Hub</h3>
+                <p>Registro de Jugador</p>
+            @endif
         </div>
         
         <div class="auth-body">
             <form method="POST" action="{{ route('register') }}" id="registerForm" enctype="multipart/form-data">
                 @csrf
-                
+
+                {{-- Campo de código de invitación --}}
+                @if($organization)
+                    {{-- Código válido en URL: campo oculto --}}
+                    <input type="hidden" name="invitation_code" id="invitation_code" value="{{ $invitationCode }}">
+                    <div class="alert alert-success mb-3 text-center">
+                        <i class="fas fa-check-circle"></i>
+                        Te registrarás en <strong>{{ $organization->name }}</strong>
+                    </div>
+                @else
+                    {{-- Sin código: mostrar campo para ingresar --}}
+                    <div id="codeSection" class="mb-4">
+                        <div class="form-group">
+                            <label class="text-muted small font-weight-bold">
+                                <i class="fas fa-ticket-alt"></i> Código del Club *
+                            </label>
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control text-uppercase @error('invitation_code') is-invalid @enderror"
+                                       name="invitation_code"
+                                       id="invitation_code"
+                                       placeholder="Ej: TRONCOS25"
+                                       value="{{ old('invitation_code', $invitationCode) }}"
+                                       maxlength="20"
+                                       required>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-rugby" id="validateCodeBtn">
+                                        <i class="fas fa-search"></i> Validar
+                                    </button>
+                                </div>
+                            </div>
+                            @error('invitation_code')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                            <small class="form-text text-muted">
+                                Ingresa el código que te proporcionó tu club
+                            </small>
+                        </div>
+                        <div id="codeResult" class="mb-3" style="display: none;"></div>
+                    </div>
+                @endif
+
                 <!-- Step 1: Basic Information -->
                 <div id="step1" class="registration-step">
                     <h5 class="text-center mb-4">
                         <i class="fas fa-user-plus text-success"></i>
                         Información Básica
                     </h5>
-                    
+
                     <!-- Name -->
                     <div class="form-group">
                         <div class="input-group">
@@ -351,6 +406,96 @@ function togglePassword(fieldId, element) {
 }
 
 $(document).ready(function() {
+    // Variable para trackear si el código es válido
+    let codeValidated = {{ $organization ? 'true' : 'false' }};
+
+    // Validación de código de invitación vía AJAX
+    $('#validateCodeBtn').on('click', function() {
+        validateInvitationCode();
+    });
+
+    // También validar al presionar Enter en el campo
+    $('#invitation_code').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            validateInvitationCode();
+        }
+    });
+
+    // Convertir a mayúsculas mientras escribe
+    $('#invitation_code').on('input', function() {
+        $(this).val($(this).val().toUpperCase());
+        // Resetear validación si cambia el código
+        codeValidated = false;
+        $('#codeResult').hide();
+    });
+
+    function validateInvitationCode() {
+        const code = $('#invitation_code').val().trim();
+        const btn = $('#validateCodeBtn');
+        const resultDiv = $('#codeResult');
+
+        if (!code) {
+            resultDiv.html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Ingresa un código</div>').show();
+            return;
+        }
+
+        // Mostrar loading
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '/api/validate-invitation-code',
+            method: 'POST',
+            data: {
+                code: code,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.valid) {
+                    codeValidated = true;
+                    resultDiv.html(`
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>${response.organization.name}</strong>
+                            <br><small>Código válido - puedes continuar</small>
+                        </div>
+                    `).show();
+
+                    // Actualizar categorías
+                    updateCategories(response.categories);
+
+                    // Marcar campo como válido
+                    $('#invitation_code').removeClass('is-invalid').addClass('is-valid');
+                } else {
+                    codeValidated = false;
+                    resultDiv.html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle"></i>
+                            ${response.message}
+                        </div>
+                    `).show();
+                    $('#invitation_code').addClass('is-invalid').removeClass('is-valid');
+                }
+            },
+            error: function() {
+                codeValidated = false;
+                resultDiv.html('<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Error al validar el código</div>').show();
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-search"></i> Validar');
+            }
+        });
+    }
+
+    function updateCategories(categories) {
+        const select = $('select[name="user_category_id"]');
+        select.empty().append('<option value="">Seleccionar categoría...</option>');
+
+        categories.forEach(function(cat) {
+            select.append(`<option value="${cat.id}">${cat.name}</option>`);
+        });
+    }
+
     // Always show player fields since only players can register
     $('#playerFields').show();
 
@@ -378,7 +523,16 @@ $(document).ready(function() {
     function validateStep1() {
         let isValid = true;
         const requiredFields = ['name', 'email', 'password', 'password_confirmation', 'role'];
-        
+
+        // Verificar código de invitación primero
+        @if(!$organization)
+        if (!codeValidated) {
+            alert('Por favor valida el código del club antes de continuar');
+            $('#invitation_code').focus();
+            return false;
+        }
+        @endif
+
         requiredFields.forEach(function(field) {
             const input = $(`[name="${field}"]`);
             if (!input.val() || input.val().trim() === '') {

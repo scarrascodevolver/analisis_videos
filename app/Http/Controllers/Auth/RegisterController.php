@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Category;
+use App\Models\Organization;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -38,10 +39,26 @@ class RegisterController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
-        $categories = Category::all();
-        return view('auth.register', compact('categories'));
+        $organization = null;
+        $categories = collect();
+        $invitationCode = $request->query('code', '');
+
+        // Si viene código en la URL, validarlo y cargar datos
+        if (!empty($invitationCode)) {
+            $organization = Organization::findByInvitationCode($invitationCode);
+
+            if ($organization) {
+                // Cargar categorías de esta organización (sin global scope)
+                $categories = Category::withoutGlobalScope('organization')
+                    ->where('organization_id', $organization->id)
+                    ->orderBy('name')
+                    ->get();
+            }
+        }
+
+        return view('auth.register', compact('categories', 'organization', 'invitationCode'));
     }
 
     /**
@@ -96,6 +113,12 @@ class RegisterController extends Controller
             'role' => ['required', 'in:jugador'],
             'phone' => ['nullable', 'string', 'max:20'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'invitation_code' => ['required', 'string', function ($attribute, $value, $fail) {
+                $org = Organization::findByInvitationCode($value);
+                if (!$org) {
+                    $fail('El código de invitación no es válido o la organización no está activa.');
+                }
+            }],
         ];
 
         // Player fields validation (always required since only players can register)
@@ -120,6 +143,9 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        // Obtener la organización del código de invitación
+        $organization = Organization::findByInvitationCode($data['invitation_code']);
+
         // Create the user
         $user = User::create([
             'name' => $data['name'],
@@ -128,6 +154,15 @@ class RegisterController extends Controller
             'role' => $data['role'],
             'phone' => $data['phone'] ?? null,
         ]);
+
+        // Asignar usuario a la organización
+        if ($organization) {
+            $organization->users()->attach($user->id, [
+                'role' => $data['role'],
+                'is_current' => true,
+                'is_org_admin' => false,
+            ]);
+        }
 
         // Create profile if player or coach
         if (in_array($data['role'], ['jugador', 'entrenador'])) {
