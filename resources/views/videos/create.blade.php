@@ -51,9 +51,9 @@
                                     <label for="title">
                                         <i class="fas fa-heading"></i> Título del Video *
                                     </label>
-                                    <input type="text" class="form-control @error('title') is-invalid @enderror" 
-                                           id="title" name="title" value="{{ old('title') }}" 
-                                           placeholder="Ej: Análisis Scrum Los Troncos vs DOBS" required>
+                                    <input type="text" class="form-control @error('title') is-invalid @enderror"
+                                           id="title" name="title" value="{{ old('title') }}"
+                                           placeholder="Escribe un título para el video" required>
                                     @error('title')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
