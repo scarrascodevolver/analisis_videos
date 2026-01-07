@@ -15,12 +15,15 @@ class AdminController extends Controller
      */
     public function index()
     {
-        // Contadores simples para las tarjetas
+        // Obtener organización actual del usuario
+        $currentOrg = auth()->user()->currentOrganization();
+
+        // Contadores simples para las tarjetas (filtrados por organización)
         $stats = [
             'categories' => Category::count(),
             'teams' => Team::count(),
             'situations' => RugbySituation::count(),
-            'users' => User::count(),
+            'users' => $currentOrg ? $currentOrg->users()->count() : 0,
         ];
 
         return view('admin.index', compact('stats'));
