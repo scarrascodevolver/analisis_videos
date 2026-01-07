@@ -187,8 +187,6 @@
                         {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
                     </a>
                     <div class="dropdown-menu dropdown-menu-right">
-                        <span class="dropdown-header">Cambiar Organizacion</span>
-                        <div class="dropdown-divider"></div>
                         @foreach($userOrganizations as $org)
                             <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline">
                                 @csrf
