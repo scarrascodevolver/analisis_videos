@@ -14,6 +14,17 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Available roles in the system
+     */
+    public const ROLES = [
+        'jugador',
+        'entrenador',
+        'analista',
+        'staff',
+        'super_admin',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -24,6 +35,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'role',
+        'is_super_admin',
     ];
 
     /**
@@ -46,6 +58,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_super_admin' => 'boolean',
         ];
     }
 
@@ -107,6 +120,11 @@ class User extends Authenticatable
     public function isCoach()
     {
         return $this->role === 'entrenador';
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->is_super_admin === true;
     }
 
     /**

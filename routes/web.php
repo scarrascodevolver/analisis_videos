@@ -253,3 +253,19 @@ Route::middleware('auth')->get('/api/category-players', function() {
 
     return response()->json($players);
 });
+
+// ======================================
+// SUPER ADMIN ROUTES
+// ======================================
+Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/', [App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/organizations', [App\Http\Controllers\SuperAdminController::class, 'organizations'])->name('organizations');
+    Route::get('/organizations/create', [App\Http\Controllers\SuperAdminController::class, 'createOrganization'])->name('organizations.create');
+    Route::post('/organizations', [App\Http\Controllers\SuperAdminController::class, 'storeOrganization'])->name('organizations.store');
+    Route::get('/organizations/{organization}/edit', [App\Http\Controllers\SuperAdminController::class, 'editOrganization'])->name('organizations.edit');
+    Route::put('/organizations/{organization}', [App\Http\Controllers\SuperAdminController::class, 'updateOrganization'])->name('organizations.update');
+    Route::delete('/organizations/{organization}', [App\Http\Controllers\SuperAdminController::class, 'destroyOrganization'])->name('organizations.destroy');
+    Route::get('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdminForm'])->name('organizations.assign-admin');
+    Route::post('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdmin'])->name('organizations.assign-admin.store');
+    Route::get('/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('users');
+});

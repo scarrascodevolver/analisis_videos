@@ -460,6 +460,28 @@
                             </li>
                         @endif
 
+                        @if(Auth::user()->isSuperAdmin())
+                            <li class="nav-header text-danger">SUPER ADMIN</li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.dashboard') }}" class="nav-link {{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-shield-alt text-danger"></i>
+                                    <p>Panel Super Admin</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.organizations') }}" class="nav-link {{ request()->routeIs('super-admin.organizations*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-building text-danger"></i>
+                                    <p>Organizaciones</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.users') }}" class="nav-link {{ request()->routeIs('super-admin.users') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-users-cog text-danger"></i>
+                                    <p>Todos los Usuarios</p>
+                                </a>
+                            </li>
+                        @endif
+
                     </ul>
                 </nav>
             </div>

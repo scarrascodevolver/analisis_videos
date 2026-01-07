@@ -18,6 +18,8 @@ class SetCurrentOrganization
         'login',
         'register',
         'password/*',
+        'super-admin',
+        'super-admin/*',
     ];
 
     /**
@@ -40,6 +42,11 @@ class SetCurrentOrganization
         }
 
         $user = auth()->user();
+
+        // Super admins pueden acceder sin organización seleccionada
+        if ($user->isSuperAdmin()) {
+            return $next($request);
+        }
         $currentOrg = $user->currentOrganization();
 
         // Si el usuario no tiene organización seleccionada

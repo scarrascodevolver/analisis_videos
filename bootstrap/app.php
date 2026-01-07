@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'organization' => \App\Http\Middleware\SetCurrentOrganization::class,
+            'super_admin' => \App\Http\Middleware\SuperAdmin::class,
         ]);
 
         // Agregar el middleware de organización al grupo web (después de auth)
