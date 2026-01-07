@@ -46,7 +46,7 @@
                         <!-- Promedio Total -->
                         <div class="text-center">
                             <h1 class="mb-0" style="font-size: 3rem; color: {{
-                                $totalScore >= 7 ? '#1e4d2b' : ($totalScore >= 5 ? '#ffc107' : '#dc3545')
+                                $totalScore >= 7 ? '#005461' : ($totalScore >= 5 ? '#ffc107' : '#dc3545')
                             }}">
                                 {{ number_format($totalScore, 1) }}
                             </h1>
@@ -68,7 +68,7 @@
         <!-- Acondicionamiento Físico -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas fa-running"></i>
                         Acondicionamiento Físico
@@ -84,7 +84,7 @@
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar"
                                      style="width: {{ ($value / 10) * 100 }}%; background-color: {{
-                                         $value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545')
+                                         $value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545')
                                      }}">
                                 </div>
                             </div>
@@ -97,7 +97,7 @@
         <!-- Destrezas Mentales -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas fa-brain"></i>
                         Destrezas Mentales
@@ -113,7 +113,7 @@
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar"
                                      style="width: {{ ($value / 10) * 100 }}%; background-color: {{
-                                         $value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545')
+                                         $value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545')
                                      }}">
                                 </div>
                             </div>
@@ -126,7 +126,7 @@
         <!-- Destrezas Básicas -->
         <div class="col-12 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas fa-football-ball"></i>
                         Destrezas Básicas
@@ -143,7 +143,7 @@
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar"
                                          style="width: {{ ($value / 10) * 100 }}%; background-color: {{
-                                             $value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545')
+                                             $value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545')
                                          }}">
                                     </div>
                                 </div>
@@ -157,7 +157,7 @@
         <!-- Otros Aspectos -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas fa-star"></i>
                         Otros Aspectos
@@ -174,8 +174,8 @@
                                 <div class="progress-bar"
                                      style="width: {{ ($value / 10) * 100 }}%; background-color: {{
                                          $key == 'actitud_negativa'
-                                         ? ($value <= 3 ? '#1e4d2b' : ($value <= 5 ? '#ffc107' : '#dc3545'))
-                                         : ($value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545'))
+                                         ? ($value <= 3 ? '#005461' : ($value <= 5 ? '#ffc107' : '#dc3545'))
+                                         : ($value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545'))
                                      }}">
                                 </div>
                             </div>
@@ -188,7 +188,7 @@
         <!-- Habilidades Específicas (Forwards o Backs) -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas {{ $isForward ? 'fa-shield-alt' : 'fa-bolt' }}"></i>
                         Habilidades {{ $isForward ? 'Forwards' : 'Backs' }}
@@ -212,7 +212,7 @@
                                     <div class="progress" style="height: 8px;">
                                         <div class="progress-bar"
                                              style="width: {{ ($value / 10) * 100 }}%; background-color: {{
-                                                 $value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545')
+                                                 $value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545')
                                              }}">
                                         </div>
                                     </div>
@@ -239,7 +239,7 @@
                                     <div class="progress" style="height: 8px;">
                                         <div class="progress-bar"
                                              style="width: {{ ($value / 10) * 100 }}%; background-color: {{
-                                                 $value >= 7 ? '#1e4d2b' : ($value >= 5 ? '#ffc107' : '#dc3545')
+                                                 $value >= 7 ? '#005461' : ($value >= 5 ? '#ffc107' : '#dc3545')
                                              }}">
                                         </div>
                                     </div>
@@ -257,7 +257,7 @@
         <!-- Lista de Evaluadores -->
         <div class="col-12 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: #005461; color: white;">
                     <h5 class="mb-0">
                         <i class="fas fa-users"></i>
                         Evaluadores ({{ $evaluationCount }})
@@ -280,7 +280,7 @@
                                         <div><strong>{{ $evaluation->evaluator->name }}</strong></div>
                                         <small class="text-muted">
                                             Puntaje: <span style="color: {{
-                                                $evaluation->total_score >= 7 ? '#1e4d2b' :
+                                                $evaluation->total_score >= 7 ? '#005461' :
                                                 ($evaluation->total_score >= 5 ? '#ffc107' : '#dc3545')
                                             }}">
                                                 {{ number_format($evaluation->total_score, 1) }}
@@ -299,7 +299,7 @@
     <!-- Botón de regreso -->
     <div class="row">
         <div class="col-12">
-            <a href="{{ route('evaluations.dashboard') }}" class="btn text-white" style="background-color: #1e4d2b;">
+            <a href="{{ route('evaluations.dashboard') }}" class="btn text-white" style="background-color: #005461;">
                 <i class="fas fa-arrow-left"></i> Volver a Resultados
             </a>
         </div>

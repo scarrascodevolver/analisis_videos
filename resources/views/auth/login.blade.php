@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Iniciar Sesión - Los Troncos')
+@section('title', 'Iniciar Sesión - RugbyHub')
 
 @section('css')
 <style>
@@ -13,20 +13,20 @@
 }
 
 .password-toggle-btn:hover {
-    background-color: #1e4d2b;
+    background-color: var(--color-primary);
     color: white;
-    border-color: #1e4d2b;
+    border-color: var(--color-primary);
 }
 
 .password-toggle-btn:focus {
     box-shadow: none;
-    border-color: #1e4d2b;
+    border-color: var(--color-primary);
 }
 
 .password-toggle-btn.active {
-    background-color: #1e4d2b;
+    background-color: var(--color-primary);
     color: white;
-    border-color: #1e4d2b;
+    border-color: var(--color-primary);
 }
 </style>
 @endsection
@@ -36,10 +36,10 @@
     <div class="auth-card">
         <div class="auth-header">
             <div class="logo-icon">
-                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <i class="fas fa-football-ball fa-3x"></i>
             </div>
-            <h3>Los Troncos</h3>
-            <p>Sistema de Análisis Rugby</p>
+            <h3>RugbyHub</h3>
+            <p>Sistema de Análisis de Video para Rugby</p>
         </div>
         
         <div class="auth-body">

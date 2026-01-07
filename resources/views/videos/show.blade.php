@@ -408,7 +408,7 @@
     <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--color-primary, #005461) 0%, var(--color-accent, #4B9DA9) 100%); color: white;">
                     <h5 class="modal-title" id="statsModalLabel">
                         <i class="fas fa-eye"></i> Visualizaciones del Video
                     </h5>
@@ -704,7 +704,7 @@ $(document).ready(function() {
             left: 0;
             height: 100%;
             width: 0%;
-            background: #1e4d2b;
+            background: var(--color-primary, #005461);
             border-radius: 5px;
             transition: width 0.1s ease;
         `;
@@ -718,7 +718,7 @@ $(document).ready(function() {
             left: 0%;
             width: 4px;
             height: 50px;
-            background: #1e4d2b;
+            background: var(--color-primary, #005461);
             border-radius: 2px;
             transition: left 0.1s ease;
             transform: translateX(-50%);
@@ -741,7 +741,7 @@ $(document).ready(function() {
                 left: ${position}%;
                 width: 8px;
                 height: 50px;
-                background: #28a745;
+                background: var(--color-accent, #4B9DA9);
                 border: 2px solid #fff;
                 border-radius: 4px;
                 cursor: pointer;
@@ -968,7 +968,7 @@ $(document).ready(function() {
             max-width: ${notificationWidth}px;
             min-width: ${minWidth}px;
             background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #28a745;
+            border: 2px solid var(--color-accent, #4B9DA9);
             border-radius: 12px;
             padding: ${padding};
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -1145,7 +1145,7 @@ $(document).ready(function() {
             color: white;
             padding: 20px;
             overflow-y: auto;
-            border-top: 2px solid #28a745;
+            border-top: 2px solid var(--color-accent, #4B9DA9);
         `;
         commentsArea.innerHTML = '<h6><i class="fas fa-comments"></i> Comentarios en tiempo real</h6>';
 
@@ -1247,8 +1247,8 @@ $(document).ready(function() {
         const notification = document.createElement('div');
         notification.className = 'pseudo-fullscreen-comment';
         notification.style.cssText = `
-            background: rgba(40, 167, 69, 0.2);
-            border: 1px solid #28a745;
+            background: rgba(0, 183, 181, 0.2);
+            border: 1px solid var(--color-accent, #4B9DA9);
             border-radius: 8px;
             padding: 10px;
             margin: 10px 0;
@@ -2641,7 +2641,7 @@ $(document).ready(function() {
 
 /* Rugby badge */
 .badge-rugby {
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     color: white;
     font-size: 0.875em;
     font-weight: 500;
@@ -2649,7 +2649,7 @@ $(document).ready(function() {
 
 /* Rugby button variations */
 .btn-rugby-light {
-    background: #28a745;
+    background: var(--color-accent, #4B9DA9);
     border: none;
     color: white;
     border-radius: 6px;
@@ -2676,15 +2676,15 @@ $(document).ready(function() {
 
 .btn-rugby-outline {
     background: transparent;
-    border: 2px solid #1e4d2b;
-    color: #1e4d2b;
+    border: 2px solid var(--color-primary, #005461);
+    color: var(--color-primary, #005461);
     border-radius: 6px;
     font-weight: 500;
 }
 
 .btn-rugby-outline:hover {
-    background: #1e4d2b;
-    border-color: #1e4d2b;
+    background: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: white;
 }
 
@@ -2747,8 +2747,8 @@ $(document).ready(function() {
 }
 
 .toolbar-btn.save-btn {
-    background: #28a745;
-    border-color: #28a745;
+    background: var(--color-accent, #4B9DA9);
+    border-color: var(--color-accent, #4B9DA9);
 }
 
 .toolbar-btn.save-btn:hover {

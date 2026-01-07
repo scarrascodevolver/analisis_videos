@@ -21,7 +21,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .email-header {
-            background: linear-gradient(135deg, #1e4d2b, #2d5a3a);
+            background: linear-gradient(135deg, #005461, #003d4a);
             color: white;
             text-align: center;
             padding: 30px 20px;
@@ -50,7 +50,7 @@
             color: #333333;
         }
         .email-body h2 {
-            color: #1e4d2b;
+            color: #005461;
             font-size: 24px;
             margin-bottom: 20px;
             text-align: center;
@@ -65,21 +65,21 @@
             width: 280px;
             margin: 30px auto;
             padding: 15px 30px;
-            background: linear-gradient(135deg, #1e4d2b, #2d5a3a);
+            background: linear-gradient(135deg, #005461, #003d4a);
             color: white !important;
             text-decoration: none !important;
             border-radius: 50px;
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(30, 77, 43, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 84, 97, 0.3);
             transition: all 0.3s ease;
             border: none;
         }
         .reset-button:hover {
-            background: linear-gradient(135deg, #2d5a3a, #1e4d2b);
+            background: linear-gradient(135deg, #003d4a, #005461);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 77, 43, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 84, 97, 0.4);
             color: white !important;
             text-decoration: none !important;
         }
@@ -93,13 +93,13 @@
         }
         .security-note {
             background-color: #f8f9fa;
-            border-left: 4px solid #1e4d2b;
+            border-left: 4px solid #005461;
             padding: 15px 20px;
             margin: 30px 0;
             border-radius: 0 5px 5px 0;
         }
         .security-note h4 {
-            color: #1e4d2b;
+            color: #005461;
             margin: 0 0 10px 0;
             font-size: 16px;
         }
@@ -120,7 +120,7 @@
             margin: 5px 0;
         }
         .email-footer a {
-            color: #1e4d2b;
+            color: #005461;
             text-decoration: none;
         }
         .alternative-link {

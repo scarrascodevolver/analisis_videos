@@ -124,8 +124,8 @@ Route::middleware(['auth'])->group(function () {
         // Gestión de Categorías
         Route::resource('categories', App\Http\Controllers\CategoryManagementController::class);
 
-        // Gestión de Equipos
-        Route::resource('teams', App\Http\Controllers\TeamManagementController::class);
+        // Gestión de Equipos (deshabilitado - equipos se crean automáticamente con la organización)
+        // Route::resource('teams', App\Http\Controllers\TeamManagementController::class);
 
         // Gestión de Situaciones de Rugby
         Route::resource('situations', App\Http\Controllers\RugbySituationController::class);

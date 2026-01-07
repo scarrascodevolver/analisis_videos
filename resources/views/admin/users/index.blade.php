@@ -81,7 +81,7 @@
 
 <style>
 .rugby-green {
-    background-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
     color: white !important;
 }
 
@@ -94,19 +94,19 @@
 
 /* Paginación estilo rugby (sobrescribir Bootstrap) */
 #users-table_paginate .pagination .page-link {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
     border-color: #dee2e6 !important;
     background-color: white !important;
 }
 
 #users-table_paginate .pagination .page-item.active .page-link {
-    background-color: #1e4d2b !important;
-    border-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
+    border-color: var(--color-primary, #005461) !important;
     color: white !important;
 }
 
 #users-table_paginate .pagination .page-link:hover {
-    color: #28a745 !important;
+    color: var(--color-accent, #4B9DA9) !important;
     background-color: #f8f9fa !important;
     border-color: #dee2e6 !important;
 }
@@ -122,14 +122,14 @@
 }
 
 .dt-button {
-    background-color: #1e4d2b !important;
-    border-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
+    border-color: var(--color-primary, #005461) !important;
     color: white !important;
 }
 
 .dt-button:hover {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
+    background-color: var(--color-accent, #4B9DA9) !important;
+    border-color: var(--color-accent, #4B9DA9) !important;
 }
 
 /* Alinear buscador a la izquierda */
@@ -229,7 +229,7 @@ $(document).ready(function() {
                 },
                 customize: function(doc) {
                     doc.styles.title = {
-                        color: '#1e4d2b',
+                        color: '#005461',
                         fontSize: '16',
                         alignment: 'center'
                     };

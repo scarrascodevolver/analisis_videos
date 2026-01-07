@@ -22,33 +22,74 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
     <style>
+        /* ========================================
+           VARIABLES CSS CENTRALIZADAS
+           ======================================== */
+        :root {
+            --color-primary: #005461;
+            --color-primary-hover: #003d4a;
+            --color-secondary: #018790;
+            --color-accent: #4B9DA9;
+            --color-bg: #F4F4F4;
+            --color-bg-card: #FFFFFF;
+            --color-text: #333333;
+        }
+
+        /* ========================================
+           CLASES UTILITARIAS
+           ======================================== */
         .rugby-green {
-            background-color: #1e4d2b !important;
-            color: white;
-        }
-        
-        .text-rugby {
-            color: #1e4d2b !important;
-        }
-        
-        .btn-rugby {
-            background-color: #1e4d2b;
-            border-color: #1e4d2b;
-            color: white;
-        }
-        
-        .btn-rugby:hover {
-            background-color: #2d5a3a;
-            border-color: #2d5a3a;
+            background-color: var(--color-primary) !important;
             color: white;
         }
 
+        .text-rugby {
+            color: var(--color-primary) !important;
+        }
+
+        .btn-rugby {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-rugby:hover {
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            color: white;
+        }
+
+        .btn-outline-rugby {
+            background-color: transparent;
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .btn-outline-rugby:hover {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .badge-rugby {
+            background-color: var(--color-accent);
+            color: white;
+        }
+
+        .badge-rugby-light {
+            background-color: var(--color-secondary);
+            color: white;
+        }
+
+        /* ========================================
+           LAYOUT - NAVBAR Y SIDEBAR
+           ======================================== */
         .main-header.navbar {
-            background-color: #1e4d2b !important;
+            background-color: var(--color-primary) !important;
         }
 
         .main-sidebar {
-            background-color: #343a40 !important;
+            background-color: var(--color-primary-hover) !important;
         }
 
         .nav-sidebar .nav-link {
@@ -56,27 +97,30 @@
         }
 
         .nav-sidebar .nav-link:hover {
-            background-color: #1e4d2b;
+            background-color: var(--color-secondary);
             color: white;
         }
 
         .nav-sidebar .nav-link.active {
-            background-color: #1e4d2b !important;
+            background-color: var(--color-accent) !important;
             color: white !important;
         }
 
         .brand-link {
-            background-color: #1e4d2b !important;
+            background-color: var(--color-primary) !important;
             color: white !important;
-            border-bottom: 1px solid #2d5a3a;
+            border-bottom: 1px solid var(--color-secondary);
         }
 
         .user-panel .info {
             color: #c2c7d0;
         }
 
+        /* ========================================
+           COMPONENTES
+           ======================================== */
         .info-box-rugby {
-            background: linear-gradient(45deg, #1e4d2b, #2d5a3a);
+            background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
             color: white;
         }
 
@@ -86,7 +130,7 @@
         }
 
         .card-rugby {
-            border-top: 3px solid #1e4d2b;
+            border-top: 3px solid var(--color-primary);
         }
 
         .small-box .icon {
@@ -98,11 +142,12 @@
         }
 
         .content-wrapper {
-            background-color: #f4f6f9;
+            background-color: var(--color-bg);
         }
 
         .video-card {
             transition: all 0.3s;
+            background-color: var(--color-bg-card);
         }
 
         .video-card:hover {
@@ -110,7 +155,9 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        /* Upcoming Features Styles */
+        /* ========================================
+           UPCOMING FEATURES
+           ======================================== */
         .upcoming-feature {
             opacity: 0.8;
             cursor: pointer;
@@ -119,7 +166,7 @@
 
         .upcoming-feature:hover {
             opacity: 1;
-            background-color: rgba(30, 77, 43, 0.1) !important;
+            background-color: rgba(0, 84, 97, 0.1) !important;
         }
 
         .upcoming-feature .badge {
@@ -133,24 +180,46 @@
             50% { opacity: 0.7; }
         }
 
-        /* Sobrescribir color azul de Bootstrap para enlaces */
+        /* ========================================
+           ENLACES Y BREADCRUMBS
+           ======================================== */
         .breadcrumb-item a {
-            color: #1e4d2b !important;
+            color: var(--color-primary) !important;
         }
-        
+
         .breadcrumb-item a:hover {
-            color: #2d5a3a !important;
+            color: var(--color-secondary) !important;
             text-decoration: none;
         }
-        
-        /* Enlaces generales en verde */
+
         a {
-            color: #1e4d2b;
+            color: var(--color-primary);
         }
-        
+
         a:hover {
-            color: #2d5a3a;
+            color: var(--color-secondary);
             text-decoration: none;
+        }
+
+        /* ========================================
+           OVERRIDES BOOTSTRAP
+           ======================================== */
+        .bg-success {
+            background-color: var(--color-accent) !important;
+        }
+
+        .text-success {
+            color: var(--color-accent) !important;
+        }
+
+        .btn-success {
+            background-color: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .btn-success:hover {
+            background-color: var(--color-secondary);
+            border-color: var(--color-secondary);
         }
 
         @yield('css')
@@ -549,7 +618,7 @@
     <div class="modal fade" id="upcomingFeatureModal" tabindex="-1" role="dialog" aria-labelledby="upcomingFeatureModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #1e4d2b 0%, #28a745 100%); color: white;">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%); color: white;">
                     <h5 class="modal-title" id="upcomingFeatureModalLabel">
                         <i class="fas fa-rocket"></i> Funcionalidad en Desarrollo
                     </h5>

@@ -68,18 +68,18 @@
     <style>
     /* Rugby pagination styles */
     .pagination .page-link {
-        color: #1e4d2b;
+        color: var(--color-primary, #005461);
         border-color: #dee2e6;
     }
 
     .pagination .page-item.active .page-link.rugby-active {
-        background-color: #1e4d2b;
-        border-color: #1e4d2b;
+        background-color: var(--color-primary, #005461);
+        border-color: var(--color-primary, #005461);
         color: white;
     }
 
     .pagination .page-link:hover {
-        color: #28a745;
+        color: var(--color-accent, #4B9DA9);
         background-color: #f8f9fa;
         border-color: #dee2e6;
     }

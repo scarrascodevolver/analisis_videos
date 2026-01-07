@@ -1,16 +1,16 @@
 @extends('layouts.auth')
 
-@section('title', 'Recuperar Contraseña - Los Troncos')
+@section('title', 'Recuperar Contraseña - RugbyHub')
 
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
             <div class="logo-icon">
-                <img src="{{ asset('logo_lt.png') }}" alt="Los Troncos Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <i class="fas fa-football-ball fa-3x"></i>
             </div>
-            <h3>Los Troncos</h3>
-            <p>Sistema de Análisis Rugby</p>
+            <h3>RugbyHub</h3>
+            <p>Sistema de Análisis de Video para Rugby</p>
         </div>
 
         <div class="auth-body">

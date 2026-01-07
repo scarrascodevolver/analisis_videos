@@ -22,7 +22,6 @@ class AdminController extends Controller
         // Contadores simples para las tarjetas (filtrados por organización)
         $stats = [
             'categories' => Category::count(),
-            'teams' => Team::count(),
             'situations' => RugbySituation::count(),
             'users' => $currentOrg ? $currentOrg->users()->count() : 0,
         ];

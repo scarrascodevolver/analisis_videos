@@ -116,16 +116,16 @@
 }
 
 .player-card:hover {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
     background: #f8fffe;
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(30, 77, 43, 0.15);
+    box-shadow: 0 8px 25px rgba(0, 84, 97, 0.15);
 }
 
 .player-card.selected {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
     background: #e8f5e8;
-    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.2);
 }
 
 /* Avatar centrado más grande */
@@ -133,14 +133,14 @@
     width: 85px;
     height: 85px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e4d2b, #28a745);
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 1.8rem;
-    box-shadow: 0 4px 10px rgba(30, 77, 43, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 84, 97, 0.3);
 }
 
 /* Nombre del jugador */
@@ -166,7 +166,7 @@
 }
 
 .position-text {
-    color: #1e4d2b;
+    color: var(--color-primary, #005461);
     font-size: 0.95rem;
     font-weight: 500;
     margin-left: 5px;
@@ -181,18 +181,18 @@
 
 /* Badges nuevos */
 .category-badge-new {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: linear-gradient(135deg, var(--color-accent, #4B9DA9), #20c997);
     color: white;
     border-radius: 20px;
     padding: 8px 16px;
     font-size: 0.85rem;
     font-weight: 600;
     display: inline-block;
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 183, 181, 0.3);
 }
 
 .video-count-badge-new {
-    background: linear-gradient(135deg, #1e4d2b, #2d6a3e);
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-primary-hover, #003d4a));
     color: white;
     border-radius: 20px;
     padding: 10px 16px;
@@ -200,7 +200,7 @@
     font-weight: 600;
     display: inline-block;
     min-width: 120px;
-    box-shadow: 0 3px 10px rgba(30, 77, 43, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 84, 97, 0.3);
 }
 
 /* Iconos rugby */
@@ -212,7 +212,7 @@
 
 .video-thumbnail {
     height: 120px;
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     border-radius: 8px;
     position: relative;
     overflow: hidden;
@@ -238,12 +238,12 @@
 }
 
 .spinner-border.text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 
 .form-control:focus {
-    border-color: #1e4d2b;
-    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+    border-color: var(--color-primary, #005461);
+    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
 }
 </style>
 @endsection
@@ -439,18 +439,18 @@ $(document).ready(function() {
 
 <style>
 .text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 
 .btn-rugby {
-    background-color: #1e4d2b;
-    border-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: white;
 }
 
 .btn-rugby:hover {
-    background-color: #164023;
-    border-color: #164023;
+    background-color: var(--color-primary-hover, #003d4a);
+    border-color: var(--color-primary-hover, #003d4a);
     color: white;
 }
 </style>

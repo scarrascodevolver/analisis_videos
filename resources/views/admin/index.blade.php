@@ -24,22 +24,6 @@
         </div>
     </div>
 
-    <!-- Equipos -->
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-primary">
-            <div class="inner">
-                <h3>{{ $stats['teams'] }}</h3>
-                <p>Equipos</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-shield-alt"></i>
-            </div>
-            <a href="{{ route('admin.teams.index') }}" class="small-box-footer">
-                Gestionar <i class="fas fa-arrow-circle-right"></i>
-            </a>
-        </div>
-    </div>
-
     <!-- Situaciones Rugby -->
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning">
@@ -86,14 +70,6 @@
                         <p class="text-muted">Gestiona las categorías de usuario (Juveniles, Adulta, Seniors, etc.). Estas se asignan a jugadores y determinan qué videos pueden ver.</p>
                         <a href="{{ route('admin.categories.index') }}" class="btn btn-rugby btn-sm mb-3">
                             <i class="fas fa-cog"></i> Gestionar Categorías
-                        </a>
-                    </div>
-
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-shield-alt text-primary"></i> Equipos</h5>
-                        <p class="text-muted">Administra equipos propios y rivales. Los videos se asocian con equipos para facilitar análisis y búsquedas.</p>
-                        <a href="{{ route('admin.teams.index') }}" class="btn btn-primary btn-sm mb-3">
-                            <i class="fas fa-cog"></i> Gestionar Equipos
                         </a>
                     </div>
 

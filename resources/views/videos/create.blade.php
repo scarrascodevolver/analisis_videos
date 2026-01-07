@@ -405,7 +405,7 @@ $(document).ready(function() {
         // Show progress
         $('#uploadProgress').show();
         $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Subiendo...');
-        $('#progressBar').removeClass('bg-success bg-danger bg-primary bg-warning').css('background-color', '#1e4d2b');
+        $('#progressBar').removeClass('bg-success bg-danger bg-primary bg-warning').css('background-color', 'var(--color-primary, #005461)');
         
         // AJAX upload with progress
         uploadWithProgress(formData);
@@ -461,7 +461,7 @@ $(document).ready(function() {
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
-                    $('#progressBar').css('background-color', '#28a745'); // Verde éxito
+                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)'); // Verde éxito
                     $('#progressText').text('¡Completado!');
                     $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano. Estará listo para análisis en 45-60 minutos.</small>');
 
@@ -475,7 +475,7 @@ $(document).ready(function() {
                     }, 3500);
                 } catch (e) {
                     // If not JSON, assume it's a redirect response
-                    $('#progressBar').css('background-color', '#28a745'); // Verde éxito
+                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)'); // Verde éxito
                     $('#progressText').text('¡Completado!');
                     $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
 
@@ -646,18 +646,18 @@ $(document).ready(function() {
 }
 
 .form-check:hover {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
     background: #f0f4f1;
 }
 
 .form-check-input:checked + .form-check-label {
-    color: #1e4d2b;
+    color: var(--color-primary, #005461);
 }
 
 .form-check:has(.form-check-input:checked) {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
     background: #e8f5e8;
-    box-shadow: 0 2px 4px rgba(30, 77, 43, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 84, 97, 0.1);
 }
 
 .form-check-label {
@@ -681,13 +681,13 @@ $(document).ready(function() {
 #player-assignment-section {
     padding: 1rem;
     background: #f8f9fa;
-    border: 2px solid #1e4d2b;
+    border: 2px solid var(--color-primary, #005461);
     border-radius: 8px;
     margin-top: 1rem;
 }
 
 #player-assignment-section label {
-    color: #1e4d2b;
+    color: var(--color-primary, #005461);
     font-weight: 600;
 }
 </style>

@@ -20,10 +20,10 @@
             @else
                 {{-- Sin código: mostrar logo genérico --}}
                 <div class="logo-icon">
-                    <i class="fas fa-football-ball fa-3x text-success"></i>
+                    <i class="fas fa-football-ball fa-3x"></i>
                 </div>
-                <h3>Rugby Hub</h3>
-                <p>Registro de Jugador</p>
+                <h3>RugbyHub</h3>
+                <p>Sistema de Análisis de Video para Rugby</p>
             @endif
         </div>
         
@@ -637,8 +637,8 @@ $(document).ready(function() {
 }
 
 .rugby-select:focus {
-    border-color: #1e4d2b;
-    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+    border-color: var(--color-primary, #005461);
+    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
     outline: none;
 }
 
@@ -660,7 +660,7 @@ $(document).ready(function() {
 
 .rugby-select optgroup {
     font-weight: bold !important;
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
     font-size: 13px !important;
     padding: 8px 15px !important;
     background-color: #f1f8f1;
@@ -672,7 +672,7 @@ $(document).ready(function() {
     color: #333 !important;
     padding-left: 25px !important;
     background-color: #fff;
-    border-left: 3px solid #1e4d2b;
+    border-left: 3px solid var(--color-primary, #005461);
 }
 
 /* Better label visibility */
@@ -693,8 +693,8 @@ $(document).ready(function() {
 }
 
 .form-control:focus {
-    border-color: #1e4d2b;
-    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+    border-color: var(--color-primary, #005461);
+    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
 }
 
 /* Additional fixes for select visibility */
@@ -734,13 +734,13 @@ select.rugby-select option {
 }
 
 .rugby-select:focus {
-    border-color: #1e4d2b !important;
+    border-color: var(--color-primary, #005461) !important;
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25) !important;
 }
 
 .rugby-select:hover {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
 }
 
 /* Para navegadores que soportan personalización de options */
@@ -751,7 +751,7 @@ select.rugby-select option {
 }
 
 .rugby-select option:checked {
-    background-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
     color: white;
 }
 
@@ -761,12 +761,12 @@ select.rugby-select option {
 }
 
 .rugby-select::-webkit-scrollbar-thumb {
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     border-radius: 6px;
 }
 
 .rugby-select::-webkit-scrollbar-thumb:hover {
-    background: #164023;
+    background: var(--color-primary-hover, #003d4a);
 }
 
 /* Alternativa: Crear un select personalizado con div + JS (más complejo) */
@@ -779,7 +779,7 @@ select.rugby-select option {
 }
 
 .password-toggle:hover {
-    background-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
     color: white !important;
 }
 
@@ -797,7 +797,7 @@ select.rugby-select option {
     height: 100px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #1e4d2b;
+    border: 3px solid var(--color-primary, #005461);
     margin: 0 auto;
     display: block;
     transition: all 0.3s ease;
@@ -805,7 +805,7 @@ select.rugby-select option {
 
 .avatar-preview-register:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(30, 77, 43, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 84, 97, 0.3);
 }
 
 .custom-file-label {
@@ -816,17 +816,17 @@ select.rugby-select option {
 }
 
 .custom-file-label:hover {
-    border-color: #1e4d2b;
+    border-color: var(--color-primary, #005461);
     background-color: #f8f9fa;
 }
 
 .custom-file-input:focus ~ .custom-file-label {
-    border-color: #1e4d2b;
-    box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+    border-color: var(--color-primary, #005461);
+    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
 }
 
 .custom-file-label::after {
-    background-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
     color: white;
     border-radius: 0 6px 6px 0;
     content: "Buscar";

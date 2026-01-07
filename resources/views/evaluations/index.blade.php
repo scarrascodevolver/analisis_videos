@@ -11,7 +11,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: var(--color-primary, #005461); color: white;">
                     <h3 class="card-title mb-0">
                         <i class="fas fa-users"></i> Evaluación de Jugadores
                     </h3>
@@ -23,7 +23,7 @@
                         <li class="nav-item flex-fill">
                             <a class="nav-link active text-center" id="forwards-tab" data-toggle="tab" href="#forwards" role="tab">
                                 <i class="fas fa-shield-alt"></i> <span class="d-none d-sm-inline">Forwards</span><span class="d-inline d-sm-none">Fwd</span>
-                                <span class="badge badge-pill" style="background-color: #1e4d2b; color: white;">
+                                <span class="badge badge-pill" style="background-color: var(--color-primary, #005461); color: white;">
                                     {{ $forwardsProgress }}/{{ count($forwards) }}
                                 </span>
                             </a>
@@ -31,7 +31,7 @@
                         <li class="nav-item flex-fill">
                             <a class="nav-link text-center" id="backs-tab" data-toggle="tab" href="#backs" role="tab">
                                 <i class="fas fa-running"></i> <span class="d-none d-sm-inline">Backs</span><span class="d-inline d-sm-none">Bks</span>
-                                <span class="badge badge-pill" style="background-color: #1e4d2b; color: white;">
+                                <span class="badge badge-pill" style="background-color: var(--color-primary, #005461); color: white;">
                                     {{ $backsProgress }}/{{ count($backs) }}
                                 </span>
                             </a>
@@ -45,7 +45,7 @@
                             @if($forwardsProgress > 0)
                             <div class="progress mb-3" style="height: 25px;">
                                 <div class="progress-bar"
-                                     style="background-color: #1e4d2b; width: {{ count($forwards) > 0 ? ($forwardsProgress / count($forwards) * 100) : 0 }}%">
+                                     style="background-color: var(--color-primary, #005461); width: {{ count($forwards) > 0 ? ($forwardsProgress / count($forwards) * 100) : 0 }}%">
                                     {{ count($forwards) > 0 ? round($forwardsProgress / count($forwards) * 100) : 0 }}%
                                 </div>
                             </div>
@@ -70,7 +70,7 @@
                                             <div style="min-width: 0; flex: 1;">
                                                 <div class="player-name-truncate">
                                                     @if($player->evaluated)
-                                                        <span style="font-size: 1.2em; color: #1e4d2b;">✅</span>
+                                                        <span style="font-size: 1.2em; color: var(--color-primary, #005461);">✅</span>
                                                     @else
                                                         <span style="font-size: 1.2em;">☐</span>
                                                     @endif
@@ -94,7 +94,7 @@
                                             @else
                                                 <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                    class="btn btn-sm text-white"
-                                                   style="background-color: #1e4d2b;">
+                                                   style="background-color: var(--color-primary, #005461);">
                                                     Evaluar
                                                 </a>
                                             @endif
@@ -103,7 +103,7 @@
                                 </div>
                                 @endforeach
                             @else
-                                <div class="alert" style="background-color: #f0f0f0; border-left: 3px solid #1e4d2b;">
+                                <div class="alert" style="background-color: #f0f0f0; border-left: 3px solid var(--color-primary, #005461);">
                                     <i class="fas fa-info-circle"></i> No hay forwards en tu categoría para evaluar.
                                 </div>
                             @endif
@@ -114,7 +114,7 @@
                             @if($backsProgress > 0)
                             <div class="progress mb-3" style="height: 25px;">
                                 <div class="progress-bar"
-                                     style="background-color: #1e4d2b; width: {{ count($backs) > 0 ? ($backsProgress / count($backs) * 100) : 0 }}%">
+                                     style="background-color: var(--color-primary, #005461); width: {{ count($backs) > 0 ? ($backsProgress / count($backs) * 100) : 0 }}%">
                                     {{ count($backs) > 0 ? round($backsProgress / count($backs) * 100) : 0 }}%
                                 </div>
                             </div>
@@ -139,7 +139,7 @@
                                             <div style="min-width: 0; flex: 1;">
                                                 <div class="player-name-truncate">
                                                     @if($player->evaluated)
-                                                        <span style="font-size: 1.2em; color: #1e4d2b;">✅</span>
+                                                        <span style="font-size: 1.2em; color: var(--color-primary, #005461);">✅</span>
                                                     @else
                                                         <span style="font-size: 1.2em;">☐</span>
                                                     @endif
@@ -163,7 +163,7 @@
                                             @else
                                                 <a href="{{ url('/evaluacion/wizard/' . $player->id) }}"
                                                    class="btn btn-sm text-white"
-                                                   style="background-color: #1e4d2b;">
+                                                   style="background-color: var(--color-primary, #005461);">
                                                     Evaluar
                                                 </a>
                                             @endif
@@ -172,7 +172,7 @@
                                 </div>
                                 @endforeach
                             @else
-                                <div class="alert" style="background-color: #f0f0f0; border-left: 3px solid #1e4d2b;">
+                                <div class="alert" style="background-color: #f0f0f0; border-left: 3px solid var(--color-primary, #005461);">
                                     <i class="fas fa-info-circle"></i> No hay backs en tu categoría para evaluar.
                                 </div>
                             @endif
@@ -200,10 +200,10 @@
 }
 
 .nav-tabs .nav-link.active {
-    color: #1e4d2b;
+    color: var(--color-primary, #005461);
     font-weight: bold;
     border-color: transparent;
-    border-bottom-color: #1e4d2b;
+    border-bottom-color: var(--color-primary, #005461);
     background-color: transparent;
 }
 

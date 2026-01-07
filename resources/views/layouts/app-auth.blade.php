@@ -16,50 +16,60 @@
 
     <!-- Rugby Custom Styles -->
     <style>
+        :root {
+            --color-primary: #005461;
+            --color-primary-hover: #003d4a;
+            --color-secondary: #018790;
+            --color-accent: #4B9DA9;
+            --color-bg: #F4F4F4;
+            --color-bg-card: #FFFFFF;
+            --color-text: #333333;
+        }
+
         .rugby-green {
-            background-color: #1e4d2b !important;
+            background-color: var(--color-primary) !important;
         }
-        
+
         .text-rugby {
-            color: #1e4d2b !important;
+            color: var(--color-primary) !important;
         }
-        
+
         .btn-rugby {
-            background-color: #1e4d2b;
-            border-color: #1e4d2b;
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
             color: white;
         }
-        
+
         .btn-rugby:hover {
-            background-color: #2d5a3a;
-            border-color: #2d5a3a;
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
             color: white;
         }
-        
+
         .login-page, .register-page {
-            background: linear-gradient(135deg, #1e4d2b 0%, #2d5a3a 50%, #4a7c59 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 50%, var(--color-secondary) 100%);
             min-height: 100vh;
         }
-        
+
         .card {
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             border-radius: 10px;
         }
-        
+
         .card-outline.card-primary {
-            border-top: 3px solid #1e4d2b;
+            border-top: 3px solid var(--color-primary);
         }
-        
+
         .register-box {
             width: 450px;
             margin: 3% auto;
         }
-        
+
         .login-box {
             width: 360px;
             margin: 7% auto;
         }
-        
+
         .rugby-ball-bg {
             position: fixed;
             top: 50%;
@@ -70,20 +80,20 @@
             z-index: -1;
             color: white;
         }
-        
+
         .form-control:focus {
-            border-color: #1e4d2b;
-            box-shadow: 0 0 0 0.2rem rgba(30, 77, 43, 0.25);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
         }
-        
+
         .btn-primary {
-            background-color: #1e4d2b;
-            border-color: #1e4d2b;
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
         }
-        
+
         .btn-primary:hover {
-            background-color: #2d5a3a;
-            border-color: #2d5a3a;
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
         }
 
         .rugby-logo {

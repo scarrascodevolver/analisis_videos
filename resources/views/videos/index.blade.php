@@ -250,14 +250,14 @@
 <style>
 /* Rugby badges */
 .badge-rugby {
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     color: white;
     font-size: 0.875em;
     font-weight: 500;
 }
 
 .badge-rugby-light {
-    background: #28a745;
+    background: var(--color-accent, #4B9DA9);
     color: white;
     font-size: 0.875em;
     font-weight: 500;
@@ -282,7 +282,7 @@
 
 /* Rugby button variations */
 .btn-rugby-light {
-    background: #28a745;
+    background: var(--color-accent, #4B9DA9);
     border: none;
     color: white;
     border-radius: 6px;
@@ -290,12 +290,12 @@
 }
 
 .btn-rugby-light:hover {
-    background: #218838;
+    background: var(--color-primary-hover, #003d4a);
     color: white;
 }
 
 .btn-rugby-dark {
-    background: #0d2818;
+    background: var(--color-primary-hover, #003d4a);
     border: none;
     color: white;
     border-radius: 6px;
@@ -303,21 +303,21 @@
 }
 
 .btn-rugby-dark:hover {
-    background: #1a4028;
+    background: var(--color-primary, #005461);
     color: white;
 }
 
 .btn-rugby-outline {
     background: transparent;
-    border: 2px solid #1e4d2b;
-    color: #1e4d2b;
+    border: 2px solid var(--color-primary, #005461);
+    color: var(--color-primary, #005461);
     border-radius: 6px;
     font-weight: 500;
 }
 
 .btn-rugby-outline:hover {
-    background: #1e4d2b;
-    border-color: #1e4d2b;
+    background: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: white;
 }
 
@@ -349,14 +349,14 @@
 
 /* Rugby thumbnail placeholder */
 .rugby-thumbnail {
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     position: relative;
 }
 
 .play-button-circle {
     width: 50px;
     height: 50px;
-    background: #28a745;
+    background: var(--color-accent, #4B9DA9);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -367,7 +367,7 @@
 
 .rugby-thumbnail:hover .play-button-circle {
     transform: scale(1.1);
-    background: #218838;
+    background: var(--color-primary-hover, #003d4a);
 }
 
 </style>

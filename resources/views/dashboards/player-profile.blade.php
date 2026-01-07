@@ -117,14 +117,14 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e4d2b, #28a745);
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 2.5rem;
-    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.3);
 }
 
 .info-item {
@@ -143,11 +143,11 @@
 }
 
 .text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 
 .spinner-border.text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 
 .video-card {
@@ -158,8 +158,8 @@
 
 .video-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(30, 77, 43, 0.15);
-    border-color: #1e4d2b;
+    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.15);
+    border-color: var(--color-primary, #005461);
 }
 
 .video-thumbnail-container {
@@ -167,7 +167,7 @@
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #1e4d2b, #28a745);
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
 }
 
 .video-thumbnail {
@@ -182,7 +182,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(30, 77, 43, 0.8);
+    background: rgba(0, 84, 97, 0.8);
     color: white;
     border-radius: 50%;
     width: 50px;
@@ -195,20 +195,20 @@
 }
 
 .video-card:hover .play-overlay {
-    background: rgba(30, 77, 43, 0.9);
+    background: rgba(0, 84, 97, 0.9);
     transform: translate(-50%, -50%) scale(1.1);
 }
 
 .btn-rugby {
-    background-color: #1e4d2b;
-    border-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: white;
     border-radius: 6px;
 }
 
 .btn-rugby:hover {
-    background-color: #164023;
-    border-color: #164023;
+    background-color: var(--color-primary-hover, #003d4a);
+    border-color: var(--color-primary-hover, #003d4a);
     color: white;
 }
 
@@ -219,8 +219,8 @@
 }
 
 .stats-card:hover {
-    border-color: #1e4d2b;
-    box-shadow: 0 2px 8px rgba(30, 77, 43, 0.1);
+    border-color: var(--color-primary, #005461);
+    box-shadow: 0 2px 8px rgba(0, 84, 97, 0.1);
 }
 </style>
 @endsection

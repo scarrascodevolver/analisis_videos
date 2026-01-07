@@ -14,7 +14,7 @@
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #1e4d2b;
+    border: 3px solid var(--color-primary, #005461);
 }
 
 .file-upload-wrapper {
@@ -54,16 +54,16 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    border: 4px solid #1e4d2b;
+    border: 4px solid var(--color-primary, #005461);
     background: #fff;
     font-size: 24px;
-    color: #1e4d2b;
+    color: var(--color-primary, #005461);
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .capture-btn:hover {
-    background: #1e4d2b;
+    background: var(--color-primary, #005461);
     color: #fff;
 }
 
@@ -88,26 +88,26 @@
 
 /* Rugby theme buttons */
 .btn-rugby {
-    background-color: #1e4d2b;
-    border-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: #fff;
 }
 
 .btn-rugby:hover {
-    background-color: #155a28;
-    border-color: #155a28;
+    background-color: var(--color-primary-hover, #003d4a);
+    border-color: var(--color-primary-hover, #003d4a);
     color: #fff;
 }
 
 .btn-outline-rugby {
-    color: #1e4d2b;
-    border-color: #1e4d2b;
+    color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     background-color: transparent;
 }
 
 .btn-outline-rugby:hover {
-    background-color: #1e4d2b;
-    border-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: #fff;
 }
 @endsection

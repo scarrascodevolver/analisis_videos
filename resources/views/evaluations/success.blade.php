@@ -67,6 +67,6 @@
 
 <style>
 .text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 </style>

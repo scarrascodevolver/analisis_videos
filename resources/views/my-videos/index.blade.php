@@ -115,7 +115,7 @@
 
     /* Rugby badge light */
     .badge-rugby-light {
-        background: #28a745;
+        background: var(--color-accent, #4B9DA9);
         color: white;
         font-size: 0.875em;
         font-weight: 500;
@@ -123,19 +123,19 @@
 
     /* Rugby thumbnail placeholder */
     .rugby-thumbnail {
-        background: #1e4d2b;
+        background: var(--color-primary, #005461);
         position: relative;
         transition: all 0.3s ease;
     }
 
     .rugby-thumbnail:hover {
-        background: #2d5a3d;
+        background: var(--color-primary-hover, #003d4a);
     }
 
     .play-button-circle {
         width: 60px;
         height: 60px;
-        background: #28a745;
+        background: var(--color-accent, #4B9DA9);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -147,7 +147,7 @@
 
     .rugby-thumbnail:hover .play-button-circle {
         transform: scale(1.1);
-        background: #218838;
+        background: var(--color-secondary, #018790);
     }
 
     /* Video thumbnail improvements */

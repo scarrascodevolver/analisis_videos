@@ -35,7 +35,7 @@
                 <span class="text-rugby font-weight-bold" id="progressText">Paso 1 de 5</span>
             </div>
             <div class="progress" style="height: 10px; background-color: #e0e0e0;">
-                <div class="progress-bar" role="progressbar" style="width: 20%; background-color: #7cb342;" id="progressBarFill"></div>
+                <div class="progress-bar" role="progressbar" style="width: 20%; background-color: var(--color-accent, #4B9DA9);" id="progressBarFill"></div>
             </div>
         </div>
 
@@ -503,7 +503,7 @@ $(document).ready(function() {
                 $badge.css({'color': '#fff', 'background-color': '#6c757d'}); // Gris con texto blanco
             } else {
                 $badge.addClass('bg-rugby');
-                $badge.css({'color': '#fff', 'background-color': '#1e4d2b'}); // Verde con texto blanco
+                $badge.css({'color': '#fff', 'background-color': 'var(--color-primary, #005461)'}); // Verde con texto blanco
             }
         } else {
             // Normal: negro bajo → verde alto
@@ -515,7 +515,7 @@ $(document).ready(function() {
                 $badge.css({'color': '#fff', 'background-color': '#6c757d'}); // Gris con texto blanco
             } else {
                 $badge.addClass('bg-rugby');
-                $badge.css({'color': '#fff', 'background-color': '#1e4d2b'}); // Verde con texto blanco
+                $badge.css({'color': '#fff', 'background-color': 'var(--color-primary, #005461)'}); // Verde con texto blanco
             }
         }
     });
@@ -527,49 +527,49 @@ $(document).ready(function() {
 <style>
 /* Colores del club rugby */
 .bg-rugby {
-    background-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
     color: #fff !important;
 }
 
 .text-rugby {
-    color: #1e4d2b !important;
+    color: var(--color-primary, #005461) !important;
 }
 
 .btn-rugby {
-    background-color: #1e4d2b;
-    border-color: #1e4d2b;
+    background-color: var(--color-primary, #005461);
+    border-color: var(--color-primary, #005461);
     color: white;
 }
 
 .btn-rugby:hover {
-    background-color: #163d22;
-    border-color: #163d22;
+    background-color: var(--color-primary-hover, #003d4a);
+    border-color: var(--color-primary-hover, #003d4a);
 }
 
 /* Slider colores Los Troncos (verde claro → verde oscuro) */
 .custom-range::-webkit-slider-thumb {
     background-color: #000000; /* Negro (círculo) */
-    border: 2px solid #1e4d2b; /* Borde verde */
+    border: 2px solid var(--color-primary, #005461); /* Borde verde */
 }
 
 .custom-range::-moz-range-thumb {
     background-color: #000000;
-    border: 2px solid #1e4d2b;
+    border: 2px solid var(--color-primary, #005461);
 }
 
 .custom-range::-ms-thumb {
     background-color: #000000;
-    border: 2px solid #1e4d2b;
+    border: 2px solid var(--color-primary, #005461);
 }
 
 .custom-range::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, #7cb342 0%, #1e4d2b 100%); /* Verde claro → Verde oscuro */
+    background: linear-gradient(to right, var(--color-accent, #4B9DA9) 0%, var(--color-primary, #005461) 100%); /* Verde claro → Verde oscuro */
     height: 8px;
     border-radius: 4px;
 }
 
 .custom-range::-moz-range-track {
-    background: linear-gradient(to right, #7cb342 0%, #1e4d2b 100%);
+    background: linear-gradient(to right, var(--color-accent, #4B9DA9) 0%, var(--color-primary, #005461) 100%);
     height: 8px;
     border-radius: 4px;
 }

@@ -11,7 +11,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header" style="background-color: #1e4d2b; color: white;">
+                <div class="card-header" style="background-color: var(--color-primary, #005461); color: white;">
                     <h3 class="card-title mb-0">
                         <i class="fas {{ Auth::user()->role === 'jugador' ? 'fa-chart-line' : 'fa-chart-bar' }}"></i>
                         {{ Auth::user()->role === 'jugador' ? 'Mis Resultados de Evaluación' : 'Resultados de Evaluaciones' }}
@@ -64,7 +64,7 @@
                     @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <div class="card" style="border: 2px solid #1e4d2b;">
+                            <div class="card" style="border: 2px solid var(--color-primary, #005461);">
                                 <div class="card-body p-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-8">
@@ -92,7 +92,7 @@
                     @if($playersStats->count() > 0)
                         <div class="table-responsive">
                             <table id="resultsTable" class="table table-striped table-hover">
-                                <thead style="background-color: #1e4d2b; color: white;">
+                                <thead style="background-color: var(--color-primary, #005461); color: white;">
                                     <tr>
                                         @if(in_array(Auth::user()->role, ['entrenador', 'analista']))
                                         <th>#</th>
@@ -133,7 +133,7 @@
                                         <td class="text-center">
                                             @if($stat['evaluations_count'] > 0)
                                                 <span class="badge badge-lg" style="
-                                                    background-color: {{ $stat['average_score'] >= 7 ? '#1e4d2b' : ($stat['average_score'] >= 5 ? '#ffc107' : '#dc3545') }};
+                                                    background-color: {{ $stat['average_score'] >= 7 ? '#005461' : ($stat['average_score'] >= 5 ? '#ffc107' : '#dc3545') }};
                                                     color: white;
                                                     font-size: 1.1rem;
                                                     padding: 0.4rem 0.8rem;
@@ -147,7 +147,7 @@
                                         <td class="text-center">
                                             @if($stat['evaluations_count'] > 0)
                                                 <div>
-                                                    <strong style="color: {{ $stat['total_points_percentage'] >= 70 ? '#1e4d2b' : ($stat['total_points_percentage'] >= 50 ? '#ffc107' : '#dc3545') }};">
+                                                    <strong style="color: {{ $stat['total_points_percentage'] >= 70 ? '#005461' : ($stat['total_points_percentage'] >= 50 ? '#ffc107' : '#dc3545') }};">
                                                         {{ $stat['total_points_avg'] }}/{{ $stat['total_points_max'] }}
                                                     </strong>
                                                     <br>
@@ -166,7 +166,7 @@
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar"
                                                      style="width: {{ $stat['completion_percentage'] }}%;
-                                                            background-color: {{ $stat['completion_percentage'] >= 75 ? '#1e4d2b' : ($stat['completion_percentage'] >= 50 ? '#ffc107' : '#dc3545') }};">
+                                                            background-color: {{ $stat['completion_percentage'] >= 75 ? '#005461' : ($stat['completion_percentage'] >= 50 ? '#ffc107' : '#dc3545') }};">
                                                     {{ $stat['completion_percentage'] }}%
                                                 </div>
                                             </div>
@@ -175,7 +175,7 @@
                                             @if($stat['evaluations_count'] > 0)
                                                 <a href="{{ route('evaluations.show', $stat['player']->id) }}"
                                                    class="btn btn-sm text-white"
-                                                   style="background-color: #1e4d2b;">
+                                                   style="background-color: var(--color-primary, #005461);">
                                                     <i class="fas fa-eye"></i> Ver Detalle
                                                 </a>
                                             @else
@@ -188,7 +188,7 @@
                                     <div class="modal fade" id="detailModal{{ $stat['player']->id }}" tabindex="-1">
                                         <div class="modal-dialog modal-lg">
                                             <div class="modal-content">
-                                                <div class="modal-header" style="background-color: #1e4d2b; color: white;">
+                                                <div class="modal-header" style="background-color: var(--color-primary, #005461); color: white;">
                                                     <h5 class="modal-title">
                                                         Evaluaciones de {{ $stat['player']->name }}
                                                     </h5>
@@ -198,7 +198,7 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <p><strong>Promedio General:</strong>
-                                                        <span class="badge" style="background-color: #1e4d2b; color: white; font-size: 1.2rem;">
+                                                        <span class="badge" style="background-color: var(--color-primary, #005461); color: white; font-size: 1.2rem;">
                                                             {{ number_format($stat['average_score'], 2) }}
                                                         </span>
                                                     </p>
@@ -264,15 +264,15 @@
 }
 
 .dt-button {
-    background-color: #1e4d2b !important;
-    border-color: #1e4d2b !important;
+    background-color: var(--color-primary, #005461) !important;
+    border-color: var(--color-primary, #005461) !important;
     color: white !important;
     margin-right: 0.5rem;
 }
 
 .dt-button:hover {
-    background-color: #154020 !important;
-    border-color: #154020 !important;
+    background-color: var(--color-primary-hover, #003d4a) !important;
+    border-color: var(--color-primary-hover, #003d4a) !important;
 }
 
 /* Ajustar el wrapper de DataTables */
@@ -364,13 +364,13 @@ $(document).ready(function() {
                 },
                 customize: function(doc) {
                     doc.styles.title = {
-                        color: '#1e4d2b',
+                        color: '#005461',
                         fontSize: '16',
                         alignment: 'center',
                         bold: true
                     };
                     doc.styles.tableHeader = {
-                        fillColor: '#1e4d2b',
+                        fillColor: '#005461',
                         color: 'white',
                         bold: true
                     };
@@ -389,7 +389,7 @@ $(document).ready(function() {
                         .css('font-size', '10pt')
                         .prepend(
                             '<div style="text-align:center; margin-bottom: 20px;">' +
-                            '<h2 style="color: #1e4d2b;">Club Los Troncos</h2>' +
+                            '<h2 style="color: #005461;">Club Los Troncos</h2>' +
                             '</div>'
                         );
 
