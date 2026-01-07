@@ -56,12 +56,23 @@ class SuperAdminController extends Controller
      */
     public function storeOrganization(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:organizations,slug',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'is_active' => 'boolean',
-        ]);
+            'create_admin' => 'boolean',
+        ];
+
+        // Si se quiere crear admin, validar campos adicionales
+        if ($request->boolean('create_admin')) {
+            $rules['admin_name'] = 'required|string|max:255';
+            $rules['admin_email'] = 'required|email|unique:users,email';
+            $rules['admin_password'] = 'nullable|string|min:8';
+            $rules['admin_role'] = 'required|in:analista,entrenador,staff';
+        }
+
+        $validated = $request->validate($rules);
 
         // Generar slug si no se proporciona
         $slug = $validated['slug'] ?? Str::slug($validated['name']);
@@ -85,8 +96,37 @@ class SuperAdminController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        $message = "Organización '{$organization->name}' creada exitosamente.";
+        $generatedPassword = null;
+
+        // Crear admin si se solicitó
+        if ($request->boolean('create_admin')) {
+            // Generar contraseña si no se proporcionó
+            $password = $validated['admin_password'] ?? Str::random(12);
+            $generatedPassword = empty($validated['admin_password']) ? $password : null;
+
+            $admin = User::create([
+                'name' => $validated['admin_name'],
+                'email' => $validated['admin_email'],
+                'password' => bcrypt($password),
+                'role' => $validated['admin_role'],
+            ]);
+
+            // Asignar a la organización como admin
+            $organization->users()->attach($admin->id, [
+                'role' => $validated['admin_role'],
+                'is_current' => true,
+                'is_org_admin' => true,
+            ]);
+
+            $message .= " Admin '{$admin->name}' creado.";
+            if ($generatedPassword) {
+                $message .= " Contraseña generada: {$generatedPassword}";
+            }
+        }
+
         return redirect()->route('super-admin.organizations')
-            ->with('success', "Organización '{$organization->name}' creada exitosamente.");
+            ->with('success', $message);
     }
 
     /**
@@ -108,7 +148,7 @@ class SuperAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('organizations')->ignore($organization->id)],
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'is_active' => 'boolean',
         ]);
 
@@ -163,43 +203,94 @@ class SuperAdminController extends Controller
      */
     public function assignAdminForm(Organization $organization)
     {
-        // Usuarios que no están en esta organización
-        $availableUsers = User::whereDoesntHave('organizations', function ($query) use ($organization) {
-            $query->where('organizations.id', $organization->id);
-        })->orderBy('name')->get();
+        // Usuarios disponibles: no están en esta organización Y no son super_admin
+        $availableUsers = User::where('is_super_admin', false)
+            ->whereDoesntHave('organizations', function ($query) use ($organization) {
+                $query->where('organizations.id', $organization->id);
+            })
+            ->orderBy('name')
+            ->get();
 
-        // Usuarios actuales de la organización
-        $currentUsers = $organization->users()->orderBy('name')->get();
+        // Usuarios actuales: SOLO los que están en la tabla pivot para esta organización
+        $currentUsers = $organization->users()
+            ->orderBy('name')
+            ->get();
 
         return view('super-admin.organizations.assign-admin', compact('organization', 'availableUsers', 'currentUsers'));
     }
 
     /**
-     * Asignar administrador a una organización
+     * Asignar usuario existente a una organización
      */
     public function assignAdmin(Request $request, Organization $organization)
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'role' => 'required|in:admin,analista,entrenador,jugador,staff',
+            'role' => 'required|in:analista,entrenador,jugador,staff',
+            'is_org_admin' => 'boolean',
         ]);
 
         $user = User::findOrFail($validated['user_id']);
+        $isOrgAdmin = $request->boolean('is_org_admin');
 
         // Verificar si el usuario ya está en la organización
         if ($organization->users()->where('users.id', $user->id)->exists()) {
-            // Actualizar rol
+            // Actualizar rol y is_org_admin
             $organization->users()->updateExistingPivot($user->id, [
                 'role' => $validated['role'],
+                'is_org_admin' => $isOrgAdmin,
             ]);
-            $message = "Rol de '{$user->name}' actualizado a '{$validated['role']}' en '{$organization->name}'.";
+            $adminText = $isOrgAdmin ? ' (Admin de Org)' : '';
+            $message = "Rol de '{$user->name}' actualizado a '{$validated['role']}'{$adminText} en '{$organization->name}'.";
         } else {
             // Agregar usuario a la organización
             $organization->users()->attach($user->id, [
                 'role' => $validated['role'],
-                'is_current' => $user->organizations()->count() === 0, // Si es su primera org, hacerla current
+                'is_current' => $user->organizations()->count() === 0,
+                'is_org_admin' => $isOrgAdmin,
             ]);
-            $message = "Usuario '{$user->name}' agregado a '{$organization->name}' como '{$validated['role']}'.";
+            $adminText = $isOrgAdmin ? ' como Admin de Org' : '';
+            $message = "Usuario '{$user->name}' agregado a '{$organization->name}' como '{$validated['role']}'{$adminText}.";
+        }
+
+        return redirect()->route('super-admin.organizations.assign-admin', $organization)
+            ->with('success', $message);
+    }
+
+    /**
+     * Crear nuevo usuario y asignarlo a la organización
+     */
+    public function createUserForOrganization(Request $request, Organization $organization)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'nullable|string|min:8',
+            'role' => 'required|in:analista,entrenador,jugador,staff',
+            'is_org_admin' => 'boolean',
+        ]);
+
+        // Generar contraseña si no se proporcionó
+        $password = $validated['password'] ?? Str::random(12);
+        $generatedPassword = empty($validated['password']) ? $password : null;
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($password),
+            'role' => $validated['role'],
+        ]);
+
+        // Asignar a la organización
+        $organization->users()->attach($user->id, [
+            'role' => $validated['role'],
+            'is_current' => true,
+            'is_org_admin' => $request->boolean('is_org_admin'),
+        ]);
+
+        $message = "Usuario '{$user->name}' creado y asignado a '{$organization->name}'.";
+        if ($generatedPassword) {
+            $message .= " Contraseña generada: {$generatedPassword}";
         }
 
         return redirect()->route('super-admin.organizations.assign-admin', $organization)

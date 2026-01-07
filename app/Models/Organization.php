@@ -28,7 +28,7 @@ class Organization extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-                    ->withPivot(['role', 'is_current'])
+                    ->withPivot(['role', 'is_current', 'is_org_admin'])
                     ->withTimestamps();
     }
 

@@ -79,7 +79,7 @@
                                 @enderror
                             </div>
                             <small class="form-text text-muted">
-                                Formatos: JPEG, PNG, JPG, GIF, SVG. Máximo 2MB.
+                                Formatos: JPEG, PNG, JPG, GIF, SVG. Máximo 10MB.
                             </small>
                         </div>
 
@@ -98,6 +98,87 @@
                             <small class="form-text text-muted">
                                 Las organizaciones inactivas no permiten el acceso a sus usuarios.
                             </small>
+                        </div>
+
+                        <hr>
+
+                        <!-- Sección crear admin -->
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox"
+                                       class="custom-control-input"
+                                       id="create_admin"
+                                       name="create_admin"
+                                       value="1"
+                                       {{ old('create_admin') ? 'checked' : '' }}>
+                                <label class="custom-control-label" for="create_admin">
+                                    <strong>Crear administrador de la organización</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="admin_fields" style="{{ old('create_admin') ? '' : 'display: none;' }}">
+                            <div class="card bg-light mb-3">
+                                <div class="card-header">
+                                    <i class="fas fa-user-shield mr-2"></i>Datos del Administrador
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="admin_name">Nombre completo <span class="text-danger">*</span></label>
+                                        <input type="text"
+                                               class="form-control @error('admin_name') is-invalid @enderror"
+                                               id="admin_name"
+                                               name="admin_name"
+                                               value="{{ old('admin_name') }}"
+                                               placeholder="Nombre del administrador">
+                                        @error('admin_name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="admin_email">Email <span class="text-danger">*</span></label>
+                                        <input type="email"
+                                               class="form-control @error('admin_email') is-invalid @enderror"
+                                               id="admin_email"
+                                               name="admin_email"
+                                               value="{{ old('admin_email') }}"
+                                               placeholder="admin@ejemplo.com">
+                                        @error('admin_email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="admin_password">Contraseña</label>
+                                        <input type="text"
+                                               class="form-control @error('admin_password') is-invalid @enderror"
+                                               id="admin_password"
+                                               name="admin_password"
+                                               placeholder="Dejar vacío para generar automáticamente">
+                                        @error('admin_password')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">
+                                            Si se deja vacío, se generará una contraseña aleatoria y se mostrará una sola vez.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="admin_role">Rol funcional <span class="text-danger">*</span></label>
+                                        <select class="form-control @error('admin_role') is-invalid @enderror"
+                                                id="admin_role"
+                                                name="admin_role">
+                                            <option value="analista" {{ old('admin_role') == 'analista' ? 'selected' : '' }}>Analista</option>
+                                            <option value="entrenador" {{ old('admin_role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
+                                            <option value="staff" {{ old('admin_role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                        </select>
+                                        @error('admin_role')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <hr>
@@ -164,6 +245,12 @@
     document.querySelector('.custom-file-input').addEventListener('change', function() {
         const fileName = this.files[0]?.name || 'Seleccionar archivo...';
         this.nextElementSibling.textContent = fileName;
+    });
+
+    // Toggle admin fields
+    document.getElementById('create_admin').addEventListener('change', function() {
+        const adminFields = document.getElementById('admin_fields');
+        adminFields.style.display = this.checked ? 'block' : 'none';
     });
 </script>
 @endpush

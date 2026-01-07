@@ -13,10 +13,39 @@ use Yajra\DataTables\Facades\DataTables;
 class UserManagementController extends Controller
 {
     /**
+     * Obtener la organización actual del usuario logueado
+     */
+    private function getCurrentOrganization()
+    {
+        $user = auth()->user();
+
+        // Super admins no usan esta página - deben ir a /super-admin/users
+        if ($user->isSuperAdmin()) {
+            return null;
+        }
+
+        return $user->currentOrganization();
+    }
+
+    /**
      * Display a listing of users
      */
     public function index(Request $request)
     {
+        // Super admins deben usar /super-admin/users
+        if (auth()->user()->isSuperAdmin()) {
+            return redirect()->route('super-admin.users')
+                ->with('info', 'Como Super Admin, usa esta sección para gestionar usuarios.');
+        }
+
+        $currentOrg = $this->getCurrentOrganization();
+
+        // Usuario sin organización asignada
+        if (!$currentOrg) {
+            return redirect()->route('home')
+                ->with('error', 'No tienes una organización asignada. Contacta al administrador.');
+        }
+
         // Categorías para filtros
         $categories = Category::orderBy('name', 'asc')->get();
 
@@ -25,7 +54,7 @@ class UserManagementController extends Controller
             return $this->getUsersDataTable($request);
         }
 
-        return view('admin.users.index', compact('categories'));
+        return view('admin.users.index', compact('categories', 'currentOrg'));
     }
 
     /**
@@ -33,7 +62,20 @@ class UserManagementController extends Controller
      */
     private function getUsersDataTable(Request $request)
     {
+        $currentOrg = $this->getCurrentOrganization();
+
+        // Base query: solo usuarios de la organización actual
         $query = User::with(['profile.category']);
+
+        // Filtrar por organización actual (si el usuario tiene una)
+        if ($currentOrg) {
+            $query->whereHas('organizations', function($q) use ($currentOrg) {
+                $q->where('organizations.id', $currentOrg->id);
+            });
+        }
+
+        // Excluir super_admins de la lista
+        $query->where('is_super_admin', false);
 
         // Filtro por rol
         if ($request->filled('role')) {
@@ -135,8 +177,34 @@ class UserManagementController extends Controller
             'user_category_id' => $validated['user_category_id'] ?? null,
         ]);
 
+        // Asignar usuario a la organización actual del admin
+        $currentOrg = $this->getCurrentOrganization();
+        if ($currentOrg) {
+            $currentOrg->users()->attach($user->id, [
+                'role' => $validated['role'],
+                'is_current' => true,
+                'is_org_admin' => false,
+            ]);
+        }
+
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuario creado exitosamente.');
+    }
+
+    /**
+     * Verificar que el usuario pertenece a la organización actual
+     */
+    private function authorizeUserAccess(User $user)
+    {
+        $currentOrg = $this->getCurrentOrganization();
+        if (!$currentOrg) {
+            abort(403, 'No tienes una organización asignada.');
+        }
+
+        $belongsToOrg = $user->organizations()->where('organizations.id', $currentOrg->id)->exists();
+        if (!$belongsToOrg) {
+            abort(403, 'No tienes permiso para acceder a este usuario.');
+        }
     }
 
     /**
@@ -144,6 +212,8 @@ class UserManagementController extends Controller
      */
     public function show(User $user)
     {
+        $this->authorizeUserAccess($user);
+
         $user->load([
             'profile.category',
             'uploadedVideos.category',
@@ -160,6 +230,8 @@ class UserManagementController extends Controller
      */
     public function edit(User $user)
     {
+        $this->authorizeUserAccess($user);
+
         $categories = Category::all();
         $user->load('profile');
         return view('admin.users.edit', compact('user', 'categories'));
@@ -170,6 +242,8 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->authorizeUserAccess($user);
+
         // Limpiar campos de contraseña vacíos antes de validar
         if (empty($request->password)) {
             $request->merge(['password' => null, 'password_confirmation' => null]);
@@ -216,6 +290,8 @@ class UserManagementController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->authorizeUserAccess($user);
+
         // Prevent deleting own account
         if ($user->id === auth()->id()) {
             return redirect()->route('admin.users.index')

@@ -133,8 +133,17 @@ class User extends Authenticatable
     public function organizations()
     {
         return $this->belongsToMany(Organization::class)
-                    ->withPivot(['role', 'is_current'])
+                    ->withPivot(['role', 'is_current', 'is_org_admin'])
                     ->withTimestamps();
+    }
+
+    /**
+     * Verificar si el usuario es administrador de la organización actual
+     */
+    public function isOrgAdmin(): bool
+    {
+        $org = $this->currentOrganization();
+        return $org ? (bool) $org->pivot->is_org_admin : false;
     }
 
     /**
