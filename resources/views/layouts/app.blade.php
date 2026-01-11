@@ -12,10 +12,10 @@
             : asset('logohub.png');
         $orgFavicon = $currentOrganization && $currentOrganization->logo_path
             ? asset('storage/' . $currentOrganization->logo_path)
-            : asset('favicon.ico');
+            : asset('favicon.png');
     @endphp
     <title>@yield('page_title', 'Dashboard') - {{ $orgName }}</title>
-    <link rel="icon" type="image/x-icon" href="{{ $orgFavicon }}">
+    <link rel="icon" type="image/png" href="{{ $orgFavicon }}">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
