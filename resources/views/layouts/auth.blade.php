@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'RugbyHub - Sistema de Análisis de Video para Rugby')</title>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('logohub.png') }}">
 
     <!-- Bootstrap 4 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -79,7 +79,7 @@
         .auth-header {
             background: var(--color-primary);
             color: white;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
         }
 

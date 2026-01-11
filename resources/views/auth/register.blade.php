@@ -10,9 +10,9 @@
                 {{-- Código válido: mostrar logo y nombre del club --}}
                 <div class="logo-icon">
                     @if($organization->logo_path)
-                        <img src="{{ asset('storage/' . $organization->logo_path) }}" alt="{{ $organization->name }}" style="width: 80px; height: 80px; object-fit: contain;">
+                        <img src="{{ asset('storage/' . $organization->logo_path) }}" alt="{{ $organization->name }}" style="width: 130px; height: 130px; object-fit: contain;">
                     @else
-                        <i class="fas fa-shield-alt fa-3x text-success"></i>
+                        <img src="{{ asset('logohub.png') }}" alt="{{ $organization->name }}" style="width: 130px; height: 130px; object-fit: contain;">
                     @endif
                 </div>
                 <h3>{{ $organization->name }}</h3>
@@ -20,7 +20,7 @@
             @else
                 {{-- Sin código: mostrar logo genérico --}}
                 <div class="logo-icon">
-                    <i class="fas fa-football-ball fa-3x"></i>
+                    <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo" style="width: 130px; height: 130px; object-fit: contain;">
                 </div>
                 <h3>RugbyHub</h3>
                 <p>Sistema de Análisis de Video para Rugby</p>

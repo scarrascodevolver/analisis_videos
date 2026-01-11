@@ -36,10 +36,8 @@
     <div class="auth-card">
         <div class="auth-header">
             <div class="logo-icon">
-                <i class="fas fa-football-ball fa-3x"></i>
+                <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo" style="width: 234px; height: 234px; object-fit: contain;">
             </div>
-            <h3>RugbyHub</h3>
-            <p>Sistema de Análisis de Video para Rugby</p>
         </div>
         
         <div class="auth-body">

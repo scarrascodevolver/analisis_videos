@@ -9,7 +9,7 @@
         $orgName = $currentOrganization ? $currentOrganization->name : 'RugbyHub';
         $orgLogo = $currentOrganization && $currentOrganization->logo_path
             ? asset('storage/' . $currentOrganization->logo_path)
-            : asset('favicon.png');
+            : asset('logohub.png');
     @endphp
     <title>@yield('page_title', 'Dashboard') - {{ $orgName }}</title>
     <link rel="icon" type="image/png" href="{{ $orgLogo }}">
@@ -363,11 +363,9 @@
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
-            <a href="{{ route('videos.index') }}" class="brand-link">
+            <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-3">
                 <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo"
-                     class="brand-image img-circle elevation-3"
-                     style="width: 33px; height: 33px; object-fit: cover;">
-                <span class="brand-text" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; vertical-align: middle; margin-left: 10px;">{{ Str::limit($orgName, 15) }}</span>
+                     style="width: 120px; height: auto; object-fit: contain;">
             </a>
 
             <!-- Sidebar -->
