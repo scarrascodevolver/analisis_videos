@@ -6,27 +6,27 @@
     <style>
         .password-toggle-btn {
             border-left: 0 !important;
-            border-color: #ced4da;
-            background-color: #f8f9fa;
-            color: #6c757d;
+            border-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
             transition: all 0.2s ease;
         }
 
         .password-toggle-btn:hover {
-            background-color: var(--color-primary);
+            background-color: rgba(255, 255, 255, 0.35);
             color: white;
-            border-color: var(--color-primary);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
         .password-toggle-btn:focus {
             box-shadow: none;
-            border-color: var(--color-primary);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
         .password-toggle-btn.active {
-            background-color: var(--color-primary);
+            background-color: rgba(255, 255, 255, 0.35);
             color: white;
-            border-color: var(--color-primary);
+            border-color: rgba(255, 255, 255, 0.4);
         }
     </style>
 @endsection

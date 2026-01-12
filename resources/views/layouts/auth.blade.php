@@ -42,7 +42,7 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background: linear-gradient(135deg, rgba(0, 84, 97, 0.85) 0%, rgba(1, 135, 144, 0.85) 100%),
+            background: linear-gradient(135deg, rgba(0, 84, 97, 0.3) 0%, rgba(1, 135, 144, 0.3) 100%),
                         url('/rugby-ball.png');
             background-size: cover;
             background-position: center;
@@ -72,16 +72,19 @@
         }
 
         .auth-card {
-            background: var(--color-bg-card);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             overflow: hidden;
             max-width: 500px;
             width: 100%;
         }
 
         .auth-header {
-            background: var(--color-primary);
+            background: rgba(0, 84, 97, 0.3);
             color: white;
             padding: 15px;
             text-align: center;
@@ -99,18 +102,32 @@
 
         .auth-body {
             padding: 40px;
+            color: white;
+        }
+
+        .auth-body h5 {
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         .form-control {
             border-radius: 8px;
-            border: 2px solid #e9ecef;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             padding: 12px 15px;
             font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .form-control:focus {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
         }
 
         .btn-rugby {
@@ -145,10 +162,11 @@
         }
 
         .input-group-text {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-left: none;
             border-radius: 0 8px 8px 0;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .input-group .form-control {
@@ -185,12 +203,12 @@
         }
 
         a {
-            color: var(--color-primary);
+            color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
         }
 
         a:hover {
-            color: var(--color-secondary);
+            color: white;
             text-decoration: underline;
         }
 
@@ -200,6 +218,7 @@
 
         .form-check-label {
             font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .logo-icon {
