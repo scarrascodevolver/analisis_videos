@@ -21,6 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SetCurrentOrganization::class,
         ]);
+
+        // Excluir rutas de verificación CSRF (para uploads directos a Spaces)
+        $middleware->validateCsrfTokens(except: [
+            'videos',
+            'videos/*',
+            'api/upload/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
