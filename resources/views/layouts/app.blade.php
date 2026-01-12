@@ -243,6 +243,14 @@
             background-color: rgba(0, 84, 97, 0.15); /* #005461 con transparencia */
         }
 
+        .dropdown-item.active,
+        .dropdown-item.active:hover,
+        .dropdown-item.active:focus,
+        .dropdown-item.bg-success:hover {
+            background-color: var(--color-secondary) !important; /* #018790 */
+            color: white !important;
+        }
+
         @yield('css')
     </style>
     @stack('styles')
