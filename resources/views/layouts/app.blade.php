@@ -232,6 +232,17 @@
             border-color: var(--color-secondary);
         }
 
+        /* Dropdown items - sobrescribir azul de Bootstrap */
+        .dropdown-item:active,
+        .dropdown-item:focus {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(30, 77, 43, 0.15);
+        }
+
         @yield('css')
     </style>
     @stack('styles')
