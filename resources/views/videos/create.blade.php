@@ -506,7 +506,9 @@ $(document).ready(function() {
         });
         
         // Start upload
-        xhr.open('POST', '{{ route("videos.store") }}');
+        // Usar URL de upload alternativa si está configurada (bypass Cloudflare)
+        var uploadUrl = '{{ config("app.upload_url") ? config("app.upload_url") . "/videos" : route("videos.store") }}';
+        xhr.open('POST', uploadUrl);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.send(formData);
     }

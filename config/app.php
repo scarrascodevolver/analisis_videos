@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Upload URL (Cloudflare Bypass)
+    |--------------------------------------------------------------------------
+    |
+    | URL alternativa para subidas grandes que bypasea Cloudflare.
+    | Si está configurada, los uploads de video usarán este dominio.
+    |
+    */
+
+    'upload_url' => env('UPLOAD_URL', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
