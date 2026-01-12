@@ -40,9 +40,9 @@
             --color-primary-hover: #003d4a;
             --color-secondary: #018790;
             --color-accent: #00B7B5;
-            --color-bg: #F4F4F4;
-            --color-bg-card: #FFFFFF;
-            --color-text: #333333;
+            --color-bg: #0f0f0f;
+            --color-bg-card: #0f0f0f;
+            --color-text: #ffffff;
         }
 
         /* ========================================
@@ -129,6 +129,45 @@
         /* ========================================
            COMPONENTES
            ======================================== */
+        .card {
+            background-color: var(--color-bg-card);
+            color: var(--color-text);
+            border: 1px solid var(--color-secondary);
+        }
+
+        .card .text-muted {
+            color: #aaaaaa !important;
+        }
+
+        .card-header, .card-title, .card-footer {
+            color: var(--color-text);
+        }
+
+        .breadcrumb-item.active {
+            color: #aaaaaa;
+        }
+
+        .form-control {
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-secondary);
+            color: var(--color-text);
+        }
+
+        .form-control:focus {
+            background-color: var(--color-primary);
+            border-color: var(--color-accent);
+            color: var(--color-text);
+        }
+
+        .form-control::placeholder {
+            color: #aaaaaa;
+        }
+
+        select.form-control option {
+            background-color: var(--color-primary-hover);
+            color: var(--color-text);
+        }
+
         .info-box-rugby {
             background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
             color: white;
@@ -153,6 +192,20 @@
 
         .content-wrapper {
             background-color: var(--color-bg);
+        }
+
+        .content-header h1 {
+            color: var(--color-text);
+        }
+
+        .main-footer {
+            background-color: var(--color-primary-hover);
+            color: white;
+            border-top: 1px solid var(--color-secondary);
+        }
+
+        .main-footer a {
+            color: var(--color-accent);
         }
 
         .video-card {
