@@ -11,6 +11,7 @@ use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VideoViewController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\DirectUploadController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -71,6 +72,10 @@ Route::middleware(['auth'])->group(function () {
     // Video Routes
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
+
+    // Direct Upload to Spaces (pre-signed URLs)
+    Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
+    Route::post('api/upload/confirm', [DirectUploadController::class, 'confirmUpload'])->name('api.upload.confirm');
     Route::delete('comments/{comment}', [VideoCommentController::class, 'destroy'])->name('comments.destroy');
 
     // Player API Routes (for AJAX search functionality)

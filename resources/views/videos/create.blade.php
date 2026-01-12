@@ -412,105 +412,135 @@ $(document).ready(function() {
     });
     
     function uploadWithProgress(formData) {
+        var fileInput = $('#video_file')[0];
+        var file = fileInput.files[0];
+
+        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida directa a la nube...');
+
+        // Step 1: Get pre-signed URL from our server
+        $.ajax({
+            url: '{{ route("api.upload.presigned") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                filename: file.name,
+                content_type: file.type || 'video/mp4',
+                file_size: file.size
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#uploadStatus').html('<i class="fas fa-cloud"></i> Conectado a la nube. Iniciando subida directa...');
+                    // Step 2: Upload directly to Spaces using pre-signed URL
+                    uploadToSpaces(response.upload_url, response.upload_id, file, formData);
+                } else {
+                    showError('Error obteniendo URL de subida: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Presigned URL error:', xhr);
+                showError('Error preparando la subida: ' + (xhr.responseJSON?.message || 'Error de conexión'));
+            }
+        });
+    }
+
+    function uploadToSpaces(presignedUrl, uploadId, file, formData) {
         var xhr = new XMLHttpRequest();
-        var processingTimeouts = [];
 
-        // Mensajes progresivos - cada uno aparece UNA sola vez
-        var processingSteps = [
-            { delay: 0, message: '<i class="fas fa-spinner fa-spin text-warning"></i> Almacenando video en servidor seguro...' },
-            { delay: 6000, message: '<i class="fas fa-check text-success"></i> Video almacenado<br><i class="fas fa-spinner fa-spin text-warning"></i> Analizando duración y calidad del video...' },
-            { delay: 15000, message: '<i class="fas fa-check text-success"></i> Análisis completado<br><i class="fas fa-spinner fa-spin text-warning"></i> Creando registro del partido en el sistema...' },
-            { delay: 30000, message: '<i class="fas fa-check text-success"></i> Registro creado<br><i class="fas fa-spinner fa-spin text-warning"></i> Preparando cola de optimización automática...' },
-            { delay: 45000, message: '<i class="fas fa-check text-success"></i> Cola configurada<br><i class="fas fa-spinner fa-spin text-warning"></i> Guardando configuración final...' }
-        ];
-
-        // Progress tracking
+        // Progress tracking - upload directo a Spaces
         xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable) {
                 var percentComplete = Math.round((e.loaded / e.total) * 100);
                 $('#progressBar').css('width', percentComplete + '%');
                 $('#progressText').text(percentComplete + '%');
 
-                // Update status text
+                var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
+                var total = (e.total / (1024 * 1024)).toFixed(1);
+
                 if (percentComplete < 100) {
-                    var loaded = (e.loaded / (1024 * 1024)).toFixed(1);
-                    var total = (e.total / (1024 * 1024)).toFixed(1);
-                    $('#uploadStatus').html(`<i class="fas fa-cloud-upload-alt"></i> Subiendo: ${loaded}MB / ${total}MB`);
+                    $('#uploadStatus').html('<i class="fas fa-cloud-upload-alt text-info"></i> Subiendo directo a la nube: ' + loaded + 'MB / ' + total + 'MB');
                 } else {
-                    $('#progressBar').css('background-color', '#ffc107'); // Amarillo para procesando
-
-                    // Ejecutar secuencia de mensajes progresivos (no se repiten)
-                    processingSteps.forEach(function(step) {
-                        var timeout = setTimeout(function() {
-                            $('#uploadStatus').html(step.message);
-                        }, step.delay);
-                        processingTimeouts.push(timeout);
-                    });
+                    $('#progressBar').css('background-color', '#ffc107');
+                    $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Video subido. Creando registro...');
                 }
             }
         });
-        
-        // Upload completion
+
         xhr.addEventListener('load', function() {
-            // Limpiar todos los timeouts pendientes
-            processingTimeouts.forEach(function(timeout) {
-                clearTimeout(timeout);
-            });
-            processingTimeouts = [];
-
-            if (xhr.status === 200) {
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)'); // Verde éxito
-                    $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano. Estará listo para análisis en 45-60 minutos.</small>');
-
-                    // Redirect after short delay
-                    setTimeout(function() {
-                        if (response.redirect) {
-                            window.location.href = response.redirect;
-                        } else {
-                            window.location.href = '/videos';
-                        }
-                    }, 3500);
-                } catch (e) {
-                    // If not JSON, assume it's a redirect response
-                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)'); // Verde éxito
-                    $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Proceso completado exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
-
-                    setTimeout(function() {
-                        window.location.href = '/videos';
-                    }, 3500);
-                }
+            if (xhr.status >= 200 && xhr.status < 300) {
+                // Step 3: Confirm upload and create video record
+                confirmUpload(uploadId, formData);
             } else {
-                $('#progressBar').css('background-color', '#dc3545'); // Rojo error
-                $('#progressText').text('Error');
-                $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error en la subida. Código: ' + xhr.status);
-                $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
+                console.error('Spaces upload failed:', xhr.status, xhr.responseText);
+                showError('Error subiendo a la nube. Código: ' + xhr.status);
             }
         });
 
-        // Upload error
         xhr.addEventListener('error', function() {
-            // Limpiar todos los timeouts pendientes
-            processingTimeouts.forEach(function(timeout) {
-                clearTimeout(timeout);
-            });
-            processingTimeouts = [];
-
-            $('#progressBar').css('background-color', '#dc3545'); // Rojo error
-            $('#progressText').text('Error');
-            $('#uploadStatus').html('<i class="fas fa-exclamation-triangle"></i> Error de conexión durante la subida');
-            $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
+            console.error('Spaces upload network error');
+            showError('Error de conexión subiendo a la nube');
         });
-        
-        // Start upload
-        // Usar URL de upload alternativa si está configurada (bypass Cloudflare)
-        var uploadUrl = '{{ config("app.upload_url") ? config("app.upload_url") . "/videos" : route("videos.store") }}';
-        xhr.open('POST', uploadUrl);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.send(formData);
+
+        // Upload directly to Spaces
+        xhr.open('PUT', presignedUrl);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+        xhr.send(file);
+    }
+
+    function confirmUpload(uploadId, formData) {
+        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Guardando información del video...');
+
+        // Build confirm data from form
+        var confirmData = {
+            _token: '{{ csrf_token() }}',
+            upload_id: uploadId,
+            title: formData.get('title'),
+            description: formData.get('description'),
+            analyzed_team_id: formData.get('analyzed_team_id'),
+            rival_team_id: formData.get('rival_team_id'),
+            rival_team_name: formData.get('rival_team_name'),
+            category_id: formData.get('category_id'),
+            division: formData.get('division'),
+            rugby_situation_id: formData.get('rugby_situation_id'),
+            match_date: formData.get('match_date'),
+            visibility_type: formData.get('visibility_type'),
+            assignment_notes: formData.get('assignment_notes')
+        };
+
+        // Add assigned players if any
+        var assignedPlayers = formData.getAll('assigned_players[]');
+        if (assignedPlayers.length > 0) {
+            confirmData['assigned_players'] = assignedPlayers;
+        }
+
+        $.ajax({
+            url: '{{ route("api.upload.confirm") }}',
+            method: 'POST',
+            data: confirmData,
+            success: function(response) {
+                if (response.success) {
+                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)');
+                    $('#progressText').text('¡Completado!');
+                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
+
+                    setTimeout(function() {
+                        window.location.href = response.redirect || '/videos';
+                    }, 2500);
+                } else {
+                    showError('Error guardando video: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Confirm upload error:', xhr);
+                showError('Error guardando información: ' + (xhr.responseJSON?.message || 'Error de conexión'));
+            }
+        });
+    }
+
+    function showError(message) {
+        $('#progressBar').css('background-color', '#dc3545');
+        $('#progressText').text('Error');
+        $('#uploadStatus').html('<i class="fas fa-exclamation-triangle text-danger"></i> ' + message);
+        $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-upload"></i> Subir Video');
     }
 
     // Rugby situation preview
