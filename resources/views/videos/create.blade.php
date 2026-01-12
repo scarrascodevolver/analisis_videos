@@ -483,6 +483,7 @@ $(document).ready(function() {
         // Upload directly to Spaces
         xhr.open('PUT', presignedUrl);
         xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+        xhr.setRequestHeader('x-amz-acl', 'public-read');
         xhr.send(file);
     }
 

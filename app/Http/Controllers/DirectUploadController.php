@@ -132,6 +132,9 @@ class DirectUploadController extends Controller
         }
 
         try {
+            // Ensure ACL is public-read (fallback in case client header didn't work)
+            $this->ensurePublicAcl($uploadInfo['key']);
+
             $video = Video::create([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -207,5 +210,33 @@ class DirectUploadController extends Controller
         ];
 
         return $messages[$visibilityType] ?? 'Video subido exitosamente.';
+    }
+
+    /**
+     * Ensure the uploaded file has public-read ACL
+     */
+    private function ensurePublicAcl(string $key): void
+    {
+        try {
+            $client = new S3Client([
+                'version' => 'latest',
+                'region' => config('filesystems.disks.spaces.region'),
+                'endpoint' => config('filesystems.disks.spaces.endpoint'),
+                'credentials' => [
+                    'key' => config('filesystems.disks.spaces.key'),
+                    'secret' => config('filesystems.disks.spaces.secret'),
+                ],
+            ]);
+
+            $client->putObjectAcl([
+                'Bucket' => config('filesystems.disks.spaces.bucket'),
+                'Key' => $key,
+                'ACL' => 'public-read',
+            ]);
+
+            Log::info("ACL set to public-read for: {$key}");
+        } catch (\Exception $e) {
+            Log::warning("Failed to set ACL for {$key}: " . $e->getMessage());
+        }
     }
 }
