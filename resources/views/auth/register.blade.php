@@ -11,10 +11,10 @@
                     <div class="logo-icon">
                         @if ($organization->logo_path)
                             <img src="{{ asset('storage/' . $organization->logo_path) }}" alt="{{ $organization->name }}"
-                                style="width: 130px; height: 130px; object-fit: contain;">
+                                style="width: 234px; height: 150px; object-fit: contain;">
                         @else
                             <img src="{{ asset('logohub.png') }}" alt="{{ $organization->name }}"
-                                style="width: 130px; height: 130px; object-fit: contain;">
+                                style="width: 234px; height: 150px; object-fit: contain;">
                         @endif
                     </div>
                     <h3>{{ $organization->name }}</h3>
@@ -23,10 +23,9 @@
                     {{-- Sin código: mostrar logo genérico --}}
                     <div class="logo-icon">
                         <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo"
-                            style="width: 130px; height: 130px; object-fit: contain;">
+                            style="width: 234px; height: 150px; object-fit: contain;">
                     </div>
-                    <h3>RugbyHub</h3>
-                    <p>Sistema de Análisis de Video para Rugby</p>
+
                 @endif
             </div>
 
@@ -55,7 +54,8 @@
                                         name="invitation_code" id="invitation_code" placeholder="Ej: LOSTRONCOS25"
                                         value="{{ old('invitation_code', $invitationCode) }}" maxlength="20" required>
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-rugby py-0" id="validateCodeBtn" style="height: 100%;">
+                                        <button type="button" class="btn btn-rugby py-0" id="validateCodeBtn"
+                                            style="height: 100%;">
                                             <i class="fas fa-search"></i> Validar
                                         </button>
                                     </div>
