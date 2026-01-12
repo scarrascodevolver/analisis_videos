@@ -1594,6 +1594,216 @@ $(document).ready(function() {
     });
 
     // ===========================
+    // ENVÍO DE COMENTARIOS PRINCIPALES VIA AJAX (SIN RECARGA)
+    // ===========================
+    $('#commentForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const videoId = form.data('video-id');
+        const submitBtn = form.find('button[type="submit"]');
+        const textarea = form.find('textarea[name="comment"]');
+        const timestampInput = form.find('#timestamp_seconds');
+        const categorySelect = form.find('select[name="category"]');
+        const prioritySelect = form.find('select[name="priority"]');
+
+        const commentText = textarea.val().trim();
+        const timestampSeconds = parseInt(timestampInput.val()) || 0;
+        const category = categorySelect.val();
+        const priority = prioritySelect.val();
+
+        // Validación
+        if (!commentText) {
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Por favor escribe un comentario');
+            }
+            return;
+        }
+
+        // Prevenir doble-submit
+        if (submitBtn.prop('disabled')) {
+            return;
+        }
+
+        // Deshabilitar botón durante envío
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: `/videos/${videoId}/comments`,
+            type: 'POST',
+            data: {
+                comment: commentText,
+                timestamp_seconds: timestampSeconds,
+                category: category,
+                priority: priority
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Limpiar formulario
+                    textarea.val('');
+                    timestampInput.val(0);
+                    $('#timestampDisplay').text('00:00');
+                    categorySelect.val('tecnico');
+                    prioritySelect.val('media');
+
+                    // Datos del usuario actual
+                    const userName = '{{ auth()->user()->name }}';
+                    const userRole = '{{ auth()->user()->role }}';
+                    const userId = {{ auth()->id() }};
+                    const badgeClass = userRole === 'analista' ? 'primary' : (userRole === 'entrenador' ? 'success' : 'info');
+                    const roleLabel = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+
+                    // Formatear timestamp
+                    const minutes = Math.floor(timestampSeconds / 60);
+                    const seconds = timestampSeconds % 60;
+                    const formattedTimestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                    // Badge de categoría
+                    const categoryBadgeClass = category === 'tecnico' ? 'info' :
+                        (category === 'tactico' ? 'warning' :
+                        (category === 'fisico' ? 'success' : 'purple'));
+
+                    // Badge de prioridad
+                    const priorityBadgeClass = priority === 'critica' ? 'danger' :
+                        (priority === 'alta' ? 'warning' :
+                        (priority === 'media' ? 'info' : 'secondary'));
+
+                    // HTML del nuevo comentario
+                    const commentHtml = `
+                        <div class="comment-item border-bottom p-2" data-timestamp="${timestampSeconds}" data-comment-id="${response.comment.id}" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <button class="btn btn-sm btn-primary timestamp-btn mr-2"
+                                                data-timestamp="${timestampSeconds}">
+                                            ${formattedTimestamp}
+                                        </button>
+                                        <span class="badge badge-${categoryBadgeClass}">
+                                            ${category.charAt(0).toUpperCase() + category.slice(1)}
+                                        </span>
+                                        <span class="badge badge-${priorityBadgeClass} ml-1">
+                                            ${priority.charAt(0).toUpperCase() + priority.slice(1)}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1">${commentText}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> ${userName}
+                                        <span class="badge badge-sm badge-${badgeClass}">
+                                            ${roleLabel}
+                                        </span>
+                                        - Hace unos segundos
+                                    </small>
+                                    <button class="btn btn-sm btn-link text-rugby p-0 ml-2 reply-btn"
+                                            data-comment-id="${response.comment.id}"
+                                            title="Responder">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger delete-comment-btn"
+                                        data-comment-id="${response.comment.id}"
+                                        title="Eliminar comentario">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Reply Form -->
+                            <div class="reply-form mt-2" id="replyForm${response.comment.id}" style="display: none;">
+                                <form class="reply-form-submit" data-comment-id="${response.comment.id}" data-video-id="${videoId}">
+                                    @csrf
+                                    <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
+                                              placeholder="Escribe tu respuesta..." required></textarea>
+                                    <button class="btn btn-rugby btn-sm" type="submit">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Replies container -->
+                            <div class="replies ml-4 mt-3"></div>
+                        </div>
+                    `;
+
+                    // Agregar al inicio de la lista de comentarios
+                    const commentsList = $('.card-body.p-0[style*="max-height: 400px"]');
+                    commentsList.prepend(commentHtml);
+                    commentsList.find('.comment-item:first').slideDown(300);
+
+                    // Actualizar contador de comentarios
+                    const commentCountElement = $('.card-title:contains("Comentarios")');
+                    const currentCountMatch = commentCountElement.text().match(/\((\d+)\)/);
+                    if (currentCountMatch) {
+                        const currentCount = parseInt(currentCountMatch[1]);
+                        const newCount = currentCount + 1;
+                        commentCountElement.html(`<i class="fas fa-list"></i> Comentarios (${newCount})`);
+                    }
+
+                    // Agregar marcador al timeline si existe la función
+                    if (typeof addTimelineMarker === 'function') {
+                        addTimelineMarker(timestampSeconds, priority);
+                    } else {
+                        // Actualizar timeline manualmente si no existe la función
+                        const video = document.getElementById('rugbyVideo');
+                        const timeline = document.querySelector('.video-timeline');
+                        if (video && timeline && video.duration > 0) {
+                            const position = (timestampSeconds / video.duration) * 100;
+                            const markerColor = priority === 'critica' ? '#dc3545' :
+                                (priority === 'alta' ? '#ffc107' : '#28a745');
+                            const marker = document.createElement('div');
+                            marker.className = 'timeline-marker';
+                            marker.style.cssText = `
+                                position: absolute;
+                                left: ${position}%;
+                                top: 0;
+                                width: 8px;
+                                height: 100%;
+                                background: ${markerColor};
+                                cursor: pointer;
+                                border-radius: 2px;
+                                opacity: 0.8;
+                            `;
+                            marker.setAttribute('data-timestamp', timestampSeconds);
+                            marker.setAttribute('title', `${formattedTimestamp} - ${category}`);
+                            timeline.appendChild(marker);
+                        }
+                    }
+
+                    // Mostrar mensaje de éxito
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Comentario agregado exitosamente');
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Error al enviar comentario:', xhr);
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorMsg = 'Error de validación: ';
+                    Object.values(errors).forEach(error => {
+                        errorMsg += error[0] + ' ';
+                    });
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errorMsg);
+                    }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Error al enviar el comentario. Por favor intenta de nuevo.');
+                    }
+                }
+            },
+            complete: function() {
+                // Re-habilitar botón
+                submitBtn.prop('disabled', false).html('<i class="fas fa-comment"></i> Agregar');
+            }
+        });
+    });
+
+    // ===========================
     // SISTEMA DE ANOTACIONES
     // ===========================
     let annotationMode = false;
