@@ -33,7 +33,7 @@
             overflow-x: hidden;
         }
 
-        /* Background with Gradient */
+        /* Background with Image */
         .video-background {
             position: fixed;
             top: 0;
@@ -42,7 +42,11 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            background: linear-gradient(135deg, rgba(0, 84, 97, 0.85) 0%, rgba(1, 135, 144, 0.85) 100%),
+                        url('/rugby-ball.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .video-background video {
@@ -218,11 +222,8 @@
     @yield('css')
 </head>
 <body>
-    <!-- Background with gradient -->
+    <!-- Background with rugby ball image -->
     <div class="video-background"></div>
-
-    <!-- Rugby Ball Background Image -->
-    <img src="/rugby-ball.png" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; opacity: 0.2; z-index: 1;">
 
     @yield('content')
 
