@@ -69,6 +69,7 @@ return [
             'bucket' => env('DO_SPACES_BUCKET'),
             'url' => env('DO_SPACES_CDN_URL'),
             'use_path_style_endpoint' => false,
+            'visibility' => 'public',
             'throw' => false,
             'report' => false,
             // Fix SSL certificate issues in local development
