@@ -39,7 +39,7 @@
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
             --color-secondary: #018790;
-            --color-accent: #4B9DA9;
+            --color-accent: #00B7B5;
             --color-bg: #F4F4F4;
             --color-bg-card: #FFFFFF;
             --color-text: #333333;
@@ -240,7 +240,7 @@
         }
 
         .dropdown-item:hover {
-            background-color: rgba(30, 77, 43, 0.15);
+            background-color: rgba(0, 84, 97, 0.15); /* #005461 con transparencia */
         }
 
         @yield('css')
