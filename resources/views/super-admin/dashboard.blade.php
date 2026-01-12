@@ -6,7 +6,7 @@
         <div class="col-12">
             <h1 class="h3 mb-0">
                 <i class="fas fa-shield-alt text-danger mr-2"></i>
-                Super Admin Dashboard
+                Super Admin Panel
             </h1>
             <p class="text-muted">Panel de administración global del sistema</p>
         </div>

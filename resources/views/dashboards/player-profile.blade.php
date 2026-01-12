@@ -117,20 +117,20 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 2.5rem;
-    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.4);
 }
 
 .info-item {
     text-align: left;
     padding: 10px 0;
-    border-bottom: 1px solid #f4f4f4;
+    border-bottom: 1px solid var(--color-secondary, #018790);
 }
 
 .info-item:last-child {
@@ -142,24 +142,45 @@
     width: 20px;
 }
 
+.info-item strong {
+    color: var(--color-text, #ffffff);
+}
+
+.info-item .text-muted {
+    color: #aaaaaa !important;
+}
+
 .text-rugby {
-    color: var(--color-primary, #005461) !important;
+    color: var(--color-accent, #00B7B5) !important;
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-primary, #005461) !important;
+    color: var(--color-accent, #00B7B5) !important;
 }
 
 .video-card {
     transition: all 0.3s ease;
-    border: 1px solid #dee2e6;
+    border: 2px solid var(--color-secondary, #018790);
     border-radius: 10px;
+    background: var(--color-bg-card, #0f0f0f);
 }
 
 .video-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.15);
-    border-color: var(--color-primary, #005461);
+    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.25);
+    border-color: var(--color-accent, #00B7B5);
+}
+
+.video-card a {
+    color: var(--color-text, #ffffff) !important;
+}
+
+.video-card .card-title {
+    color: var(--color-text, #ffffff);
+}
+
+.video-card .card-text.text-muted {
+    color: #aaaaaa !important;
 }
 
 .video-thumbnail-container {
@@ -167,7 +188,7 @@
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
 }
 
 .video-thumbnail {
@@ -182,7 +203,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 84, 97, 0.8);
+    background: rgba(0, 183, 181, 0.8);
     color: white;
     border-radius: 50%;
     width: 50px;
@@ -195,7 +216,7 @@
 }
 
 .video-card:hover .play-overlay {
-    background: rgba(0, 84, 97, 0.9);
+    background: rgba(0, 183, 181, 0.95);
     transform: translate(-50%, -50%) scale(1.1);
 }
 
@@ -213,14 +234,19 @@
 }
 
 .stats-card {
-    border: 1px solid #e3e6f0;
+    border: 2px solid var(--color-secondary, #018790);
     border-radius: 10px;
     transition: all 0.3s ease;
+    background: var(--color-bg-card, #0f0f0f);
 }
 
 .stats-card:hover {
-    border-color: var(--color-primary, #005461);
-    box-shadow: 0 2px 8px rgba(0, 84, 97, 0.1);
+    border-color: var(--color-accent, #00B7B5);
+    box-shadow: 0 2px 8px rgba(0, 183, 181, 0.2);
+}
+
+.profile-info .text-muted {
+    color: #aaaaaa !important;
 }
 </style>
 @endsection

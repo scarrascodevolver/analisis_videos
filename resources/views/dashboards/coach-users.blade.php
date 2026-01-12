@@ -106,9 +106,9 @@
 .player-card {
     transition: all 0.3s ease;
     cursor: pointer;
-    border: 2px solid #e9ecef;
+    border: 2px solid var(--color-secondary, #018790);
     border-radius: 15px;
-    background: #fff;
+    background: var(--color-bg-card, #0f0f0f);
     min-height: 220px;
     display: flex;
     flex-direction: column;
@@ -116,16 +116,16 @@
 }
 
 .player-card:hover {
-    border-color: var(--color-primary, #005461);
-    background: #f8fffe;
+    border-color: var(--color-accent, #00B7B5);
+    background: var(--color-primary-hover, #003d4a);
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 84, 97, 0.15);
+    box-shadow: 0 8px 25px rgba(0, 183, 181, 0.25);
 }
 
 .player-card.selected {
-    border-color: var(--color-primary, #005461);
-    background: #e8f5e8;
-    box-shadow: 0 4px 15px rgba(0, 84, 97, 0.2);
+    border-color: var(--color-accent, #00B7B5);
+    background: var(--color-primary-hover, #003d4a);
+    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.3);
 }
 
 /* Avatar centrado más grande */
@@ -133,21 +133,21 @@
     width: 85px;
     height: 85px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #4B9DA9));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 1.8rem;
-    box-shadow: 0 4px 10px rgba(0, 84, 97, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 183, 181, 0.4);
 }
 
 /* Nombre del jugador */
 .player-name {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--color-text, #ffffff);
     margin-bottom: 15px !important;
     line-height: 1.3;
 }
@@ -166,14 +166,14 @@
 }
 
 .position-text {
-    color: var(--color-primary, #005461);
+    color: var(--color-accent, #00B7B5);
     font-size: 0.95rem;
     font-weight: 500;
     margin-left: 5px;
 }
 
 .position-text-secondary {
-    color: #6c757d;
+    color: #aaaaaa;
     font-size: 0.9rem;
     font-weight: 400;
     margin-left: 5px;
@@ -181,7 +181,7 @@
 
 /* Badges nuevos */
 .category-badge-new {
-    background: linear-gradient(135deg, var(--color-accent, #4B9DA9), #20c997);
+    background: linear-gradient(135deg, var(--color-accent, #00B7B5), var(--color-secondary, #018790));
     color: white;
     border-radius: 20px;
     padding: 8px 16px;
@@ -238,12 +238,17 @@
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-primary, #005461) !important;
+    color: var(--color-accent, #00B7B5) !important;
 }
 
 .form-control:focus {
-    border-color: var(--color-primary, #005461);
-    box-shadow: 0 0 0 0.2rem rgba(0, 84, 97, 0.25);
+    border-color: var(--color-accent, #00B7B5);
+    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+}
+
+/* Texto de videos asignados */
+.video-count-section small.text-muted {
+    color: #aaaaaa !important;
 }
 </style>
 @endsection
