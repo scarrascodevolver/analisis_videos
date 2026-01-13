@@ -111,6 +111,7 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:jugador'],
+            'country_code' => ['nullable', 'string', 'max:5'],
             'phone' => ['nullable', 'string', 'max:20'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'invitation_code' => ['required', 'string', function ($attribute, $value, $fail) {
@@ -146,13 +147,20 @@ class RegisterController extends Controller
         // Obtener la organización del código de invitación
         $organization = Organization::findByInvitationCode($data['invitation_code']);
 
+        // Combinar código de país con teléfono
+        $phone = null;
+        if (!empty($data['phone'])) {
+            $countryCode = $data['country_code'] ?? '+56';
+            $phone = $countryCode . $data['phone'];
+        }
+
         // Create the user
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
-            'phone' => $data['phone'] ?? null,
+            'phone' => $phone,
         ]);
 
         // Asignar usuario a la organización

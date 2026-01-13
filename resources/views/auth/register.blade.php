@@ -112,18 +112,37 @@
 
                         <!-- Phone -->
                         <div class="form-group">
-                            <div class="input-group">
+                            <label class="text-muted small font-weight-bold">
+                                <i class="fas fa-phone"></i> Teléfono (Opcional)
+                            </label>
+                            <div class="input-group phone-input-group">
+                                <select class="country-code-select @error('country_code') is-invalid @enderror"
+                                    name="country_code" id="country_code">
+                                        <option value="+56" {{ old('country_code', '+56') == '+56' ? 'selected' : '' }}>🇨🇱 +56</option>
+                                        <option value="+54" {{ old('country_code') == '+54' ? 'selected' : '' }}>🇦🇷 +54</option>
+                                        <option value="+34" {{ old('country_code') == '+34' ? 'selected' : '' }}>🇪🇸 +34</option>
+                                        <option value="+598" {{ old('country_code') == '+598' ? 'selected' : '' }}>🇺🇾 +598</option>
+                                        <option value="+55" {{ old('country_code') == '+55' ? 'selected' : '' }}>🇧🇷 +55</option>
+                                        <option value="+52" {{ old('country_code') == '+52' ? 'selected' : '' }}>🇲🇽 +52</option>
+                                        <option value="+51" {{ old('country_code') == '+51' ? 'selected' : '' }}>🇵🇪 +51</option>
+                                        <option value="+57" {{ old('country_code') == '+57' ? 'selected' : '' }}>🇨🇴 +57</option>
+                                        <option value="+1" {{ old('country_code') == '+1' ? 'selected' : '' }}>🇺🇸 +1</option>
+                                        <option value="+44" {{ old('country_code') == '+44' ? 'selected' : '' }}>🇬🇧 +44</option>
+                                        <option value="+33" {{ old('country_code') == '+33' ? 'selected' : '' }}>🇫🇷 +33</option>
+                                        <option value="+39" {{ old('country_code') == '+39' ? 'selected' : '' }}>🇮🇹 +39</option>
+                                        <option value="+61" {{ old('country_code') == '+61' ? 'selected' : '' }}>🇦🇺 +61</option>
+                                        <option value="+64" {{ old('country_code') == '+64' ? 'selected' : '' }}>🇳🇿 +64</option>
+                                        <option value="+27" {{ old('country_code') == '+27' ? 'selected' : '' }}>🇿🇦 +27</option>
+                                </select>
                                 <input type="tel" class="form-control @error('phone') is-invalid @enderror"
-                                    name="phone" placeholder="Teléfono (ej: +56912345678)" value="{{ old('phone') }}">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-phone"></i>
-                                    </span>
-                                </div>
+                                    name="phone" id="phone_number" placeholder="912345678" value="{{ old('phone') }}">
                             </div>
                             @error('phone')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
+                            <small class="form-text text-muted">
+                                Solo el número sin el código de país
+                            </small>
                         </div>
 
                         <!-- Avatar Upload -->
@@ -569,15 +588,10 @@
                 }
             });
 
-            // Format phone number
-            $('[name="phone"]').on('input', function() {
+            // Format phone number - solo números, sin código de país
+            $('#phone_number').on('input', function() {
                 let value = $(this).val().replace(/\D/g, '');
-                if (value.length > 0 && !value.startsWith('56')) {
-                    if (value.startsWith('9')) {
-                        value = '56' + value;
-                    }
-                }
-                $(this).val(value ? '+' + value : '');
+                $(this).val(value);
             });
 
             // Avatar preview functionality
@@ -834,6 +848,54 @@
             color: white;
             border-radius: 0 6px 6px 0;
             content: "Buscar";
+        }
+
+        /* Contenedor del teléfono - misma altura para ambos */
+        .phone-input-group {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .phone-input-group .country-code-select,
+        .phone-input-group #phone_number {
+            height: 48px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Country code selector */
+        .country-code-select {
+            width: 100px !important;
+            min-width: 100px !important;
+            max-width: 100px !important;
+            font-size: 16px !important;
+            padding: 0 10px !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-right: none !important;
+            border-radius: 8px 0 0 8px !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            cursor: pointer;
+        }
+
+        .country-code-select:focus {
+            border-color: rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.25) !important;
+            outline: none;
+        }
+
+        /* Opciones del select con colores visibles */
+        .country-code-select option {
+            background-color: #fff !important;
+            color: #333 !important;
+            padding: 8px;
+        }
+
+        /* Input del teléfono */
+        #phone_number {
+            border-radius: 0 8px 8px 0 !important;
+            border-left: none !important;
+            flex: 1 !important;
         }
     </style>
 @endsection
