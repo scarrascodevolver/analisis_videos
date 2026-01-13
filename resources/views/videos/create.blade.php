@@ -367,24 +367,74 @@
 @section('js')
 <script>
 $(document).ready(function() {
-    // Custom file input
+    // Allowed video formats
+    var allowedExtensions = ['mp4', 'mov', 'avi', 'webm', 'mkv'];
+    var allowedMimeTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/x-matroska'];
+    var maxFileSize = 8 * 1024 * 1024 * 1024; // 8GB
+
+    // Custom file input with immediate validation
     $('.custom-file-input').on('change', function() {
-        var fileName = $(this).val().split('\\').pop();
-        $(this).siblings('.custom-file-label').addClass('selected').html(fileName);
-        
-        // Show file info
-        if (this.files && this.files[0]) {
-            var file = this.files[0];
-            var size = (file.size / (1024 * 1024)).toFixed(2);
-            var info = fileName + ' (' + size + ' MB)';
-            $(this).siblings('.custom-file-label').html(info);
+        var input = this;
+        var $label = $(this).siblings('.custom-file-label');
+        var $feedback = $(this).closest('.form-group').find('.file-validation-feedback');
+
+        // Remove previous feedback
+        if ($feedback.length === 0) {
+            $feedback = $('<div class="file-validation-feedback mt-2"></div>');
+            $(this).closest('.custom-file').after($feedback);
+        }
+        $feedback.html('');
+        $(this).removeClass('is-invalid is-valid');
+
+        if (!input.files || !input.files[0]) {
+            $label.html('Seleccionar archivo de video...');
+            return;
+        }
+
+        var file = input.files[0];
+        var fileName = file.name;
+        var fileExt = fileName.split('.').pop().toLowerCase();
+        var fileSize = file.size;
+        var fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+        var fileSizeGB = (fileSize / (1024 * 1024 * 1024)).toFixed(2);
+
+        // Validate extension
+        if (!allowedExtensions.includes(fileExt)) {
+            $(this).addClass('is-invalid');
+            $feedback.html('<div class="alert alert-danger py-2"><i class="fas fa-exclamation-circle"></i> <strong>Formato no válido:</strong> .' + fileExt + '<br>Formatos permitidos: ' + allowedExtensions.join(', ').toUpperCase() + '</div>');
+            $label.html('<span class="text-danger">' + fileName + ' (formato no válido)</span>');
+            return;
+        }
+
+        // Validate file size
+        if (fileSize > maxFileSize) {
+            $(this).addClass('is-invalid');
+            $feedback.html('<div class="alert alert-danger py-2"><i class="fas fa-exclamation-circle"></i> <strong>Archivo demasiado grande:</strong> ' + fileSizeGB + ' GB<br>Tamaño máximo permitido: 8 GB</div>');
+            $label.html('<span class="text-danger">' + fileName + ' (demasiado grande)</span>');
+            return;
+        }
+
+        // Validate MIME type (best effort - some browsers don't report correctly)
+        if (file.type && !allowedMimeTypes.includes(file.type) && !file.type.startsWith('video/')) {
+            $(this).addClass('is-invalid');
+            $feedback.html('<div class="alert alert-warning py-2"><i class="fas fa-exclamation-triangle"></i> <strong>Tipo de archivo sospechoso:</strong> ' + file.type + '<br>Asegúrate de que sea un video válido.</div>');
+        }
+
+        // All validations passed
+        $(this).addClass('is-valid');
+        var sizeDisplay = fileSize >= (1024 * 1024 * 1024) ? fileSizeGB + ' GB' : fileSizeMB + ' MB';
+        $label.html('<span class="text-success"><i class="fas fa-check-circle"></i> ' + fileName + '</span> <small>(' + sizeDisplay + ')</small>');
+
+        // Show compression notice for large files
+        if (fileSize > 500 * 1024 * 1024) { // > 500MB
+            $feedback.html('<div class="alert alert-info py-2"><i class="fas fa-info-circle"></i> Este video será comprimido automáticamente después de subirse para optimizar la reproducción.</div>');
         }
     });
 
     // Form validation and upload with real progress
     $('#videoUploadForm').on('submit', function(e) {
         e.preventDefault(); // Always prevent default to handle with AJAX
-        
+
         var fileInput = $('#video_file')[0];
         if (!fileInput.files || !fileInput.files[0]) {
             alert('Por favor selecciona un archivo de video');
@@ -392,10 +442,17 @@ $(document).ready(function() {
         }
 
         var file = fileInput.files[0];
-        var maxSize = 8 * 1024 * 1024 * 1024; // 8GB
+        var fileExt = file.name.split('.').pop().toLowerCase();
 
-        if (file.size > maxSize) {
-            alert('El archivo es demasiado grande. El tamaño máximo es 8GB.');
+        // Validate extension
+        if (!allowedExtensions.includes(fileExt)) {
+            alert('Formato de video no válido.\nFormatos permitidos: ' + allowedExtensions.join(', ').toUpperCase());
+            return false;
+        }
+
+        // Validate file size
+        if (file.size > maxFileSize) {
+            alert('El archivo es demasiado grande (' + (file.size / (1024*1024*1024)).toFixed(2) + ' GB).\nTamaño máximo permitido: 8 GB');
             return false;
         }
 
@@ -766,6 +823,20 @@ label {
 
 .select2-container--bootstrap4 .select2-results__option--highlighted {
     background-color: var(--color-accent, #00B7B5) !important;
+}
+
+/* File input validation states */
+.custom-file-input.is-valid ~ .custom-file-label {
+    border-color: #28a745 !important;
+}
+
+.custom-file-input.is-invalid ~ .custom-file-label {
+    border-color: #dc3545 !important;
+}
+
+.file-validation-feedback .alert {
+    font-size: 0.875rem;
+    margin-bottom: 0;
 }
 </style>
 
