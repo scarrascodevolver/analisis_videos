@@ -126,6 +126,12 @@
             border-bottom: 1px solid var(--color-secondary);
         }
 
+        /* Logo switching for collapsed sidebar */
+        .brand-logo-full { display: block; }
+        .brand-logo-mini { display: none !important; }
+        .sidebar-collapse .brand-logo-full { display: none !important; }
+        .sidebar-collapse .brand-logo-mini { display: block !important; }
+
         .user-panel .info {
             color: #c2c7d0;
         }
@@ -495,8 +501,10 @@
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-3">
-                <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo"
+                <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo" class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain;">
+                <img src="{{ asset('favicon.png') }}" alt="{{ $orgName }}" class="brand-logo-mini"
+                    style="width: 36px; height: 36px; object-fit: contain; display: none;">
             </a>
 
             <!-- Sidebar -->

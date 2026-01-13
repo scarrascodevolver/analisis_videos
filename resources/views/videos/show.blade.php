@@ -129,7 +129,7 @@
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
                             </button>
                             @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
-                                <button id="toggleAnnotationMode" class="btn btn-sm btn-warning font-weight-bold">
+                                <button id="toggleAnnotationMode" class="btn btn-sm btn-rugby-outline font-weight-bold">
                                     <i class="fas fa-paint-brush"></i> Anotar
                                 </button>
                             @endif
@@ -137,12 +137,12 @@
                     </div>
 
                     <!-- Timeline with Comments -->
-                    <div class="video-timeline p-3 position-relative" style="background: #f8f9fa;">
-                        <h6><i class="fas fa-clock"></i> Timeline de Comentarios</h6>
-                        <div id="timelineMarkers" class="position-relative" style="height: 40px; background: #dee2e6; border-radius: 5px; margin: 10px 0; cursor: pointer;">
+                    <div class="video-timeline p-3 position-relative" style="background: #1a1a1a;">
+                        <h6 class="text-light mb-2"><i class="fas fa-clock"></i> Timeline de Comentarios</h6>
+                        <div id="timelineMarkers" class="position-relative" style="height: 40px; background: #333; border-radius: 5px; margin: 10px 0; cursor: pointer;">
                             <!-- Comment markers will be added here via JavaScript -->
                         </div>
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex justify-content-between small" style="color: #888;">
                             <span>00:00</span>
                             <span id="videoDuration">{{ gmdate('H:i:s', $video->duration ?? 0) }}</span>
                         </div>
@@ -277,13 +277,13 @@
                         Comentarios ({{ $comments->count() }})
                     </h5>
                 </div>
-                <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                <div class="card-body p-0 comments-scroll-container" style="max-height: 400px; overflow-y: auto;">
                     @forelse($comments as $comment)
                         <div class="comment-item border-bottom p-2" data-timestamp="{{ $comment->timestamp_seconds }}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
-                                        <button class="btn btn-sm btn-primary timestamp-btn mr-2" 
+                                        <button class="btn btn-sm btn-rugby-light timestamp-btn mr-2" 
                                                 data-timestamp="{{ $comment->timestamp_seconds }}">
                                             {{ $comment->formatted_timestamp }}
                                         </button>
@@ -392,7 +392,7 @@
                         Anotaciones (<span id="annotationsCount">0</span>)
                     </h5>
                 </div>
-                <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;" id="annotationsList">
+                <div class="card-body p-0 comments-scroll-container" style="max-height: 300px; overflow-y: auto;" id="annotationsList">
                     <div class="text-center p-3 text-muted" id="noAnnotationsMessage">
                         <i class="fas fa-pen-fancy fa-2x mb-2"></i>
                         <p>No hay anotaciones aún.</p>

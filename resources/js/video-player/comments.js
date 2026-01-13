@@ -73,14 +73,14 @@ function initToggleComments() {
             videoSection.removeClass('col-lg-8').addClass('col-lg-12');
             toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
             toggleText.text('Mostrar Comentarios');
-            toggleBtn.removeClass('btn-warning').addClass('btn-success');
+            toggleBtn.removeClass('btn-rugby-outline').addClass('btn-rugby-light');
             $('#rugbyVideo').css('height', '600px');
         } else {
             commentsSection.show();
             videoSection.removeClass('col-lg-12').addClass('col-lg-8');
             toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
             toggleText.text('Ocultar Comentarios');
-            toggleBtn.removeClass('btn-success').addClass('btn-warning');
+            toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
             $('#rugbyVideo').css('height', '500px');
         }
     });
@@ -107,7 +107,7 @@ function initAddCommentButton() {
             videoSection.removeClass('col-lg-12').addClass('col-lg-8');
             toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
             toggleText.text('Ocultar Comentarios');
-            toggleBtn.removeClass('btn-success').addClass('btn-warning');
+            toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
             $('#rugbyVideo').css('height', '500px');
         }
 

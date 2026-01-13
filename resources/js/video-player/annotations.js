@@ -283,8 +283,8 @@ function enterAnnotationMode() {
     }
 
     $('#toggleAnnotationMode')
-        .removeClass('btn-warning')
-        .addClass('btn-success')
+        .removeClass('btn-rugby-outline')
+        .addClass('btn-rugby-light')
         .html('<i class="fas fa-check"></i> Anotando');
 
     if (!fabricCanvas) {
@@ -304,14 +304,24 @@ export function exitAnnotationMode() {
     if (fabricCanvas) {
         fabricCanvas.upperCanvasEl.style.pointerEvents = 'none';
         fabricCanvas.lowerCanvasEl.style.pointerEvents = 'none';
+        // Clear temporary drawings from canvas
+        fabricCanvas.clear();
     }
 
     $('#toggleAnnotationMode')
-        .removeClass('btn-success')
-        .addClass('btn-warning')
+        .removeClass('btn-rugby-light')
+        .addClass('btn-rugby-outline')
         .html('<i class="fas fa-paint-brush"></i> Anotar');
 
+    // Hide delete button
+    $('#deleteAnnotationBtn').hide();
+
+    // Reset state
     currentDisplayedAnnotations = [];
+    hasTemporaryDrawing = false;
+
+    // Re-check for saved annotations at current time
+    setTimeout(() => checkAndShowAnnotations(), 100);
 }
 
 /**

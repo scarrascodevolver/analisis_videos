@@ -61,7 +61,7 @@ function loadVideoStats() {
                         tbody.append(`
                             <tr>
                                 <td><i class="fas fa-user"></i> ${stat.user.name}</td>
-                                <td class="text-center"><span class="badge badge-success">${stat.view_count}x</span></td>
+                                <td class="text-center"><span class="badge badge-rugby">${stat.view_count}x</span></td>
                                 <td><i class="fas fa-clock"></i> ${lastViewed}</td>
                             </tr>
                         `);
