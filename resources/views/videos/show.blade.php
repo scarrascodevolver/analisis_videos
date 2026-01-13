@@ -495,8 +495,8 @@ window.VideoPlayer = {
 };
 </script>
 
-<!-- Video Player Scripts -->
-<script src="{{ asset('js/video-player.js') }}"></script>
+<!-- Video Player Scripts (Vite bundled) -->
+@vite('resources/js/video-player/index.js')
 
 
 <!-- Tribute.js CSS and JS -->
