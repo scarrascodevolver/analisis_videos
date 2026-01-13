@@ -37,11 +37,11 @@ $(document).ready(function() {
     });
 
     function trackView() {
-        fetch('VideoPlayer.config.routes.trackView', {
+        fetch(VideoPlayer.config.routes.trackView, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': 'VideoPlayer.config.csrfToken'
+                'X-CSRF-TOKEN': VideoPlayer.config.csrfToken
             }
         })
         .then(response => response.json())
@@ -80,11 +80,11 @@ $(document).ready(function() {
     function updateWatchDuration() {
         if (!currentViewId) return;
 
-        fetch('VideoPlayer.config.routes.updateDuration', {
+        fetch(VideoPlayer.config.routes.updateDuration, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': 'VideoPlayer.config.csrfToken'
+                'X-CSRF-TOKEN': VideoPlayer.config.csrfToken
             },
             body: JSON.stringify({
                 view_id: currentViewId,
@@ -103,11 +103,11 @@ $(document).ready(function() {
     function markVideoCompleted() {
         if (!currentViewId) return;
 
-        fetch('VideoPlayer.config.routes.markCompleted', {
+        fetch(VideoPlayer.config.routes.markCompleted, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': 'VideoPlayer.config.csrfToken'
+                'X-CSRF-TOKEN': VideoPlayer.config.csrfToken
             },
             body: JSON.stringify({
                 view_id: currentViewId
@@ -1052,7 +1052,7 @@ $(document).ready(function() {
                             <!-- Reply Form para respuestas anidadas -->
                             <div class="reply-form mt-2" id="replyForm${response.comment.id}" style="display: none;">
                                 <form class="reply-form-submit" data-comment-id="${response.comment.id}" data-video-id="${videoId}">
-                                    @csrf
+                                    <input type="hidden" name="_token" value="${VideoPlayer.config.csrfToken}">
                                     <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
                                               placeholder="Escribe tu respuesta..." required></textarea>
                                     <button class="btn btn-rugby btn-sm" type="submit">
@@ -1249,7 +1249,7 @@ $(document).ready(function() {
                             <!-- Reply Form -->
                             <div class="reply-form mt-2" id="replyForm${response.comment.id}" style="display: none;">
                                 <form class="reply-form-submit" data-comment-id="${response.comment.id}" data-video-id="${videoId}">
-                                    @csrf
+                                    <input type="hidden" name="_token" value="${VideoPlayer.config.csrfToken}">
                                     <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
                                               placeholder="Escribe tu respuesta..." required></textarea>
                                     <button class="btn btn-rugby btn-sm" type="submit">
@@ -1418,7 +1418,7 @@ $(document).ready(function() {
     // Cargar anotaciones existentes del video
     function loadExistingAnnotations() {
         $.ajax({
-            url: `/api/annotations/video/VideoPlayer.config.videoId`,
+            url: `/api/annotations/video/${VideoPlayer.config.videoId}`,
             method: 'GET',
             success: function(response) {
                 if (response.success) {
@@ -2126,11 +2126,11 @@ $(document).ready(function() {
     });
 
     function loadVideoStats() {
-        fetch('VideoPlayer.config.routes.stats', {
+        fetch(VideoPlayer.config.routes.stats, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': 'VideoPlayer.config.csrfToken'
+                'X-CSRF-TOKEN': VideoPlayer.config.csrfToken
             }
         })
         .then(response => response.json())
