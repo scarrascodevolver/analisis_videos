@@ -109,12 +109,18 @@ class CompressVideoJob implements ShouldQueue
 
             Log::info("CompressVideoJob: Uploaded compressed video to {$newPath}");
 
+            // Generate thumbnail from compressed video
+            $thumbnailPath = $this->generateThumbnail($video, $tempCompressedPath);
+            if ($thumbnailPath) {
+                Log::info("CompressVideoJob: Generated thumbnail at {$thumbnailPath}");
+            }
+
             // Update video record with new information
             $originalFileSize = $video->file_size;
             $compressedFileSize = filesize($tempCompressedPath);
             $compressionRatio = round(($originalFileSize - $compressedFileSize) / $originalFileSize * 100, 2);
 
-            $video->update([
+            $updateData = [
                 'original_file_path' => $video->file_path,
                 'original_file_size' => $originalFileSize,
                 'file_path' => $newPath,
@@ -123,7 +129,13 @@ class CompressVideoJob implements ShouldQueue
                 'compression_ratio' => $compressionRatio,
                 'processing_status' => 'completed',
                 'processing_completed_at' => now(),
-            ]);
+            ];
+
+            if ($thumbnailPath) {
+                $updateData['thumbnail_path'] = $thumbnailPath;
+            }
+
+            $video->update($updateData);
 
             // Clean up temporary files
             @unlink($tempOriginalPath);
@@ -267,6 +279,67 @@ class CompressVideoJob implements ShouldQueue
             );
 
             return $path;
+        }
+    }
+
+    /**
+     * Generate thumbnail from video using FFmpeg.
+     */
+    protected function generateThumbnail(Video $video, string $videoPath): ?string
+    {
+        try {
+            $tempDir = storage_path('app/temp');
+            $thumbnailFilename = pathinfo($video->file_name, PATHINFO_FILENAME) . '_thumb.jpg';
+            $tempThumbnailPath = $tempDir . '/' . $thumbnailFilename;
+
+            // Extract frame at 2 seconds (or 1 second for short videos)
+            $command = sprintf(
+                'ffmpeg -i %s -ss 00:00:02 -vframes 1 -vf "scale=640:-1" -q:v 2 -y %s 2>&1',
+                escapeshellarg($videoPath),
+                escapeshellarg($tempThumbnailPath)
+            );
+
+            $output = [];
+            $returnVar = 0;
+            exec($command, $output, $returnVar);
+
+            if ($returnVar !== 0 || !file_exists($tempThumbnailPath)) {
+                // Try at 1 second if 2 seconds failed (video might be shorter)
+                $command = sprintf(
+                    'ffmpeg -i %s -ss 00:00:01 -vframes 1 -vf "scale=640:-1" -q:v 2 -y %s 2>&1',
+                    escapeshellarg($videoPath),
+                    escapeshellarg($tempThumbnailPath)
+                );
+                exec($command, $output, $returnVar);
+            }
+
+            if (!file_exists($tempThumbnailPath)) {
+                Log::warning("CompressVideoJob: Failed to generate thumbnail");
+                return null;
+            }
+
+            // Get organization slug for path
+            $orgSlug = $video->organization ? $video->organization->slug : 'default';
+            $storagePath = "thumbnails/{$orgSlug}/{$thumbnailFilename}";
+
+            // Upload to storage
+            try {
+                Storage::disk('spaces')->put($storagePath, file_get_contents($tempThumbnailPath), 'public');
+                Log::info("CompressVideoJob: Thumbnail uploaded to Spaces");
+            } catch (Exception $e) {
+                // Fallback to local storage
+                Storage::disk('public')->put($storagePath, file_get_contents($tempThumbnailPath));
+                Log::info("CompressVideoJob: Thumbnail uploaded to local storage");
+            }
+
+            // Cleanup temp file
+            @unlink($tempThumbnailPath);
+
+            return $storagePath;
+
+        } catch (Exception $e) {
+            Log::warning("CompressVideoJob: Thumbnail generation failed: " . $e->getMessage());
+            return null;
         }
     }
 
