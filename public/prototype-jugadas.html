@@ -1658,16 +1658,44 @@
             });
 
             // Restaurar posición del balón
-            if (rugbyBall && originalPositions['ball']) {
-                const ballOrig = originalPositions['ball'];
-                console.log(`  └─ Balón: (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${ballOrig.left.toFixed(0)},${ballOrig.top.toFixed(0)})`);
-                rugbyBall.set({
-                    left: ballOrig.left,
-                    top: ballOrig.top
-                });
-                rugbyBall.dirty = true;
-                rugbyBall.setCoords();
-                restoredCount++;
+            if (rugbyBall) {
+                // Si hay un poseedor original, posicionar el balón relativo a él
+                if (originalBallHolder !== null) {
+                    const holder = players.find(p => p.playerNumber === originalBallHolder);
+                    if (holder) {
+                        const holderOrigPos = originalPositions[holder.playerNumber];
+                        if (holderOrigPos) {
+                            // Calcular posición del balón relativa al jugador original
+                            const newBallLeft = holderOrigPos.left + BALL_OFFSET_X;
+                            const newBallTop = holderOrigPos.top + BALL_OFFSET_Y;
+                            console.log(`  └─ Balón (con J${originalBallHolder}): (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${newBallLeft.toFixed(0)},${newBallTop.toFixed(0)})`);
+                            rugbyBall.set({
+                                left: newBallLeft,
+                                top: newBallTop
+                            });
+                            rugbyBall.dirty = true;
+                            rugbyBall.setCoords();
+                            restoredCount++;
+
+                            // Restaurar posesión al jugador original
+                            ballPossession = originalBallHolder;
+                            players.forEach(p => p.hasBallPossession = false);
+                            holder.hasBallPossession = true;
+                            updatePossessionUI();
+                        }
+                    }
+                } else if (originalPositions['ball']) {
+                    // Sin poseedor, restaurar posición absoluta del balón
+                    const ballOrig = originalPositions['ball'];
+                    console.log(`  └─ Balón (libre): (${rugbyBall.left.toFixed(0)},${rugbyBall.top.toFixed(0)}) → (${ballOrig.left.toFixed(0)},${ballOrig.top.toFixed(0)})`);
+                    rugbyBall.set({
+                        left: ballOrig.left,
+                        top: ballOrig.top
+                    });
+                    rugbyBall.dirty = true;
+                    rugbyBall.setCoords();
+                    restoredCount++;
+                }
             }
 
             // Forzar re-renderizado completo
