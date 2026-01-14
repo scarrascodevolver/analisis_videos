@@ -15,6 +15,8 @@ let playingClipsOnly = false;
 let filteredClips = [];
 let currentClipIndex = 0;
 let clipEndHandler = null;
+let singleClipHandler = null; // Handler para reproducir un solo clip
+let pendingClip = null; // Clip en proceso de grabación (modo toggle)
 
 /**
  * Initialize clip manager
@@ -210,17 +212,21 @@ function renderClipsList(clipsToShow = null) {
     container.innerHTML = displayClips.map(clip => `
         <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 clip-item"
              data-clip-id="${clip.id}"
-             data-start="${clip.start_time}">
-            <div class="d-flex align-items-center">
+             data-start="${clip.start_time}"
+             data-end="${clip.end_time}"
+             style="cursor: pointer; background: #252525; border: none; border-bottom: 1px solid #333; color: #ccc;"
+             title="Clic para reproducir clip (${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))})">
+            <div class="d-flex align-items-center clip-play-area">
+                <i class="fas fa-play-circle mr-2" style="color: #00B7B5;"></i>
                 <span class="badge mr-2" style="background-color: ${clip.category?.color || '#6c757d'}; color: white;">
                     ${clip.category?.name || 'Sin categoría'}
                 </span>
-                <span class="text-primary clip-time" style="cursor: pointer;" title="Ir a este momento">
-                    ${formatTime(Math.floor(clip.start_time))}
+                <span class="clip-time" style="color: #00B7B5;">
+                    ${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))}
                 </span>
-                ${clip.title ? `<span class="ml-2 text-muted small">${clip.title}</span>` : ''}
+                ${clip.title ? `<span class="ml-2 small" style="color: #888;">${clip.title}</span>` : ''}
             </div>
-            <div>
+            <div class="clip-actions">
                 ${clip.is_highlight ? '<i class="fas fa-star text-warning mr-2" title="Destacado"></i>' : ''}
                 <button class="btn btn-sm btn-outline-danger delete-clip-btn" data-clip-id="${clip.id}" title="Eliminar">
                     <i class="fas fa-trash"></i>
@@ -229,15 +235,15 @@ function renderClipsList(clipsToShow = null) {
         </div>
     `).join('');
 
-    // Add click handlers for seeking
-    container.querySelectorAll('.clip-time').forEach(el => {
-        el.addEventListener('click', () => {
-            const startTime = parseFloat(el.closest('.clip-item').dataset.start);
-            const video = getVideo();
-            if (video) {
-                video.currentTime = startTime;
-                video.play();
-            }
+    // Add click handlers for playing clip (LongoMatch style)
+    container.querySelectorAll('.clip-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+            // Ignore if clicking delete button
+            if (e.target.closest('.delete-clip-btn')) return;
+
+            const startTime = parseFloat(el.dataset.start);
+            const endTime = parseFloat(el.dataset.end);
+            playSingleClip(startTime, endTime, el);
         });
     });
 
@@ -253,6 +259,55 @@ function renderClipsList(clipsToShow = null) {
 }
 
 /**
+ * Play a single clip from start to end, then pause (LongoMatch style)
+ */
+function playSingleClip(startTime, endTime, clipElement) {
+    const video = getVideo();
+    if (!video) return;
+
+    // Stop any previous single clip playback
+    stopSingleClipMode();
+
+    // Highlight this clip
+    document.querySelectorAll('.clip-item').forEach(el => el.classList.remove('playing'));
+    if (clipElement) {
+        clipElement.classList.add('playing');
+    }
+
+    // Jump to start and play
+    video.currentTime = startTime;
+    video.play();
+
+    // Setup handler to pause when reaching end
+    singleClipHandler = () => {
+        if (video.currentTime >= endTime) {
+            video.pause();
+            stopSingleClipMode();
+            showNotification('Fin del clip', 'info');
+        }
+    };
+    video.addEventListener('timeupdate', singleClipHandler);
+
+    showNotification(`Reproduciendo clip... (ESC para cancelar)`, 'info');
+}
+
+/**
+ * Stop single clip playback mode
+ */
+function stopSingleClipMode() {
+    const video = getVideo();
+    if (video && singleClipHandler) {
+        video.removeEventListener('timeupdate', singleClipHandler);
+    }
+    singleClipHandler = null;
+
+    // Remove playing highlight
+    document.querySelectorAll('.clip-item').forEach(el => {
+        el.classList.remove('playing');
+    });
+}
+
+/**
  * Update clip count badge
  */
 function updateClipCount() {
@@ -263,7 +318,7 @@ function updateClipCount() {
 }
 
 /**
- * Setup keyboard shortcuts for clip creation
+ * Setup keyboard shortcuts for clip creation (Toggle mode - LongoMatch style)
  */
 function setupHotkeys() {
     document.addEventListener('keydown', (e) => {
@@ -276,14 +331,221 @@ function setupHotkeys() {
 
         if (category) {
             e.preventDefault();
-            createClip(category);
+            handleClipToggle(category);
         }
 
-        // ESC to stop clip playback mode
-        if (e.key === 'Escape' && playingClipsOnly) {
-            stopClipsMode();
+        // ESC to stop clip playback mode OR cancel pending clip
+        if (e.key === 'Escape') {
+            if (pendingClip) {
+                cancelPendingClip();
+            }
+            if (playingClipsOnly) {
+                stopClipsMode();
+            }
+            if (singleClipHandler) {
+                const video = getVideo();
+                if (video) video.pause();
+                stopSingleClipMode();
+                showNotification('Reproducción cancelada', 'info');
+            }
         }
     });
+}
+
+/**
+ * Handle clip toggle - Start or End recording (LongoMatch style)
+ */
+function handleClipToggle(category) {
+    const video = getVideo();
+    if (!video) return;
+
+    const currentTime = video.currentTime;
+
+    // Check if there's a pending clip for THIS category
+    if (pendingClip && pendingClip.categoryId === category.id) {
+        // SECOND PRESS - End recording
+        finishClip(category, currentTime);
+    } else if (pendingClip && pendingClip.categoryId !== category.id) {
+        // Different category pressed - finish current and start new
+        const oldCategory = categories.find(c => c.id === pendingClip.categoryId);
+        if (oldCategory) {
+            finishClip(oldCategory, currentTime);
+        }
+        // Start new clip with the new category
+        startClip(category, currentTime);
+    } else {
+        // FIRST PRESS - Start recording
+        startClip(category, currentTime);
+    }
+}
+
+/**
+ * Start recording a clip (first press)
+ */
+function startClip(category, currentTime) {
+    const video = getVideo();
+    const startTime = Math.max(0, currentTime - category.lead_seconds);
+
+    pendingClip = {
+        categoryId: category.id,
+        categoryName: category.name,
+        startTime: startTime,
+        startedAt: currentTime,
+        color: category.color,
+        lagSeconds: category.lag_seconds
+    };
+
+    // Visual feedback - highlight the button
+    highlightRecordingButton(category.id, true);
+
+    // Show recording indicator
+    showRecordingIndicator(category);
+
+    showNotification(
+        `🔴 GRABANDO "${category.name}" desde ${formatTime(Math.floor(startTime))} - Presiona [${category.hotkey.toUpperCase()}] para terminar`,
+        'warning'
+    );
+}
+
+/**
+ * Finish recording a clip (second press)
+ */
+async function finishClip(category, currentTime) {
+    if (!pendingClip) return;
+
+    const video = getVideo();
+    const config = getConfig();
+    const endTime = Math.min(video.duration, currentTime + category.lag_seconds);
+
+    // Remove visual feedback
+    highlightRecordingButton(pendingClip.categoryId, false);
+    hideRecordingIndicator();
+
+    try {
+        const response = await fetch(config.routes.createClip, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': config.csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                clip_category_id: category.id,
+                start_time: pendingClip.startTime.toFixed(2),
+                end_time: endTime.toFixed(2)
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            clips.push(data.clip);
+            renderClipsList();
+            updateClipCount();
+
+            const duration = endTime - pendingClip.startTime;
+            showNotification(
+                `✅ Clip "${category.name}" guardado (${formatTime(Math.floor(pendingClip.startTime))} - ${formatTime(Math.floor(endTime))}) - ${duration.toFixed(1)}s`,
+                'success'
+            );
+
+            // Flash the button
+            flashButton(category.id);
+        } else {
+            showNotification('Error al crear clip', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating clip:', error);
+        showNotification('Error al crear clip', 'error');
+    }
+
+    pendingClip = null;
+}
+
+/**
+ * Cancel pending clip recording
+ */
+function cancelPendingClip() {
+    if (!pendingClip) return;
+
+    highlightRecordingButton(pendingClip.categoryId, false);
+    hideRecordingIndicator();
+    showNotification(`Grabación de "${pendingClip.categoryName}" cancelada`, 'info');
+    pendingClip = null;
+}
+
+/**
+ * Highlight button when recording
+ */
+function highlightRecordingButton(categoryId, isRecording) {
+    const btn = document.querySelector(`[data-category-id="${categoryId}"]`);
+    if (btn) {
+        if (isRecording) {
+            btn.classList.add('recording');
+        } else {
+            btn.classList.remove('recording');
+        }
+    }
+}
+
+/**
+ * Show recording indicator on video
+ */
+function showRecordingIndicator(category) {
+    // Remove existing indicator
+    hideRecordingIndicator();
+
+    const indicator = document.createElement('div');
+    indicator.id = 'clipRecordingIndicator';
+    indicator.innerHTML = `
+        <div class="recording-badge">
+            <span class="recording-dot"></span>
+            <span class="recording-text">REC: ${category.name}</span>
+            <span class="recording-time" id="recordingTimer">00:00</span>
+        </div>
+    `;
+
+    // Find video container and append
+    const videoContainer = document.querySelector('.video-container');
+    if (videoContainer) {
+        videoContainer.appendChild(indicator);
+        startRecordingTimer();
+    }
+}
+
+/**
+ * Hide recording indicator
+ */
+function hideRecordingIndicator() {
+    const indicator = document.getElementById('clipRecordingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
+    stopRecordingTimer();
+}
+
+let recordingTimerInterval = null;
+let recordingStartTime = null;
+
+function startRecordingTimer() {
+    recordingStartTime = Date.now();
+    recordingTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timerEl = document.getElementById('recordingTimer');
+        if (timerEl) {
+            timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+function stopRecordingTimer() {
+    if (recordingTimerInterval) {
+        clearInterval(recordingTimerInterval);
+        recordingTimerInterval = null;
+    }
+    recordingStartTime = null;
 }
 
 /**
@@ -537,10 +799,84 @@ style.textContent = `
         50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255,255,255,0.8); }
     }
     .clip-item.active {
-        background-color: #e3f2fd !important;
-        border-left: 3px solid #2196f3;
+        background-color: #1a3a4a !important;
+        border-left: 3px solid #00B7B5;
+    }
+    .clip-item.playing {
+        background-color: #3d2e00 !important;
+        border-left: 3px solid #ffc107;
+        animation: clipPlaying 1s ease infinite;
+    }
+    .clip-item.playing .fa-play-circle {
+        color: #ffc107 !important;
+        animation: pulse 0.5s ease infinite alternate;
+    }
+    @keyframes clipPlaying {
+        0%, 100% { background-color: #3d2e00; }
+        50% { background-color: #4a3800; }
+    }
+    @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.2); }
+    }
+    .clip-item:hover {
+        background-color: #0a3040 !important;
+    }
+
+    /* Recording mode styles */
+    .clip-category-btn.recording {
+        animation: recordingPulse 1s ease infinite;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.5);
+    }
+    @keyframes recordingPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
+
+    /* Recording indicator on video */
+    #clipRecordingIndicator {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 100;
+    }
+    .recording-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(220, 53, 69, 0.95);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    .recording-dot {
+        width: 12px;
+        height: 12px;
+        background: white;
+        border-radius: 50%;
+        animation: recordingDot 1s ease infinite;
+    }
+    @keyframes recordingDot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    .recording-time {
+        font-family: monospace;
+        background: rgba(0,0,0,0.3);
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    .clip-item:hover .fa-play-circle {
+        color: #00d4d1 !important;
+        transform: scale(1.1);
     }
 `;
 document.head.appendChild(style);
+
+// Expose loadCategories globally for modal access
+window.loadCategories = loadCategories;
 
 export { loadClips, loadCategories };

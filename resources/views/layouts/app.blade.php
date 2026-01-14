@@ -723,21 +723,7 @@
         </aside>
 
         <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <!-- Content Header -->
-            <div class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-
-                        <div class="col-sm-6">
-                            <ol class="breadcrumb float-sm-right">
-                                @yield('breadcrumbs')
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+        <div class="content-wrapper" style="padding-top: 15px;">
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">

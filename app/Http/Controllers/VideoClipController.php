@@ -17,7 +17,7 @@ class VideoClipController extends Controller
             ->ordered()
             ->get();
 
-        $categories = ClipCategory::where('organization_id', auth()->user()->current_organization_id)
+        $categories = ClipCategory::where('organization_id', auth()->user()->currentOrganization()->id)
             ->active()
             ->ordered()
             ->get();
@@ -51,7 +51,7 @@ class VideoClipController extends Controller
         $clip = VideoClip::create([
             'video_id' => $video->id,
             'clip_category_id' => $request->clip_category_id,
-            'organization_id' => auth()->user()->current_organization_id,
+            'organization_id' => auth()->user()->currentOrganization()->id,
             'created_by' => auth()->id(),
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
@@ -60,7 +60,7 @@ class VideoClipController extends Controller
             'is_highlight' => $request->boolean('is_highlight'),
         ]);
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'clip' => $clip->load('category'),
@@ -82,7 +82,7 @@ class VideoClipController extends Controller
         $clip = VideoClip::create([
             'video_id' => $video->id,
             'clip_category_id' => $request->clip_category_id,
-            'organization_id' => auth()->user()->current_organization_id,
+            'organization_id' => auth()->user()->currentOrganization()->id,
             'created_by' => auth()->id(),
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
@@ -113,7 +113,7 @@ class VideoClipController extends Controller
             'title', 'notes', 'rating', 'is_highlight'
         ]));
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'clip' => $clip->fresh()->load('category'),
@@ -128,7 +128,7 @@ class VideoClipController extends Controller
     {
         $clip->delete();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson() || $request->wantsJson()) {
             return response()->json(['success' => true]);
         }
 
@@ -150,7 +150,7 @@ class VideoClipController extends Controller
     public function byCategory(ClipCategory $category)
     {
         $clips = VideoClip::where('clip_category_id', $category->id)
-            ->where('organization_id', auth()->user()->current_organization_id)
+            ->where('organization_id', auth()->user()->currentOrganization()->id)
             ->with('video:id,title', 'category:id,name,color')
             ->ordered()
             ->get();

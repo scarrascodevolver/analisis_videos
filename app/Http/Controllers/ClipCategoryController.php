@@ -10,7 +10,7 @@ class ClipCategoryController extends Controller
 {
     public function index()
     {
-        $categories = ClipCategory::where('organization_id', auth()->user()->current_organization_id)
+        $categories = ClipCategory::where('organization_id', auth()->user()->currentOrganization()->id)
             ->ordered()
             ->get();
 
@@ -24,15 +24,28 @@ class ClipCategoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:50',
             'color' => 'required|string|max:7',
-            'hotkey' => 'nullable|string|size:1',
-            'lead_seconds' => 'required|integer|min:0|max:30',
-            'lag_seconds' => 'required|integer|min:0|max:30',
-        ]);
+            'hotkey' => 'nullable|string|max:1',
+            'lead_seconds' => 'nullable|integer|min:0|max:30',
+            'lag_seconds' => 'nullable|integer|min:0|max:30',
+        ];
 
-        $orgId = auth()->user()->current_organization_id;
+        // Para AJAX, manejar errores de validación como JSON
+        if ($request->wantsJson() || $request->ajax()) {
+            $validator = \Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+        } else {
+            $request->validate($rules);
+        }
+
+        $orgId = auth()->user()->currentOrganization()->id;
 
         // Verificar hotkey único en la org
         if ($request->hotkey) {
@@ -41,23 +54,38 @@ class ClipCategoryController extends Controller
                 ->exists();
 
             if ($exists) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Esta tecla ya está asignada a otra categoría'
+                    ], 422);
+                }
                 return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
             }
         }
 
         $maxOrder = ClipCategory::where('organization_id', $orgId)->max('sort_order') ?? 0;
 
-        ClipCategory::create([
+        $category = ClipCategory::create([
             'organization_id' => $orgId,
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'color' => $request->color,
             'hotkey' => $request->hotkey ? strtolower($request->hotkey) : null,
-            'lead_seconds' => $request->lead_seconds,
-            'lag_seconds' => $request->lag_seconds,
+            'lead_seconds' => $request->lead_seconds ?? 3,
+            'lag_seconds' => $request->lag_seconds ?? 3,
             'sort_order' => $maxOrder + 1,
             'created_by' => auth()->id(),
         ]);
+
+        // Respuesta JSON para AJAX
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'message' => 'Categoría creada exitosamente'
+            ]);
+        }
 
         return redirect()->route('admin.clip-categories.index')
             ->with('success', 'Categoría creada exitosamente');
@@ -70,16 +98,29 @@ class ClipCategoryController extends Controller
 
     public function update(Request $request, ClipCategory $clipCategory)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:50',
             'color' => 'required|string|max:7',
-            'hotkey' => 'nullable|string|size:1',
-            'lead_seconds' => 'required|integer|min:0|max:30',
-            'lag_seconds' => 'required|integer|min:0|max:30',
+            'hotkey' => 'nullable|string|max:1',
+            'lead_seconds' => 'nullable|integer|min:0|max:30',
+            'lag_seconds' => 'nullable|integer|min:0|max:30',
             'is_active' => 'boolean',
-        ]);
+        ];
 
-        $orgId = auth()->user()->current_organization_id;
+        // Para AJAX, manejar errores de validación como JSON
+        if ($request->wantsJson() || $request->ajax()) {
+            $validator = \Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+        } else {
+            $request->validate($rules);
+        }
+
+        $orgId = auth()->user()->currentOrganization()->id;
 
         // Verificar hotkey único (excluyendo el actual)
         if ($request->hotkey) {
@@ -89,6 +130,12 @@ class ClipCategoryController extends Controller
                 ->exists();
 
             if ($exists) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Esta tecla ya está asignada a otra categoría'
+                    ], 422);
+                }
                 return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
             }
         }
@@ -98,10 +145,19 @@ class ClipCategoryController extends Controller
             'slug' => Str::slug($request->name),
             'color' => $request->color,
             'hotkey' => $request->hotkey ? strtolower($request->hotkey) : null,
-            'lead_seconds' => $request->lead_seconds,
-            'lag_seconds' => $request->lag_seconds,
+            'lead_seconds' => $request->lead_seconds ?? $clipCategory->lead_seconds,
+            'lag_seconds' => $request->lag_seconds ?? $clipCategory->lag_seconds,
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        // Respuesta JSON para AJAX
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'category' => $clipCategory->fresh(),
+                'message' => 'Categoría actualizada exitosamente'
+            ]);
+        }
 
         return redirect()->route('admin.clip-categories.index')
             ->with('success', 'Categoría actualizada exitosamente');
@@ -129,7 +185,7 @@ class ClipCategoryController extends Controller
 
         foreach ($request->order as $index => $id) {
             ClipCategory::where('id', $id)
-                ->where('organization_id', auth()->user()->current_organization_id)
+                ->where('organization_id', auth()->user()->currentOrganization()->id)
                 ->update(['sort_order' => $index]);
         }
 
@@ -139,7 +195,7 @@ class ClipCategoryController extends Controller
     // API: Obtener categorías para el player
     public function apiIndex()
     {
-        $categories = ClipCategory::where('organization_id', auth()->user()->current_organization_id)
+        $categories = ClipCategory::where('organization_id', auth()->user()->currentOrganization()->id)
             ->active()
             ->ordered()
             ->get(['id', 'name', 'slug', 'color', 'hotkey', 'lead_seconds', 'lag_seconds']);
