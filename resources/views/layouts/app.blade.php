@@ -401,9 +401,6 @@
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
                             <i class="fas fa-building mr-1"></i>
                             {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
-                            @if($isSuperAdmin)
-                                <span class="badge badge-danger badge-sm ml-1">SA</span>
-                            @endif
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" style="max-height: 400px; overflow-y: auto;">
                             @if($isSuperAdmin)
