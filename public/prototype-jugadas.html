@@ -106,6 +106,10 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
+        .canvas-wrapper .canvas-container {
+            margin: 0 auto;
+        }
+
         .canvas-wrapper h4 {
             color: #e0e0e0;
         }
@@ -238,7 +242,7 @@
                             <i class="fas fa-trash"></i> Limpiar Todo
                         </button>
                     </div>
-                    <canvas id="playCanvas" width="1200" height="650"></canvas>
+                    <canvas id="playCanvas"></canvas>
                 </div>
             </div>
 
@@ -378,9 +382,24 @@
         // Sistema simple de posiciones fijas
         // ============================================
 
+        // Calcular dimensiones del canvas basado en el contenedor
+        function getCanvasDimensions() {
+            const wrapper = document.querySelector('.canvas-wrapper');
+            const availableWidth = wrapper.clientWidth - 32; // padding
+            const aspectRatio = 1.85; // Ratio aproximado cancha rugby (más ancho que alto)
+            const height = Math.min(availableWidth / aspectRatio, window.innerHeight * 0.75);
+            return {
+                width: Math.floor(height * aspectRatio),
+                height: Math.floor(height)
+            };
+        }
+
+        const dims = getCanvasDimensions();
         const canvas = new fabric.Canvas('playCanvas', {
             backgroundColor: '#2d5a2d',
-            selection: true
+            selection: true,
+            width: dims.width,
+            height: dims.height
         });
 
         let playerCounter = 1;
