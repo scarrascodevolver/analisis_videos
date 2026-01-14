@@ -159,10 +159,12 @@ class User extends Authenticatable
     /**
      * Cambiar a una organización específica
      */
-    public function switchOrganization(Organization $organization): bool
+    public function switchOrganization(Organization $organization, bool $isSuperAdmin = false): bool
     {
-        // Verificar que el usuario pertenece a esta organización
-        if (!$this->organizations()->where('organizations.id', $organization->id)->exists()) {
+        $belongsToOrg = $this->organizations()->where('organizations.id', $organization->id)->exists();
+
+        // Verificar que el usuario pertenece a esta organización (excepto super admins)
+        if (!$belongsToOrg && !$isSuperAdmin) {
             return false;
         }
 
@@ -172,8 +174,17 @@ class User extends Authenticatable
             ['is_current' => false]
         );
 
-        // Marcar la nueva organización como current
-        $this->organizations()->updateExistingPivot($organization->id, ['is_current' => true]);
+        // Si es super admin y no pertenece a la org, agregarlo temporalmente
+        if ($isSuperAdmin && !$belongsToOrg) {
+            $this->organizations()->attach($organization->id, [
+                'role' => $this->role ?? 'analista',
+                'is_current' => true,
+                'is_org_admin' => true,
+            ]);
+        } else {
+            // Marcar la nueva organización como current
+            $this->organizations()->updateExistingPivot($organization->id, ['is_current' => true]);
+        }
 
         return true;
     }

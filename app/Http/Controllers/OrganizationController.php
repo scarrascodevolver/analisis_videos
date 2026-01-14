@@ -13,7 +13,13 @@ class OrganizationController extends Controller
     public function select()
     {
         $user = auth()->user();
-        $organizations = $user->organizations()->where('is_active', true)->get();
+
+        // Super admins pueden ver TODAS las organizaciones
+        if ($user->isSuperAdmin()) {
+            $organizations = Organization::where('is_active', true)->orderBy('name')->get();
+        } else {
+            $organizations = $user->organizations()->where('is_active', true)->get();
+        }
 
         // Si solo tiene una organización, seleccionarla automáticamente
         if ($organizations->count() === 1) {
@@ -22,8 +28,8 @@ class OrganizationController extends Controller
                 ->with('success', 'Bienvenido a ' . $organizations->first()->name);
         }
 
-        // Si no tiene organizaciones, error
-        if ($organizations->count() === 0) {
+        // Si no tiene organizaciones, error (no aplica a super admins)
+        if ($organizations->count() === 0 && !$user->isSuperAdmin()) {
             auth()->logout();
             return redirect()->route('login')
                 ->with('error', 'Tu cuenta no está asociada a ninguna organización activa.');
@@ -41,10 +47,13 @@ class OrganizationController extends Controller
     {
         $user = auth()->user();
 
-        // Verificar que el usuario pertenece a esta organización
-        if (!$user->organizations()->where('organizations.id', $organization->id)->exists()) {
-            return redirect()->back()
-                ->with('error', 'No tienes acceso a esta organización.');
+        // Super admins pueden cambiar a cualquier organización
+        if (!$user->isSuperAdmin()) {
+            // Verificar que el usuario pertenece a esta organización
+            if (!$user->organizations()->where('organizations.id', $organization->id)->exists()) {
+                return redirect()->back()
+                    ->with('error', 'No tienes acceso a esta organización.');
+            }
         }
 
         // Verificar que la organización esté activa
@@ -54,7 +63,7 @@ class OrganizationController extends Controller
         }
 
         // Cambiar de organización
-        $user->switchOrganization($organization);
+        $user->switchOrganization($organization, $user->isSuperAdmin());
 
         return redirect()->route('home')
             ->with('success', 'Cambiaste a ' . $organization->name);

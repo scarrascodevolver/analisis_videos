@@ -387,18 +387,29 @@
 
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
-                <!-- Organization Dropdown (solo si tiene múltiples orgs) -->
+                <!-- Organization Dropdown (solo si tiene múltiples orgs o es super admin) -->
                 @php
-                    $userOrganizations = auth()->user()->organizations;
+                    $isSuperAdmin = auth()->user()->isSuperAdmin();
+                    // Super admins ven TODAS las organizaciones
+                    $userOrganizations = $isSuperAdmin
+                        ? \App\Models\Organization::where('is_active', true)->orderBy('name')->get()
+                        : auth()->user()->organizations;
                     $currentOrg = auth()->user()->currentOrganization();
                 @endphp
-                @if ($userOrganizations->count() > 1)
+                @if ($userOrganizations->count() > 1 || $isSuperAdmin)
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
                             <i class="fas fa-building mr-1"></i>
                             {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
+                            @if($isSuperAdmin)
+                                <span class="badge badge-danger badge-sm ml-1">SA</span>
+                            @endif
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right">
+                        <div class="dropdown-menu dropdown-menu-right" style="max-height: 400px; overflow-y: auto;">
+                            @if($isSuperAdmin)
+                                <span class="dropdown-header text-danger"><i class="fas fa-shield-alt mr-1"></i>Super Admin - Todas las Orgs</span>
+                                <div class="dropdown-divider"></div>
+                            @endif
                             @foreach ($userOrganizations as $org)
                                 <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline">
                                     @csrf
@@ -410,7 +421,9 @@
                                             <i class="fas fa-building mr-2"></i>
                                         @endif
                                         {{ $org->name }}
-                                        <small class="text-muted ml-2">({{ ucfirst($org->pivot->role) }})</small>
+                                        @if(!$isSuperAdmin && isset($org->pivot))
+                                            <small class="text-muted ml-2">({{ ucfirst($org->pivot->role) }})</small>
+                                        @endif
                                     </button>
                                 </form>
                             @endforeach
