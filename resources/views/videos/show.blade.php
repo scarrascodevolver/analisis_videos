@@ -934,6 +934,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         sidebarClipsData = sidebarClipsData.filter(c => c.id != clipId);
                         renderSidebarClips(sidebarClipFilter.value || null);
+                        // Sync with clip-manager local array
+                        if (typeof window.removeClipFromLocalArray === 'function') {
+                            window.removeClipFromLocalArray(parseInt(clipId));
+                        }
                     }
                 } catch (error) {
                     console.error('Error:', error);

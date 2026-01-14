@@ -144,13 +144,13 @@ function renderCategoryButtons() {
         </button>
     `).join('');
 
-    // Add click handlers
+    // Add click handlers (toggle mode - same as hotkeys)
     container.querySelectorAll('.clip-category-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const categoryId = parseInt(btn.dataset.categoryId);
             const category = categories.find(c => c.id === categoryId);
             if (category) {
-                createClip(category);
+                handleClipToggle(category);
             }
         });
     });
@@ -490,7 +490,6 @@ async function finishClip(category, currentTime) {
 
         if (data.success) {
             clips.push(data.clip);
-            renderClipsList();
             updateClipCount();
 
             const duration = endTime - pendingClip.startTime;
@@ -502,9 +501,11 @@ async function finishClip(category, currentTime) {
             // Flash the button
             flashButton(category.id);
 
-            // Refresh sidebar clips if available
+            // Refresh clips list - use sidebar refresh if available (avoids double render)
             if (typeof window.refreshSidebarClips === 'function') {
                 window.refreshSidebarClips();
+            } else {
+                renderClipsList();
             }
         } else {
             showNotification('Error al crear clip', 'error');
@@ -936,7 +937,10 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Expose loadCategories globally for modal access
+// Expose functions globally for external access
 window.loadCategories = loadCategories;
+window.removeClipFromLocalArray = function(clipId) {
+    clips = clips.filter(c => c.id !== clipId);
+};
 
 export { loadClips, loadCategories };
