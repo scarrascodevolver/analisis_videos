@@ -164,30 +164,37 @@
     </div>
     @endif
 
-    <!-- Resumen de Costos -->
+    <!-- Uso de Espacio Visual -->
     <div class="row">
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-dollar-sign mr-2"></i>Resumen de Costos Mensuales
+                        <i class="fas fa-hdd mr-2"></i>Espacio Utilizado por Organización
                     </h6>
                 </div>
                 <div class="card-body">
                     @foreach($storageByOrg as $org)
                     @php
                         $sizeGB = $org->total_size / 1073741824;
-                        $costPerMonth = $sizeGB * 0.02;
+                        $sizeMB = $org->total_size / 1048576;
+                        $percentage = $totalStorage > 0 ? ($org->total_size / $totalStorage) * 100 : 0;
                     @endphp
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                        <div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
                             <strong>{{ $org->name }}</strong>
-                            <br><small class="text-muted">{{ $org->video_count }} videos</small>
+                            <span>{{ number_format($sizeGB, 2) }} GB</span>
                         </div>
-                        <div class="text-right">
-                            <span class="text-muted">{{ number_format($sizeGB, 2) }} GB</span>
-                            <br><strong class="text-success">${{ number_format($costPerMonth, 2) }}/mes</strong>
+                        <div class="progress" style="height: 20px; background-color: #e9ecef;">
+                            <div class="progress-bar bg-info" role="progressbar"
+                                 style="width: {{ max($percentage, 1) }}%;"
+                                 aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                @if($percentage >= 10)
+                                    {{ number_format($sizeMB, 0) }} MB
+                                @endif
+                            </div>
                         </div>
+                        <small class="text-muted">{{ $org->video_count }} videos</small>
                     </div>
                     @endforeach
                 </div>
