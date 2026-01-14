@@ -163,14 +163,28 @@ class ClipCategoryController extends Controller
             ->with('success', 'Categoría actualizada exitosamente');
     }
 
-    public function destroy(ClipCategory $clipCategory)
+    public function destroy(Request $request, ClipCategory $clipCategory)
     {
         // No eliminar si tiene clips
         if ($clipCategory->clips()->count() > 0) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar: tiene clips asociados'
+                ], 422);
+            }
             return back()->withErrors(['error' => 'No se puede eliminar: tiene clips asociados']);
         }
 
         $clipCategory->delete();
+
+        // Respuesta JSON para AJAX
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría eliminada exitosamente'
+            ]);
+        }
 
         return redirect()->route('admin.clip-categories.index')
             ->with('success', 'Categoría eliminada exitosamente');

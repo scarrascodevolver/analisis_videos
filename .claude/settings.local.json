@@ -19,7 +19,12 @@
       "Bash(git reset:*)",
       "Bash(ls:*)",
       "Bash(ssh:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "WebSearch",
+      "WebFetch(domain:longomatch.com)",
+      "WebFetch(domain:linuxaria.com)",
+      "Bash(npx vite build:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

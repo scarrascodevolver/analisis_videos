@@ -1137,6 +1137,43 @@ function openCategoryModal(category = null) {
     $('#categoryModal').modal('show');
 }
 
+// Eliminar categoría
+async function deleteCategory(categoryId, categoryName) {
+    if (!confirm(`¿Eliminar la categoría "${categoryName}"?\n\nLos clips existentes de esta categoría NO se eliminarán.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/clip-categories/${categoryId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Remover la fila del modal
+            const row = document.getElementById(`category-row-${categoryId}`);
+            if (row) {
+                row.remove();
+            }
+
+            // Recargar categorías en el player
+            if (typeof window.loadCategories === 'function') {
+                window.loadCategories();
+            }
+        } else {
+            alert(result.message || 'Error al eliminar categoría');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar categoría');
+    }
+}
+
 // Manejo de modales de categorías
 document.addEventListener('DOMContentLoaded', function() {
     const categoryForm = document.getElementById('categoryForm');
@@ -1214,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             categoriesListModal.innerHTML = categories.map(cat => `
-                <div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background: #252525; border-radius: 5px;">
+                <div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background: #252525; border-radius: 5px;" id="category-row-${cat.id}">
                     <div class="d-flex align-items-center">
                         <span class="mr-3" style="width: 30px; height: 30px; background: ${cat.color}; border-radius: 5px;"></span>
                         <div>
@@ -1224,9 +1261,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <small style="color: #888;">Lead: ${cat.lead_seconds}s | Lag: ${cat.lag_seconds}s</small>
                         </div>
                     </div>
-                    <button type="button" onclick='openCategoryModal(${JSON.stringify(cat)})' class="btn btn-sm" style="background: #005461; color: #fff;">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    <div>
+                        <button type="button" onclick='openCategoryModal(${JSON.stringify(cat)})' class="btn btn-sm" style="background: #005461; color: #fff;" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" onclick='deleteCategory(${cat.id}, "${cat.name}")' class="btn btn-sm btn-danger ml-1" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         } catch (error) {

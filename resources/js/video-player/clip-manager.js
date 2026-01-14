@@ -207,7 +207,8 @@ function renderClipsList(clipsToShow = null) {
     const container = document.getElementById('sidebarClipsList') || document.getElementById('clipsList');
     if (!container) return;
 
-    const displayClips = clipsToShow || clips;
+    // Ordenar por ID descendente (más reciente primero)
+    const displayClips = [...(clipsToShow || clips)].sort((a, b) => b.id - a.id);
 
     if (displayClips.length === 0) {
         container.innerHTML = `
