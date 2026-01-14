@@ -348,6 +348,9 @@ function updateClipCount() {
 /**
  * Setup keyboard shortcuts for clip creation (Toggle mode - LongoMatch style)
  */
+let lastHotkeyTime = 0;
+const HOTKEY_DEBOUNCE = 300; // ms entre pulsaciones
+
 function setupHotkeys() {
     // Usar capture: true para interceptar teclas ANTES de que lleguen al video player
     document.addEventListener('keydown', (e) => {
@@ -365,7 +368,16 @@ function setupHotkeys() {
 
         if (category) {
             e.preventDefault();
-            e.stopPropagation(); // Evitar que el video player capture la tecla
+            e.stopPropagation();
+
+            // Debounce para evitar doble disparo
+            const now = Date.now();
+            if (now - lastHotkeyTime < HOTKEY_DEBOUNCE) {
+                console.log(`Hotkey "${key}" ignored (debounce)`);
+                return;
+            }
+            lastHotkeyTime = now;
+
             console.log(`Hotkey "${key}" -> ${category.name}`);
             handleClipToggle(category);
         }
