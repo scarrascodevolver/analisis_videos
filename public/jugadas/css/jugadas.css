@@ -1,0 +1,206 @@
+/* ============================================
+ * Creador de Jugadas - RugbyHub
+ * Estilos del editor de jugadas
+ * ============================================ */
+
+body {
+    background: #0f0f0f;
+    font-family: 'Source Sans Pro', sans-serif;
+    color: #e0e0e0;
+}
+
+.navbar-rugby {
+    background: linear-gradient(135deg, #005461 0%, #00B7B5 100%);
+    color: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.navbar-rugby h3 {
+    margin: 0;
+    color: white;
+    font-weight: 600;
+}
+
+.canvas-container {
+    border: 3px solid #00B7B5 !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.btn-rugby {
+    background: #005461;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-rugby:hover {
+    background: #00B7B5;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,183,181,0.3);
+}
+
+.btn-rugby i {
+    margin-right: 0.5rem;
+}
+
+.tools-panel {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    margin-bottom: 1rem;
+}
+
+.tools-panel .btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+}
+
+.tools-panel .form-control {
+    font-size: 0.85rem;
+    background: #252525;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+.tools-panel .form-control:focus {
+    background: #2a2a2a;
+    border-color: #00B7B5;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+}
+
+.tools-panel optgroup {
+    font-weight: 600;
+    font-style: normal;
+}
+
+.tools-panel option {
+    padding-left: 0.5rem;
+    background: #252525;
+}
+
+.canvas-wrapper {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.canvas-wrapper .canvas-container {
+    margin: 0 auto;
+}
+
+.canvas-wrapper h4 {
+    color: #e0e0e0;
+}
+
+.canvas-wrapper .text-muted {
+    color: #888 !important;
+}
+
+.section-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #00B7B5;
+    margin-top: 0.75rem;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid #00B7B5;
+    padding-bottom: 0.2rem;
+}
+
+.section-header:first-child {
+    margin-top: 0;
+}
+
+.section-header i {
+    font-size: 0.7rem;
+}
+
+#playNameInput, #formacionSelect, #playCategory {
+    background: #252525;
+    border: 2px solid #444;
+    border-radius: 6px;
+    color: #e0e0e0;
+    transition: border-color 0.3s;
+}
+
+#playNameInput:focus, #formacionSelect:focus, #playCategory:focus {
+    background: #2a2a2a;
+    border-color: #00B7B5;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+}
+
+.saved-play-item {
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-bottom: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.saved-play-item:hover {
+    background: #333;
+    border-color: #00B7B5;
+    transform: translateX(3px);
+}
+
+.saved-play-item strong {
+    color: #00B7B5;
+    font-size: 0.85rem;
+}
+
+.saved-play-item small {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.saved-play-item .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+}
+
+.badge-rugby {
+    background: #005461;
+}
+
+.alert-info-rugby {
+    background: rgba(0, 183, 181, 0.15);
+    border: 1px solid #00B7B5;
+    color: #00B7B5;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+}
+
+/* Dark mode adjustments for Bootstrap elements */
+.text-muted {
+    color: #888 !important;
+}
+
+.movements-list {
+    color: #ccc;
+}
+
+#animationStatus {
+    color: #888;
+}
+
+#savedPlaysList {
+    color: #ccc;
+}
