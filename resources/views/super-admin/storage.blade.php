@@ -119,6 +119,7 @@
                                     $sizeGB = $org->total_size / 1073741824;
                                     $sizeMB = $org->total_size / 1048576;
                                     $costPerMonth = $sizeGB * 0.02; // $0.02 por GB
+                                    $percentage = $totalStorage > 0 ? ($org->total_size / $totalStorage) * 100 : 0;
                                 @endphp
                                 <tr>
                                     <td>
@@ -127,9 +128,17 @@
                                     <td class="text-center">
                                         <span class="badge badge-info">{{ $org->video_count }}</span>
                                     </td>
-                                    <td class="text-right">
-                                        <strong>{{ number_format($sizeGB, 2) }} GB</strong>
-                                        <br><small class="text-muted">{{ number_format($sizeMB, 0) }} MB</small>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 mr-2" style="height: 18px; background-color: #3a3a3a; border: 1px solid #555;">
+                                                <div class="progress-bar" role="progressbar"
+                                                     style="width: {{ max($percentage, 2) }}%; background-color: #17a2b8;">
+                                                </div>
+                                            </div>
+                                            <span style="min-width: 70px;" class="text-right">
+                                                <strong>{{ number_format($sizeGB, 2) }} GB</strong>
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="text-right">
                                         <strong class="text-success">${{ number_format($costPerMonth, 2) }}</strong>
@@ -164,42 +173,8 @@
     </div>
     @endif
 
-    <!-- Uso de Espacio Visual -->
+    <!-- Información de Costos -->
     <div class="row">
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-hdd mr-2"></i>Espacio Utilizado por Organización
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @foreach($storageByOrg as $org)
-                    @php
-                        $sizeGB = $org->total_size / 1073741824;
-                        $sizeMB = $org->total_size / 1048576;
-                        $percentage = $totalStorage > 0 ? ($org->total_size / $totalStorage) * 100 : 0;
-                    @endphp
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between mb-1">
-                            <strong>{{ $org->name }}</strong>
-                            <span>{{ number_format($sizeGB, 2) }} GB</span>
-                        </div>
-                        <div class="progress" style="height: 20px; background-color: #3a3a3a; border: 1px solid #555;">
-                            <div class="progress-bar" role="progressbar"
-                                 style="width: {{ max($percentage, 1) }}%; background-color: #17a2b8;"
-                                 aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
-                                @if($percentage >= 10)
-                                    <span style="color: #fff; font-weight: bold;">{{ number_format($sizeMB, 0) }} MB</span>
-                                @endif
-                            </div>
-                        </div>
-                        <small class="text-muted">{{ $org->video_count }} videos</small>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
