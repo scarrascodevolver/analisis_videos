@@ -169,7 +169,7 @@
 
                             <div id="clipPanel" style="display: none; background: #0f0f0f;">
                                 <div class="p-3" style="color: #ccc;">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex justify-content-between align-items-start">
                                         <div id="clipButtonsContainer" class="d-flex flex-wrap" style="gap: 8px; flex: 1;">
                                             <div style="color: #888;">Cargando categorías...</div>
                                         </div>
@@ -182,26 +182,9 @@
                                             </button>
                                         </div>
                                     </div>
-
-                                    <hr class="my-2" style="border-color: #333;">
-
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="font-weight-bold" style="color: #fff;">Clips de este video</span>
-                                        <div>
-                                            <select id="clipFilterCategory" class="form-control form-control-sm d-inline-block" style="width: auto; background: #1a1a1a; color: #fff; border-color: #333;">
-                                                <option value="">Todas las categorías</option>
-                                            </select>
-                                            <button id="playAllClipsBtn" class="btn btn-sm ml-1" style="background: #00B7B5; color: #fff; border: none;" title="Reproducir todos los clips">
-                                                <i class="fas fa-play"></i> Ver clips
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div id="clipsList" class="list-group" style="max-height: 200px; overflow-y: auto; background: #1a1a1a; border-radius: 5px;">
-                                        <div class="text-center py-3" style="color: #666;">
-                                            <i class="fas fa-video-slash"></i> Sin clips aún
-                                        </div>
-                                    </div>
+                                    <small class="d-block mt-2" style="color: #666;">
+                                        <i class="fas fa-info-circle"></i> Presiona una categoría para iniciar/terminar grabación. Ver clips en el tab lateral.
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -298,8 +281,22 @@
             </div>
         </div>
 
-        <!-- Comments Section -->
-        <div class="col-lg-2" id="commentsSection">
+        <!-- Sidebar Section -->
+        <div class="col-lg-2" id="sidebarSection">
+            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+            <!-- Tabs para alternar entre Comentarios y Clips -->
+            <div class="sidebar-tabs mb-2" style="display: flex; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
+                <button type="button" class="sidebar-tab active" data-tab="comments" style="flex: 1; padding: 10px; border: none; background: #005461; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <i class="fas fa-comments"></i> Comentarios
+                </button>
+                <button type="button" class="sidebar-tab" data-tab="clips" style="flex: 1; padding: 10px; border: none; background: #252525; color: #888; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <i class="fas fa-film"></i> Clips <span id="sidebarClipCount" class="badge badge-light ml-1">0</span>
+                </button>
+            </div>
+            @endif
+
+            <!-- Tab Content: Comentarios -->
+            <div id="tabComments" class="tab-content-sidebar">
             <!-- Add Comment Form -->
             <div class="card">
                 <div class="card-header">
@@ -494,6 +491,50 @@
                     <!-- Las anotaciones se cargarán aquí via JavaScript -->
                 </div>
             </div>
+            </div><!-- End tabComments -->
+
+            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+            <!-- Tab Content: Clips -->
+            <div id="tabClips" class="tab-content-sidebar" style="display: none;">
+                <div class="card" style="background: #1a1a1a; border: 1px solid #333;">
+                    <div class="card-header py-2" style="background: #252525; border-bottom: 1px solid #333;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0" style="color: #fff;">
+                                <i class="fas fa-film" style="color: #00B7B5;"></i> Clips del Video
+                            </h6>
+                            <select id="sidebarClipFilter" class="form-control form-control-sm" style="width: auto; background: #333; color: #fff; border: none; font-size: 11px;">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                        <div id="sidebarClipsList" style="color: #ccc;">
+                            <div class="text-center py-4" style="color: #666;">
+                                <i class="fas fa-film fa-2x mb-2"></i>
+                                <p class="mb-0">Sin clips aún</p>
+                                <small>Usa la botonera bajo el video para crear clips</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card mt-2" style="background: #1a1a1a; border: 1px solid #333;">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-around text-center" style="color: #888; font-size: 12px;">
+                            <div>
+                                <div id="sidebarTotalClips" style="font-size: 18px; font-weight: bold; color: #00B7B5;">0</div>
+                                <div>Total</div>
+                            </div>
+                            <div>
+                                <div id="sidebarHighlights" style="font-size: 18px; font-weight: bold; color: #ffc107;">0</div>
+                                <div>Destacados</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -716,6 +757,207 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<script>
+// Sidebar Tabs para Comentarios/Clips
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.sidebar-tab');
+    const tabComments = document.getElementById('tabComments');
+    const tabClips = document.getElementById('tabClips');
+    const sidebarClipsList = document.getElementById('sidebarClipsList');
+    const sidebarClipFilter = document.getElementById('sidebarClipFilter');
+    const sidebarClipCount = document.getElementById('sidebarClipCount');
+    const sidebarTotalClips = document.getElementById('sidebarTotalClips');
+    const sidebarHighlights = document.getElementById('sidebarHighlights');
+
+    let sidebarClipsData = [];
+    let sidebarCategoriesData = [];
+
+    // Tab switching
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+
+            // Update button styles
+            tabButtons.forEach(b => {
+                b.style.background = '#252525';
+                b.style.color = '#888';
+                b.classList.remove('active');
+            });
+            this.style.background = '#005461';
+            this.style.color = '#fff';
+            this.classList.add('active');
+
+            // Show/hide content
+            if (tab === 'comments') {
+                tabComments.style.display = 'block';
+                tabClips.style.display = 'none';
+            } else {
+                tabComments.style.display = 'none';
+                tabClips.style.display = 'block';
+                loadSidebarClips();
+            }
+        });
+    });
+
+    // Load clips for sidebar
+    async function loadSidebarClips() {
+        try {
+            // Load categories for filter
+            if (sidebarCategoriesData.length === 0) {
+                const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
+                sidebarCategoriesData = await catResponse.json();
+
+                // Populate filter dropdown
+                sidebarClipFilter.innerHTML = '<option value="">Todos</option>' +
+                    sidebarCategoriesData.map(cat =>
+                        `<option value="${cat.id}" style="color: ${cat.color};">${cat.name}</option>`
+                    ).join('');
+            }
+
+            // Load clips
+            const response = await fetch('{{ route("api.clips.index", $video) }}');
+            sidebarClipsData = await response.json();
+
+            renderSidebarClips();
+        } catch (error) {
+            console.error('Error loading sidebar clips:', error);
+        }
+    }
+
+    // Render clips in sidebar
+    function renderSidebarClips(filterCategoryId = null) {
+        let clips = sidebarClipsData;
+
+        if (filterCategoryId) {
+            clips = clips.filter(c => c.clip_category_id == filterCategoryId);
+        }
+
+        // Update counts
+        sidebarClipCount.textContent = sidebarClipsData.length;
+        sidebarTotalClips.textContent = sidebarClipsData.length;
+        sidebarHighlights.textContent = sidebarClipsData.filter(c => c.is_highlight).length;
+
+        if (clips.length === 0) {
+            sidebarClipsList.innerHTML = `
+                <div class="text-center py-4" style="color: #666;">
+                    <i class="fas fa-film fa-2x mb-2"></i>
+                    <p class="mb-0">Sin clips</p>
+                    <small>${filterCategoryId ? 'Prueba otro filtro' : 'Usa la botonera para crear clips'}</small>
+                </div>`;
+            return;
+        }
+
+        sidebarClipsList.innerHTML = clips.map(clip => `
+            <div class="sidebar-clip-item"
+                 data-clip-id="${clip.id}"
+                 data-start="${clip.start_time}"
+                 data-end="${clip.end_time}"
+                 style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background 0.2s;"
+                 onmouseover="this.style.background='#252525'"
+                 onmouseout="this.style.background='transparent'">
+                <div class="d-flex align-items-center">
+                    <span style="width: 8px; height: 30px; background: ${clip.category?.color || '#666'}; border-radius: 3px; margin-right: 10px;"></span>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="font-weight: 600; font-size: 12px; color: #fff;">
+                                ${clip.category?.name || 'Sin categoría'}
+                            </span>
+                            <div>
+                                ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                                <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
+                                        style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                        title="Eliminar clip">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: #888;">
+                            ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
+                            <span style="color: #666; margin-left: 5px;">(${(clip.end_time - clip.start_time).toFixed(1)}s)</span>
+                        </div>
+                        ${clip.title ? `<div style="font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clip.title}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add click handlers to play clips
+        document.querySelectorAll('.sidebar-clip-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Ignore if clicking delete button
+                if (e.target.closest('.sidebar-delete-clip-btn')) return;
+
+                const start = parseFloat(this.dataset.start);
+                const end = parseFloat(this.dataset.end);
+                const video = document.getElementById('rugbyVideo');
+                if (video) {
+                    video.currentTime = start;
+                    video.play();
+
+                    // Auto-pause at end
+                    const checkEnd = setInterval(() => {
+                        if (video.currentTime >= end) {
+                            video.pause();
+                            clearInterval(checkEnd);
+                        }
+                    }, 100);
+                }
+            });
+        });
+
+        // Add click handlers for delete buttons
+        document.querySelectorAll('.sidebar-delete-clip-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                if (!confirm('¿Eliminar este clip?')) return;
+
+                const clipId = this.dataset.clipId;
+                try {
+                    const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        sidebarClipsData = sidebarClipsData.filter(c => c.id != clipId);
+                        renderSidebarClips(sidebarClipFilter.value || null);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    }
+
+    // Filter change
+    if (sidebarClipFilter) {
+        sidebarClipFilter.addEventListener('change', function() {
+            renderSidebarClips(this.value || null);
+        });
+    }
+
+    // Helper function
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Expose function to refresh sidebar clips from outside
+    window.refreshSidebarClips = function() {
+        sidebarClipsData = []; // Reset to force reload
+        if (tabClips && tabClips.style.display !== 'none') {
+            loadSidebarClips();
+        }
+    };
+});
+</script>
+@endif
 
 <!-- Tribute.js CSS and JS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">

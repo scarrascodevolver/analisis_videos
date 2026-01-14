@@ -451,6 +451,11 @@ async function finishClip(category, currentTime) {
 
             // Flash the button
             flashButton(category.id);
+
+            // Refresh sidebar clips if available
+            if (typeof window.refreshSidebarClips === 'function') {
+                window.refreshSidebarClips();
+            }
         } else {
             showNotification('Error al crear clip', 'error');
         }
@@ -618,6 +623,11 @@ async function deleteClip(clipId) {
             renderClipsList();
             updateClipCount();
             showNotification('Clip eliminado', 'info');
+
+            // Refresh sidebar clips if available
+            if (typeof window.refreshSidebarClips === 'function') {
+                window.refreshSidebarClips();
+            }
         }
     } catch (error) {
         console.error('Error deleting clip:', error);
