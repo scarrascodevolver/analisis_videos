@@ -665,14 +665,13 @@
                                     <p>Invitar Jugadores</p>
                                 </a>
                             </li>
-                            <!-- Funcionalidades Futuras -->
+                            <!-- Editor de Jugadas (Prototipo) -->
                             <li class="nav-item">
-                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal"
-                                    data-target="#upcomingFeatureModal" data-feature="Crear Jugadas">
+                                <a href="/prototype-jugadas.html" class="nav-link" target="_blank">
                                     <i class="nav-icon fas fa-draw-polygon"></i>
                                     <p>
                                         Crear Jugadas
-                                        <span class="badge badge-success right">Próximamente</span>
+                                        <span class="badge badge-warning right">Beta</span>
                                     </p>
                                 </a>
                             </li>
