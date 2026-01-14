@@ -55,6 +55,22 @@
             </a>
         </div>
     </div>
+
+    <!-- Categorías de Clips -->
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-primary">
+            <div class="inner">
+                <h3>{{ $stats['clip_categories'] ?? 0 }}</h3>
+                <p>Categorías de Clips</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-film"></i>
+            </div>
+            <a href="{{ route('admin.clip-categories.index') }}" class="small-box-footer">
+                Gestionar <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="row">
@@ -94,6 +110,14 @@
                         <p class="text-muted">Gestiona el código de invitación para que nuevos jugadores puedan registrarse en tu organización.</p>
                         <a href="{{ route('admin.organization') }}" class="btn btn-secondary btn-sm mb-3">
                             <i class="fas fa-cog"></i> Configurar Código
+                        </a>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-film text-primary"></i> Categorías de Clips</h5>
+                        <p class="text-muted">Configura la botonera de análisis de video. Define categorías como Try, Scrum, Lineout, etc., con teclas rápidas para marcar clips.</p>
+                        <a href="{{ route('admin.clip-categories.index') }}" class="btn btn-primary btn-sm mb-3">
+                            <i class="fas fa-cog"></i> Configurar Botonera
                         </a>
                     </div>
                 </div>

@@ -109,6 +109,11 @@ class Video extends Model
         return $this->hasMany(VideoAnnotation::class);
     }
 
+    public function clips()
+    {
+        return $this->hasMany(VideoClip::class);
+    }
+
     public function views()
     {
         return $this->hasMany(VideoView::class);

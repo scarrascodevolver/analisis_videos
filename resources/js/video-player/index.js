@@ -15,6 +15,7 @@ import { initComments } from './comments.js';
 import { initAnnotations, checkAndShowAnnotations } from './annotations.js';
 import { initStatsModal } from './stats-modal.js';
 import { initMentions } from './mentions.js';
+import { initClipManager } from './clip-manager.js';
 
 /**
  * Initialize Video Player when DOM is ready
@@ -48,6 +49,7 @@ $(document).ready(function () {
     initAnnotations();
     initStatsModal();
     initMentions();
+    initClipManager();
 
     console.log('Video Player initialized successfully');
 });

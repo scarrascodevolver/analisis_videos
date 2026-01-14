@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ClipCategory;
 use App\Models\Organization;
 use App\Models\Team;
 use App\Models\RugbySituation;
@@ -24,6 +25,7 @@ class AdminController extends Controller
             'categories' => Category::count(),
             'situations' => RugbySituation::count(),
             'users' => $currentOrg ? $currentOrg->users()->count() : 0,
+            'clip_categories' => ClipCategory::count(),
         ];
 
         return view('admin.index', compact('stats'));

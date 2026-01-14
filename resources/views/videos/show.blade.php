@@ -152,6 +152,51 @@
                             <!-- Active comment notifications will appear here -->
                         </div>
                     </div>
+
+                    {{-- Botonera de Clips (Solo analistas/entrenadores) --}}
+                    @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                    <div id="clipPanelWrapper" class="border-top" style="background: #f8f9fa;">
+                        {{-- Toggle Button --}}
+                        <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #e9ecef; border: none; border-radius: 0;">
+                            <i class="fas fa-film mr-2"></i>
+                            <strong>Modo Análisis - Clips</strong>
+                            <span id="clipCount" class="badge badge-primary ml-2">0</span>
+                            <i id="clipPanelArrow" class="fas fa-chevron-down float-right mt-1"></i>
+                        </button>
+
+                        {{-- Collapsible Panel --}}
+                        <div id="clipPanel" style="display: none;">
+                            <div class="p-3">
+                                {{-- Botonera de Categorías --}}
+                                <div id="clipButtonsContainer" class="d-flex flex-wrap mb-3" style="gap: 8px;">
+                                    {{-- Los botones se cargan via JavaScript --}}
+                                    <div class="text-muted">Cargando categorías...</div>
+                                </div>
+
+                                <hr class="my-2">
+
+                                {{-- Lista de Clips del Video --}}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="font-weight-bold">Clips de este video</span>
+                                    <div>
+                                        <select id="clipFilterCategory" class="form-control form-control-sm d-inline-block" style="width: auto;">
+                                            <option value="">Todas las categorías</option>
+                                        </select>
+                                        <button id="playAllClipsBtn" class="btn btn-sm btn-outline-primary ml-1" title="Reproducir todos los clips">
+                                            <i class="fas fa-play"></i> Ver clips
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="clipsList" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                    <div class="text-muted text-center py-3">
+                                        <i class="fas fa-video-slash"></i> Sin clips aún
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -483,13 +528,17 @@ window.VideoPlayer = {
             id: {{ auth()->id() }},
             name: '{{ auth()->user()->name }}',
             role: '{{ auth()->user()->role }}',
-            canViewStats: {{ in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']) ? 'true' : 'false' }}
+            canViewStats: {{ in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']) ? 'true' : 'false' }},
+            canCreateClips: {{ in_array(auth()->user()->role, ['analista', 'entrenador']) ? 'true' : 'false' }}
         },
         routes: {
             trackView: '{{ route("api.videos.track-view", $video) }}',
             updateDuration: '{{ route("api.videos.update-duration", $video) }}',
             markCompleted: '{{ route("api.videos.mark-completed", $video) }}',
-            stats: '{{ route("api.videos.stats", $video) }}'
+            stats: '{{ route("api.videos.stats", $video) }}',
+            clipCategories: '{{ route("api.clip-categories.index") }}',
+            clips: '{{ route("api.clips.index", $video) }}',
+            createClip: '{{ route("api.clips.quick-store", $video) }}'
         }
     }
 };

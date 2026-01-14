@@ -12,6 +12,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VideoViewController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\ClipCategoryController;
+use App\Http\Controllers\VideoClipController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -91,6 +93,26 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{id}', [AnnotationController::class, 'destroy'])->name('destroy');
     });
 
+    // Video Clips API Routes
+    Route::prefix('api/videos/{video}/clips')->name('api.clips.')->group(function () {
+        Route::get('/', [VideoClipController::class, 'apiIndex'])->name('index');
+        Route::post('/quick', [VideoClipController::class, 'quickStore'])->name('quick-store');
+    });
+
+    // Clip Categories API
+    Route::get('api/clip-categories', [ClipCategoryController::class, 'apiIndex'])->name('api.clip-categories.index');
+
+    // Video Clips CRUD Routes
+    Route::prefix('videos/{video}/clips')->name('videos.clips.')->group(function () {
+        Route::get('/', [VideoClipController::class, 'index'])->name('index');
+        Route::post('/', [VideoClipController::class, 'store'])->name('store');
+        Route::put('/{clip}', [VideoClipController::class, 'update'])->name('update');
+        Route::delete('/{clip}', [VideoClipController::class, 'destroy'])->name('destroy');
+    });
+
+    // Clip highlight toggle
+    Route::post('api/clips/{clip}/toggle-highlight', [VideoClipController::class, 'toggleHighlight'])->name('api.clips.toggle-highlight');
+
     // Video View Tracking API Routes
     Route::prefix('api/videos')->name('api.videos.')->group(function () {
         Route::post('/{video}/track-view', [VideoViewController::class, 'track'])->name('track-view');
@@ -128,6 +150,10 @@ Route::middleware(['auth'])->group(function () {
 
         // Gestión de Categorías
         Route::resource('categories', App\Http\Controllers\CategoryManagementController::class);
+
+        // Gestión de Categorías de Clips (Botonera)
+        Route::resource('clip-categories', ClipCategoryController::class);
+        Route::post('clip-categories/reorder', [ClipCategoryController::class, 'reorder'])->name('clip-categories.reorder');
 
         // Gestión de Equipos (deshabilitado - equipos se crean automáticamente con la organización)
         // Route::resource('teams', App\Http\Controllers\TeamManagementController::class);
