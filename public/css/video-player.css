@@ -371,3 +371,77 @@
     0%, 100% { box-shadow: 0 2px 10px rgba(0, 183, 181, 0.3); }
     50% { box-shadow: 0 2px 20px rgba(0, 183, 181, 0.6); }
 }
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Clip Category Buttons - Mobile Responsive                   */
+/* ═══════════════════════════════════════════════════════════ */
+
+.clip-category-btn {
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+}
+
+.clip-category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.clip-category-btn:active {
+    transform: translateY(0);
+}
+
+/* Recording state */
+.clip-category-btn.recording {
+    animation: recordingPulse 1s ease infinite;
+}
+
+@keyframes recordingPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 0, 0, 0); }
+}
+
+/* Mobile: Botones compactos */
+@media (max-width: 768px) {
+    #clipButtonsContainer {
+        gap: 4px !important;
+    }
+
+    .clip-category-btn {
+        min-width: 60px !important;
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+        border-radius: 4px;
+    }
+
+    /* Ocultar hotkey en móvil (no se usa teclado) */
+    .clip-category-btn small {
+        display: none !important;
+    }
+
+    /* Botones Crear/Editar más compactos */
+    #clipPanel .btn-sm {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+    }
+
+    /* Ocultar texto, solo icono */
+    #clipPanel .btn-sm:not(:has(i)) {
+        font-size: 0;
+    }
+
+    /* Texto de ayuda más pequeño */
+    #clipPanel small.d-block {
+        font-size: 10px !important;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .clip-category-btn {
+        min-width: 50px !important;
+        padding: 5px 6px !important;
+        font-size: 10px !important;
+    }
+}

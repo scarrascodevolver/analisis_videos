@@ -26,7 +26,8 @@
       "Bash(npx vite build:*)",
       "Bash(find:*)",
       "Bash(git remote set-url:*)",
-      "Bash(GIT_TERMINAL_PROMPT=0 git push:*)"
+      "Bash(GIT_TERMINAL_PROMPT=0 git push:*)",
+      "Bash(xargs git branch -d)"
     ],
     "deny": [],
     "ask": []
