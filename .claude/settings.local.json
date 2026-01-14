@@ -24,7 +24,9 @@
       "WebFetch(domain:longomatch.com)",
       "WebFetch(domain:linuxaria.com)",
       "Bash(npx vite build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(GIT_TERMINAL_PROMPT=0 git push:*)"
     ],
     "deny": [],
     "ask": []

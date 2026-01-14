@@ -349,23 +349,31 @@ function updateClipCount() {
  * Setup keyboard shortcuts for clip creation (Toggle mode - LongoMatch style)
  */
 function setupHotkeys() {
+    // Usar capture: true para interceptar teclas ANTES de que lleguen al video player
     document.addEventListener('keydown', (e) => {
         // Skip if typing in input fields
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
         // Skip if categories not loaded yet
-        if (categories.length === 0) return;
+        if (categories.length === 0) {
+            console.log('Hotkey ignored: categories not loaded');
+            return;
+        }
 
         const key = e.key.toLowerCase();
         const category = categories.find(c => c.hotkey && c.hotkey.toLowerCase() === key);
 
         if (category) {
             e.preventDefault();
+            e.stopPropagation(); // Evitar que el video player capture la tecla
+            console.log(`Hotkey "${key}" -> ${category.name}`);
             handleClipToggle(category);
         }
 
         // ESC to stop clip playback mode OR cancel pending clip
         if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
             if (pendingClip) {
                 cancelPendingClip();
             }
@@ -379,7 +387,7 @@ function setupHotkeys() {
                 showNotification('Reproducción cancelada', 'info');
             }
         }
-    });
+    }, { capture: true }); // Capturar en fase de capture, antes del video
 }
 
 /**
