@@ -62,13 +62,13 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Promedio por Video</div>
+                                Costo Total Mensual</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $totalVideos > 0 ? number_format(($totalStorage / $totalVideos) / 1048576, 0) : 0 }} MB
+                                ${{ number_format(($totalStorage / 1073741824) * 0.02, 2) }}
                             </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-pie mr-2"></i>Uso por Organización
+                        <i class="fas fa-building mr-2"></i>Uso por Organización
                     </h6>
                 </div>
                 <div class="card-body">
@@ -110,47 +110,29 @@
                                     <th>Organización</th>
                                     <th class="text-center">Videos</th>
                                     <th class="text-right">Almacenamiento</th>
-                                    <th class="text-right">Promedio</th>
-                                    <th style="width: 30%">Uso</th>
+                                    <th class="text-right">Costo/Mes</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($storageByOrg as $org)
                                 @php
-                                    $percentage = $totalStorage > 0 ? ($org->total_size / $totalStorage) * 100 : 0;
                                     $sizeGB = $org->total_size / 1073741824;
                                     $sizeMB = $org->total_size / 1048576;
-                                    $avgMB = $org->avg_size / 1048576;
+                                    $costPerMonth = $sizeGB * 0.02; // $0.02 por GB
                                 @endphp
                                 <tr>
                                     <td>
                                         <strong>{{ $org->name }}</strong>
-                                        <br><small class="text-muted">{{ $org->slug }}</small>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge badge-info">{{ $org->video_count }}</span>
                                     </td>
                                     <td class="text-right">
-                                        @if($sizeGB >= 1)
-                                            <strong>{{ number_format($sizeGB, 2) }} GB</strong>
-                                        @else
-                                            {{ number_format($sizeMB, 0) }} MB
-                                        @endif
+                                        <strong>{{ number_format($sizeGB, 2) }} GB</strong>
+                                        <br><small class="text-muted">{{ number_format($sizeMB, 0) }} MB</small>
                                     </td>
                                     <td class="text-right">
-                                        {{ number_format($avgMB, 0) }} MB
-                                    </td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-{{ $percentage > 50 ? 'danger' : ($percentage > 25 ? 'warning' : 'success') }}"
-                                                 role="progressbar"
-                                                 style="width: {{ max($percentage, 1) }}%"
-                                                 aria-valuenow="{{ $percentage }}"
-                                                 aria-valuemin="0"
-                                                 aria-valuemax="100">
-                                                {{ number_format($percentage, 1) }}%
-                                            </div>
-                                        </div>
+                                        <strong class="text-success">${{ number_format($costPerMonth, 2) }}</strong>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -160,10 +142,7 @@
                                     <td><strong>TOTAL</strong></td>
                                     <td class="text-center"><strong>{{ $totalVideos }}</strong></td>
                                     <td class="text-right"><strong>{{ number_format($totalStorage / 1073741824, 2) }} GB</strong></td>
-                                    <td class="text-right">
-                                        <strong>{{ $totalVideos > 0 ? number_format(($totalStorage / $totalVideos) / 1048576, 0) : 0 }} MB</strong>
-                                    </td>
-                                    <td><strong>100%</strong></td>
+                                    <td class="text-right"><strong class="text-success">${{ number_format(($totalStorage / 1073741824) * 0.02, 2) }}</strong></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -185,28 +164,29 @@
     </div>
     @endif
 
-    <!-- Storage Visual Chart -->
+    <!-- Resumen de Costos -->
     <div class="row">
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-bar mr-2"></i>Top 5 Organizaciones por Uso
+                        <i class="fas fa-dollar-sign mr-2"></i>Resumen de Costos Mensuales
                     </h6>
                 </div>
                 <div class="card-body">
-                    @foreach($storageByOrg->take(5) as $org)
+                    @foreach($storageByOrg as $org)
                     @php
-                        $percentage = $totalStorage > 0 ? ($org->total_size / $totalStorage) * 100 : 0;
-                        $sizeMB = $org->total_size / 1048576;
+                        $sizeGB = $org->total_size / 1073741824;
+                        $costPerMonth = $sizeGB * 0.02;
                     @endphp
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>{{ $org->name }}</span>
-                            <span class="text-muted">{{ number_format($sizeMB, 0) }} MB</span>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <strong>{{ $org->name }}</strong>
+                            <br><small class="text-muted">{{ $org->video_count }} videos</small>
                         </div>
-                        <div class="progress" style="height: 12px;">
-                            <div class="progress-bar bg-primary" style="width: {{ max($percentage, 2) }}%"></div>
+                        <div class="text-right">
+                            <span class="text-muted">{{ number_format($sizeGB, 2) }} GB</span>
+                            <br><strong class="text-success">${{ number_format($costPerMonth, 2) }}/mes</strong>
                         </div>
                     </div>
                     @endforeach
@@ -217,29 +197,32 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-info-circle mr-2"></i>Información
+                        <i class="fas fa-info-circle mr-2"></i>Información de Costos
                     </h6>
                 </div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <i class="fas fa-cloud text-info mr-2"></i>
-                            <strong>Proveedor:</strong> DigitalOcean Spaces
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-dollar-sign text-success mr-2"></i>
-                            <strong>Costo estimado:</strong> ${{ number_format(($totalStorage / 1073741824) * 0.02, 2) }}/mes
-                            <small class="text-muted">(~$0.02/GB)</small>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-film text-primary mr-2"></i>
-                            <strong>Formato:</strong> MP4 (comprimido)
-                        </li>
-                        <li>
-                            <i class="fas fa-compress text-warning mr-2"></i>
-                            <strong>Compresión:</strong> H.264/AAC
-                        </li>
-                    </ul>
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-cloud mr-2"></i>
+                        <strong>DigitalOcean Spaces</strong> - $0.02 USD por GB/mes
+                    </div>
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>Almacenamiento Total:</td>
+                            <td class="text-right"><strong>{{ number_format($totalStorage / 1073741824, 2) }} GB</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Videos Totales:</td>
+                            <td class="text-right"><strong>{{ $totalVideos }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Promedio por Video:</td>
+                            <td class="text-right"><strong>{{ $totalVideos > 0 ? number_format(($totalStorage / $totalVideos) / 1048576, 0) : 0 }} MB</strong></td>
+                        </tr>
+                        <tr class="bg-light">
+                            <td><strong>Costo Mensual Total:</strong></td>
+                            <td class="text-right"><strong class="text-success">${{ number_format(($totalStorage / 1073741824) * 0.02, 2) }} USD</strong></td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </div>
