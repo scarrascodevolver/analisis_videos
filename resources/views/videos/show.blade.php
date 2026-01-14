@@ -164,10 +164,12 @@
                                 <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
                                 <strong>Modo Análisis - Clips</strong>
                                 <span id="clipCount" class="badge ml-2" style="background: #00B7B5;">0</span>
-                                <i id="clipPanelArrow" class="fas fa-chevron-down float-right mt-1"></i>
+                                {{-- Analistas: expandido por defecto (flecha arriba), Entrenadores: colapsado (flecha abajo) --}}
+                                <i id="clipPanelArrow" class="fas fa-chevron-{{ auth()->user()->role === 'analista' ? 'up' : 'down' }} float-right mt-1"></i>
                             </button>
 
-                            <div id="clipPanel" style="display: none; background: #0f0f0f;">
+                            {{-- Analistas: visible por defecto, Entrenadores: oculto --}}
+                            <div id="clipPanel" style="display: {{ auth()->user()->role === 'analista' ? 'block' : 'none' }}; background: #0f0f0f;">
                                 <div class="p-3" style="color: #ccc;">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div id="clipButtonsContainer" class="d-flex flex-wrap" style="gap: 8px; flex: 1;">
@@ -285,18 +287,23 @@
         <div class="col-lg-2" id="sidebarSection">
             @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
             <!-- Tabs para alternar entre Comentarios y Clips -->
+            <!-- Analistas: Clips primero, Entrenadores: Comentarios primero -->
+            @php
+                $isAnalista = auth()->user()->role === 'analista';
+            @endphp
             <div class="sidebar-tabs mb-2" style="display: flex; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
-                <button type="button" class="sidebar-tab active" data-tab="comments" style="flex: 1; padding: 10px; border: none; background: #005461; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                <button type="button" class="sidebar-tab {{ $isAnalista ? '' : 'active' }}" data-tab="comments" style="flex: 1; padding: 10px; border: none; background: {{ $isAnalista ? '#252525' : '#005461' }}; color: {{ $isAnalista ? '#888' : '#fff' }}; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                     <i class="fas fa-comments"></i> Comentarios
                 </button>
-                <button type="button" class="sidebar-tab" data-tab="clips" style="flex: 1; padding: 10px; border: none; background: #252525; color: #888; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                <button type="button" class="sidebar-tab {{ $isAnalista ? 'active' : '' }}" data-tab="clips" style="flex: 1; padding: 10px; border: none; background: {{ $isAnalista ? '#005461' : '#252525' }}; color: {{ $isAnalista ? '#fff' : '#888' }}; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                     <i class="fas fa-film"></i> Clips <span id="sidebarClipCount" class="badge badge-light ml-1">0</span>
                 </button>
             </div>
             @endif
 
             <!-- Tab Content: Comentarios -->
-            <div id="tabComments" class="tab-content-sidebar">
+            <!-- Analistas: oculto por defecto, Entrenadores/otros: visible -->
+            <div id="tabComments" class="tab-content-sidebar" @if(auth()->user()->role === 'analista') style="display: none;" @endif>
             <!-- Add Comment Form -->
             <div class="card">
                 <div class="card-header">
@@ -495,7 +502,8 @@
 
             @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
             <!-- Tab Content: Clips -->
-            <div id="tabClips" class="tab-content-sidebar" style="display: none;">
+            <!-- Analistas: visible por defecto, Entrenadores: oculto -->
+            <div id="tabClips" class="tab-content-sidebar" style="display: {{ auth()->user()->role === 'analista' ? 'block' : 'none' }}">
                 <div class="card" style="background: #1a1a1a; border: 1px solid #333;">
                     <div class="card-header py-2" style="background: #252525; border-bottom: 1px solid #333;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -955,6 +963,11 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSidebarClips();
         }
     };
+
+    // Auto-cargar clips al inicio si el tab está visible (para analistas)
+    if (tabClips && tabClips.style.display !== 'none') {
+        loadSidebarClips();
+    }
 });
 </script>
 @endif
