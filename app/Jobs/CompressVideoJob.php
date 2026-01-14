@@ -38,6 +38,14 @@ class CompressVideoJob implements ShouldQueue
     protected $videoId;
 
     /**
+     * Temporary file paths for cleanup tracking.
+     *
+     * @var string|null
+     */
+    protected $tempOriginalPath = null;
+    protected $tempCompressedPath = null;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(int $videoId)
@@ -88,30 +96,30 @@ class CompressVideoJob implements ShouldQueue
             ]);
 
             // Download video to temporary location for processing
-            $tempOriginalPath = $this->downloadVideoToTemp($video, $disk);
+            $this->tempOriginalPath = $this->downloadVideoToTemp($video, $disk);
 
-            if (!$tempOriginalPath) {
+            if (!$this->tempOriginalPath) {
                 throw new Exception("Failed to download video for processing");
             }
 
-            Log::info("CompressVideoJob: Downloaded video to {$tempOriginalPath}");
+            Log::info("CompressVideoJob: Downloaded video to {$this->tempOriginalPath}");
 
             // Create temporary output path
-            $tempCompressedPath = storage_path('app/temp/compressed_' . basename($tempOriginalPath));
+            $this->tempCompressedPath = storage_path('app/temp/compressed_' . basename($this->tempOriginalPath));
 
             // Compress the video using FFmpeg
-            $this->compressVideo($tempOriginalPath, $tempCompressedPath);
+            $this->compressVideo($this->tempOriginalPath, $this->tempCompressedPath);
 
-            Log::info("CompressVideoJob: Compression completed, output: {$tempCompressedPath}");
+            Log::info("CompressVideoJob: Compression completed, output: {$this->tempCompressedPath}");
 
             // Upload compressed video to storage
-            $newPath = $this->uploadCompressedVideo($video, $tempCompressedPath);
+            $newPath = $this->uploadCompressedVideo($video, $this->tempCompressedPath);
 
             Log::info("CompressVideoJob: Uploaded compressed video to {$newPath}");
 
             // Update video record with new information
             $originalFileSize = $video->file_size;
-            $compressedFileSize = filesize($tempCompressedPath);
+            $compressedFileSize = filesize($this->tempCompressedPath);
             $compressionRatio = round(($originalFileSize - $compressedFileSize) / $originalFileSize * 100, 2);
 
             $video->update([
@@ -124,10 +132,6 @@ class CompressVideoJob implements ShouldQueue
                 'processing_status' => 'completed',
                 'processing_completed_at' => now(),
             ]);
-
-            // Clean up temporary files
-            @unlink($tempOriginalPath);
-            @unlink($tempCompressedPath);
 
             // Delete original file from storage if it's different from compressed path
             if ($video->original_file_path && $video->original_file_path !== $newPath) {
@@ -151,6 +155,9 @@ class CompressVideoJob implements ShouldQueue
             ]);
 
             throw $e; // Re-throw to mark job as failed
+        } finally {
+            // ALWAYS clean up temporary files, regardless of success or failure
+            $this->cleanupTempFiles();
         }
     }
 
@@ -271,10 +278,36 @@ class CompressVideoJob implements ShouldQueue
     }
 
     /**
+     * Clean up temporary files.
+     * Called from finally block to ensure cleanup regardless of job outcome.
+     */
+    protected function cleanupTempFiles(): void
+    {
+        $cleaned = [];
+
+        if ($this->tempOriginalPath && file_exists($this->tempOriginalPath)) {
+            @unlink($this->tempOriginalPath);
+            $cleaned[] = basename($this->tempOriginalPath);
+        }
+
+        if ($this->tempCompressedPath && file_exists($this->tempCompressedPath)) {
+            @unlink($this->tempCompressedPath);
+            $cleaned[] = basename($this->tempCompressedPath);
+        }
+
+        if (!empty($cleaned)) {
+            Log::info("CompressVideoJob: Cleaned up temp files: " . implode(', ', $cleaned));
+        }
+    }
+
+    /**
      * Handle a job failure.
      */
     public function failed(Exception $exception): void
     {
+        // Ensure temp files are cleaned up on final failure
+        $this->cleanupTempFiles();
+
         $video = Video::find($this->videoId);
 
         if ($video) {
