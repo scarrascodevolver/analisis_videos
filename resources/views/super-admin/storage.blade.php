@@ -185,12 +185,12 @@
                             <strong>{{ $org->name }}</strong>
                             <span>{{ number_format($sizeGB, 2) }} GB</span>
                         </div>
-                        <div class="progress" style="height: 20px; background-color: #e9ecef;">
-                            <div class="progress-bar bg-info" role="progressbar"
-                                 style="width: {{ max($percentage, 1) }}%;"
+                        <div class="progress" style="height: 20px; background-color: #3a3a3a; border: 1px solid #555;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ max($percentage, 1) }}%; background-color: #17a2b8;"
                                  aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
                                 @if($percentage >= 10)
-                                    {{ number_format($sizeMB, 0) }} MB
+                                    <span style="color: #fff; font-weight: bold;">{{ number_format($sizeMB, 0) }} MB</span>
                                 @endif
                             </div>
                         </div>
