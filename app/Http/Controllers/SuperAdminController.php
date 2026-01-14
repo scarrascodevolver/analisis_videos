@@ -349,4 +349,40 @@ class SuperAdminController extends Controller
 
         return view('super-admin.users.index', compact('users', 'organizations'));
     }
+
+    /**
+     * Estadísticas de almacenamiento por organización
+     */
+    public function storageStats()
+    {
+        // Obtener uso de almacenamiento por organización
+        $storageByOrg = Organization::select('organizations.id', 'organizations.name', 'organizations.slug')
+            ->selectRaw('COALESCE(SUM(videos.file_size), 0) as total_size')
+            ->selectRaw('COUNT(videos.id) as video_count')
+            ->selectRaw('COALESCE(AVG(videos.file_size), 0) as avg_size')
+            ->leftJoin('videos', 'organizations.id', '=', 'videos.organization_id')
+            ->groupBy('organizations.id', 'organizations.name', 'organizations.slug')
+            ->orderByDesc('total_size')
+            ->get();
+
+        // Total global
+        $totalStorage = Video::withoutGlobalScope('organization')->sum('file_size');
+        $totalVideos = Video::withoutGlobalScope('organization')->count();
+
+        // Videos sin organización (si existen)
+        $orphanVideos = Video::withoutGlobalScope('organization')
+            ->whereNull('organization_id')
+            ->count();
+        $orphanSize = Video::withoutGlobalScope('organization')
+            ->whereNull('organization_id')
+            ->sum('file_size');
+
+        return view('super-admin.storage', compact(
+            'storageByOrg',
+            'totalStorage',
+            'totalVideos',
+            'orphanVideos',
+            'orphanSize'
+        ));
+    }
 }

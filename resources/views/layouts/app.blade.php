@@ -726,6 +726,13 @@
                                     <p>Todos los Usuarios</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.storage') }}"
+                                    class="nav-link {{ request()->routeIs('super-admin.storage') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-database text-danger"></i>
+                                    <p>Almacenamiento</p>
+                                </a>
+                            </li>
                         @endif
 
                     </ul>

@@ -336,4 +336,5 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::post('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdmin'])->name('organizations.assign-admin.store');
     Route::post('/organizations/{organization}/create-user', [App\Http\Controllers\SuperAdminController::class, 'createUserForOrganization'])->name('organizations.create-user');
     Route::get('/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('users');
+    Route::get('/storage', [App\Http\Controllers\SuperAdminController::class, 'storageStats'])->name('storage');
 });
