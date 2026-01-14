@@ -836,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Render clips in sidebar
     function renderSidebarClips(filterCategoryId = null) {
-        let clips = sidebarClipsData;
+        let clips = [...sidebarClipsData].sort((a, b) => b.id - a.id); // Newest first
 
         if (filterCategoryId) {
             clips = clips.filter(c => c.clip_category_id == filterCategoryId);
