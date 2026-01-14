@@ -134,7 +134,8 @@ function playAllMovements() {
     let sameTimingCount = 0;
     let maxPassEndTime = 0;
 
-    // Pre-calcular duración de cada movimiento
+    // Pre-calcular duración total de movimientos por jugador
+    // (si un jugador tiene múltiples movimientos, sumar sus duraciones)
     const movementDurations = {};
     movementsList.forEach(movement => {
         let totalDistance = 0;
@@ -144,7 +145,13 @@ function playAllMovements() {
                 Math.pow(movement.points[i].y - movement.points[i-1].y, 2)
             );
         }
-        movementDurations[movement.playerId] = (totalDistance / PLAYER_SPEED) * 1000;
+        const duration = (totalDistance / PLAYER_SPEED) * 1000;
+        // Sumar duración si ya existe (múltiples movimientos)
+        if (movementDurations[movement.playerId]) {
+            movementDurations[movement.playerId] += duration;
+        } else {
+            movementDurations[movement.playerId] = duration;
+        }
     });
 
     passesList.forEach((pass, index) => {
@@ -320,55 +327,96 @@ function playAllMovementsSimultaneously(movementsList, callback) {
         return;
     }
 
-    const animationPromises = [];
-    let maxEndTime = 0;
-
+    // Agrupar movimientos por jugador
+    const movementsByPlayer = {};
     movementsList.forEach(movement => {
-        const obj = findObjectById(movement.playerId);
+        const id = movement.playerId;
+        if (!movementsByPlayer[id]) {
+            movementsByPlayer[id] = [];
+        }
+        movementsByPlayer[id].push(movement);
+    });
+
+    const animationPromises = [];
+
+    // Para cada jugador, encadenar sus movimientos secuencialmente
+    Object.keys(movementsByPlayer).forEach(playerId => {
+        const playerMovements = movementsByPlayer[playerId];
+        const obj = findObjectById(playerId === 'ball' ? 'ball' : parseInt(playerId));
+
         if (!obj) {
-            console.warn('⚠️ Objeto no encontrado:', movement.playerId);
+            console.warn('⚠️ Objeto no encontrado:', playerId);
             return;
         }
 
-        // Calcular distancia total de la trayectoria
-        let totalDistance = 0;
-        for (let i = 1; i < movement.points.length; i++) {
-            totalDistance += Math.sqrt(
-                Math.pow(movement.points[i].x - movement.points[i-1].x, 2) +
-                Math.pow(movement.points[i].y - movement.points[i-1].y, 2)
-            );
+        if (playerMovements.length === 1) {
+            // Un solo movimiento: comportamiento normal
+            const movement = playerMovements[0];
+            const totalDistance = calculatePathDistance(movement.points);
+            const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+            const startDelay = (movement.startDelay || 0) / 100 * ANIMATION_DURATION;
+
+            console.log(`    📏 J${playerId}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms`);
+
+            const promise = new Promise((resolve) => {
+                setTimeout(() => {
+                    animateObjectAlongPathUnified(obj, movement.points, movementDuration, () => {
+                        console.log(`    ✓ J${playerId} completado`);
+                        resolve();
+                    }, playerId);
+                }, startDelay);
+            });
+
+            animationPromises.push(promise);
+        } else {
+            // Múltiples movimientos: encadenar secuencialmente
+            console.log(`    📏 J${playerId}: ${playerMovements.length} movimientos en secuencia`);
+
+            const promise = new Promise((resolve) => {
+                let movementIndex = 0;
+
+                function executeNextMovement() {
+                    if (movementIndex >= playerMovements.length) {
+                        console.log(`    ✓ J${playerId} todos los movimientos completados`);
+                        resolve();
+                        return;
+                    }
+
+                    const movement = playerMovements[movementIndex];
+                    const totalDistance = calculatePathDistance(movement.points);
+                    const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+
+                    console.log(`      → J${playerId} mov ${movementIndex + 1}/${playerMovements.length}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms`);
+
+                    animateObjectAlongPathUnified(obj, movement.points, movementDuration, () => {
+                        console.log(`      ✓ J${playerId} mov ${movementIndex + 1} completado`);
+                        movementIndex++;
+                        executeNextMovement();
+                    }, playerId);
+                }
+
+                // Iniciar la cadena de movimientos
+                executeNextMovement();
+            });
+
+            animationPromises.push(promise);
         }
-
-        // Duración basada en velocidad constante (distancia / velocidad)
-        const movementDuration = (totalDistance / PLAYER_SPEED) * 1000; // en ms
-
-        // Delay de inicio (% del tiempo base de animación)
-        const startDelay = (movement.startDelay || 0) / 100 * ANIMATION_DURATION;
-
-        // Calcular cuándo termina este movimiento
-        const endTime = startDelay + movementDuration;
-        if (endTime > maxEndTime) {
-            maxEndTime = endTime;
-        }
-
-        console.log(`    📏 J${movement.playerId}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms, delay ${startDelay.toFixed(0)}ms`);
-
-        const promise = new Promise((resolve) => {
-            // Aplicar delay de inicio
-            setTimeout(() => {
-                animateObjectAlongPathUnified(obj, movement.points, movementDuration, () => {
-                    console.log(`    ✓ J${movement.playerId} completado`);
-                    resolve();
-                }, movement.playerId);
-            }, startDelay);
-        });
-
-        animationPromises.push(promise);
     });
 
     Promise.all(animationPromises).then(() => {
         callback();
     });
+}
+
+function calculatePathDistance(points) {
+    let totalDistance = 0;
+    for (let i = 1; i < points.length; i++) {
+        totalDistance += Math.sqrt(
+            Math.pow(points[i].x - points[i-1].x, 2) +
+            Math.pow(points[i].y - points[i-1].y, 2)
+        );
+    }
+    return totalDistance;
 }
 
 function animateObjectAlongPathUnified(obj, points, duration, callback, playerId) {

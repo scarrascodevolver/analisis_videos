@@ -40,6 +40,14 @@ export function initClipManager() {
     // Setup toggle panel
     toggleBtn.addEventListener('click', togglePanel);
 
+    // Initialize panel state based on current visibility
+    const panel = document.getElementById('clipPanel');
+    if (panel && panel.style.display !== 'none') {
+        isPanelOpen = true;
+        isClipMode = true;
+        console.log('Clip Mode: ACTIVADO (panel visible por defecto)');
+    }
+
     // Load categories and clips
     loadCategories();
     loadClips();
@@ -192,10 +200,11 @@ async function loadClips() {
 }
 
 /**
- * Render clips list
+ * Render clips list (in sidebar)
  */
 function renderClipsList(clipsToShow = null) {
-    const container = document.getElementById('clipsList');
+    // Usar sidebarClipsList que es el que existe en la vista
+    const container = document.getElementById('sidebarClipsList') || document.getElementById('clipsList');
     if (!container) return;
 
     const displayClips = clipsToShow || clips;
@@ -308,12 +317,30 @@ function stopSingleClipMode() {
 }
 
 /**
- * Update clip count badge
+ * Update clip count badges (panel and sidebar)
  */
 function updateClipCount() {
+    // Badge del panel principal
     const badge = document.getElementById('clipCount');
     if (badge) {
         badge.textContent = clips.length;
+    }
+
+    // Badge del sidebar
+    const sidebarBadge = document.getElementById('sidebarClipCount');
+    if (sidebarBadge) {
+        sidebarBadge.textContent = clips.length;
+    }
+
+    // Stats del sidebar
+    const totalClips = document.getElementById('sidebarTotalClips');
+    if (totalClips) {
+        totalClips.textContent = clips.length;
+    }
+
+    const highlights = document.getElementById('sidebarHighlights');
+    if (highlights) {
+        highlights.textContent = clips.filter(c => c.is_highlight).length;
     }
 }
 
@@ -322,9 +349,11 @@ function updateClipCount() {
  */
 function setupHotkeys() {
     document.addEventListener('keydown', (e) => {
-        // Only active when panel is open and not typing in input
-        if (!isClipMode) return;
+        // Skip if typing in input fields
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        // Skip if categories not loaded yet
+        if (categories.length === 0) return;
 
         const key = e.key.toLowerCase();
         const category = categories.find(c => c.hotkey && c.hotkey.toLowerCase() === key);
