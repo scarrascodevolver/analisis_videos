@@ -37,6 +37,7 @@ function crearBalon(x = 600, y = 325) {
     rugbyBall = ball;
     canvas.renderAll();
     updatePossessionUI();
+    updatePassButton();
     console.log('🏈 Balón agregado en:', x, y);
     return ball;
 }
@@ -149,6 +150,7 @@ function assignPossessionTo(player) {
 
     canvas.renderAll();
     updatePossessionUI();
+    updatePassButton();
     console.log('✅ Posesión asignada a jugador', ballPossession);
 }
 
@@ -195,6 +197,7 @@ function releasePossession() {
     originalBallHolder = null;
 
     updatePossessionUI();
+    updatePassButton();
     canvas.renderAll();
     console.log('🏈 Balón soltado por jugador', previousOwner);
 }
@@ -206,6 +209,7 @@ function clearPossession() {
     }
     originalBallHolder = null;
     updatePossessionUI();
+    updatePassButton();
 }
 
 console.log('📦 ball.js cargado');

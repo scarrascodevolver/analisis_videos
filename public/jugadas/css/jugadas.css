@@ -204,3 +204,71 @@ body {
 #savedPlaysList {
     color: #ccc;
 }
+
+/* ============================================
+ * Botones con colores del sistema RugbyHub
+ * Verde principal: #1e4d2b
+ * Accent: #00B7B5
+ * ============================================ */
+
+/* Botón primario - Verde rugby */
+.btn-primary {
+    background-color: #1e4d2b !important;
+    border-color: #1e4d2b !important;
+}
+
+.btn-primary:hover {
+    background-color: #2a6b3d !important;
+    border-color: #2a6b3d !important;
+}
+
+/* Botón info - Accent teal */
+.btn-info {
+    background-color: #00B7B5 !important;
+    border-color: #00B7B5 !important;
+}
+
+.btn-info:hover {
+    background-color: #00a3a1 !important;
+    border-color: #00a3a1 !important;
+}
+
+/* Botón success - Verde */
+.btn-success {
+    background-color: #1e4d2b !important;
+    border-color: #1e4d2b !important;
+}
+
+.btn-success:hover {
+    background-color: #2a6b3d !important;
+    border-color: #2a6b3d !important;
+}
+
+/* Botón outline-warning */
+.btn-outline-warning {
+    color: #00B7B5 !important;
+    border-color: #00B7B5 !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: #00B7B5 !important;
+    color: white !important;
+}
+
+/* Botón warning activo */
+.btn-warning {
+    background-color: #e6a700 !important;
+    border-color: #e6a700 !important;
+    color: #000 !important;
+}
+
+/* Botón secundario */
+.btn-secondary {
+    background-color: #444 !important;
+    border-color: #444 !important;
+}
+
+.btn-secondary:hover {
+    background-color: #555 !important;
+    border-color: #555 !important;
+}

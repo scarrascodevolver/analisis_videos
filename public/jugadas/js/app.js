@@ -63,6 +63,7 @@ let movementIdCounter = 0;
 const BALL_OFFSET_X = 30;
 const BALL_OFFSET_Y = 0;
 const ANIMATION_DURATION = 3000;
+const PLAYER_SPEED = 200; // pixels por segundo (velocidad constante para todos)
 
 // Variable para rastrear quién tiene el balón durante la reproducción
 let playbackBallHolder = null;

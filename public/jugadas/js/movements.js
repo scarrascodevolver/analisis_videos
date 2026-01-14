@@ -94,14 +94,16 @@ function createPathWithArrow(points, color) {
 
 function saveMovement(obj, points, pathObject) {
     const hasBall = obj.isPlayer && ballPossession === obj.playerNumber;
+    const playerId = obj.isBall ? 'ball' : obj.playerNumber;
 
     const movement = {
         id: ++movementIdCounter,
         type: 'movement',
-        playerId: obj.isBall ? 'ball' : obj.playerNumber,
+        playerId: playerId,
         playerType: obj.isBall ? 'ball' : obj.playerType,
         points: points.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) })),
         hasBall: hasBall,
+        startDelay: 0,
         pathObject: pathObject
     };
 
@@ -217,8 +219,11 @@ function renderMovementsList() {
         return;
     }
 
+    // Invertir para mostrar los más recientes primero
+    const reversedMovements = [...movements].reverse();
+
     let html = '<div class="list-group list-group-flush">';
-    movements.forEach((action) => {
+    reversedMovements.forEach((action) => {
         if (action.type === 'movement') {
             const ballIcon = action.hasBall ? ' 🏈' : '';
             const ballClass = action.hasBall ? 'border-warning' : 'border-success';
@@ -226,7 +231,7 @@ function renderMovementsList() {
                 <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${ballClass}"
                      style="background: #2d2d2d; border-left: 3px solid; margin-bottom: 2px;">
                     <span style="color: #28a745; font-weight: bold;">
-                        Jugador ${action.playerId}${ballIcon}
+                        J${action.playerId}${ballIcon}
                     </span>
                     <button class="btn btn-sm text-danger p-0 ml-2" onclick="deleteMovementById(${action.id})" title="Eliminar movimiento">
                         <i class="fas fa-trash-alt"></i>

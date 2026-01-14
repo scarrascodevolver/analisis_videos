@@ -124,10 +124,6 @@ function playAllMovements() {
     console.log(`   📍 ${movementsList.length} movimientos simultáneos`);
     console.log(`   🏈 ${passesList.length} pases programados`);
 
-    passesList.forEach((pass, i) => {
-        const timing = pass.timing || 50;
-        console.log(`      Pase ${i+1}: ${pass.from}→${pass.to} al ${timing}%`);
-    });
 
     $('#animationStatus').html(
         `<i class="fas fa-bolt text-warning"></i> Ejecutando ${movementsList.length} movimientos + ${passesList.length} pases...`
@@ -136,6 +132,20 @@ function playAllMovements() {
     const PASS_DURATION = 800;
     let lastTiming = -1;
     let sameTimingCount = 0;
+    let maxPassEndTime = 0;
+
+    // Pre-calcular duración de cada movimiento
+    const movementDurations = {};
+    movementsList.forEach(movement => {
+        let totalDistance = 0;
+        for (let i = 1; i < movement.points.length; i++) {
+            totalDistance += Math.sqrt(
+                Math.pow(movement.points[i].x - movement.points[i-1].x, 2) +
+                Math.pow(movement.points[i].y - movement.points[i-1].y, 2)
+            );
+        }
+        movementDurations[movement.playerId] = (totalDistance / PLAYER_SPEED) * 1000;
+    });
 
     passesList.forEach((pass, index) => {
         const timing = Math.min(pass.timing || 50, 99);
@@ -147,9 +157,19 @@ function playAllMovements() {
             lastTiming = timing;
         }
 
-        const baseDelay = (timing / 100) * ANIMATION_DURATION;
+        // Usar la duración del movimiento del jugador que PASA (from)
+        const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
+        const baseDelay = (timing / 100) * passerDuration;
         const sequenceOffset = sameTimingCount * (PASS_DURATION + 100);
         const delay = baseDelay + sequenceOffset;
+
+        // Calcular cuándo termina este pase (delay + duración)
+        const passEndTime = delay + PASS_DURATION;
+        if (passEndTime > maxPassEndTime) {
+            maxPassEndTime = passEndTime;
+        }
+
+        console.log(`      Pase ${pass.from}→${pass.to}: timing ${timing}% de ${passerDuration.toFixed(0)}ms = delay ${delay.toFixed(0)}ms`);
 
         setTimeout(() => {
             if (isPlaying) {
@@ -159,8 +179,14 @@ function playAllMovements() {
         }, delay);
     });
 
-    const passesAtEnd = passesList.filter(p => (p.timing || 50) >= 90).length;
-    const extraTimeForPasses = passesAtEnd * (PASS_DURATION + 100);
+    // Calcular duración máxima de movimientos (solo los reales, no ANIMATION_DURATION)
+    const durationValues = Object.values(movementDurations);
+    const maxMovementDuration = durationValues.length > 0 ? Math.max(...durationValues) : ANIMATION_DURATION;
+
+    // Calcular tiempo extra: cuánto más allá de los movimientos necesitamos esperar para los pases
+    const extraTimeForPasses = Math.max(0, maxPassEndTime - maxMovementDuration + 100);
+
+    console.log(`   ⏱️ maxMovementDuration: ${maxMovementDuration.toFixed(0)}ms, maxPassEndTime: ${maxPassEndTime.toFixed(0)}ms, extra: ${extraTimeForPasses.toFixed(0)}ms`);
 
     playAllMovementsSimultaneously(movementsList, () => {
         setTimeout(() => {
@@ -211,29 +237,78 @@ function executePassDuringAnimation(passAction) {
     canvas.add(passLine, arrowHead);
     canvas.renderAll();
 
-    const targetX = toCenter.x + BALL_OFFSET_X;
-    const targetY = toCenter.y + BALL_OFFSET_Y;
+    // Guardar posición inicial del balón y target inicial
     const startX = rugbyBall.left;
     const startY = rugbyBall.top;
+    const initialTargetX = toCenter.x + BALL_OFFSET_X;
+    const initialTargetY = toCenter.y + BALL_OFFSET_Y;
+
+    // Calcular offset inicial (distancia del balón al target inicial)
+    const initialOffsetX = startX - initialTargetX;
+    const initialOffsetY = startY - initialTargetY;
 
     fabric.util.animate({
         startValue: 0,
         endValue: 1,
         duration: 800,
-        easing: fabric.util.ease.easeInOutQuad,
+        easing: fabric.util.ease.easeOutQuad,
         onChange: function(value) {
+            // Obtener posición ACTUAL del receptor (que se está moviendo)
+            const currentToCenter = toPlayer.getCenterPoint();
+
+            // LEAD FACTOR: El balón apunta ADELANTE del receptor
+            // Esto compensa el movimiento del receptor durante el pase
+            // Se reduce a 0 al final para llegar exacto al target
+            const leadFactor = (1 - value) * 20;
+
+            // Target = centro del receptor + offset normal + lead
+            const currentTargetX = currentToCenter.x + BALL_OFFSET_X + leadFactor;
+            const currentTargetY = currentToCenter.y + BALL_OFFSET_Y;
+
+            // Interpolación simple desde inicio hacia el target con lead
             rugbyBall.set({
-                left: startX + (targetX - startX) * value,
-                top: startY + (targetY - startY) * value
+                left: startX + (currentTargetX - startX) * value,
+                top: startY + (currentTargetY - startY) * value
             });
             rugbyBall.dirty = true;
+
+            // Actualizar también la línea visual del pase
+            const currentFromCenter = fromPlayer.getCenterPoint();
+            passLine.set({
+                x1: currentFromCenter.x,
+                y1: currentFromCenter.y,
+                x2: currentToCenter.x,
+                y2: currentToCenter.y
+            });
+
+            // Actualizar flecha
+            const newAngle = Math.atan2(
+                currentToCenter.y - currentFromCenter.y,
+                currentToCenter.x - currentFromCenter.x
+            );
+            arrowHead.set({
+                left: currentToCenter.x,
+                top: currentToCenter.y,
+                angle: (newAngle * 180 / Math.PI) + 90
+            });
+
             canvas.renderAll();
         },
         onComplete: function() {
             canvas.remove(passLine);
             canvas.remove(arrowHead);
+
+            // Asegurar posición final exacta al frente del receptor
+            const finalToCenter = toPlayer.getCenterPoint();
+            rugbyBall.set({
+                left: finalToCenter.x + BALL_OFFSET_X,
+                top: finalToCenter.y + BALL_OFFSET_Y
+            });
+
             playbackBallHolder = passAction.to;
             console.log(`    ✓ Pase completado → J${playbackBallHolder}`);
+            console.log(`    📍 Balón en: (${rugbyBall.left.toFixed(0)}, ${rugbyBall.top.toFixed(0)})`);
+            console.log(`    👤 Receptor en: (${finalToCenter.x.toFixed(0)}, ${finalToCenter.y.toFixed(0)})`);
             canvas.renderAll();
         }
     });
@@ -246,6 +321,7 @@ function playAllMovementsSimultaneously(movementsList, callback) {
     }
 
     const animationPromises = [];
+    let maxEndTime = 0;
 
     movementsList.forEach(movement => {
         const obj = findObjectById(movement.playerId);
@@ -254,11 +330,37 @@ function playAllMovementsSimultaneously(movementsList, callback) {
             return;
         }
 
+        // Calcular distancia total de la trayectoria
+        let totalDistance = 0;
+        for (let i = 1; i < movement.points.length; i++) {
+            totalDistance += Math.sqrt(
+                Math.pow(movement.points[i].x - movement.points[i-1].x, 2) +
+                Math.pow(movement.points[i].y - movement.points[i-1].y, 2)
+            );
+        }
+
+        // Duración basada en velocidad constante (distancia / velocidad)
+        const movementDuration = (totalDistance / PLAYER_SPEED) * 1000; // en ms
+
+        // Delay de inicio (% del tiempo base de animación)
+        const startDelay = (movement.startDelay || 0) / 100 * ANIMATION_DURATION;
+
+        // Calcular cuándo termina este movimiento
+        const endTime = startDelay + movementDuration;
+        if (endTime > maxEndTime) {
+            maxEndTime = endTime;
+        }
+
+        console.log(`    📏 J${movement.playerId}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms, delay ${startDelay.toFixed(0)}ms`);
+
         const promise = new Promise((resolve) => {
-            animateObjectAlongPathUnified(obj, movement.points, ANIMATION_DURATION, () => {
-                console.log(`    ✓ J${movement.playerId} completado`);
-                resolve();
-            }, movement.playerId);
+            // Aplicar delay de inicio
+            setTimeout(() => {
+                animateObjectAlongPathUnified(obj, movement.points, movementDuration, () => {
+                    console.log(`    ✓ J${movement.playerId} completado`);
+                    resolve();
+                }, movement.playerId);
+            }, startDelay);
         });
 
         animationPromises.push(promise);

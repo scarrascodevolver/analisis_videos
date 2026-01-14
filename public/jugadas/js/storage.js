@@ -44,7 +44,8 @@ function savePlay() {
                 playerId: action.playerId,
                 playerType: action.playerType,
                 points: action.points,
-                hasBall: action.hasBall || false
+                hasBall: action.hasBall || false,
+                startDelay: action.startDelay || 0
             };
         } else if (action.type === 'pass') {
             return {
@@ -162,6 +163,7 @@ function loadPlayById(playId) {
                         playerType: action.playerType,
                         points: action.points,
                         hasBall: action.hasBall || false,
+                        startDelay: action.startDelay || 0,
                         pathObject: pathGroup
                     });
                 }

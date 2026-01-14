@@ -677,13 +677,13 @@
                                     <p>Invitar Jugadores</p>
                                 </a>
                             </li>
-                            <!-- Editor de Jugadas (Prototipo) -->
+                            <!-- Editor de Jugadas -->
                             <li class="nav-item">
-                                <a href="/prototype-jugadas.html" class="nav-link" target="_blank">
-                                    <i class="nav-icon fas fa-draw-polygon"></i>
+                                <a href="/jugadas/index.html" class="nav-link" target="_blank">
+                                    <i class="nav-icon fas fa-chalkboard-teacher"></i>
                                     <p>
                                         Crear Jugadas
-                                        <span class="badge badge-warning right">Beta</span>
+                                        <span class="badge badge-info right">Beta</span>
                                     </p>
                                 </a>
                             </li>
