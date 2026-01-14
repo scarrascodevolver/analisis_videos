@@ -522,7 +522,8 @@
 
             <!-- Sidebar -->
             <div class="sidebar">
-                <!-- User panel -->
+                <!-- User panel (oculto para analistas - ya está en navbar) -->
+                @if(Auth::user()->role !== 'analista')
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
                         @if (Auth::user()->profile && Auth::user()->profile->avatar)
@@ -541,6 +542,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <!-- Sidebar Menu -->
                 <nav class="mt-2">
