@@ -276,8 +276,10 @@ class VideoController extends Controller
             ->with('success', 'Video actualizado exitosamente');
     }
 
-    public function destroy(Video $video)
+    public function destroy(Request $request, Video $video)
     {
+        $videoTitle = $video->title;
+
         // Delete file from storage - try Spaces first, then local
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
@@ -295,6 +297,14 @@ class VideoController extends Controller
         }
 
         $video->delete();
+
+        // Respuesta JSON para AJAX
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Video '{$videoTitle}' eliminado exitosamente"
+            ]);
+        }
 
         return redirect()->route('videos.index')
             ->with('success', 'Video eliminado exitosamente');

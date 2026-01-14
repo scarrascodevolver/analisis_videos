@@ -92,7 +92,7 @@
                     @if(isset($videos) && $videos->count() > 0)
                         <div class="row">
                             @foreach($videos as $video)
-                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2" id="video-card-{{ $video->id }}">
                                     <div class="card video-card h-100">
                                         <!-- Video Thumbnail -->
                                         <div class="card-img-top video-thumbnail-container"
@@ -211,13 +211,11 @@
                                                 <button type="button" class="btn btn-rugby-outline" data-dismiss="modal">
                                                     <i class="fas fa-times"></i> Cancelar
                                                 </button>
-                                                <form method="POST" action="{{ route('videos.destroy', $video) }}" style="display: inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-rugby-dark">
-                                                        <i class="fas fa-trash"></i> Eliminar Video
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-rugby-dark btn-delete-video"
+                                                        data-video-id="{{ $video->id }}"
+                                                        data-url="{{ route('videos.destroy', $video) }}">
+                                                    <i class="fas fa-trash"></i> Eliminar Video
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -372,29 +370,125 @@
 
 </style>
 
+<!-- Toast Container -->
+<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filter-form');
-    if (!form) return; // 🚫 si no existen los filtros (jugadores), no se ejecuta nada
+    if (form) {
+        let filterTimeout;
+        function autoFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => form.submit(), 500);
+        }
 
-    let filterTimeout;
-    function autoFilter() {
-        clearTimeout(filterTimeout);
-        filterTimeout = setTimeout(() => form.submit(), 500);
+        const on = (id, evt, cb) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(evt, cb);
+        };
+
+        on('search-input', 'input', autoFilter);
+        on('situation-select', 'change', () => form.submit());
+        on('category-select', 'change', () => form.submit());
+        on('team-select', 'change', () => form.submit());
     }
 
-    const on = (id, evt, cb) => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener(evt, cb);
-    };
+    // AJAX Delete Video
+    document.querySelectorAll('.btn-delete-video').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const videoId = this.dataset.videoId;
+            const url = this.dataset.url;
+            const button = this;
 
-    on('search-input', 'input', autoFilter);
-    on('situation-select', 'change', () => form.submit());
-    on('category-select', 'change', () => form.submit());
-    on('team-select', 'change', () => form.submit());
+            // Disable button and show loading
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Close modal
+                $(`#deleteModal-${videoId}`).modal('hide');
+
+                if (data.success) {
+                    // Show success toast
+                    showToast(data.message, 'success');
+
+                    // Remove video card with animation
+                    const card = document.getElementById(`video-card-${videoId}`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s, transform 0.3s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.8)';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                } else {
+                    showToast(data.message || 'Error al eliminar', 'error');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-trash"></i> Eliminar Video';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error al eliminar el video', 'error');
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-trash"></i> Eliminar Video';
+                $(`#deleteModal-${videoId}`).modal('hide');
+            });
+        });
+    });
 });
 
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const bgColor = type === 'success' ? '#00B7B5' : '#dc3545';
+    const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        background: ${bgColor};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+        max-width: 350px;
+    `;
+    toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+
+    container.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
 </script>
+
+<style>
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100px); }
+}
+</style>
 
 @endsection
