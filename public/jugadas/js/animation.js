@@ -261,48 +261,9 @@ function executePassDuringAnimation(passAction) {
         return;
     }
 
-    const fromCenter = fromPlayer.getCenterPoint();
-    const toCenter = toPlayer.getCenterPoint();
-
-    const passLine = new fabric.Line([
-        fromCenter.x, fromCenter.y,
-        toCenter.x, toCenter.y
-    ], {
-        stroke: '#0066CC',
-        strokeWidth: 3,
-        strokeDashArray: [8, 4],
-        selectable: false,
-        evented: false,
-        opacity: 0.9
-    });
-
-    const angle = Math.atan2(toCenter.y - fromCenter.y, toCenter.x - fromCenter.x);
-    const arrowHead = new fabric.Triangle({
-        left: toCenter.x,
-        top: toCenter.y,
-        fill: '#0066CC',
-        width: 15,
-        height: 18,
-        angle: (angle * 180 / Math.PI) + 90,
-        originX: 'center',
-        originY: 'center',
-        selectable: false,
-        evented: false,
-        opacity: 0.9
-    });
-
-    canvas.add(passLine, arrowHead);
-    canvas.renderAll();
-
-    // Guardar posición inicial del balón y target inicial
+    // Guardar posición inicial del balón
     const startX = rugbyBall.left;
     const startY = rugbyBall.top;
-    const initialTargetX = toCenter.x + BALL_OFFSET_X;
-    const initialTargetY = toCenter.y + BALL_OFFSET_Y;
-
-    // Calcular offset inicial (distancia del balón al target inicial)
-    const initialOffsetX = startX - initialTargetX;
-    const initialOffsetY = startY - initialTargetY;
 
     fabric.util.animate({
         startValue: 0,
@@ -314,47 +275,21 @@ function executePassDuringAnimation(passAction) {
             const currentToCenter = toPlayer.getCenterPoint();
 
             // LEAD FACTOR: El balón apunta ADELANTE del receptor
-            // Esto compensa el movimiento del receptor durante el pase
-            // Se reduce a 0 al final para llegar exacto al target
             const leadFactor = (1 - value) * 20;
 
             // Target = centro del receptor + offset normal + lead
             const currentTargetX = currentToCenter.x + BALL_OFFSET_X + leadFactor;
             const currentTargetY = currentToCenter.y + BALL_OFFSET_Y;
 
-            // Interpolación simple desde inicio hacia el target con lead
+            // Interpolación desde inicio hacia el target
             rugbyBall.set({
                 left: startX + (currentTargetX - startX) * value,
                 top: startY + (currentTargetY - startY) * value
             });
             rugbyBall.dirty = true;
-
-            // Actualizar también la línea visual del pase
-            const currentFromCenter = fromPlayer.getCenterPoint();
-            passLine.set({
-                x1: currentFromCenter.x,
-                y1: currentFromCenter.y,
-                x2: currentToCenter.x,
-                y2: currentToCenter.y
-            });
-
-            // Actualizar flecha
-            const newAngle = Math.atan2(
-                currentToCenter.y - currentFromCenter.y,
-                currentToCenter.x - currentFromCenter.x
-            );
-            arrowHead.set({
-                left: currentToCenter.x,
-                top: currentToCenter.y,
-                angle: (newAngle * 180 / Math.PI) + 90
-            });
-
             canvas.renderAll();
         },
         onComplete: function() {
-            canvas.remove(passLine);
-            canvas.remove(arrowHead);
-
             // Asegurar posición final exacta al frente del receptor
             const finalToCenter = toPlayer.getCenterPoint();
             rugbyBall.set({
@@ -364,8 +299,6 @@ function executePassDuringAnimation(passAction) {
 
             playbackBallHolder = passAction.to;
             console.log(`    ✓ Pase completado → J${playbackBallHolder}`);
-            console.log(`    📍 Balón en: (${rugbyBall.left.toFixed(0)}, ${rugbyBall.top.toFixed(0)})`);
-            console.log(`    👤 Receptor en: (${finalToCenter.x.toFixed(0)}, ${finalToCenter.y.toFixed(0)})`);
             canvas.renderAll();
         }
     });
