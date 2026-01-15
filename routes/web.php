@@ -125,6 +125,14 @@ Route::middleware(['auth'])->group(function () {
     // Jugadas Editor (Editor de Jugadas)
     Route::get('jugadas', [JugadasController::class, 'index'])->name('jugadas.index');
 
+    // Jugadas API
+    Route::prefix('api/jugadas')->name('jugadas.api.')->group(function () {
+        Route::get('/', [JugadasController::class, 'apiIndex'])->name('index');
+        Route::post('/', [JugadasController::class, 'apiStore'])->name('store');
+        Route::get('/{jugada}', [JugadasController::class, 'apiShow'])->name('show');
+        Route::delete('/{jugada}', [JugadasController::class, 'apiDestroy'])->name('destroy');
+    });
+
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
     Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
