@@ -171,9 +171,23 @@ canvas.on('selection:cleared', function() {
 // ============================================
 
 $(document).ready(function() {
-    // Cargar cancha y jugadas guardadas
-    drawRugbyField();
+    // Cargar jugadas guardadas (funciona en móvil y desktop)
     loadPlays();
+
+    // Delegated events (funcionan en móvil y desktop)
+    $(document).on('click', '.delete-play-mobile', function() {
+        const playId = $(this).data('id');
+        deletePlayById(playId);
+    });
+
+    // En móvil, solo cargar lista de jugadas
+    if (typeof isMobileView !== 'undefined' && isMobileView) {
+        console.log('📱 Vista móvil - Solo lista de jugadas');
+        return;
+    }
+
+    // Desktop: inicializar editor completo
+    drawRugbyField();
 
     // Botones de jugadores
     $('#btnAddPlayer').on('click', () => addPlayer());

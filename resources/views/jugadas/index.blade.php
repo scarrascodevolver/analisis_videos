@@ -10,6 +10,45 @@
         padding: 15px;
         margin: -15px;
     }
+
+    /* Vista móvil */
+    .mobile-only {
+        display: none;
+    }
+
+    @media (max-width: 991px) {
+        .desktop-only {
+            display: none !important;
+        }
+        .mobile-only {
+            display: block;
+        }
+        .mobile-plays-list {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .mobile-play-item {
+            background: #252525;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #00B7B5;
+        }
+        .mobile-play-item .play-name {
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .mobile-play-item .play-meta {
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .mobile-play-item .btn-group {
+            margin-top: 10px;
+        }
+    }
 </style>
 <link rel="stylesheet" href="{{ asset('jugadas-static/css/jugadas.css') }}">
 @endsection
@@ -17,7 +56,25 @@
 @section('main_content')
 <div class="jugadas-page">
     <div class="container-fluid">
-        <div class="row">
+        {{-- Vista móvil: solo lista de jugadas --}}
+        <div class="mobile-only">
+            <div class="mobile-plays-list">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-football-ball"></i> Mis Jugadas
+                </h4>
+                <div class="alert alert-info py-2 mb-3">
+                    <small><i class="fas fa-info-circle"></i> Para editar jugadas, usa un computador.</small>
+                </div>
+                <div id="mobilePlaysList">
+                    <p class="text-muted text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Vista desktop: editor completo --}}
+        <div class="row desktop-only">
             <div class="col-md-10">
                 <div class="canvas-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -150,6 +207,10 @@
 @endsection
 
 @section('js')
+{{-- Script para vista móvil --}}
+<script>
+    const isMobileView = window.innerWidth < 992;
+</script>
 <script src="{{ asset('jugadas-static/js/app.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('jugadas-static/js/field.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('jugadas-static/js/players.js') }}?v={{ time() }}"></script>

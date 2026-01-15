@@ -159,15 +159,18 @@ function loadPlays() {
 
 function renderPlaysList(jugadas) {
     const container = $('#savedPlaysList');
+    const mobileContainer = $('#mobilePlaysList');
 
     if (!jugadas || jugadas.length === 0) {
         container.html('<p class="text-muted text-center small mb-0"><i class="fas fa-info-circle"></i> Sin jugadas</p>');
+        mobileContainer.html('<p class="text-muted text-center"><i class="fas fa-info-circle"></i> No tienes jugadas guardadas.<br><small>Crea jugadas desde un computador.</small></p>');
         $('#playCount').text('0');
         return;
     }
 
     $('#playCount').text(jugadas.length);
 
+    // Desktop view
     let html = '';
     jugadas.forEach(play => {
         const categoryIcon = play.categoryIcon || '⚪';
@@ -196,8 +199,33 @@ function renderPlaysList(jugadas) {
             </div>
         `;
     });
-
     container.html(html);
+
+    // Mobile view
+    let mobileHtml = '';
+    jugadas.forEach(play => {
+        const categoryIcon = play.categoryIcon || '⚪';
+        const dateStr = play.created_at || '';
+        const hasMovements = play.data.movements && play.data.movements.length > 0;
+        const playerCount = play.data.players ? play.data.players.length : 0;
+        const movementCount = play.data.movements ? play.data.movements.length : 0;
+
+        mobileHtml += `
+            <div class="mobile-play-item">
+                <div class="play-name">${categoryIcon} ${play.name}</div>
+                <div class="play-meta">
+                    ${playerCount} jugadores · ${movementCount} movimientos<br>
+                    ${play.user} · ${dateStr}
+                </div>
+                <div class="btn-group w-100">
+                    <button class="btn btn-danger btn-sm delete-play-mobile" data-id="${play.id}" style="flex: 1;">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    mobileContainer.html(mobileHtml);
 }
 
 function loadPlayById(playId) {
