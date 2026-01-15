@@ -26,19 +26,31 @@ function startRecording() {
     const stream = canvasElement.captureStream(30);
 
     // Detectar formato soportado
-    // Safari soporta MP4 nativo, Chrome/Firefox soportan WebM
+    // iOS (todos los navegadores) y Safari macOS soportan MP4 nativo
+    // Chrome/Firefox en desktop/Android soportan WebM
     let mimeType = '';
 
-    // Intentar WebM primero (Chrome, Firefox)
-    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-        mimeType = 'video/webm;codecs=vp9';
-    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-        mimeType = 'video/webm;codecs=vp8';
-    } else if (MediaRecorder.isTypeSupported('video/webm')) {
-        mimeType = 'video/webm';
-    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-        // Safari iOS/macOS - graba en MP4 nativo
-        mimeType = 'video/mp4';
+    // Detectar si estamos en iOS
+    const oniOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (oniOS) {
+        // En iOS, todos los navegadores usan WebKit y soportan MP4
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mimeType = 'video/mp4';
+        }
+    } else {
+        // Desktop/Android: intentar WebM primero (Chrome, Firefox)
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+            mimeType = 'video/webm;codecs=vp9';
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+            mimeType = 'video/webm;codecs=vp8';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+            mimeType = 'video/webm';
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+            // Safari macOS
+            mimeType = 'video/mp4';
+        }
     }
 
     if (!mimeType) {
@@ -103,10 +115,18 @@ function stopRecording() {
 }
 
 /**
- * Verifica si el formato grabado es MP4 nativo (Safari)
+ * Verifica si el formato grabado es MP4 nativo (Safari/iOS)
  */
 function isNativeMp4() {
     return recordingMimeType && recordingMimeType.includes('mp4');
+}
+
+/**
+ * Detecta si estamos en iOS (todos los navegadores en iOS usan WebKit)
+ */
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 /**
