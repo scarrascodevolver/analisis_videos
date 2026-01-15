@@ -108,6 +108,12 @@ function assignPossessionTo(player) {
 
     console.log('🏈 Iniciando asignación de balón a jugador', player.playerNumber);
 
+    // Guardar posiciones originales para el Reset (si aún no se han guardado)
+    if (typeof saveOriginalPositions === 'function' && Object.keys(originalPositions).length === 0) {
+        saveOriginalPositions();
+        console.log('  └─ Posiciones originales guardadas automáticamente');
+    }
+
     if (ballPossession !== null) {
         const prevPlayer = players.find(p => p.playerNumber === ballPossession);
         if (prevPlayer) {

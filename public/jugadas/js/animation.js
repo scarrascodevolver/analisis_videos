@@ -340,9 +340,11 @@ function playAllMovementsSimultaneously(movementsList, callback) {
     const animationPromises = [];
 
     // Para cada jugador, encadenar sus movimientos secuencialmente
-    Object.keys(movementsByPlayer).forEach(playerId => {
-        const playerMovements = movementsByPlayer[playerId];
-        const obj = findObjectById(playerId === 'ball' ? 'ball' : parseInt(playerId));
+    Object.keys(movementsByPlayer).forEach(playerIdStr => {
+        const playerMovements = movementsByPlayer[playerIdStr];
+        // Convertir a número para comparaciones correctas (excepto 'ball')
+        const playerId = playerIdStr === 'ball' ? 'ball' : parseInt(playerIdStr);
+        const obj = findObjectById(playerId);
 
         if (!obj) {
             console.warn('⚠️ Objeto no encontrado:', playerId);

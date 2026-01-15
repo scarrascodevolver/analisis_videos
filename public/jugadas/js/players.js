@@ -81,6 +81,8 @@ function clearAllPlayers() {
     selectedPlayer = null;
     eliminarBalon();
     clearAllMovements();
+    // Limpiar posiciones originales para que Reset funcione correctamente
+    originalPositions = {};
     canvas.renderAll();
 }
 
