@@ -430,7 +430,10 @@
                     <li class="nav-item">
                         <span class="nav-link text-light">
                             <i class="fas fa-building mr-1"></i>
-                            {{ Str::limit($currentOrg->name, 20) }}
+                            {{-- Desktop: nombre completo --}}
+                            <span class="d-none d-md-inline">{{ $currentOrg->name }}</span>
+                            {{-- Móvil: cortado como dropdown --}}
+                            <span class="d-inline d-md-none">{{ Str::limit($currentOrg->name, 15) }}</span>
                         </span>
                     </li>
                 @endif
