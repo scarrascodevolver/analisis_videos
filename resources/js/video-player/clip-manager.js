@@ -434,6 +434,19 @@ function handleClipToggle(category) {
  */
 function startClip(category, currentTime) {
     const video = getVideo();
+
+    // Verificar si el video está al final (no se puede grabar)
+    if (video.currentTime >= video.duration - 0.5) {
+        showNotification('El video terminó. Rebobina para crear clips.', 'warning');
+        return;
+    }
+
+    // Auto-play si el video está pausado (evita clips de 0 segundos)
+    const wasPaused = video.paused;
+    if (wasPaused) {
+        video.play();
+    }
+
     const startTime = Math.max(0, currentTime - category.lead_seconds);
 
     pendingClip = {
@@ -451,8 +464,11 @@ function startClip(category, currentTime) {
     // Show recording indicator
     showRecordingIndicator(category);
 
+    const hotkeyText = category.hotkey ? ` - Presiona [${category.hotkey.toUpperCase()}] para terminar` : '';
+    const resumedText = wasPaused ? ' (video reanudado)' : '';
+
     showNotification(
-        `🔴 GRABANDO "${category.name}" desde ${formatTime(Math.floor(startTime))} - Presiona [${category.hotkey.toUpperCase()}] para terminar`,
+        `🔴 GRABANDO "${category.name}"${resumedText} desde ${formatTime(Math.floor(startTime))}${hotkeyText}`,
         'warning'
     );
 }
