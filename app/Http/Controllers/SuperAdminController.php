@@ -343,6 +343,38 @@ class SuperAdminController extends Controller
     }
 
     /**
+     * Eliminar usuario del sistema
+     */
+    public function destroyUser(User $user)
+    {
+        // No permitir eliminar super admins
+        if ($user->is_super_admin) {
+            return back()->with('error', 'No se puede eliminar un Super Admin.');
+        }
+
+        // No permitir eliminar tu propia cuenta
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'No puedes eliminar tu propia cuenta.');
+        }
+
+        $name = $user->name;
+
+        // Desasociar de todas las organizaciones primero
+        $user->organizations()->detach();
+
+        // Eliminar perfil si existe
+        if ($user->profile) {
+            $user->profile->delete();
+        }
+
+        // Eliminar usuario
+        $user->delete();
+
+        return redirect()->route('super-admin.users')
+            ->with('success', "Usuario '{$name}' eliminado exitosamente.");
+    }
+
+    /**
      * Estadísticas de almacenamiento por organización
      */
     public function storageStats()

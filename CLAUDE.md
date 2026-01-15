@@ -172,9 +172,10 @@ php artisan storage:link
 
 ## COLORES DEL SISTEMA
 
-- **Verde principal**: `#1e4d2b` (rugby tradicional)
-- **Accent**: `#00B7B5` (teal moderno)
-- **Hover dropdown**: Verde claro
+- **Primary**: `#005461` (teal oscuro)
+- **Primary hover**: `#003d4a`
+- **Accent**: `#00B7B5` (teal claro)
+- **Background**: `#0f0f0f` (dark mode)
 - **Framework**: Laravel 12 + AdminLTE + Bootstrap 4
 
 ---

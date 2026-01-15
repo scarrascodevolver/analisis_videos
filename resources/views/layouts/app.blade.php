@@ -682,7 +682,7 @@
                             </li>
                             <!-- Editor de Jugadas -->
                             <li class="nav-item">
-                                <a href="/jugadas/index.html" class="nav-link" target="_blank">
+                                <a href="{{ route('jugadas.index') }}" class="nav-link {{ request()->routeIs('jugadas.*') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-chalkboard-teacher"></i>
                                     <p>
                                         Crear Jugadas

@@ -207,19 +207,19 @@ body {
 
 /* ============================================
  * Botones con colores del sistema RugbyHub
- * Verde principal: #1e4d2b
- * Accent: #00B7B5
+ * Primary: #005461 (teal oscuro)
+ * Accent: #00B7B5 (teal claro)
  * ============================================ */
 
-/* Botón primario - Verde rugby */
+/* Botón primario - Teal oscuro */
 .btn-primary {
-    background-color: #1e4d2b !important;
-    border-color: #1e4d2b !important;
+    background-color: #005461 !important;
+    border-color: #005461 !important;
 }
 
 .btn-primary:hover {
-    background-color: #2a6b3d !important;
-    border-color: #2a6b3d !important;
+    background-color: #003d4a !important;
+    border-color: #003d4a !important;
 }
 
 /* Botón info - Accent teal */
@@ -229,22 +229,22 @@ body {
 }
 
 .btn-info:hover {
-    background-color: #00a3a1 !important;
-    border-color: #00a3a1 !important;
+    background-color: #009a98 !important;
+    border-color: #009a98 !important;
 }
 
-/* Botón success - Verde */
+/* Botón success - Teal oscuro */
 .btn-success {
-    background-color: #1e4d2b !important;
-    border-color: #1e4d2b !important;
+    background-color: #005461 !important;
+    border-color: #005461 !important;
 }
 
 .btn-success:hover {
-    background-color: #2a6b3d !important;
-    border-color: #2a6b3d !important;
+    background-color: #003d4a !important;
+    border-color: #003d4a !important;
 }
 
-/* Botón outline-warning */
+/* Botón outline-warning - Accent */
 .btn-outline-warning {
     color: #00B7B5 !important;
     border-color: #00B7B5 !important;
@@ -257,9 +257,9 @@ body {
 
 /* Botón warning activo */
 .btn-warning {
-    background-color: #e6a700 !important;
-    border-color: #e6a700 !important;
-    color: #000 !important;
+    background-color: #00B7B5 !important;
+    border-color: #00B7B5 !important;
+    color: white !important;
 }
 
 /* Botón secundario */
@@ -271,4 +271,16 @@ body {
 .btn-secondary:hover {
     background-color: #555 !important;
     border-color: #555 !important;
+}
+
+/* Botón rugby custom */
+.btn-rugby {
+    background: #005461 !important;
+    border: none;
+    color: white;
+}
+
+.btn-rugby:hover {
+    background: #00B7B5 !important;
+    color: white;
 }

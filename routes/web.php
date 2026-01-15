@@ -14,6 +14,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\DirectUploadController;
 use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\VideoClipController;
+use App\Http\Controllers\JugadasController;
 
 // Public route - Redirect directly to login
 Route::redirect('/', '/login');
@@ -120,6 +121,9 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{video}/mark-completed', [VideoViewController::class, 'markCompleted'])->name('mark-completed');
         Route::get('/{video}/stats', [VideoViewController::class, 'getStats'])->name('stats');
     });
+
+    // Jugadas Editor (Editor de Jugadas)
+    Route::get('jugadas', [JugadasController::class, 'index'])->name('jugadas.index');
 
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
@@ -333,5 +337,6 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::post('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdmin'])->name('organizations.assign-admin.store');
     Route::post('/organizations/{organization}/create-user', [App\Http\Controllers\SuperAdminController::class, 'createUserForOrganization'])->name('organizations.create-user');
     Route::get('/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('users');
+    Route::delete('/users/{user}', [App\Http\Controllers\SuperAdminController::class, 'destroyUser'])->name('users.destroy');
     Route::get('/storage', [App\Http\Controllers\SuperAdminController::class, 'storageStats'])->name('storage');
 });

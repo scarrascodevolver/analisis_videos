@@ -130,7 +130,7 @@ function playAllMovements() {
 
     const PASS_DURATION = 800;
 
-    // Pre-calcular duración de movimientos por jugador
+    // Pre-calcular duración de movimientos por jugador (usando velocidad individual)
     const movementDurations = {};
     movementsList.forEach(movement => {
         let totalDistance = 0;
@@ -140,7 +140,8 @@ function playAllMovements() {
                 Math.pow(movement.points[i].y - movement.points[i-1].y, 2)
             );
         }
-        const duration = (totalDistance / PLAYER_SPEED) * 1000;
+        const speed = movement.speed || PLAYER_SPEED;
+        const duration = (totalDistance / speed) * 1000;
         if (movementDurations[movement.playerId]) {
             movementDurations[movement.playerId] += duration;
         } else {
@@ -149,45 +150,44 @@ function playAllMovements() {
     });
 
     // ============================================
-    // NUEVO: Calcular escalonamiento basado en cadena de pases
+    // HÍBRIDO: Delays mínimos para que nadie esté detenido al recibir
+    // Todos empiezan casi juntos, pero con ajustes mínimos
     // ============================================
-    const movementStartDelays = {};  // Cuándo debe EMPEZAR cada jugador
-    const passExecutionTimes = {};   // Cuándo se ejecuta cada pase
+    const movementStartDelays = {};  // Delays mínimos calculados
+    const passArrivalTimes = {};     // Cuándo llega el balón a cada receptor
 
-    let currentTime = 0;  // Tiempo acumulado en la cadena de pases
+    // Primero: calcular cuándo llega cada pase (secuencialmente)
+    let currentPassTime = 0;
 
     passesList.forEach((pass, index) => {
         const timing = Math.min(pass.timing || 50, 99) / 100;
         const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
-        const receiverDuration = movementDurations[pass.to] || ANIMATION_DURATION;
 
         if (index === 0) {
-            // Primer pasador: empieza en t=0, pasa en timing% de su movimiento
+            // Primer pase: el pasador pasa en timing% de su movimiento
+            currentPassTime = timing * passerDuration;
             movementStartDelays[pass.from] = 0;
-            const passTime = timing * passerDuration;
-            passExecutionTimes[pass.from] = passTime;
-            currentTime = passTime + PASS_DURATION;  // Tiempo cuando el receptor recibe
-
-            console.log(`   📊 J${pass.from}: inicio=0ms, pasa=${passTime.toFixed(0)}ms`);
+            console.log(`   📊 J${pass.from}: pasa en t=${currentPassTime.toFixed(0)}ms`);
+        } else {
+            // Pases siguientes: después de recibir el anterior + pequeño delay
+            const quickPassDelay = (1 - timing) * 200;
+            currentPassTime = currentPassTime + PASS_DURATION + quickPassDelay;
         }
 
-        // El receptor debe estar en timing% de su movimiento cuando recibe
-        // receiveTime = startDelay + (timing * duration)
-        // Por lo tanto: startDelay = receiveTime - (timing * duration)
-        const receiveTime = currentTime;
-        const receiverStartDelay = Math.max(0, receiveTime - (timing * receiverDuration));
-        movementStartDelays[pass.to] = receiverStartDelay;
+        // Cuándo llega el balón al receptor
+        const arrivalTime = currentPassTime + PASS_DURATION;
+        passArrivalTimes[pass.to] = arrivalTime;
 
-        // El receptor pasa en su timing% (desde que empezó su movimiento)
-        const receiverPassTime = receiverStartDelay + (timing * receiverDuration);
-        passExecutionTimes[pass.to] = receiverPassTime;
+        // Calcular delay mínimo para que el receptor no esté detenido
+        const receiverDuration = movementDurations[pass.to] || ANIMATION_DURATION;
 
-        console.log(`   📊 J${pass.to}: inicio=${receiverStartDelay.toFixed(0)}ms, recibe=${receiveTime.toFixed(0)}ms, pasa=${receiverPassTime.toFixed(0)}ms`);
+        // Si el receptor termina antes de que llegue el balón, necesita delay
+        // delay = arrivalTime - duration (para terminar justo cuando llega el balón)
+        // Agregamos un margen de 200ms para que siga en movimiento
+        const minDelay = Math.max(0, arrivalTime - receiverDuration + 200);
+        movementStartDelays[pass.to] = minDelay;
 
-        // Actualizar tiempo actual para el siguiente pase en la cadena
-        if (index < passesList.length - 1) {
-            currentTime = receiverPassTime + PASS_DURATION;
-        }
+        console.log(`   📊 J${pass.to}: recibe en t=${arrivalTime.toFixed(0)}ms, dur=${receiverDuration.toFixed(0)}ms, delay=${minDelay.toFixed(0)}ms`);
     });
 
     // Jugadores sin pases empiezan en t=0
@@ -198,23 +198,28 @@ function playAllMovements() {
     });
 
     // ============================================
-    // Programar ejecución de pases
+    // Programar ejecución de pases (SECUENCIALES)
+    // Cada pase ocurre después de que el anterior se complete
     // ============================================
     let maxPassEndTime = 0;
+    currentPassTime = 0;  // Resetear para programación
 
     passesList.forEach((pass, index) => {
+        const timing = Math.min(pass.timing || 50, 99) / 100;
+        const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
         let passTime;
 
         if (index === 0) {
-            // Primer pase: basado en timing del pasador
-            const timing = Math.min(pass.timing || 50, 99) / 100;
-            const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
+            // Primer pase: el pasador original pasa en timing% de su movimiento
             passTime = timing * passerDuration;
         } else {
-            // Pases siguientes: basado en passExecutionTimes calculado
-            passTime = passExecutionTimes[pass.from] || 0;
+            // Pases siguientes: ocurren después de recibir el pase anterior
+            // El nuevo pasador pasa rápido (timing bajo = pasa más rápido después de recibir)
+            const quickPassDelay = (1 - timing) * 300; // timing alto = pasa casi inmediato
+            passTime = currentPassTime + PASS_DURATION + quickPassDelay;
         }
 
+        currentPassTime = passTime;
         const passEndTime = passTime + PASS_DURATION;
         if (passEndTime > maxPassEndTime) {
             maxPassEndTime = passEndTime;
@@ -306,7 +311,8 @@ function executePassDuringAnimation(passAction) {
 
 /**
  * Nueva función: Ejecuta movimientos con escalonamiento calculado
- * Cada jugador empieza en su tiempo calculado según la cadena de pases
+ * Soporta SEÑUELOS: si un jugador tiene 2+ movimientos y está en cadena de pases,
+ * el primer movimiento es señuelo (t=0) y el segundo espera el pase
  */
 function playAllMovementsStaggered(movementsList, movementDurations, movementStartDelays, callback) {
     if (movementsList.length === 0) {
@@ -338,34 +344,88 @@ function playAllMovementsStaggered(movementsList, movementDurations, movementSta
 
         // Obtener el delay de inicio calculado para este jugador
         const startDelay = movementStartDelays[playerId] || movementStartDelays[playerIdStr] || 0;
-        const duration = movementDurations[playerId] || movementDurations[playerIdStr] || ANIMATION_DURATION;
 
-        // Combinar todos los puntos de los movimientos del jugador
-        let allPoints = [];
-        playerMovements.forEach((movement, idx) => {
-            if (idx === 0) {
-                allPoints = [...movement.points];
-            } else {
-                // Agregar puntos sin duplicar el primer punto
-                allPoints = allPoints.concat(movement.points.slice(1));
-            }
-        });
+        // ============================================
+        // SEÑUELO: Si tiene 2+ movimientos Y está en cadena de pases (delay > 0)
+        // ============================================
+        const isDecoy = playerMovements.length >= 2 && startDelay > 0;
 
-        const totalDistance = calculatePathDistance(allPoints);
-        const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+        if (isDecoy) {
+            // MODO SEÑUELO: Movimientos separados
+            console.log(`    🎭 J${playerId}: SEÑUELO detectado (${playerMovements.length} movimientos)`);
 
-        console.log(`    📏 J${playerId}: inicio=${startDelay.toFixed(0)}ms, dist=${totalDistance.toFixed(0)}px, dur=${movementDuration.toFixed(0)}ms`);
+            // Movimiento 1: Señuelo - empieza en t=0
+            const decoyMovement = playerMovements[0];
+            const decoyPoints = decoyMovement.points;
+            const decoyDistance = calculatePathDistance(decoyPoints);
+            const decoySpeed = decoyMovement.speed || PLAYER_SPEED;
+            const decoyDuration = (decoyDistance / decoySpeed) * 1000;
 
-        const promise = new Promise((resolve) => {
-            setTimeout(() => {
-                animateObjectAlongPathUnified(obj, allPoints, movementDuration, () => {
-                    console.log(`    ✓ J${playerId} completado`);
+            console.log(`       └─ Mov 1 (señuelo): inicio=0ms, dur=${decoyDuration.toFixed(0)}ms`);
+
+            const decoyPromise = new Promise((resolve) => {
+                animateObjectAlongPathUnified(obj, decoyPoints, decoyDuration, () => {
+                    console.log(`    ✓ J${playerId} señuelo completado`);
                     resolve();
                 }, playerId);
-            }, startDelay);
-        });
+            });
+            animationPromises.push(decoyPromise);
 
-        animationPromises.push(promise);
+            // Movimiento 2+: Ataque - empieza cuando recibe el pase
+            let attackPoints = [];
+            for (let i = 1; i < playerMovements.length; i++) {
+                if (i === 1) {
+                    attackPoints = [...playerMovements[i].points];
+                } else {
+                    attackPoints = attackPoints.concat(playerMovements[i].points.slice(1));
+                }
+            }
+
+            const attackDistance = calculatePathDistance(attackPoints);
+            const attackSpeed = playerMovements[1].speed || PLAYER_SPEED;
+            const attackDuration = (attackDistance / attackSpeed) * 1000;
+
+            console.log(`       └─ Mov 2 (ataque): inicio=${startDelay.toFixed(0)}ms, dur=${attackDuration.toFixed(0)}ms`);
+
+            const attackPromise = new Promise((resolve) => {
+                setTimeout(() => {
+                    animateObjectAlongPathUnified(obj, attackPoints, attackDuration, () => {
+                        console.log(`    ✓ J${playerId} ataque completado`);
+                        resolve();
+                    }, playerId);
+                }, startDelay);
+            });
+            animationPromises.push(attackPromise);
+
+        } else {
+            // MODO NORMAL: Combinar movimientos
+            let allPoints = [];
+            playerMovements.forEach((movement, idx) => {
+                if (idx === 0) {
+                    allPoints = [...movement.points];
+                } else {
+                    allPoints = allPoints.concat(movement.points.slice(1));
+                }
+            });
+
+            const totalDistance = calculatePathDistance(allPoints);
+            const playerSpeed = playerMovements[0].speed || PLAYER_SPEED;
+            const movementDuration = (totalDistance / playerSpeed) * 1000;
+
+            const speedLabel = { 100: '🐢', 200: '🏃', 300: '🏃‍♂️', 400: '⚡' }[playerSpeed] || '🏃';
+            console.log(`    📏 J${playerId}: inicio=${startDelay.toFixed(0)}ms, dist=${totalDistance.toFixed(0)}px, dur=${movementDuration.toFixed(0)}ms ${speedLabel}`);
+
+            const promise = new Promise((resolve) => {
+                setTimeout(() => {
+                    animateObjectAlongPathUnified(obj, allPoints, movementDuration, () => {
+                        console.log(`    ✓ J${playerId} completado`);
+                        resolve();
+                    }, playerId);
+                }, startDelay);
+            });
+
+            animationPromises.push(promise);
+        }
     });
 
     Promise.all(animationPromises).then(() => {
@@ -407,7 +467,8 @@ function playAllMovementsSimultaneously(movementsList, callback) {
             // Un solo movimiento: comportamiento normal
             const movement = playerMovements[0];
             const totalDistance = calculatePathDistance(movement.points);
-            const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+            const playerSpeed = movement.speed || PLAYER_SPEED;
+            const movementDuration = (totalDistance / playerSpeed) * 1000;
             const startDelay = (movement.startDelay || 0) / 100 * ANIMATION_DURATION;
 
             console.log(`    📏 J${playerId}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms`);
@@ -438,7 +499,8 @@ function playAllMovementsSimultaneously(movementsList, callback) {
 
                     const movement = playerMovements[movementIndex];
                     const totalDistance = calculatePathDistance(movement.points);
-                    const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+                    const playerSpeed = movement.speed || PLAYER_SPEED;
+                    const movementDuration = (totalDistance / playerSpeed) * 1000;
 
                     console.log(`      → J${playerId} mov ${movementIndex + 1}/${playerMovements.length}: ${totalDistance.toFixed(0)}px, ${movementDuration.toFixed(0)}ms`);
 
@@ -612,9 +674,11 @@ function resetToOriginalPositions() {
                     rugbyBall.setCoords();
                     restoredCount++;
 
-                    ballPossession = originalBallHolder;
-                    players.forEach(p => p.hasBallPossession = false);
-                    holder.hasBallPossession = true;
+                    // Recalcular posesión según cadena de pases (para permitir fases como ruck)
+                    recalculateBallPossession();
+
+                    // Actualizar UI del jugador con posesión
+                    players.forEach(p => p.hasBallPossession = (p.playerNumber === ballPossession));
                     updatePossessionUI();
                 }
             }

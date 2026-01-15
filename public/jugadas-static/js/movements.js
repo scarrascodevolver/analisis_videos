@@ -104,6 +104,7 @@ function saveMovement(obj, points, pathObject) {
         points: points.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) })),
         hasBall: hasBall,
         startDelay: 0,
+        speed: PLAYER_SPEED, // Velocidad por defecto (200 px/s)
         pathObject: pathObject
     };
 
@@ -227,15 +228,28 @@ function renderMovementsList() {
         if (action.type === 'movement') {
             const ballIcon = action.hasBall ? ' 🏈' : '';
             const ballClass = action.hasBall ? 'border-warning' : 'border-success';
+            const currentSpeed = action.speed || PLAYER_SPEED;
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${ballClass}"
+                <div class="list-group-item py-1 px-2 ${ballClass}"
                      style="background: #2d2d2d; border-left: 3px solid; margin-bottom: 2px;">
-                    <span style="color: #28a745; font-weight: bold;">
-                        J${action.playerId}${ballIcon}
-                    </span>
-                    <button class="btn btn-sm text-danger p-0 ml-2" onclick="deleteMovementById(${action.id})" title="Eliminar movimiento">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="color: #28a745; font-weight: bold;">
+                            J${action.playerId}${ballIcon}
+                        </span>
+                        <button class="btn btn-sm text-danger p-0" onclick="deleteMovementById(${action.id})" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex align-items-center mt-1">
+                        <small class="text-muted mr-1" style="font-size: 10px;">🏃</small>
+                        <select class="form-control form-control-sm" style="font-size: 10px; padding: 0 2px; height: 20px; background: #3d4248; color: #e9ecef; border: none;"
+                                onchange="updateMovementSpeed(${action.id}, this.value)" title="Velocidad">
+                            <option value="100" ${currentSpeed === 100 ? 'selected' : ''}>Lento</option>
+                            <option value="200" ${currentSpeed === 200 ? 'selected' : ''}>Normal</option>
+                            <option value="300" ${currentSpeed === 300 ? 'selected' : ''}>Rápido</option>
+                            <option value="400" ${currentSpeed === 400 ? 'selected' : ''}>Sprint</option>
+                        </select>
+                    </div>
                 </div>
             `;
         } else if (action.type === 'pass') {
@@ -287,6 +301,15 @@ function clearPreviewLine() {
     if (previewLine) {
         canvas.remove(previewLine);
         previewLine = null;
+    }
+}
+
+function updateMovementSpeed(id, speed) {
+    const movement = movements.find(m => m.id === id);
+    if (movement && movement.type === 'movement') {
+        movement.speed = parseInt(speed);
+        const speedLabels = { 100: 'Lento', 200: 'Normal', 300: 'Rápido', 400: 'Sprint' };
+        console.log(`🏃 Velocidad J${movement.playerId} actualizada: ${speedLabels[movement.speed] || movement.speed}px/s`);
     }
 }
 

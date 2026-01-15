@@ -72,6 +72,7 @@
                             <th>Organizaciones</th>
                             <th class="text-center">Super Admin</th>
                             <th>Registrado</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,10 +110,28 @@
                             <td>
                                 <small>{{ $user->created_at->format('d/m/Y') }}</small>
                             </td>
+                            <td class="text-center">
+                                @if(!$user->is_super_admin && $user->id !== auth()->id())
+                                    <form action="{{ route('super-admin.users.destroy', $user) }}"
+                                          method="POST"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Eliminar usuario {{ $user->name }}?\n\nEsta acción es irreversible y eliminará al usuario de todas las organizaciones.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar usuario">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-muted" title="{{ $user->is_super_admin ? 'No se puede eliminar Super Admin' : 'No puedes eliminarte a ti mismo' }}">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4">
+                            <td colspan="7" class="text-center py-4">
                                 <i class="fas fa-search fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">No se encontraron usuarios con los filtros aplicados</p>
                             </td>

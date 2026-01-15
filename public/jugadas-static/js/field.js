@@ -3,7 +3,7 @@
  */
 
 function drawRugbyField() {
-    fabric.Image.fromURL('../cancha_rugby.png', function(img) {
+    fabric.Image.fromURL('/cancha_rugby.png', function(img) {
         img.set({
             left: 0,
             top: 0,
