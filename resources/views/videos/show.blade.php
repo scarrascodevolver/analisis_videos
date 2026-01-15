@@ -372,7 +372,7 @@
                         Comentarios ({{ $comments->count() }})
                     </h5>
                 </div>
-                <div class="card-body p-0 comments-scroll-container" style="max-height: 400px; overflow-y: auto;">
+                <div class="card-body p-0 comments-scroll-container" style="max-height: 400px; overflow-y: scroll; overflow-x: hidden;">
                     @forelse($comments as $comment)
                         <div class="comment-item border-bottom p-2" data-timestamp="{{ $comment->timestamp_seconds }}">
                             <div class="d-flex justify-content-between align-items-start">
@@ -980,6 +980,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Video Player Styles -->
 <link rel="stylesheet" href="{{ asset('css/video-player.css') }}">
+
+<style>
+/* Scrollbar visible para comentarios */
+.comments-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+.comments-scroll-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+.comments-scroll-container::-webkit-scrollbar-thumb {
+    background: #00B7B5;
+    border-radius: 4px;
+}
+.comments-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #009999;
+}
+/* Firefox */
+.comments-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: #00B7B5 #1a1a1a;
+}
+</style>
 
 <!-- Modal de Confirmación para Eliminar Video -->
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">

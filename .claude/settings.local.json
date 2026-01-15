@@ -34,7 +34,11 @@
       "WebFetch(domain:support.longomatch.com)",
       "Bash(git rm:*)",
       "Bash(php:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "WebFetch(domain:www.flow.cl)",
+      "WebFetch(domain:developers.flow.cl)",
+      "WebFetch(domain:docs.stripe.com)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
