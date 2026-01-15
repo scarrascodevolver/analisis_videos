@@ -120,22 +120,17 @@ function playAllMovements() {
     $('#btnDrawMovement').prop('disabled', true);
     $('#btnCreatePass').prop('disabled', true);
 
-    console.log('▶️ Iniciando reproducción UNIFICADA');
-    console.log(`   📍 ${movementsList.length} movimientos simultáneos`);
+    console.log('▶️ Iniciando reproducción con ESCALONAMIENTO');
+    console.log(`   📍 ${movementsList.length} movimientos`);
     console.log(`   🏈 ${passesList.length} pases programados`);
-
 
     $('#animationStatus').html(
         `<i class="fas fa-bolt text-warning"></i> Ejecutando ${movementsList.length} movimientos + ${passesList.length} pases...`
     );
 
     const PASS_DURATION = 800;
-    let lastTiming = -1;
-    let sameTimingCount = 0;
-    let maxPassEndTime = 0;
 
-    // Pre-calcular duración total de movimientos por jugador
-    // (si un jugador tiene múltiples movimientos, sumar sus duraciones)
+    // Pre-calcular duración de movimientos por jugador
     const movementDurations = {};
     movementsList.forEach(movement => {
         let totalDistance = 0;
@@ -146,7 +141,6 @@ function playAllMovements() {
             );
         }
         const duration = (totalDistance / PLAYER_SPEED) * 1000;
-        // Sumar duración si ya existe (múltiples movimientos)
         if (movementDurations[movement.playerId]) {
             movementDurations[movement.playerId] += duration;
         } else {
@@ -154,51 +148,107 @@ function playAllMovements() {
         }
     });
 
-    passesList.forEach((pass, index) => {
-        const timing = Math.min(pass.timing || 50, 99);
+    // ============================================
+    // NUEVO: Calcular escalonamiento basado en cadena de pases
+    // ============================================
+    const movementStartDelays = {};  // Cuándo debe EMPEZAR cada jugador
+    const passExecutionTimes = {};   // Cuándo se ejecuta cada pase
 
-        if (timing === lastTiming) {
-            sameTimingCount++;
-        } else {
-            sameTimingCount = 0;
-            lastTiming = timing;
+    let currentTime = 0;  // Tiempo acumulado en la cadena de pases
+
+    passesList.forEach((pass, index) => {
+        const timing = Math.min(pass.timing || 50, 99) / 100;
+        const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
+        const receiverDuration = movementDurations[pass.to] || ANIMATION_DURATION;
+
+        if (index === 0) {
+            // Primer pasador: empieza en t=0, pasa en timing% de su movimiento
+            movementStartDelays[pass.from] = 0;
+            const passTime = timing * passerDuration;
+            passExecutionTimes[pass.from] = passTime;
+            currentTime = passTime + PASS_DURATION;  // Tiempo cuando el receptor recibe
+
+            console.log(`   📊 J${pass.from}: inicio=0ms, pasa=${passTime.toFixed(0)}ms`);
         }
 
-        // Usar la duración del movimiento del jugador que PASA (from)
-        const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
-        const baseDelay = (timing / 100) * passerDuration;
-        const sequenceOffset = sameTimingCount * (PASS_DURATION + 100);
-        const delay = baseDelay + sequenceOffset;
+        // El receptor debe estar en timing% de su movimiento cuando recibe
+        // receiveTime = startDelay + (timing * duration)
+        // Por lo tanto: startDelay = receiveTime - (timing * duration)
+        const receiveTime = currentTime;
+        const receiverStartDelay = Math.max(0, receiveTime - (timing * receiverDuration));
+        movementStartDelays[pass.to] = receiverStartDelay;
 
-        // Calcular cuándo termina este pase (delay + duración)
-        const passEndTime = delay + PASS_DURATION;
+        // El receptor pasa en su timing% (desde que empezó su movimiento)
+        const receiverPassTime = receiverStartDelay + (timing * receiverDuration);
+        passExecutionTimes[pass.to] = receiverPassTime;
+
+        console.log(`   📊 J${pass.to}: inicio=${receiverStartDelay.toFixed(0)}ms, recibe=${receiveTime.toFixed(0)}ms, pasa=${receiverPassTime.toFixed(0)}ms`);
+
+        // Actualizar tiempo actual para el siguiente pase en la cadena
+        if (index < passesList.length - 1) {
+            currentTime = receiverPassTime + PASS_DURATION;
+        }
+    });
+
+    // Jugadores sin pases empiezan en t=0
+    movementsList.forEach(movement => {
+        if (movementStartDelays[movement.playerId] === undefined) {
+            movementStartDelays[movement.playerId] = 0;
+        }
+    });
+
+    // ============================================
+    // Programar ejecución de pases
+    // ============================================
+    let maxPassEndTime = 0;
+
+    passesList.forEach((pass, index) => {
+        let passTime;
+
+        if (index === 0) {
+            // Primer pase: basado en timing del pasador
+            const timing = Math.min(pass.timing || 50, 99) / 100;
+            const passerDuration = movementDurations[pass.from] || ANIMATION_DURATION;
+            passTime = timing * passerDuration;
+        } else {
+            // Pases siguientes: basado en passExecutionTimes calculado
+            passTime = passExecutionTimes[pass.from] || 0;
+        }
+
+        const passEndTime = passTime + PASS_DURATION;
         if (passEndTime > maxPassEndTime) {
             maxPassEndTime = passEndTime;
         }
 
-        console.log(`      Pase ${pass.from}→${pass.to}: timing ${timing}% de ${passerDuration.toFixed(0)}ms = delay ${delay.toFixed(0)}ms`);
+        console.log(`      🏈 Pase ${pass.from}→${pass.to} programado para t=${passTime.toFixed(0)}ms`);
 
         setTimeout(() => {
             if (isPlaying) {
-                console.log(`    🏈 Ejecutando pase ${pass.from}→${pass.to} (al ${timing}%)`);
+                console.log(`    🏈 Ejecutando pase ${pass.from}→${pass.to}`);
                 executePassDuringAnimation(pass);
             }
-        }, delay);
+        }, passTime);
     });
 
-    // Calcular duración máxima de movimientos (solo los reales, no ANIMATION_DURATION)
-    const durationValues = Object.values(movementDurations);
-    const maxMovementDuration = durationValues.length > 0 ? Math.max(...durationValues) : ANIMATION_DURATION;
+    // Calcular duración total de la animación
+    let maxEndTime = 0;
+    Object.keys(movementStartDelays).forEach(playerId => {
+        const startDelay = movementStartDelays[playerId];
+        const duration = movementDurations[playerId] || ANIMATION_DURATION;
+        const endTime = startDelay + duration;
+        if (endTime > maxEndTime) {
+            maxEndTime = endTime;
+        }
+    });
 
-    // Calcular tiempo extra: cuánto más allá de los movimientos necesitamos esperar para los pases
-    const extraTimeForPasses = Math.max(0, maxPassEndTime - maxMovementDuration + 100);
+    const totalDuration = Math.max(maxEndTime, maxPassEndTime) + 100;
+    console.log(`   ⏱️ Duración total estimada: ${totalDuration.toFixed(0)}ms`);
 
-    console.log(`   ⏱️ maxMovementDuration: ${maxMovementDuration.toFixed(0)}ms, maxPassEndTime: ${maxPassEndTime.toFixed(0)}ms, extra: ${extraTimeForPasses.toFixed(0)}ms`);
-
-    playAllMovementsSimultaneously(movementsList, () => {
+    // Iniciar animaciones con escalonamiento
+    playAllMovementsStaggered(movementsList, movementDurations, movementStartDelays, () => {
         setTimeout(() => {
             finishPlayback();
-        }, extraTimeForPasses);
+        }, Math.max(0, maxPassEndTime - maxEndTime + 100));
     });
 }
 
@@ -318,6 +368,75 @@ function executePassDuringAnimation(passAction) {
             console.log(`    👤 Receptor en: (${finalToCenter.x.toFixed(0)}, ${finalToCenter.y.toFixed(0)})`);
             canvas.renderAll();
         }
+    });
+}
+
+/**
+ * Nueva función: Ejecuta movimientos con escalonamiento calculado
+ * Cada jugador empieza en su tiempo calculado según la cadena de pases
+ */
+function playAllMovementsStaggered(movementsList, movementDurations, movementStartDelays, callback) {
+    if (movementsList.length === 0) {
+        callback();
+        return;
+    }
+
+    // Agrupar movimientos por jugador
+    const movementsByPlayer = {};
+    movementsList.forEach(movement => {
+        const id = movement.playerId;
+        if (!movementsByPlayer[id]) {
+            movementsByPlayer[id] = [];
+        }
+        movementsByPlayer[id].push(movement);
+    });
+
+    const animationPromises = [];
+
+    Object.keys(movementsByPlayer).forEach(playerIdStr => {
+        const playerMovements = movementsByPlayer[playerIdStr];
+        const playerId = playerIdStr === 'ball' ? 'ball' : parseInt(playerIdStr);
+        const obj = findObjectById(playerId);
+
+        if (!obj) {
+            console.warn('⚠️ Objeto no encontrado:', playerId);
+            return;
+        }
+
+        // Obtener el delay de inicio calculado para este jugador
+        const startDelay = movementStartDelays[playerId] || movementStartDelays[playerIdStr] || 0;
+        const duration = movementDurations[playerId] || movementDurations[playerIdStr] || ANIMATION_DURATION;
+
+        // Combinar todos los puntos de los movimientos del jugador
+        let allPoints = [];
+        playerMovements.forEach((movement, idx) => {
+            if (idx === 0) {
+                allPoints = [...movement.points];
+            } else {
+                // Agregar puntos sin duplicar el primer punto
+                allPoints = allPoints.concat(movement.points.slice(1));
+            }
+        });
+
+        const totalDistance = calculatePathDistance(allPoints);
+        const movementDuration = (totalDistance / PLAYER_SPEED) * 1000;
+
+        console.log(`    📏 J${playerId}: inicio=${startDelay.toFixed(0)}ms, dist=${totalDistance.toFixed(0)}px, dur=${movementDuration.toFixed(0)}ms`);
+
+        const promise = new Promise((resolve) => {
+            setTimeout(() => {
+                animateObjectAlongPathUnified(obj, allPoints, movementDuration, () => {
+                    console.log(`    ✓ J${playerId} completado`);
+                    resolve();
+                }, playerId);
+            }, startDelay);
+        });
+
+        animationPromises.push(promise);
+    });
+
+    Promise.all(animationPromises).then(() => {
+        callback();
     });
 }
 
