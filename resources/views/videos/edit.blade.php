@@ -60,8 +60,9 @@
                                         <i class="fas fa-users"></i> Equipo Analizado
                                     </label>
                                     <input type="text"
-                                           class="form-control bg-light text-dark"
+                                           class="form-control"
                                            value="{{ $video->analyzed_team_name ?? $organizationName }}"
+                                           style="background-color: #3d4248; color: #e9ecef; cursor: not-allowed;"
                                            disabled
                                            readonly>
                                     <small class="form-text text-muted">
