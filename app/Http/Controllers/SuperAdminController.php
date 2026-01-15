@@ -316,10 +316,23 @@ class SuperAdminController extends Controller
     {
         $query = User::with('organizations');
 
-        // Filtro por organización
-        if ($request->filled('organization')) {
-            $query->whereHas('organizations', function ($q) use ($request) {
-                $q->where('organizations.id', $request->organization);
+        // Determinar organización a filtrar
+        // Si no hay parámetro en URL, usar la org actual del super admin (excepto si explícitamente pide "todas")
+        $selectedOrganization = null;
+
+        if ($request->has('organization')) {
+            // Usuario seleccionó manualmente (puede ser vacío = "Todas")
+            $selectedOrganization = $request->organization ?: null;
+        } else {
+            // Primera carga: usar org actual del super admin
+            $currentOrg = auth()->user()->currentOrganization();
+            $selectedOrganization = $currentOrg ? $currentOrg->id : null;
+        }
+
+        // Aplicar filtro por organización si hay una seleccionada
+        if ($selectedOrganization) {
+            $query->whereHas('organizations', function ($q) use ($selectedOrganization) {
+                $q->where('organizations.id', $selectedOrganization);
             });
         }
 
@@ -339,7 +352,7 @@ class SuperAdminController extends Controller
         $users = $query->latest()->paginate(15);
         $organizations = Organization::orderBy('name')->get();
 
-        return view('super-admin.users.index', compact('users', 'organizations'));
+        return view('super-admin.users.index', compact('users', 'organizations', 'selectedOrganization'));
     }
 
     /**

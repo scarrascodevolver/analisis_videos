@@ -28,9 +28,9 @@
                 <div class="col-md-3 mb-2">
                     <label for="organization">Organización</label>
                     <select class="form-control" id="organization" name="organization">
-                        <option value="">Todas</option>
+                        <option value="">Todas las organizaciones</option>
                         @foreach($organizations as $org)
-                            <option value="{{ $org->id }}" {{ request('organization') == $org->id ? 'selected' : '' }}>
+                            <option value="{{ $org->id }}" {{ $selectedOrganization == $org->id ? 'selected' : '' }}>
                                 {{ $org->name }}
                             </option>
                         @endforeach
