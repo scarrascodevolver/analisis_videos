@@ -145,7 +145,7 @@
                 <span class="text-muted">
                     Mostrando {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} de {{ $users->total() }} usuarios
                 </span>
-                {{ $users->appends(request()->query())->links() }}
+                {{ $users->appends(request()->query())->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
