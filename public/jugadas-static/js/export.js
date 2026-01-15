@@ -250,11 +250,11 @@ async function exportPlayById(playId, playName) {
         await loadPlayForExport(play);
 
         // 2. Esperar que el canvas se renderice
-        await sleep(300);
+        await sleep(100);
 
         // 3. Reset a posiciones originales
         resetToOriginalPositionsSync();
-        await sleep(200);
+        await sleep(50);
 
         // 4. Iniciar grabación
         $('#animationStatus').html('<i class="fas fa-circle text-danger"></i> Grabando...');
@@ -263,13 +263,13 @@ async function exportPlayById(playId, playName) {
         }
 
         // 5. Esperar un momento para capturar estado inicial
-        await sleep(500);
+        await sleep(200);
 
         // 6. Ejecutar animación y esperar que termine
         await playAnimationAndWait();
 
         // 7. Esperar un momento para capturar estado final
-        await sleep(500);
+        await sleep(200);
 
         // 8. Detener grabación y obtener blob
         const videoBlob = await stopRecording();
