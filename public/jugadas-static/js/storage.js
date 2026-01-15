@@ -58,6 +58,15 @@ function savePlay() {
         return action;
     });
 
+    // Guardar posiciones originales (para reset)
+    const originalPositionsData = {};
+    Object.keys(originalPositions).forEach(key => {
+        originalPositionsData[key] = {
+            left: originalPositions[key].left,
+            top: originalPositions[key].top
+        };
+    });
+
     const play = {
         id: Date.now(),
         name: playName,
@@ -67,6 +76,7 @@ function savePlay() {
         ball: ballData,
         ballPossession: ballPossession,
         originalBallHolder: originalBallHolder,
+        originalPositions: originalPositionsData,
         movements: movementsData,
         thumbnail: thumbnail,
         created_at: new Date().toISOString()
@@ -206,7 +216,23 @@ function loadPlayById(playId) {
         }
     }
 
-    saveOriginalPositions();
+    // Restaurar posiciones originales desde la jugada guardada
+    if (play.originalPositions && Object.keys(play.originalPositions).length > 0) {
+        // Usar las posiciones originales guardadas
+        originalPositions = {};
+        Object.keys(play.originalPositions).forEach(key => {
+            originalPositions[key] = {
+                left: play.originalPositions[key].left,
+                top: play.originalPositions[key].top
+            };
+        });
+        console.log('📍 Posiciones originales restauradas desde jugada guardada:', Object.keys(originalPositions).length, 'objetos');
+    } else {
+        // Jugadas antiguas sin originalPositions guardado - usar posiciones actuales
+        saveOriginalPositions();
+        console.log('📍 Jugada antigua - posiciones actuales guardadas como originales');
+    }
+
     updatePossessionUI();
 
     $('#playNameInput').val(play.name);
