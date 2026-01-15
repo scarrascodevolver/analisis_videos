@@ -185,6 +185,8 @@ async function convertToMp4(webmBlob, filename) {
 
         const data = await response.json();
 
+        console.log('🔄 Respuesta del servidor:', data);
+
         if (data.success) {
             // Convertir base64 a blob y descargar
             const byteCharacters = atob(data.video);
@@ -207,7 +209,8 @@ async function convertToMp4(webmBlob, filename) {
 
             return { success: true, filename: data.filename, size: data.size };
         } else {
-            return { success: false, error: data.message };
+            console.error('❌ Error del servidor:', data.message, data.debug || '');
+            return { success: false, error: data.message + (data.debug ? '\n' + data.debug : '') };
         }
     } catch (error) {
         console.error('Error convirtiendo a MP4:', error);

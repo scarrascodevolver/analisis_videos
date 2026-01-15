@@ -137,8 +137,16 @@ class JugadasController extends Controller
     public function apiConvertToMp4(Request $request): JsonResponse
     {
         $request->validate([
-            'video' => 'required|file|mimetypes:video/webm,video/x-matroska',
+            'video' => 'required|file',
             'filename' => 'required|string|max:255',
+        ]);
+
+        // Log para debug
+        $uploadedMime = $request->file('video')->getMimeType();
+        \Log::info('Video conversion request', [
+            'mime' => $uploadedMime,
+            'size' => $request->file('video')->getSize(),
+            'filename' => $request->input('filename'),
         ]);
 
         $webmFile = $request->file('video');
@@ -172,10 +180,15 @@ class JugadasController extends Controller
             }
 
             if ($returnCode !== 0 || !file_exists($mp4Path)) {
+                \Log::error('FFmpeg conversion failed', [
+                    'returnCode' => $returnCode,
+                    'output' => $output,
+                    'command' => $command,
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al convertir el video.',
-                    'debug' => implode("\n", $output),
+                    'message' => 'Error al convertir el video. FFmpeg code: ' . $returnCode,
+                    'debug' => implode("\n", array_slice($output, -10)), // últimas 10 líneas
                 ], 500);
             }
 

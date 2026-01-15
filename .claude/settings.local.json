@@ -27,7 +27,14 @@
       "Bash(find:*)",
       "Bash(git remote set-url:*)",
       "Bash(GIT_TERMINAL_PROMPT=0 git push:*)",
-      "Bash(xargs git branch -d)"
+      "Bash(xargs git branch -d)",
+      "Bash(git check-ignore:*)",
+      "WebFetch(domain:fluendo.atlassian.net)",
+      "WebFetch(domain:www.scribd.com)",
+      "WebFetch(domain:support.longomatch.com)",
+      "Bash(git rm:*)",
+      "Bash(php:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
