@@ -181,7 +181,6 @@ $(document).ready(function() {
     $('#btnDeleteSelected').on('click', deleteSelectedPlayer);
     $('#btnApplyFormacion').on('click', applyFormacion);
     $('#btnSavePlay').on('click', savePlay);
-    $('#btnExportVideo').on('click', exportVideo);
     $('#btnClearCanvas').on('click', clearCanvas);
 
     // Botón de dibujar movimiento
@@ -238,7 +237,7 @@ $(document).ready(function() {
         }
     });
 
-    // Delegated events para cargar/eliminar jugadas
+    // Delegated events para cargar/eliminar/exportar jugadas
     $(document).on('click', '.load-play', function() {
         const playId = $(this).data('id');
         loadPlayById(playId);
@@ -247,6 +246,12 @@ $(document).ready(function() {
     $(document).on('click', '.delete-play', function() {
         const playId = $(this).data('id');
         deletePlayById(playId);
+    });
+
+    $(document).on('click', '.export-play', function() {
+        const playId = $(this).data('id');
+        const playName = $(this).data('name');
+        exportPlayById(playId, playName);
     });
 
     console.log('✅ Editor de Jugadas Rugby - Inicializado');

@@ -129,6 +129,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('api/jugadas')->name('jugadas.api.')->group(function () {
         Route::get('/', [JugadasController::class, 'apiIndex'])->name('index');
         Route::post('/', [JugadasController::class, 'apiStore'])->name('store');
+        Route::post('/convert-to-mp4', [JugadasController::class, 'apiConvertToMp4'])->name('convert');
         Route::get('/{jugada}', [JugadasController::class, 'apiShow'])->name('show');
         Route::delete('/{jugada}', [JugadasController::class, 'apiDestroy'])->name('destroy');
     });

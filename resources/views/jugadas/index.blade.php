@@ -119,7 +119,7 @@
 
                 <div class="tools-panel">
                     <div class="section-header">
-                        <i class="fas fa-save"></i> Guardar / Exportar
+                        <i class="fas fa-save"></i> Guardar
                     </div>
                     <input type="text" id="playNameInput" class="form-control form-control-sm mb-2" placeholder="Nombre...">
                     <select id="playCategory" class="form-control form-control-sm mb-2">
@@ -127,11 +127,8 @@
                         <option value="backs">Backs</option>
                         <option value="full_team">Equipo completo</option>
                     </select>
-                    <button id="btnSavePlay" class="btn btn-rugby btn-block btn-sm mb-2">
+                    <button id="btnSavePlay" class="btn btn-rugby btn-block btn-sm">
                         <i class="fas fa-save"></i> Guardar
-                    </button>
-                    <button id="btnExportVideo" class="btn btn-outline-info btn-block btn-sm" title="Exportar animacion como video">
-                        <i class="fas fa-video"></i> Exportar Video
                     </button>
                 </div>
 

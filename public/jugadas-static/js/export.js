@@ -1,11 +1,12 @@
 /**
- * export.js - Exportar jugadas a video (WebM/MP4)
+ * export.js - Exportar jugadas a video MP4
  */
 
 let mediaRecorder = null;
 let recordedChunks = [];
 let isRecording = false;
-let exportCallback = null;
+let currentExportName = '';
+let exportResolve = null;
 
 /**
  * Inicia la grabación del canvas
@@ -14,41 +15,31 @@ function startRecording() {
     const canvasElement = document.getElementById('playCanvas');
 
     if (!canvasElement) {
-        console.error('❌ Canvas no encontrado');
+        console.error('Canvas no encontrado');
         return false;
     }
 
     // Obtener stream del canvas a 30fps
     const stream = canvasElement.captureStream(30);
 
-    // Detectar formato soportado
+    // Detectar formato soportado (preferir VP9 para mejor calidad)
     let mimeType = 'video/webm;codecs=vp9';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'video/webm;codecs=vp8';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
             mimeType = 'video/webm';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'video/mp4';
-                if (!MediaRecorder.isTypeSupported(mimeType)) {
-                    alert('❌ Tu navegador no soporta grabación de video');
-                    return false;
-                }
-            }
         }
     }
-
-    console.log('🎬 Iniciando grabación con:', mimeType);
 
     recordedChunks = [];
 
     try {
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
-            videoBitsPerSecond: 2500000 // 2.5 Mbps para buena calidad
+            videoBitsPerSecond: 3000000 // 3 Mbps para buena calidad
         });
     } catch (e) {
-        console.error('❌ Error creando MediaRecorder:', e);
-        alert('❌ Error al iniciar grabación: ' + e.message);
+        console.error('Error creando MediaRecorder:', e);
         return false;
     }
 
@@ -59,127 +50,287 @@ function startRecording() {
     };
 
     mediaRecorder.onstop = function() {
-        console.log('🎬 Grabación detenida, procesando...');
-        downloadRecording();
+        if (exportResolve) {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            exportResolve(blob);
+            exportResolve = null;
+        }
     };
 
     mediaRecorder.onerror = function(event) {
-        console.error('❌ Error en MediaRecorder:', event.error);
+        console.error('Error en MediaRecorder:', event.error);
         isRecording = false;
+        if (exportResolve) {
+            exportResolve(null);
+            exportResolve = null;
+        }
     };
 
-    mediaRecorder.start(100); // Capturar datos cada 100ms
+    mediaRecorder.start(100);
     isRecording = true;
-
     return true;
 }
 
 /**
- * Detiene la grabación
+ * Detiene la grabación y retorna una promesa con el blob
  */
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        isRecording = false;
-        console.log('🛑 Grabación finalizada');
+    return new Promise((resolve) => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            exportResolve = resolve;
+            mediaRecorder.stop();
+            isRecording = false;
+        } else {
+            resolve(null);
+        }
+    });
+}
+
+/**
+ * Convierte WebM a MP4 en el servidor
+ */
+async function convertToMp4(webmBlob, filename) {
+    const formData = new FormData();
+    formData.append('video', webmBlob, 'video.webm');
+    formData.append('filename', filename);
+
+    try {
+        const response = await fetch('/api/jugadas/convert-to-mp4', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Convertir base64 a blob y descargar
+            const byteCharacters = atob(data.video);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const mp4Blob = new Blob([byteArray], { type: 'video/mp4' });
+
+            // Descargar
+            const url = URL.createObjectURL(mp4Blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            return { success: true, filename: data.filename, size: data.size };
+        } else {
+            return { success: false, error: data.message };
+        }
+    } catch (error) {
+        console.error('Error convirtiendo a MP4:', error);
+        return { success: false, error: error.message };
     }
 }
 
 /**
- * Descarga el video grabado
+ * Exporta una jugada por su ID
  */
-function downloadRecording() {
-    if (recordedChunks.length === 0) {
-        console.error('❌ No hay datos grabados');
-        alert('❌ No se grabó ningún dato');
+async function exportPlayById(playId, playName) {
+    // Buscar jugada en cache
+    const play = jugadasCache.find(p => p.id === playId);
+
+    if (!play || !play.data) {
+        alert('❌ Jugada no encontrada');
         return;
     }
 
-    const mimeType = mediaRecorder.mimeType || 'video/webm';
-    const blob = new Blob(recordedChunks, { type: mimeType });
-
-    // Determinar extensión
-    let extension = 'webm';
-    if (mimeType.includes('mp4')) {
-        extension = 'mp4';
-    }
-
-    // Generar nombre con fecha
-    const playName = $('#playNameInput').val().trim() || 'jugada';
-    const date = new Date().toISOString().slice(0, 10);
-    const filename = `${playName}_${date}.${extension}`;
-
-    // Crear URL y descargar
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    console.log(`✅ Video descargado: ${filename} (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
-
-    // Restaurar UI
-    $('#btnExportVideo').prop('disabled', false).html('<i class="fas fa-video"></i> Exportar Video');
-    $('#animationStatus').html(`<i class="fas fa-check-circle text-success"></i> Video exportado: ${filename}`);
-
-    if (exportCallback) {
-        exportCallback();
-        exportCallback = null;
-    }
-}
-
-/**
- * Exporta la jugada actual como video
- * Flujo: Reset -> Esperar -> Grabar -> Animar -> Detener -> Descargar
- */
-function exportVideo() {
-    // Validaciones
-    if (movements.length === 0) {
-        alert('⚠️ Primero dibuja algunos movimientos para exportar');
+    if (!play.data.movements || play.data.movements.length === 0) {
+        alert('⚠️ Esta jugada no tiene movimientos para exportar');
         return;
     }
 
-    if (isPlaying) {
-        alert('⚠️ Espera a que termine la animación actual');
+    if (isPlaying || isRecording) {
+        alert('⚠️ Espera a que termine la operación actual');
         return;
     }
 
-    if (isRecording) {
-        alert('⚠️ Ya hay una grabación en progreso');
-        return;
-    }
+    // Deshabilitar botón y mostrar progreso
+    const $btn = $(`.export-play[data-id="${playId}"]`);
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    $('#animationStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Preparando exportación...');
 
-    // Deshabilitar botón
-    $('#btnExportVideo').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Preparando...');
+    currentExportName = playName || 'jugada';
 
-    console.log('🎥 Iniciando exportación de video...');
+    try {
+        // 1. Cargar la jugada (sin mostrar alert)
+        await loadPlayForExport(play);
 
-    // 1. Resetear posiciones primero
-    if (Object.keys(originalPositions).length > 0) {
+        // 2. Esperar que el canvas se renderice
+        await sleep(300);
+
+        // 3. Reset a posiciones originales
         resetToOriginalPositionsSync();
-    }
+        await sleep(200);
 
-    // 2. Esperar un frame para que el canvas se actualice
-    setTimeout(() => {
-        // 3. Iniciar grabación
+        // 4. Iniciar grabación
+        $('#animationStatus').html('<i class="fas fa-circle text-danger"></i> Grabando...');
         if (!startRecording()) {
-            $('#btnExportVideo').prop('disabled', false).html('<i class="fas fa-video"></i> Exportar Video');
-            return;
+            throw new Error('No se pudo iniciar la grabación');
         }
 
-        $('#btnExportVideo').html('<i class="fas fa-circle text-danger"></i> Grabando...');
-        $('#animationStatus').html('<i class="fas fa-video text-danger"></i> Grabando animación...');
+        // 5. Esperar un momento para capturar estado inicial
+        await sleep(500);
 
-        // 4. Pequeña pausa antes de animar (para capturar estado inicial)
-        setTimeout(() => {
-            // 5. Ejecutar animación con callback para detener grabación
-            playAnimationForExport();
-        }, 500);
+        // 6. Ejecutar animación y esperar que termine
+        await playAnimationAndWait();
 
-    }, 100);
+        // 7. Esperar un momento para capturar estado final
+        await sleep(500);
+
+        // 8. Detener grabación y obtener WebM
+        const webmBlob = await stopRecording();
+
+        if (!webmBlob) {
+            throw new Error('No se pudo grabar el video');
+        }
+
+        // 9. Convertir a MP4 en el servidor
+        $('#animationStatus').html('<i class="fas fa-cog fa-spin text-info"></i> Convirtiendo a MP4...');
+        const result = await convertToMp4(webmBlob, currentExportName);
+
+        if (result.success) {
+            const sizeMB = (result.size / 1024 / 1024).toFixed(2);
+            $('#animationStatus').html(`<i class="fas fa-check-circle text-success"></i> Exportado: ${result.filename} (${sizeMB} MB)`);
+            console.log(`✅ Video exportado: ${result.filename}`);
+        } else {
+            throw new Error(result.error || 'Error en la conversión');
+        }
+
+    } catch (error) {
+        console.error('Error exportando:', error);
+        $('#animationStatus').html(`<i class="fas fa-exclamation-triangle text-danger"></i> Error: ${error.message}`);
+        alert('❌ Error al exportar: ' + error.message);
+    } finally {
+        $btn.prop('disabled', false).html(originalHtml);
+        isRecording = false;
+    }
+}
+
+/**
+ * Carga una jugada sin mostrar alert
+ */
+function loadPlayForExport(play) {
+    return new Promise((resolve) => {
+        const data = play.data;
+
+        // Limpiar canvas
+        clearAllPlayers();
+
+        // Restaurar jugadores
+        if (data.players) {
+            data.players.forEach(p => {
+                addPlayer(p.type, p.x, p.y, p.number);
+            });
+        }
+
+        // Restaurar balón
+        if (data.ball && data.ball.isBall) {
+            crearBalon(data.ball.x, data.ball.y);
+        }
+
+        // Restaurar movimientos
+        if (data.movements && data.movements.length > 0) {
+            data.movements.forEach(action => {
+                if (action.type === 'movement' || !action.type) {
+                    let color;
+                    if (action.playerType === 'ball') {
+                        color = '#FF8C00';
+                    } else if (action.playerType === 'forward') {
+                        color = '#1e4d2b';
+                    } else {
+                        color = '#28a745';
+                    }
+
+                    const pathGroup = createPathWithArrow(action.points, color);
+                    if (pathGroup) {
+                        canvas.add(pathGroup);
+                        pathGroup.sendToBack();
+
+                        movements.push({
+                            id: ++movementIdCounter,
+                            type: 'movement',
+                            playerId: action.playerId,
+                            playerType: action.playerType,
+                            points: action.points,
+                            hasBall: action.hasBall || false,
+                            startDelay: action.startDelay || 0,
+                            speed: action.speed || PLAYER_SPEED,
+                            pathObject: pathGroup
+                        });
+                    }
+                } else if (action.type === 'pass') {
+                    movements.push({
+                        id: ++movementIdCounter,
+                        type: 'pass',
+                        from: action.from,
+                        to: action.to,
+                        timing: action.timing
+                    });
+                }
+            });
+
+            canvas.getObjects().forEach(obj => {
+                if (obj.type === 'image') {
+                    obj.sendToBack();
+                }
+            });
+
+            canvas.renderAll();
+            updatePlayButton();
+            updatePassButton();
+            renderMovementsList();
+        }
+
+        // Restaurar posesión del balón
+        if (data.ballPossession !== null && data.ballPossession !== undefined) {
+            const originalHolder = data.originalBallHolder || data.ballPossession;
+            const playerOriginal = players.find(p => p.playerNumber === originalHolder);
+            if (playerOriginal && rugbyBall) {
+                assignPossessionTo(playerOriginal);
+            }
+
+            if (data.ballPossession !== originalHolder) {
+                ballPossession = data.ballPossession;
+                const finalHolder = players.find(p => p.playerNumber === data.ballPossession);
+                if (finalHolder) {
+                    finalHolder.hasBallPossession = true;
+                }
+            }
+        }
+
+        // Restaurar posiciones originales
+        if (data.originalPositions && Object.keys(data.originalPositions).length > 0) {
+            originalPositions = {};
+            Object.keys(data.originalPositions).forEach(key => {
+                originalPositions[key] = {
+                    left: data.originalPositions[key].left,
+                    top: data.originalPositions[key].top
+                };
+            });
+        } else {
+            saveOriginalPositions();
+        }
+
+        updatePossessionUI();
+        $('#playNameInput').val(play.name);
+
+        resolve();
+    });
 }
 
 /**
@@ -219,7 +370,6 @@ function resetToOriginalPositionsSync() {
         rugbyBall.setCoords();
     }
 
-    // Recalcular posesión
     if (typeof recalculateBallPossession === 'function') {
         recalculateBallPossession();
     }
@@ -228,74 +378,51 @@ function resetToOriginalPositionsSync() {
 }
 
 /**
- * Ejecuta la animación para exportación
- * Similar a playAllMovements pero con callback al finalizar
+ * Ejecuta la animación y espera a que termine
  */
-function playAnimationForExport() {
-    if (movements.length === 0) {
-        stopRecording();
-        return;
-    }
+function playAnimationAndWait() {
+    return new Promise((resolve) => {
+        if (movements.length === 0) {
+            resolve();
+            return;
+        }
 
-    // Guardar callback original de finishPlayback
-    const originalFinishPlayback = window.finishPlayback;
+        // Guardar callback original
+        const originalFinishPlayback = window.finishPlayback;
 
-    // Override temporal para capturar el fin de la animación
-    window.finishPlayback = function() {
-        // Restaurar función original
-        window.finishPlayback = originalFinishPlayback;
-
-        // Pequeña pausa después de la animación para capturar estado final
-        setTimeout(() => {
-            stopRecording();
-            // Llamar al finish original
+        // Override temporal
+        window.finishPlayback = function() {
+            window.finishPlayback = originalFinishPlayback;
             if (originalFinishPlayback) {
                 originalFinishPlayback();
             }
-        }, 1000);
-    };
+            resolve();
+        };
 
-    // Iniciar la animación normal
-    playAllMovements();
+        // Iniciar animación
+        playAllMovements();
+    });
 }
 
 /**
- * Obtener información del formato soportado
+ * Helper para esperar
  */
-function getSupportedFormat() {
-    const formats = [
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
-        'video/webm',
-        'video/mp4'
-    ];
-
-    for (const format of formats) {
-        if (MediaRecorder.isTypeSupported(format)) {
-            return format;
-        }
-    }
-    return null;
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
  * Verificar si el navegador soporta exportación
  */
 function canExportVideo() {
-    if (!window.MediaRecorder) {
-        return false;
-    }
-    return getSupportedFormat() !== null;
+    return window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm');
 }
 
 // Verificar soporte al cargar
 $(document).ready(function() {
     if (!canExportVideo()) {
-        $('#btnExportVideo').prop('disabled', true).attr('title', 'Tu navegador no soporta exportación de video');
-        console.warn('⚠️ MediaRecorder no soportado en este navegador');
-    } else {
-        console.log('✅ Exportación de video disponible:', getSupportedFormat());
+        $('.export-play').prop('disabled', true).attr('title', 'Tu navegador no soporta exportación de video');
     }
 });
 
-console.log('📦 export.js cargado');
+console.log('📦 export.js cargado (MP4 Server Conversion)');

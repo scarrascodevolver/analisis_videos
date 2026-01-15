@@ -172,6 +172,7 @@ function renderPlaysList(jugadas) {
     jugadas.forEach(play => {
         const categoryIcon = play.categoryIcon || '⚪';
         const dateStr = play.created_at || '';
+        const hasMovements = play.data.movements && play.data.movements.length > 0;
 
         html += `
             <div class="saved-play-item">
@@ -179,13 +180,18 @@ function renderPlaysList(jugadas) {
                 <small class="text-muted">
                     ${play.data.players ? play.data.players.length : 0} jug. · ${play.user} · ${dateStr}
                 </small>
-                <div class="mt-1">
-                    <button class="btn btn-sm btn-info load-play" data-id="${play.id}" title="Cargar">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete-play" data-id="${play.id}" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div class="mt-1 btn-group-vertical btn-group-sm w-100">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-info load-play" data-id="${play.id}" title="Cargar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-success export-play" data-id="${play.id}" data-name="${play.name}" title="Exportar MP4" ${!hasMovements ? 'disabled' : ''}>
+                            <i class="fas fa-video"></i>
+                        </button>
+                        <button class="btn btn-danger delete-play" data-id="${play.id}" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;

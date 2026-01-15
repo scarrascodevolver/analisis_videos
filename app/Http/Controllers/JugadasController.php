@@ -130,4 +130,83 @@ class JugadasController extends Controller
             'message' => "Jugada '{$name}' eliminada.",
         ]);
     }
+
+    /**
+     * API: Convertir video WebM a MP4
+     */
+    public function apiConvertToMp4(Request $request): JsonResponse
+    {
+        $request->validate([
+            'video' => 'required|file|mimetypes:video/webm,video/x-matroska',
+            'filename' => 'required|string|max:255',
+        ]);
+
+        $webmFile = $request->file('video');
+        $filename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->input('filename'));
+
+        // Crear directorios temporales
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $webmPath = $tempDir . '/' . uniqid() . '.webm';
+        $mp4Path = $tempDir . '/' . $filename . '_' . date('Y-m-d') . '.mp4';
+
+        try {
+            // Guardar archivo WebM
+            $webmFile->move($tempDir, basename($webmPath));
+
+            // Convertir con FFmpeg
+            $command = sprintf(
+                'ffmpeg -i %s -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart -y %s 2>&1',
+                escapeshellarg($webmPath),
+                escapeshellarg($mp4Path)
+            );
+
+            exec($command, $output, $returnCode);
+
+            // Eliminar archivo WebM temporal
+            if (file_exists($webmPath)) {
+                unlink($webmPath);
+            }
+
+            if ($returnCode !== 0 || !file_exists($mp4Path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al convertir el video.',
+                    'debug' => implode("\n", $output),
+                ], 500);
+            }
+
+            // Leer MP4 y devolver como base64
+            $mp4Content = file_get_contents($mp4Path);
+            $mp4Base64 = base64_encode($mp4Content);
+            $mp4Size = filesize($mp4Path);
+
+            // Eliminar archivo MP4 temporal
+            unlink($mp4Path);
+
+            return response()->json([
+                'success' => true,
+                'video' => $mp4Base64,
+                'filename' => basename($mp4Path),
+                'size' => $mp4Size,
+            ]);
+
+        } catch (\Exception $e) {
+            // Limpiar archivos temporales en caso de error
+            if (file_exists($webmPath)) {
+                unlink($webmPath);
+            }
+            if (file_exists($mp4Path)) {
+                unlink($mp4Path);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
