@@ -748,20 +748,6 @@
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">
-                    @if (session('success'))
-                        <div class="alert alert-success alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
-                    @if (session('error'))
-                        <div class="alert alert-danger alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                            {{ session('error') }}
-                        </div>
-                    @endif
-
                     @yield('main_content')
                 </div>
             </section>
@@ -976,6 +962,71 @@
                     async: false // Esperar a que se marque antes de navegar
                 });
             }
+        });
+    </script>
+
+    <!-- Toast Container Global -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+    <!-- Toast System -->
+    <style>
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastSlideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
+        }
+    </style>
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const bgColor = type === 'success' ? '#00B7B5' : (type === 'error' ? '#dc3545' : '#ffc107');
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                animation: toastSlideIn 0.3s ease;
+                max-width: 350px;
+            `;
+            toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+
+            container.appendChild(toast);
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Show toast for session messages
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showToast(@json(session('success')), 'success');
+            @endif
+            @if(session('error'))
+                showToast(@json(session('error')), 'error');
+            @endif
+            @if(session('warning'))
+                showToast(@json(session('warning')), 'warning');
+            @endif
+            @if(session('info'))
+                showToast(@json(session('info')), 'info');
+            @endif
         });
     </script>
 </body>
