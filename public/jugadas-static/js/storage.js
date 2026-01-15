@@ -10,15 +10,25 @@ function getCSRFToken() {
 }
 
 function savePlay() {
+    console.log('🔵 savePlay() iniciado');
+
     const playName = $('#playNameInput').val().trim();
     const playCategory = $('#playCategory').val();
+    const csrfToken = getCSRFToken();
+
+    console.log('📝 Nombre:', playName);
+    console.log('📂 Categoría:', playCategory);
+    console.log('🔑 CSRF Token:', csrfToken ? 'presente (' + csrfToken.substring(0,10) + '...)' : 'FALTA!');
+    console.log('👥 Jugadores:', players.length);
 
     if (!playName) {
+        console.log('❌ Sin nombre - abortando');
         alert('⚠️ Ingresa un nombre para la jugada');
         return;
     }
 
     if (players.length === 0) {
+        console.log('❌ Sin jugadores - abortando');
         alert('⚠️ Agrega al menos un jugador antes de guardar');
         return;
     }
@@ -88,12 +98,16 @@ function savePlay() {
     $btnSave.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
 
     // Enviar al backend
+    console.log('🚀 Enviando AJAX a /api/jugadas...');
+    console.log('📦 Payload:', { name: playName, category: playCategory, playersCount: playData.players.length });
+
     $.ajax({
         url: '/api/jugadas',
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': getCSRFToken(),
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         data: JSON.stringify({
             name: playName,
@@ -102,6 +116,7 @@ function savePlay() {
             thumbnail: thumbnail
         }),
         success: function(response) {
+            console.log('✅ Respuesta exitosa:', response);
             if (response.success) {
                 $('#playNameInput').val('');
                 loadPlays();
@@ -110,21 +125,30 @@ function savePlay() {
                 alert('❌ Error al guardar: ' + (response.message || 'Error desconocido'));
             }
         },
-        error: function(xhr) {
-            console.error('Error guardando jugada:', xhr);
+        error: function(xhr, status, error) {
+            console.error('❌ Error AJAX:', { status: xhr.status, statusText: xhr.statusText, error: error });
+            console.error('📄 Response:', xhr.responseText);
             let errorMsg = 'Error al guardar la jugada';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
+            } else if (xhr.status === 419) {
+                errorMsg = 'Token CSRF expirado. Recarga la página.';
+            } else if (xhr.status === 401) {
+                errorMsg = 'Sesión expirada. Inicia sesión nuevamente.';
+            } else if (xhr.status === 500) {
+                errorMsg = 'Error interno del servidor. Revisa los logs.';
             }
             alert('❌ ' + errorMsg);
         },
         complete: function() {
+            console.log('🏁 AJAX completado');
             $btnSave.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar');
         }
     });
 }
 
 function loadPlays() {
+    console.log('📂 loadPlays() - Cargando jugadas...');
     const container = $('#savedPlaysList');
     container.html('<p class="text-muted text-center small mb-0"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
 
@@ -132,9 +156,15 @@ function loadPlays() {
         url: '/api/jugadas',
         method: 'GET',
         headers: {
-            'X-CSRF-TOKEN': getCSRFToken()
+            'X-CSRF-TOKEN': getCSRFToken(),
+            'Accept': 'application/json'
         },
         success: function(response) {
+            console.log('📂 loadPlays() respuesta:', response);
+            if (response.debug) {
+                console.log('🏢 Org:', response.debug.org_name, '(ID:', response.debug.org_id + ')');
+                console.log('📊 Jugadas encontradas:', response.debug.count);
+            }
             if (response.success) {
                 jugadasCache = response.jugadas;
                 renderPlaysList(response.jugadas);
@@ -142,8 +172,9 @@ function loadPlays() {
                 container.html('<p class="text-danger text-center small mb-0"><i class="fas fa-exclamation-circle"></i> Error al cargar</p>');
             }
         },
-        error: function(xhr) {
-            console.error('Error cargando jugadas:', xhr);
+        error: function(xhr, status, error) {
+            console.error('❌ Error cargando jugadas:', { status: xhr.status, error: error });
+            console.error('📄 Response:', xhr.responseText);
             container.html('<p class="text-danger text-center small mb-0"><i class="fas fa-exclamation-circle"></i> Error de conexión</p>');
         }
     });
