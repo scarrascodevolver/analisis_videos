@@ -34,8 +34,7 @@ class UserManagementController extends Controller
     {
         // Super admins deben usar /super-admin/users
         if (auth()->user()->isSuperAdmin()) {
-            return redirect()->route('super-admin.users')
-                ->with('info', 'Como Super Admin, usa esta sección para gestionar usuarios.');
+            return redirect()->route('super-admin.users');
         }
 
         $currentOrg = $this->getCurrentOrganization();
