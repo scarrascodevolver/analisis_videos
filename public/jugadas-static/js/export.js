@@ -22,17 +22,19 @@ function startRecording() {
         return false;
     }
 
-    // Obtener stream del canvas a 30fps
-    const stream = canvasElement.captureStream(30);
+    // Detectar si estamos en iOS
+    const oniOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // Obtener stream del canvas
+    // iOS necesita framerate más bajo para capturar correctamente
+    const frameRate = oniOS ? 15 : 30;
+    const stream = canvasElement.captureStream(frameRate);
 
     // Detectar formato soportado
     // iOS (todos los navegadores) y Safari macOS soportan MP4 nativo
     // Chrome/Firefox en desktop/Android soportan WebM
     let mimeType = '';
-
-    // Detectar si estamos en iOS
-    const oniOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if (oniOS) {
         // En iOS, todos los navegadores usan WebKit y soportan MP4
@@ -61,10 +63,17 @@ function startRecording() {
     recordingMimeType = mimeType;
     recordedChunks = [];
 
+    console.log('🎬 Iniciando grabación:', {
+        formato: mimeType,
+        fps: frameRate,
+        iOS: oniOS,
+        userAgent: navigator.userAgent.substring(0, 50)
+    });
+
     try {
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
-            videoBitsPerSecond: 3000000 // 3 Mbps para buena calidad
+            videoBitsPerSecond: oniOS ? 1500000 : 3000000 // Menor bitrate en iOS
         });
     } catch (e) {
         console.error('Error creando MediaRecorder:', e);
@@ -79,7 +88,13 @@ function startRecording() {
 
     mediaRecorder.onstop = function() {
         if (exportResolve) {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            // Usar el tipo MIME correcto (MP4 en iOS, WebM en otros)
+            const blob = new Blob(recordedChunks, { type: recordingMimeType || 'video/mp4' });
+            console.log('📼 Video grabado:', {
+                chunks: recordedChunks.length,
+                totalSize: (blob.size / 1024).toFixed(2) + ' KB',
+                type: blob.type
+            });
             exportResolve(blob);
             exportResolve = null;
         }
@@ -130,9 +145,15 @@ function isIOS() {
 }
 
 /**
- * Descarga el video directamente (para Safari que ya graba en MP4)
+ * Descarga el video directamente (para Safari/iOS que graba en MP4)
  */
 function downloadDirectly(blob, filename) {
+    console.log('📱 Descarga directa - Tamaño:', (blob.size / 1024).toFixed(2), 'KB, Tipo:', blob.type);
+
+    if (blob.size < 1000) {
+        console.warn('⚠️ El video parece muy pequeño, puede estar vacío');
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -481,7 +502,10 @@ function sleep(ms) {
  * Verificar si el navegador soporta exportación
  */
 function canExportVideo() {
-    return window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm');
+    if (!window.MediaRecorder) return false;
+    // Soporta WebM (Chrome/Firefox) o MP4 (Safari/iOS)
+    return MediaRecorder.isTypeSupported('video/webm') ||
+           MediaRecorder.isTypeSupported('video/mp4');
 }
 
 // Verificar soporte al cargar
