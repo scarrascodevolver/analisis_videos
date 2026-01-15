@@ -81,7 +81,7 @@
                                         <i class="fas fa-users"></i> Equipo Analizado
                                     </label>
                                     <input type="text"
-                                           class="form-control"
+                                           class="form-control bg-light text-dark"
                                            value="{{ $organizationName }}"
                                            disabled
                                            readonly>
