@@ -150,14 +150,14 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('jugadas-static/js/app.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/field.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/players.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/ball.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/movements.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/animation.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/passes.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/formations.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/storage.js') }}"></script>
-<script src="{{ asset('jugadas-static/js/events.js') }}"></script>
+<script src="{{ asset('jugadas-static/js/app.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/field.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/players.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/ball.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/movements.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/animation.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/passes.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/formations.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/storage.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/events.js') }}?v={{ time() }}"></script>
 @endsection
