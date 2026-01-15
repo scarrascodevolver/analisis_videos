@@ -181,6 +181,7 @@ $(document).ready(function() {
     $('#btnDeleteSelected').on('click', deleteSelectedPlayer);
     $('#btnApplyFormacion').on('click', applyFormacion);
     $('#btnSavePlay').on('click', savePlay);
+    $('#btnExportVideo').on('click', exportVideo);
     $('#btnClearCanvas').on('click', clearCanvas);
 
     // Botón de dibujar movimiento

@@ -29,17 +29,6 @@ class JugadasController extends Controller
      */
     public function apiIndex(Request $request): JsonResponse
     {
-        $user = auth()->user();
-        $currentOrg = $user ? $user->currentOrganization() : null;
-
-        // Debug info
-        \Log::info('Jugadas API Index', [
-            'user_id' => $user ? $user->id : null,
-            'user_name' => $user ? $user->name : null,
-            'current_org_id' => $currentOrg ? $currentOrg->id : null,
-            'current_org_name' => $currentOrg ? $currentOrg->name : null,
-        ]);
-
         $jugadas = Jugada::with('user:id,name')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -56,16 +45,9 @@ class JugadasController extends Controller
                 ];
             });
 
-        \Log::info('Jugadas encontradas: ' . $jugadas->count());
-
         return response()->json([
             'success' => true,
             'jugadas' => $jugadas,
-            'debug' => [
-                'org_id' => $currentOrg ? $currentOrg->id : null,
-                'org_name' => $currentOrg ? $currentOrg->name : null,
-                'count' => $jugadas->count(),
-            ],
         ]);
     }
 

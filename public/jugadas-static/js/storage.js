@@ -10,25 +10,15 @@ function getCSRFToken() {
 }
 
 function savePlay() {
-    console.log('🔵 savePlay() iniciado');
-
     const playName = $('#playNameInput').val().trim();
     const playCategory = $('#playCategory').val();
-    const csrfToken = getCSRFToken();
-
-    console.log('📝 Nombre:', playName);
-    console.log('📂 Categoría:', playCategory);
-    console.log('🔑 CSRF Token:', csrfToken ? 'presente (' + csrfToken.substring(0,10) + '...)' : 'FALTA!');
-    console.log('👥 Jugadores:', players.length);
 
     if (!playName) {
-        console.log('❌ Sin nombre - abortando');
         alert('⚠️ Ingresa un nombre para la jugada');
         return;
     }
 
     if (players.length === 0) {
-        console.log('❌ Sin jugadores - abortando');
         alert('⚠️ Agrega al menos un jugador antes de guardar');
         return;
     }
@@ -98,9 +88,6 @@ function savePlay() {
     $btnSave.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
 
     // Enviar al backend
-    console.log('🚀 Enviando AJAX a /api/jugadas...');
-    console.log('📦 Payload:', { name: playName, category: playCategory, playersCount: playData.players.length });
-
     $.ajax({
         url: '/api/jugadas',
         method: 'POST',
@@ -116,7 +103,6 @@ function savePlay() {
             thumbnail: thumbnail
         }),
         success: function(response) {
-            console.log('✅ Respuesta exitosa:', response);
             if (response.success) {
                 $('#playNameInput').val('');
                 loadPlays();
@@ -126,8 +112,7 @@ function savePlay() {
             }
         },
         error: function(xhr, status, error) {
-            console.error('❌ Error AJAX:', { status: xhr.status, statusText: xhr.statusText, error: error });
-            console.error('📄 Response:', xhr.responseText);
+            console.error('Error guardando jugada:', xhr.status, error);
             let errorMsg = 'Error al guardar la jugada';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
@@ -136,19 +121,17 @@ function savePlay() {
             } else if (xhr.status === 401) {
                 errorMsg = 'Sesión expirada. Inicia sesión nuevamente.';
             } else if (xhr.status === 500) {
-                errorMsg = 'Error interno del servidor. Revisa los logs.';
+                errorMsg = 'Error interno del servidor.';
             }
             alert('❌ ' + errorMsg);
         },
         complete: function() {
-            console.log('🏁 AJAX completado');
             $btnSave.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar');
         }
     });
 }
 
 function loadPlays() {
-    console.log('📂 loadPlays() - Cargando jugadas...');
     const container = $('#savedPlaysList');
     container.html('<p class="text-muted text-center small mb-0"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
 
@@ -160,11 +143,6 @@ function loadPlays() {
             'Accept': 'application/json'
         },
         success: function(response) {
-            console.log('📂 loadPlays() respuesta:', response);
-            if (response.debug) {
-                console.log('🏢 Org:', response.debug.org_name, '(ID:', response.debug.org_id + ')');
-                console.log('📊 Jugadas encontradas:', response.debug.count);
-            }
             if (response.success) {
                 jugadasCache = response.jugadas;
                 renderPlaysList(response.jugadas);
@@ -173,8 +151,7 @@ function loadPlays() {
             }
         },
         error: function(xhr, status, error) {
-            console.error('❌ Error cargando jugadas:', { status: xhr.status, error: error });
-            console.error('📄 Response:', xhr.responseText);
+            console.error('Error cargando jugadas:', xhr.status, error);
             container.html('<p class="text-danger text-center small mb-0"><i class="fas fa-exclamation-circle"></i> Error de conexión</p>');
         }
     });
@@ -322,10 +299,8 @@ function loadPlayById(playId) {
                 top: data.originalPositions[key].top
             };
         });
-        console.log('📍 Posiciones originales restauradas desde DB:', Object.keys(originalPositions).length, 'objetos');
     } else {
         saveOriginalPositions();
-        console.log('📍 Jugada sin posiciones originales - usando actuales');
     }
 
     updatePossessionUI();
@@ -346,13 +321,12 @@ function deletePlayById(playId) {
         success: function(response) {
             if (response.success) {
                 loadPlays();
-                console.log('🗑️ Jugada eliminada');
             } else {
                 alert('❌ Error al eliminar');
             }
         },
         error: function(xhr) {
-            console.error('Error eliminando jugada:', xhr);
+            console.error('Error eliminando jugada:', xhr.status);
             alert('❌ Error al eliminar la jugada');
         }
     });
