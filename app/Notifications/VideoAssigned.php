@@ -31,8 +31,8 @@ class VideoAssigned extends Notification implements ShouldQueue
                     ->greeting('¡Hola ' . $notifiable->name . '!')
                     ->line('Se te ha asignado un nuevo video para análisis.')
                     ->line('**Video:** ' . $this->assignment->video->title)
-                    ->line('**Equipos:** ' . $this->assignment->video->analyzedTeam->name . 
-                           ($this->assignment->video->rivalTeam ? ' vs ' . $this->assignment->video->rivalTeam->name : ''))
+                    ->line('**Equipos:** ' . $this->assignment->video->analyzed_team_name .
+                           ($this->assignment->video->rival_team_name ? ' vs ' . $this->assignment->video->rival_team_name : ''))
                     ->line('**Categoría:** ' . $this->assignment->video->category->name)
                     ->line('**Prioridad:** ' . ucfirst($this->assignment->priority))
                     ->line('**Fecha límite:** ' . $this->assignment->due_date->format('d/m/Y'))

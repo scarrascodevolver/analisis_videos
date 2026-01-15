@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Jobs\CompressVideoJob;
 use App\Models\Video;
-use App\Models\Team;
 use App\Models\VideoAssignment;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
@@ -70,6 +69,7 @@ class DirectUploadController extends Controller
                 'content_type' => $request->content_type,
                 'file_size' => $request->file_size,
                 'org_slug' => $orgSlug,
+                'org_name' => $currentOrg ? $currentOrg->name : 'Mi Equipo',
                 'user_id' => auth()->id(),
             ], now()->addHours(3));
 
@@ -100,8 +100,6 @@ class DirectUploadController extends Controller
             'upload_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'analyzed_team_id' => 'nullable|exists:teams,id',
-            'rival_team_id' => 'nullable|exists:teams,id',
             'rival_team_name' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'division' => 'nullable|in:primera,intermedia,unica',
@@ -144,8 +142,7 @@ class DirectUploadController extends Controller
                 'file_size' => $uploadInfo['file_size'],
                 'mime_type' => $uploadInfo['content_type'],
                 'uploaded_by' => auth()->id(),
-                'analyzed_team_id' => $request->analyzed_team_id,
-                'rival_team_id' => $request->rival_team_id,
+                'analyzed_team_name' => $uploadInfo['org_name'], // Nombre de la organización
                 'rival_team_name' => $request->rival_team_name,
                 'category_id' => $request->category_id,
                 'division' => $request->division,

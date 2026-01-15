@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Jobs\CompressVideoJob;
 use App\Models\User;
 use App\Models\Video;
-use App\Models\Team;
 use App\Models\Category;
 use App\Models\VideoComment;
 use App\Models\RugbySituation;
@@ -16,7 +15,7 @@ class VideoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader', 'rugbySituation'])
+        $query = Video::with(['category', 'uploader', 'rugbySituation'])
                       ->teamVisible(auth()->user());
 
         // Filter by rugby situation
@@ -29,12 +28,9 @@ class VideoController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        // Filter by team
+        // Filter by team name (busca en analyzed_team_name o rival_team_name)
         if ($request->filled('team')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('analyzed_team_id', $request->team)
-                    ->orWhere('rival_team_id', $request->team);
-            });
+            $query->byTeamName($request->team);
         }
 
         // Search by title
@@ -56,15 +52,11 @@ class VideoController extends Controller
             $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
         }
 
-        $teams = Team::all();
-
-        return view('videos.index', compact('videos', 'rugbySituations', 'categories', 'teams'));
+        return view('videos.index', compact('videos', 'rugbySituations', 'categories'));
     }
 
     public function create()
     {
-        $teams = Team::all();
-
         // Categories: Analysts and coaches see all, staff see only their category
         if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             $categories = Category::all();
@@ -73,9 +65,12 @@ class VideoController extends Controller
             $userCategoryId = auth()->user()->profile->user_category_id ?? null;
             $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
         }
-        $ownTeam = Team::where('is_own_team', true)->first();
-        $rivalTeams = Team::where('is_own_team', false)->get();
+
         $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
+
+        // El equipo analizado es siempre la organización actual
+        $currentOrg = auth()->user()->currentOrganization();
+        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
         // Obtener jugadores y entrenadores para asignación (incluye staff que puede recibir asignaciones)
         $players = User::where(function($query) {
@@ -89,7 +84,7 @@ class VideoController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('videos.create', compact('teams', 'categories', 'ownTeam', 'rivalTeams', 'rugbySituations', 'players'));
+        return view('videos.create', compact('categories', 'rugbySituations', 'players', 'organizationName'));
     }
 
     public function store(Request $request)
@@ -99,8 +94,6 @@ class VideoController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
-                'analyzed_team_id' => 'nullable|exists:teams,id', // Ahora es opcional
-                'rival_team_id' => 'nullable|exists:teams,id',
                 'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
                 'category_id' => 'required|exists:categories,id',
                 'division' => 'nullable|in:primera,intermedia,unica',
@@ -137,6 +130,7 @@ class VideoController extends Controller
         // Obtener el slug de la organización actual para el path
         $currentOrg = auth()->user()->currentOrganization();
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
+        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
         // En producción: usar Spaces con fallback a local
         // En desarrollo: usar storage local directamente (más rápido)
@@ -165,9 +159,8 @@ class VideoController extends Controller
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
             'uploaded_by' => auth()->id(),
-            'analyzed_team_id' => $request->analyzed_team_id,
-            'rival_team_id' => $request->rival_team_id,
-            'rival_team_name' => $request->rival_team_name, // Texto libre para rival
+            'analyzed_team_name' => $organizationName, // Siempre es la organización
+            'rival_team_name' => $request->rival_team_name,
             'category_id' => $request->category_id,
             'division' => $request->division,
             'rugby_situation_id' => $request->rugby_situation_id,
@@ -221,7 +214,7 @@ class VideoController extends Controller
 
     public function show(Video $video)
     {
-        $video->load(['analyzedTeam', 'rivalTeam', 'category', 'uploader']);
+        $video->load(['category', 'uploader']);
 
         // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
@@ -242,12 +235,13 @@ class VideoController extends Controller
 
     public function edit(Video $video)
     {
-        $teams = Team::all();
         $categories = Category::all();
-        $ownTeam = Team::where('is_own_team', true)->first();
-        $rivalTeams = Team::where('is_own_team', false)->get();
 
-        return view('videos.edit', compact('video', 'teams', 'categories', 'ownTeam', 'rivalTeams'));
+        // El equipo analizado es siempre la organización actual
+        $currentOrg = auth()->user()->currentOrganization();
+        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
+
+        return view('videos.edit', compact('video', 'categories', 'organizationName'));
     }
 
     public function update(Request $request, Video $video)
@@ -255,9 +249,7 @@ class VideoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'analyzed_team_id' => 'nullable|exists:teams,id', // Ahora es opcional
-            'rival_team_id' => 'nullable|exists:teams,id',
-            'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
+            'rival_team_name' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'match_date' => 'required|date',
         ]);
@@ -265,8 +257,6 @@ class VideoController extends Controller
         $video->update($request->only([
             'title',
             'description',
-            'analyzed_team_id',
-            'rival_team_id',
             'rival_team_name',
             'category_id',
             'match_date'
@@ -313,11 +303,13 @@ class VideoController extends Controller
 
     public function playerUpload()
     {
-        $teams = Team::all();
         $categories = Category::all();
-        $ownTeam = Team::where('is_own_team', true)->first();
 
-        return view('videos.player-upload', compact('teams', 'categories', 'ownTeam'));
+        // El equipo analizado es siempre la organización actual
+        $currentOrg = auth()->user()->currentOrganization();
+        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
+
+        return view('videos.player-upload', compact('categories', 'organizationName'));
     }
 
     public function playerStore(Request $request)
@@ -345,6 +337,7 @@ class VideoController extends Controller
         // Obtener el slug de la organización actual para el path
         $currentOrg = auth()->user()->currentOrganization();
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
+        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
         // En producción: usar Spaces con fallback a local
         // En desarrollo: usar storage local directamente (más rápido)
@@ -364,8 +357,6 @@ class VideoController extends Controller
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
 
-        $ownTeam = Team::where('is_own_team', true)->first();
-
         $video = Video::create([
             'title' => $request->title . ' (Solicitud de Análisis)',
             'description' => $request->description . "\n\nSolicitud específica: " . $request->analysis_request,
@@ -375,8 +366,8 @@ class VideoController extends Controller
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
             'uploaded_by' => auth()->id(),
-            'analyzed_team_id' => $ownTeam->id,
-            'rival_team_id' => null,
+            'analyzed_team_name' => $organizationName,
+            'rival_team_name' => null,
             'category_id' => $request->category_id,
             'division' => 'unica', // Jugadores no especifican división, se asigna automáticamente
             'match_date' => now()->toDateString(),

@@ -15,7 +15,7 @@ class MyVideosController extends Controller
         
         // Obtener videos asignados al usuario
         $assignedVideos = VideoAssignment::where('assigned_to', $user->id)
-            ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category', 'video.rugbySituation', 'video.uploader', 'assignedBy'])
+            ->with(['video.category', 'video.rugbySituation', 'video.uploader', 'assignedBy'])
             ->latest()
             ->paginate(12, ['*'], 'assigned');
 
@@ -49,7 +49,7 @@ class MyVideosController extends Controller
             abort(403, 'No tienes permiso para ver este video');
         }
 
-        $video = $assignment->video->load(['analyzedTeam', 'rivalTeam', 'category', 'rugbySituation', 'uploader', 'comments.user', 'comments.replies.user']);
+        $video = $assignment->video->load(['category', 'rugbySituation', 'uploader', 'comments.user', 'comments.replies.user']);
         
         $comments = $video->comments()
                          ->whereNull('parent_id')

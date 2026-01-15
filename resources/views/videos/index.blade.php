@@ -50,14 +50,9 @@
                         </div>
                         @endif
                         <div class="col-md-2 mb-2">
-                            <select name="team" id="team-select" class="form-control">
-                                <option value="">Equipo</option>
-                                @foreach($teams as $team)
-                                    <option value="{{ $team->id }}" {{ request('team') == $team->id ? 'selected' : '' }}>
-                                        {{ $team->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="team" id="team-input" class="form-control"
+                                   placeholder="Buscar equipo..."
+                                   value="{{ request('team') }}">
                         </div>
                         <div class="col-md-2 mb-2">
                             <a href="{{ route('videos.index') }}" class="btn btn-secondary btn-sm">
@@ -392,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
         on('search-input', 'input', autoFilter);
         on('situation-select', 'change', () => form.submit());
         on('category-select', 'change', () => form.submit());
-        on('team-select', 'change', () => form.submit());
+        on('team-input', 'input', autoFilter);
     }
 
     // AJAX Delete Video

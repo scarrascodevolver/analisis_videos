@@ -73,92 +73,44 @@
                             </div>
                         </div>
 
-                        <!-- Team Selection (Opcional) -->
+                        <!-- Team Selection -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="analyzed_team_id">
+                                    <label>
                                         <i class="fas fa-users"></i> Equipo Analizado
-                                        <small class="text-muted">(Opcional)</small>
                                     </label>
-                                    <select class="form-control @error('analyzed_team_id') is-invalid @enderror"
-                                            id="analyzed_team_id" name="analyzed_team_id">
-                                        <option value="">Sin especificar</option>
-                                        @if($ownTeam)
-                                            <option value="{{ $ownTeam->id }}"
-                                                    {{ old('analyzed_team_id', $ownTeam->id) == $ownTeam->id ? 'selected' : '' }}>
-                                                {{ $ownTeam->name }} (Nuestro Equipo)
-                                            </option>
-                                        @endif
-                                        @foreach($rivalTeams as $team)
-                                            <option value="{{ $team->id }}"
-                                                    {{ old('analyzed_team_id') == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('analyzed_team_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <input type="text"
+                                           class="form-control"
+                                           value="{{ $organizationName }}"
+                                           disabled
+                                           readonly>
+                                    <small class="form-text text-muted">
+                                        El equipo analizado es tu organización
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="rival_team_id">
-                                        <i class="fas fa-shield-alt"></i> Equipo Rival
-                                        <small class="text-muted">(Opcional)</small>
-                                    </label>
-                                    @if($rivalTeams->count() > 0)
-                                        <select class="form-control @error('rival_team_id') is-invalid @enderror"
-                                                id="rival_team_id" name="rival_team_id">
-                                            <option value="">Sin rival / Entrenamiento</option>
-                                            @foreach($rivalTeams as $team)
-                                                <option value="{{ $team->id }}"
-                                                        {{ old('rival_team_id') == $team->id ? 'selected' : '' }}>
-                                                    {{ $team->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @else
-                                        {{-- Si no hay equipos rivales, mostrar campo de texto --}}
-                                        <input type="text"
-                                               class="form-control @error('rival_team_name') is-invalid @enderror"
-                                               id="rival_team_name"
-                                               name="rival_team_name"
-                                               value="{{ old('rival_team_name') }}"
-                                               placeholder="Ej: Club Rugby Rival">
-                                    @endif
-                                    @error('rival_team_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    @error('rival_team_name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Campo de texto para rival si hay dropdown pero quiere escribir otro --}}
-                        @if($rivalTeams->count() > 0)
-                        <div class="row">
-                            <div class="col-md-6 offset-md-6">
                                 <div class="form-group">
                                     <label for="rival_team_name">
-                                        <i class="fas fa-edit"></i> O escribe el nombre del rival
+                                        <i class="fas fa-shield-alt"></i> Equipo Rival
+                                        <small class="text-muted">(Opcional)</small>
                                     </label>
                                     <input type="text"
                                            class="form-control @error('rival_team_name') is-invalid @enderror"
                                            id="rival_team_name"
                                            name="rival_team_name"
                                            value="{{ old('rival_team_name') }}"
-                                           placeholder="Si el rival no está en la lista...">
+                                           placeholder="Ej: Club Rugby Rival">
                                     <small class="form-text text-muted">
-                                        Usa este campo si el equipo rival no está en la lista
+                                        Deja vacío si es un video de entrenamiento
                                     </small>
+                                    @error('rival_team_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
-                        @endif
 
                         <!-- Category Selection -->
                         <div class="row">
@@ -496,8 +448,6 @@ $(document).ready(function() {
             upload_id: uploadId,
             title: formData.get('title'),
             description: formData.get('description'),
-            analyzed_team_id: formData.get('analyzed_team_id'),
-            rival_team_id: formData.get('rival_team_id'),
             rival_team_name: formData.get('rival_team_name'),
             category_id: formData.get('category_id'),
             division: formData.get('division'),
@@ -629,38 +579,38 @@ $(document).ready(function() {
     // Auto-generate title based on selections (only if title is empty)
     var titleInput = $('#title');
     var isUserTyping = false;
-    
+    var organizationName = '{{ $organizationName }}';
+
     titleInput.on('input', function() {
         isUserTyping = $(this).val().length > 0;
     });
-    
+
     function cleanText(text) {
-        return text.replace(/\s+/g, ' ').replace(' (Nuestro Equipo)', '').trim();
+        return text.replace(/\s+/g, ' ').trim();
     }
-    
-    $('#analyzed_team_id, #rival_team_id, #category_id, #rugby_situation_id').on('change', function() {
+
+    $('#rival_team_name, #category_id, #rugby_situation_id').on('change input', function() {
         if (isUserTyping) return; // Don't auto-generate if user is typing
-        
-        var analyzedTeam = cleanText($('#analyzed_team_id option:selected').text());
-        var rivalTeam = cleanText($('#rival_team_id option:selected').text());
+
+        var rivalTeam = $('#rival_team_name').val().trim();
         var category = cleanText($('#category_id option:selected').text());
         var rugbySituation = cleanText($('#rugby_situation_id option:selected').text());
-        
-        if (analyzedTeam && analyzedTeam !== 'Seleccionar equipo...' && category && category !== 'Seleccionar categoría...') {
+
+        if (category && category !== 'Seleccionar categoría...') {
             var title = '';
-            
+
             if (rugbySituation && rugbySituation !== 'Sin situación específica') {
                 title = rugbySituation;
             } else {
                 title = 'Análisis ' + category;
             }
-            
-            if (rivalTeam && rivalTeam !== 'Sin rival (entrenamiento)') {
-                title += ' - ' + analyzedTeam + ' vs ' + rivalTeam;
+
+            if (rivalTeam) {
+                title += ' - ' + organizationName + ' vs ' + rivalTeam;
             } else {
-                title += ' - ' + analyzedTeam;
+                title += ' - ' + organizationName;
             }
-            
+
             titleInput.val(title);
         }
     });

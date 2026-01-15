@@ -36,9 +36,9 @@
                             <div class="bg-light p-3 rounded">
                                 <h6><strong>{{ $assignment->video->title }}</strong></h6>
                                 <p class="mb-1">
-                                    <strong>Equipos:</strong> {{ $assignment->video->analyzedTeam->name }}
-                                    @if($assignment->video->rivalTeam)
-                                        vs {{ $assignment->video->rivalTeam->name }}
+                                    <strong>Equipos:</strong> {{ $assignment->video->analyzed_team_name }}
+                                    @if($assignment->video->rival_team_name)
+                                        vs {{ $assignment->video->rival_team_name }}
                                     @endif
                                 </p>
                                 <p class="mb-1"><strong>Categoría:</strong> {{ $assignment->video->category->name }}</p>

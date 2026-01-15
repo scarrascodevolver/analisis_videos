@@ -56,9 +56,9 @@
                                     <!-- Teams -->
                                     <p class="card-text small text-muted mb-2">
                                         <i class="fas fa-users"></i>
-                                        {{ $assignment->video->analyzedTeam->name }}
-                                        @if($assignment->video->rivalTeam)
-                                            vs {{ $assignment->video->rivalTeam->name }}
+                                        {{ $assignment->video->analyzed_team_name }}
+                                        @if($assignment->video->rival_team_name)
+                                            vs {{ $assignment->video->rival_team_name }}
                                         @endif
                                     </p>
 

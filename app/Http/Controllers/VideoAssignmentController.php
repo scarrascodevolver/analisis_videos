@@ -13,7 +13,7 @@ class VideoAssignmentController extends Controller
 {
     public function index()
     {
-        $assignments = VideoAssignment::with(['video.analyzedTeam', 'video.rivalTeam', 'video.category', 'assignedTo', 'assignedBy'])
+        $assignments = VideoAssignment::with(['video.category', 'assignedTo', 'assignedBy'])
                                     ->latest()
                                     ->paginate(15);
 
@@ -22,7 +22,7 @@ class VideoAssignmentController extends Controller
 
     public function create()
     {
-        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])
+        $videos = Video::with(['category'])
                       ->latest()
                       ->get();
 
@@ -83,11 +83,9 @@ class VideoAssignmentController extends Controller
     public function show(VideoAssignment $assignment)
     {
         $assignment->load([
-            'video.analyzedTeam', 
-            'video.rivalTeam', 
             'video.category',
             'video.comments.user',
-            'player', 
+            'player',
             'analyst'
         ]);
 
@@ -96,7 +94,7 @@ class VideoAssignmentController extends Controller
 
     public function edit(VideoAssignment $assignment)
     {
-        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])->get();
+        $videos = Video::with(['category'])->get();
         $players = User::where(function($query) {
                 $query->where('role', 'jugador')
                       ->orWhereHas('profile', function($q) {

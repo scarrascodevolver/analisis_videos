@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\ClipCategory;
 use App\Models\Organization;
-use App\Models\Team;
 use App\Models\RugbySituation;
 use App\Models\User;
 use Illuminate\Http\Request;

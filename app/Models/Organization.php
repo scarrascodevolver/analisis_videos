@@ -98,14 +98,6 @@ class Organization extends Model
     }
 
     /**
-     * Equipos de esta organización
-     */
-    public function teams(): HasMany
-    {
-        return $this->hasMany(Team::class);
-    }
-
-    /**
      * Categorías de esta organización
      */
     public function categories(): HasMany

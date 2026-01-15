@@ -124,7 +124,7 @@ class PlayerApiController extends Controller
         }
 
         // Get videos assigned to this player via VideoAssignment model
-        $assignments = $player->assignedVideos()->with(['video.analyzedTeam', 'video.rivalTeam'])->get();
+        $assignments = $player->assignedVideos()->with(['video'])->get();
 
         // Format videos with assignment status
         $formattedVideos = $assignments->map(function($assignment) {
@@ -139,14 +139,8 @@ class PlayerApiController extends Controller
                 'title' => $video->title,
                 'description' => $video->description,
                 'match_date' => $video->match_date,
-                'analyzed_team' => $video->analyzedTeam ? [
-                    'id' => $video->analyzedTeam->id,
-                    'name' => $video->analyzedTeam->name
-                ] : null,
-                'rival_team' => $video->rivalTeam ? [
-                    'id' => $video->rivalTeam->id,
-                    'name' => $video->rivalTeam->name
-                ] : null,
+                'analyzed_team' => $video->analyzed_team_name,
+                'rival_team' => $video->rival_team_name,
                 'pivot' => [
                     'status' => 'assigned', // All assignments are simply 'assigned' since status was removed
                     'assigned_at' => $assignment->created_at ?? null

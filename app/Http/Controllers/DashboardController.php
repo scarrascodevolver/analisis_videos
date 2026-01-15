@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoAssignment;
-use App\Models\Team;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
@@ -35,7 +34,7 @@ class DashboardController extends Controller
     public function playerVideos()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category'])
+                                    ->with(['video.category'])
                                     ->latest()
                                     ->get();
 
@@ -45,7 +44,7 @@ class DashboardController extends Controller
     public function playerCompleted()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category'])
+                                    ->with(['video.category'])
                                     ->latest()
                                     ->get();
 
@@ -55,7 +54,7 @@ class DashboardController extends Controller
     public function playerPending()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.analyzedTeam', 'video.rivalTeam', 'video.category'])
+                                    ->with(['video.category'])
                                     ->latest()
                                     ->get();
 
@@ -64,7 +63,7 @@ class DashboardController extends Controller
 
     public function coachVideos()
     {
-        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category', 'uploader'])
+        $videos = Video::with(['category', 'uploader'])
                       ->coachVisible(auth()->user())
                       ->latest()
                       ->paginate(12);
@@ -118,9 +117,15 @@ class DashboardController extends Controller
 
     public function coachRivals()
     {
-        $teams = Team::where('is_own_team', false)->get();
-        
-        return view('dashboards.coach-rivals', compact('teams'));
+        // Obtener nombres únicos de rivales desde los videos
+        $rivals = Video::whereNotNull('rival_team_name')
+                      ->where('rival_team_name', '!=', '')
+                      ->distinct()
+                      ->pluck('rival_team_name')
+                      ->sort()
+                      ->values();
+
+        return view('dashboards.coach-rivals', compact('rivals'));
     }
 
     public function teamReport()
@@ -157,7 +162,7 @@ class DashboardController extends Controller
 
     public function playerAssign(User $user)
     {
-        $videos = Video::with(['analyzedTeam', 'rivalTeam', 'category'])
+        $videos = Video::with(['category'])
                       ->coachVisible(auth()->user())
                       ->latest()
                       ->get();

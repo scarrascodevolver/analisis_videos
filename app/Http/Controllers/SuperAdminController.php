@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
-use App\Models\Team;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Http\Request;
@@ -105,13 +104,6 @@ class SuperAdminController extends Controller
             'slug' => $slug,
             'logo_path' => $logoPath,
             'is_active' => $request->boolean('is_active', true),
-        ]);
-
-        // Auto-crear equipo propio con el nombre de la organización
-        Team::create([
-            'name' => $validated['name'],
-            'is_own_team' => true,
-            'organization_id' => $organization->id,
         ]);
 
         $message = "Organización '{$organization->name}' creada exitosamente.";

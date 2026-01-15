@@ -18,9 +18,8 @@ class Video extends Model
         'mime_type',
         'duration',
         'uploaded_by',
-        'analyzed_team_id',
-        'rival_team_id',
-        'rival_team_name', // Texto libre alternativo para rival
+        'analyzed_team_name', // Nombre del equipo analizado (= organización)
+        'rival_team_name',    // Nombre del rival (texto libre)
         'category_id',
         'division',
         'rugby_situation_id',
@@ -51,42 +50,20 @@ class Video extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    public function analyzedTeam()
-    {
-        return $this->belongsTo(Team::class, 'analyzed_team_id');
-    }
-
-    public function rivalTeam()
-    {
-        return $this->belongsTo(Team::class, 'rival_team_id');
-    }
-
     /**
-     * Obtener nombre del equipo analizado (con fallback)
-     */
-    public function getAnalyzedTeamNameAttribute(): string
-    {
-        return $this->analyzedTeam?->name ?? 'Sin equipo';
-    }
-
-    /**
-     * Obtener nombre del rival (relación o texto libre)
+     * Obtener nombre del rival
      */
     public function getRivalNameAttribute(): ?string
     {
-        // Prioridad: relación > texto libre
-        if ($this->rivalTeam) {
-            return $this->rivalTeam->name;
-        }
         return $this->rival_team_name;
     }
 
     /**
-     * Verificar si tiene rival (por relación o texto)
+     * Verificar si tiene rival
      */
     public function hasRival(): bool
     {
-        return $this->rival_team_id !== null || !empty($this->rival_team_name);
+        return !empty($this->rival_team_name);
     }
 
     public function category()
@@ -176,9 +153,15 @@ class Video extends Model
         });
     }
 
-    public function scopeByTeam($query, $teamId)
+    /**
+     * Buscar videos por nombre de equipo (analizado o rival)
+     */
+    public function scopeByTeamName($query, $teamName)
     {
-        return $query->where('analyzed_team_id', $teamId);
+        return $query->where(function($q) use ($teamName) {
+            $q->where('analyzed_team_name', 'LIKE', "%{$teamName}%")
+              ->orWhere('rival_team_name', 'LIKE', "%{$teamName}%");
+        });
     }
 
     public function scopeByDivision($query, $division)

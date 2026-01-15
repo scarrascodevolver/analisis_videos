@@ -155,9 +155,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('clip-categories', ClipCategoryController::class);
         Route::post('clip-categories/reorder', [ClipCategoryController::class, 'reorder'])->name('clip-categories.reorder');
 
-        // Gestión de Equipos (deshabilitado - equipos se crean automáticamente con la organización)
-        // Route::resource('teams', App\Http\Controllers\TeamManagementController::class);
-
         // Gestión de Situaciones de Rugby
         Route::resource('situations', App\Http\Controllers\RugbySituationController::class);
         Route::post('situations/reorder', [App\Http\Controllers\RugbySituationController::class, 'reorder'])->name('situations.reorder');

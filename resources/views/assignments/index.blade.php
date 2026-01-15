@@ -49,9 +49,9 @@
                                                     <div>
                                                         <strong>{{ $assignment->video->title }}</strong><br>
                                                         <small class="text-muted">
-                                                            {{ $assignment->video->analyzedTeam->name }}
-                                                            @if($assignment->video->rivalTeam)
-                                                                vs {{ $assignment->video->rivalTeam->name }}
+                                                            {{ $assignment->video->analyzed_team_name }}
+                                                            @if($assignment->video->rival_team_name)
+                                                                vs {{ $assignment->video->rival_team_name }}
                                                             @endif
                                                         </small>
                                                     </div>

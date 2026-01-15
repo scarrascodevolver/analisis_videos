@@ -56,46 +56,35 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="analyzed_team_id">
-                                        <i class="fas fa-users"></i> Equipo Analizado *
+                                    <label>
+                                        <i class="fas fa-users"></i> Equipo Analizado
                                     </label>
-                                    <select class="form-control @error('analyzed_team_id') is-invalid @enderror" 
-                                            id="analyzed_team_id" name="analyzed_team_id" required>
-                                        <option value="">Seleccionar equipo...</option>
-                                        @if($ownTeam)
-                                            <option value="{{ $ownTeam->id }}" 
-                                                    {{ old('analyzed_team_id', $video->analyzed_team_id) == $ownTeam->id ? 'selected' : '' }}>
-                                                {{ $ownTeam->name }} (Nuestro Equipo)
-                                            </option>
-                                        @endif
-                                        @foreach($rivalTeams as $team)
-                                            <option value="{{ $team->id }}" 
-                                                    {{ old('analyzed_team_id', $video->analyzed_team_id) == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('analyzed_team_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <input type="text"
+                                           class="form-control"
+                                           value="{{ $video->analyzed_team_name ?? $organizationName }}"
+                                           disabled
+                                           readonly>
+                                    <small class="form-text text-muted">
+                                        El equipo analizado no se puede modificar
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="rival_team_id">
+                                    <label for="rival_team_name">
                                         <i class="fas fa-shield-alt"></i> Equipo Rival
+                                        <small class="text-muted">(Opcional)</small>
                                     </label>
-                                    <select class="form-control @error('rival_team_id') is-invalid @enderror" 
-                                            id="rival_team_id" name="rival_team_id">
-                                        <option value="">Sin rival (entrenamiento)</option>
-                                        @foreach($rivalTeams as $team)
-                                            <option value="{{ $team->id }}" 
-                                                    {{ old('rival_team_id', $video->rival_team_id) == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('rival_team_id')
+                                    <input type="text"
+                                           class="form-control @error('rival_team_name') is-invalid @enderror"
+                                           id="rival_team_name"
+                                           name="rival_team_name"
+                                           value="{{ old('rival_team_name', $video->rival_team_name) }}"
+                                           placeholder="Ej: Club Rugby Rival">
+                                    <small class="form-text text-muted">
+                                        Deja vacío si es un video de entrenamiento
+                                    </small>
+                                    @error('rival_team_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -190,9 +179,9 @@ $(document).ready(function() {
     // Form validation
     $('#videoEditForm').on('submit', function(e) {
         let isValid = true;
-        
+
         // Check required fields
-        const requiredFields = ['title', 'analyzed_team_id', 'category_id', 'match_date'];
+        const requiredFields = ['title', 'category_id', 'match_date'];
         requiredFields.forEach(function(fieldName) {
             const field = $(`[name="${fieldName}"]`);
             if (!field.val() || field.val().trim() === '') {

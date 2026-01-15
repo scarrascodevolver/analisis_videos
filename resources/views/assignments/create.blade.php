@@ -31,7 +31,7 @@
                                 <option value="">Seleccionar video...</option>
                                 @foreach($videos as $video)
                                     <option value="{{ $video->id }}" {{ old('video_id') == $video->id ? 'selected' : '' }}
-                                            data-teams="{{ $video->analyzedTeam->name }}{{ $video->rivalTeam ? ' vs ' . $video->rivalTeam->name : '' }}"
+                                            data-teams="{{ $video->analyzed_team_name }}{{ $video->rival_team_name ? ' vs ' . $video->rival_team_name : '' }}"
                                             data-category="{{ $video->category->name }}"
                                             data-date="{{ $video->match_date->format('d/m/Y') }}">
                                         {{ $video->title }}

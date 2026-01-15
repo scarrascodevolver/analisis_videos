@@ -41,7 +41,7 @@ class AssignDivisionToVideosSeeder extends Seeder
         // Puedes ajustar esta lógica según patrones específicos de tu club
 
         $title = $video->title;
-        $rivalTeam = $video->rivalTeam?->name ?? '';
+        $rivalTeam = $video->rival_team_name ?? '';
 
         // Algunos equipos típicos de Primera División
         $primeraTeams = ['Old Locks', 'Los Troncos', 'Stade Français'];
