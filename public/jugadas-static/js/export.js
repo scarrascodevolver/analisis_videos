@@ -8,6 +8,9 @@ let isRecording = false;
 let currentExportName = '';
 let exportResolve = null;
 
+// Variable para saber si grabamos en MP4 nativo (Safari)
+let recordingMimeType = '';
+
 /**
  * Inicia la grabación del canvas
  */
@@ -22,15 +25,28 @@ function startRecording() {
     // Obtener stream del canvas a 30fps
     const stream = canvasElement.captureStream(30);
 
-    // Detectar formato soportado (preferir VP9 para mejor calidad)
-    let mimeType = 'video/webm;codecs=vp9';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
+    // Detectar formato soportado
+    // Safari soporta MP4 nativo, Chrome/Firefox soportan WebM
+    let mimeType = '';
+
+    // Intentar WebM primero (Chrome, Firefox)
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
         mimeType = 'video/webm;codecs=vp8';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'video/webm';
-        }
+    } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        mimeType = 'video/webm';
+    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        // Safari iOS/macOS - graba en MP4 nativo
+        mimeType = 'video/mp4';
     }
 
+    if (!mimeType) {
+        console.error('No se encontró formato de video soportado');
+        return false;
+    }
+
+    recordingMimeType = mimeType;
     recordedChunks = [];
 
     try {
@@ -84,6 +100,28 @@ function stopRecording() {
             resolve(null);
         }
     });
+}
+
+/**
+ * Verifica si el formato grabado es MP4 nativo (Safari)
+ */
+function isNativeMp4() {
+    return recordingMimeType && recordingMimeType.includes('mp4');
+}
+
+/**
+ * Descarga el video directamente (para Safari que ya graba en MP4)
+ */
+function downloadDirectly(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return { success: true, filename: filename + '.mp4', size: blob.size };
 }
 
 /**
@@ -192,16 +230,24 @@ async function exportPlayById(playId, playName) {
         // 7. Esperar un momento para capturar estado final
         await sleep(500);
 
-        // 8. Detener grabación y obtener WebM
-        const webmBlob = await stopRecording();
+        // 8. Detener grabación y obtener blob
+        const videoBlob = await stopRecording();
 
-        if (!webmBlob) {
+        if (!videoBlob) {
             throw new Error('No se pudo grabar el video');
         }
 
-        // 9. Convertir a MP4 en el servidor
-        $('#animationStatus').html('<i class="fas fa-cog fa-spin text-info"></i> Convirtiendo a MP4...');
-        const result = await convertToMp4(webmBlob, currentExportName);
+        let result;
+
+        // 9. Si es Safari (MP4 nativo), descargar directamente sin conversión
+        if (isNativeMp4()) {
+            $('#animationStatus').html('<i class="fas fa-download text-info"></i> Descargando MP4...');
+            result = downloadDirectly(videoBlob, currentExportName);
+        } else {
+            // Chrome/Firefox: Convertir WebM a MP4 en el servidor
+            $('#animationStatus').html('<i class="fas fa-cog fa-spin text-info"></i> Convirtiendo a MP4...');
+            result = await convertToMp4(videoBlob, currentExportName);
+        }
 
         if (result.success) {
             const sizeMB = (result.size / 1024 / 1024).toFixed(2);
