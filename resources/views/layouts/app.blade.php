@@ -37,6 +37,37 @@
 
     <style>
         /* ========================================
+           FIX: Prevent horizontal overflow on mobile
+           ======================================== */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        /* Fix dropdown-menu-lg causing overflow on small screens */
+        @media (max-width: 350px) {
+            .dropdown-menu-lg {
+                min-width: auto !important;
+                max-width: calc(100vw - 20px) !important;
+            }
+        }
+
+        /* Fix toast animations causing overflow */
+        #toast-container {
+            max-width: calc(100vw - 40px);
+        }
+
+        /* Ensure wrapper doesn't overflow */
+        .wrapper {
+            overflow-x: hidden;
+        }
+
+        /* Fix content-wrapper on mobile */
+        .content-wrapper {
+            overflow-x: hidden;
+        }
+
+        /* ========================================
            VARIABLES CSS CENTRALIZADAS
            ======================================== */
         :root {

@@ -328,6 +328,9 @@
 @media (max-width: 768px) {
     .annotation-toolbar {
         padding: 10px;
+        left: 5px;
+        right: 5px;
+        max-width: calc(100% - 10px);
     }
 
     .toolbar-buttons {
@@ -337,6 +340,20 @@
     .toolbar-btn {
         padding: 6px 8px;
         font-size: 11px;
+    }
+
+    /* Prevent area-tip from causing overflow */
+    .area-tip {
+        left: 50%;
+        right: auto;
+        max-width: calc(100vw - 40px);
+        white-space: normal;
+        text-align: center;
+    }
+
+    /* Speed control adjustments for mobile */
+    .speed-control-wrapper {
+        right: 10px;
     }
 }
 
