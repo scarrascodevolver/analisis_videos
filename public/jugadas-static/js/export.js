@@ -166,6 +166,23 @@ function downloadDirectly(blob, filename) {
 }
 
 /**
+ * Descarga WebM directamente (fallback cuando FFmpeg no está disponible)
+ */
+function downloadWebmDirectly(blob, filename) {
+    console.log('📼 Descarga WebM directa - Tamaño:', (blob.size / 1024).toFixed(2), 'KB');
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.webm';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return { success: true, filename: filename + '.webm', size: blob.size };
+}
+
+/**
  * Convierte WebM a MP4 en el servidor
  */
 async function convertToMp4(webmBlob, filename) {
@@ -209,6 +226,22 @@ async function convertToMp4(webmBlob, filename) {
 
             return { success: true, filename: data.filename, size: data.size };
         } else {
+            // Detectar si el error es por FFmpeg no instalado
+            const isFFmpegMissing = data.message && (
+                data.message.includes('ffmpeg') ||
+                data.message.includes('FFmpeg') ||
+                data.debug && data.debug.includes('no se reconoce')
+            );
+
+            if (isFFmpegMissing) {
+                console.warn('⚠️ FFmpeg no disponible, descargando WebM directamente');
+                return {
+                    success: false,
+                    error: data.message,
+                    ffmpegMissing: true
+                };
+            }
+
             console.error('❌ Error del servidor:', data.message, data.debug || '');
             return { success: false, error: data.message + (data.debug ? '\n' + data.debug : '') };
         }
@@ -297,6 +330,13 @@ async function exportPlayById(playId, playName) {
             const sizeMB = (result.size / 1024 / 1024).toFixed(2);
             $('#animationStatus').html(`<i class="fas fa-check-circle text-success"></i> Exportado: ${result.filename} (${sizeMB} MB)`);
             console.log(`✅ Video exportado: ${result.filename}`);
+        } else if (result.ffmpegMissing) {
+            // FFmpeg no disponible, descargar WebM directamente
+            $('#animationStatus').html('<i class="fas fa-download text-warning"></i> FFmpeg no disponible, descargando WebM...');
+            const webmResult = downloadWebmDirectly(videoBlob, currentExportName);
+            const sizeMB = (webmResult.size / 1024 / 1024).toFixed(2);
+            $('#animationStatus').html(`<i class="fas fa-check-circle text-warning"></i> Descargado: ${webmResult.filename} (${sizeMB} MB) - WebM`);
+            console.log(`⚠️ Video exportado como WebM (FFmpeg no disponible): ${webmResult.filename}`);
         } else {
             throw new Error(result.error || 'Error en la conversión');
         }
