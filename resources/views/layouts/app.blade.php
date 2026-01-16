@@ -670,15 +670,11 @@
                                     <p>Mis Resultados</p>
                                 </a>
                             </li>
-                            <!-- Funcionalidades Futuras -->
+                            <!-- Ver Jugadas (acceso para jugadores) -->
                             <li class="nav-item">
-                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal"
-                                    data-target="#upcomingFeatureModal" data-feature="Jugadas">
+                                <a href="{{ route('jugadas.index') }}" class="nav-link {{ request()->routeIs('jugadas.*') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-football-ball"></i>
-                                    <p>
-                                        Jugadas
-                                        <span class="badge badge-success right">Próximamente</span>
-                                    </p>
+                                    <p>Jugadas</p>
                                 </a>
                             </li>
                             <li class="nav-item">

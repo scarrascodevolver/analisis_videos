@@ -52,10 +52,18 @@ class JugadasController extends Controller
     }
 
     /**
-     * API: Guardar nueva jugada
+     * API: Guardar nueva jugada (solo analistas/entrenadores)
      */
     public function apiStore(Request $request): JsonResponse
     {
+        // Solo analistas y entrenadores pueden crear jugadas
+        if (!in_array(auth()->user()->role, ['analista', 'entrenador'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para crear jugadas.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:forwards,backs,full_team',
@@ -118,10 +126,18 @@ class JugadasController extends Controller
     }
 
     /**
-     * API: Eliminar jugada
+     * API: Eliminar jugada (solo analistas/entrenadores)
      */
     public function apiDestroy(Jugada $jugada): JsonResponse
     {
+        // Solo analistas y entrenadores pueden eliminar jugadas
+        if (!in_array(auth()->user()->role, ['analista', 'entrenador'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para eliminar jugadas.',
+            ], 403);
+        }
+
         $name = $jugada->name;
         $jugada->delete();
 
