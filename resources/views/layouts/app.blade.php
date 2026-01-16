@@ -67,6 +67,21 @@
             overflow-x: hidden;
         }
 
+        /* User dropdown responsive on mobile */
+        @media (max-width: 576px) {
+            .user-dropdown-menu {
+                position: absolute;
+                right: 0;
+                left: auto;
+                min-width: 150px;
+            }
+
+            /* Ensure all navbar dropdowns stay within viewport */
+            .navbar .dropdown-menu {
+                max-width: calc(100vw - 20px);
+            }
+        }
+
         /* ========================================
            VARIABLES CSS CENTRALIZADAS
            ======================================== */
@@ -521,13 +536,13 @@
                         role="button" data-toggle="dropdown">
                         @if (Auth::user()->profile && Auth::user()->profile->avatar)
                             <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}" alt="Avatar"
-                                class="img-circle mr-2" style="width: 28px; height: 28px; object-fit: cover;">
+                                class="img-circle" style="width: 28px; height: 28px; object-fit: cover;">
                         @else
-                            <i class="fas fa-user mr-2"></i>
+                            <i class="fas fa-user"></i>
                         @endif
-                        {{ Auth::user()->name }}
+                        <span class="d-none d-md-inline ml-2">{{ Auth::user()->name }}</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right">
+                    <div class="dropdown-menu dropdown-menu-right user-dropdown-menu">
                         <a class="dropdown-item" href="{{ route('profile.show') }}">
                             <i class="fas fa-user"></i> Perfil
                         </a>
