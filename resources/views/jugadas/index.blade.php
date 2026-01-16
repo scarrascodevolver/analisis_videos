@@ -437,6 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let scaleX = 1;
     let scaleY = 1;
 
+    // Sistema de posesión del balón
+    let currentBallHolder = null;
+    const BALL_OFFSET_X = 25; // El balón va adelante del jugador
+    const BALL_OFFSET_Y = 0;
+
     // Cargar jugadas
     async function loadPlays() {
         try {
@@ -566,9 +571,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentPositions[p.number] = pos;
             });
         }
+
+        // Determinar quién tiene el balón inicialmente
+        // Prioridad: originalBallHolder > primer pase.from > ballPossession
+        const passes = (data.movements || []).filter(m => m.type === 'pass');
+        if (data.originalBallHolder) {
+            currentBallHolder = data.originalBallHolder;
+        } else if (passes.length > 0) {
+            currentBallHolder = passes[0].from;
+        } else if (data.ballPossession) {
+            currentBallHolder = data.ballPossession;
+        } else {
+            currentBallHolder = null;
+        }
+
+        // Posicionar el balón
         if (data.ball) {
-            const pos = scale(data.ball.x, data.ball.y);
-            currentPositions['ball'] = pos;
+            if (currentBallHolder && currentPositions[currentBallHolder]) {
+                // El balón sigue al jugador que lo tiene
+                const holderPos = currentPositions[currentBallHolder];
+                currentPositions['ball'] = {
+                    x: holderPos.x + BALL_OFFSET_X * scaleX,
+                    y: holderPos.y + BALL_OFFSET_Y * scaleY
+                };
+            } else {
+                // Balón libre (sin poseedor)
+                const pos = scale(data.ball.x, data.ball.y);
+                currentPositions['ball'] = pos;
+            }
         }
     }
 
@@ -657,9 +687,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentPlayData || !currentPlayData.data) return;
 
         const data = currentPlayData.data;
-        const movements = data.movements || [];
+        const allMovements = data.movements || [];
 
-        if (movements.length === 0) {
+        // Separar movimientos de jugadores y pases
+        const playerMovements = allMovements.filter(m => m.type === 'movement');
+        const passes = allMovements.filter(m => m.type === 'pass');
+
+        if (playerMovements.length === 0 && passes.length === 0) {
             alert('Esta jugada no tiene movimientos animados');
             return;
         }
@@ -670,16 +704,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // Resetear posiciones
         initPositions(data);
 
-        const totalFrames = 90;
+        const totalFrames = 120; // Más frames para animación más suave
         let frame = 0;
+
+        // Calcular timing de pases (cada pase ocurre en un % del tiempo total)
+        const passTimings = passes.map((p, idx) => {
+            // Distribuir pases a lo largo de la animación
+            const timing = (p.timing || 50) / 100;
+            return {
+                ...p,
+                triggerFrame: Math.floor(timing * totalFrames * 0.8), // Pases ocurren en el 80% inicial
+                completed: false
+            };
+        });
 
         function animate() {
             frame++;
             const progress = Math.min(frame / totalFrames, 1);
 
-            // Animar cada movimiento
-            movements.forEach(m => {
-                if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
+            // Animar cada movimiento de jugador
+            playerMovements.forEach(m => {
+                if (m.playerId && m.points && m.points.length > 1) {
                     // Interpolar a lo largo del path
                     const pathLength = m.points.length - 1;
                     const pathProgress = progress * pathLength;
@@ -695,6 +740,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentPositions[m.playerId] = scale(interpX, interpY);
                 }
             });
+
+            // Procesar pases
+            passTimings.forEach(pass => {
+                if (!pass.completed && frame >= pass.triggerFrame) {
+                    // Ejecutar el pase - cambiar poseedor
+                    currentBallHolder = pass.to;
+                    pass.completed = true;
+                }
+            });
+
+            // Actualizar posición del balón según el poseedor actual
+            if (currentBallHolder && currentPositions[currentBallHolder]) {
+                const holderPos = currentPositions[currentBallHolder];
+                currentPositions['ball'] = {
+                    x: holderPos.x + BALL_OFFSET_X * scaleX,
+                    y: holderPos.y + BALL_OFFSET_Y * scaleY
+                };
+            }
 
             render(data);
 
@@ -720,7 +783,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentPlayData || !currentPlayData.data) return;
 
         const data = currentPlayData.data;
-        const movements = data.movements || [];
+        const allMovements = data.movements || [];
+
+        // Separar movimientos y pases
+        const playerMovements = allMovements.filter(m => m.type === 'movement');
+        const passes = allMovements.filter(m => m.type === 'pass');
 
         const btn = this;
         btn.disabled = true;
@@ -735,17 +802,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 workerScript: '/js/gif.worker.js'
             });
 
-            const totalFrames = 45;
+            const totalFrames = 60;
+
+            // Preparar timing de pases para el GIF
+            const passTimings = passes.map(p => ({
+                ...p,
+                triggerFrame: Math.floor(((p.timing || 50) / 100) * totalFrames * 0.8),
+                completed: false
+            }));
 
             for (let frame = 0; frame <= totalFrames; frame++) {
                 const progress = frame / totalFrames;
 
                 // Resetear posiciones para este frame
                 initPositions(data);
+                // Resetear estado de pases
+                passTimings.forEach(p => p.completed = false);
+
+                // Simular hasta el frame actual
+                for (let f = 0; f <= frame; f++) {
+                    passTimings.forEach(pass => {
+                        if (!pass.completed && f >= pass.triggerFrame) {
+                            currentBallHolder = pass.to;
+                            pass.completed = true;
+                        }
+                    });
+                }
 
                 // Calcular posiciones animadas para este frame
-                movements.forEach(m => {
-                    if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
+                playerMovements.forEach(m => {
+                    if (m.playerId && m.points && m.points.length > 1) {
                         const pathLength = m.points.length - 1;
                         const pathProgress = progress * pathLength;
                         const segmentIndex = Math.min(Math.floor(pathProgress), pathLength - 1);
@@ -754,15 +840,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         const startPoint = m.points[segmentIndex];
                         const endPoint = m.points[segmentIndex + 1] || startPoint;
 
-                        // Interpolar y escalar
                         const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
                         const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
                         currentPositions[m.playerId] = scale(interpX, interpY);
                     }
                 });
 
+                // Actualizar posición del balón
+                if (currentBallHolder && currentPositions[currentBallHolder]) {
+                    const holderPos = currentPositions[currentBallHolder];
+                    currentPositions['ball'] = {
+                        x: holderPos.x + BALL_OFFSET_X * scaleX,
+                        y: holderPos.y + BALL_OFFSET_Y * scaleY
+                    };
+                }
+
                 render(data);
-                gif.addFrame(ctx, { copy: true, delay: 80 });
+                gif.addFrame(ctx, { copy: true, delay: 70 });
             }
 
             gif.on('finished', function(blob) {
