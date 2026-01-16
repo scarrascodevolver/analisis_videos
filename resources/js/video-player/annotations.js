@@ -328,6 +328,9 @@ function setupToolbarEvents() {
         e.stopPropagation();
         const symbol = $(this).data('symbol');
         addSymbol(symbol);
+        // Cerrar el dropdown después de seleccionar
+        $(this).closest('.dropdown-menu').removeClass('show');
+        $(this).closest('.dropdown').find('.dropdown-toggle').attr('aria-expanded', 'false');
     });
 
     // Timestamp button clicks in annotation list
