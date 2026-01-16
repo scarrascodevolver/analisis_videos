@@ -159,6 +159,35 @@
 
     #viewerCanvasContainer canvas {
         max-width: 100%;
+        height: auto;
+    }
+
+    /* Mobile adjustments for play viewer modal */
+    @media (max-width: 768px) {
+        #playViewerModal .modal-dialog {
+            margin: 10px;
+            max-width: calc(100% - 20px);
+        }
+
+        #playViewerModal .modal-footer {
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        #playViewerModal .modal-footer .btn {
+            flex: 1 1 45%;
+            font-size: 12px;
+            padding: 8px 10px;
+        }
+
+        #viewerCanvasContainer {
+            min-height: 200px;
+        }
+
+        .play-card-actions .btn {
+            font-size: 12px;
+        }
     }
 </style>
 <link rel="stylesheet" href="{{ asset('jugadas-static/css/jugadas.css') }}">
