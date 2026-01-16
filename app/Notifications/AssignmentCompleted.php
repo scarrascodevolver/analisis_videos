@@ -2,16 +2,12 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\VideoAssignment;
 
-class AssignmentCompleted extends Notification implements ShouldQueue
+class AssignmentCompleted extends Notification
 {
-    use Queueable;
-
     protected $assignment;
 
     public function __construct(VideoAssignment $assignment)
