@@ -273,27 +273,28 @@
     top: 75px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 84, 97, 0.98);
-    color: white;
-    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    padding: 14px 28px;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     z-index: 30;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 183, 181, 0.5);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6);
+    border: 2px solid #00B7B5;
     animation: tipFadeIn 0.3s ease;
 }
 
 .area-tip i {
     color: #ffc107;
     margin-right: 10px;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .area-tip strong {
-    color: #00B7B5;
-    font-weight: 700;
+    color: #ffc107;
+    font-weight: 800;
+    text-decoration: underline;
 }
 
 @keyframes tipFadeIn {
