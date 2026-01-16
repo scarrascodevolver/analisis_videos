@@ -132,16 +132,10 @@ function setupCanvasEvents() {
     fabricCanvas.on('mouse:down', function (event) {
         if (!annotationMode) return;
 
-        // Ignorar clicks en el toolbar (evita dibujar cuando se usan los controles)
-        if (event.e && event.e.target && event.e.target.closest('#annotationToolbar')) {
-            return;
-        }
-
         const pointer = fabricCanvas.getPointer(event.e);
         const clickedObject = fabricCanvas.findTarget(event.e);
-        const activeObject = fabricCanvas.getActiveObject();
 
-        // Si encontramos un objeto bajo el cursor, permitir arrastre
+        // Si encontramos un objeto bajo el cursor, permitir arrastre (no dibujar)
         if (clickedObject && !clickedObject.isAreaPoint) {
             isDraggingObject = true;
             fabricCanvas.setActiveObject(clickedObject);
@@ -149,14 +143,7 @@ function setupCanvasEvents() {
             return;
         }
 
-        // Si hay un objeto activo (seleccionado), verificar si el click está dentro de su área
-        if (activeObject && activeObject.containsPoint(pointer)) {
-            isDraggingObject = true;
-            return;
-        }
-
-        isDraggingObject = false; // No estamos arrastrando, estamos dibujando
-
+        isDraggingObject = false;
         startX = pointer.x;
         startY = pointer.y;
 
