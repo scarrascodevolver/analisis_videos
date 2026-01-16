@@ -429,6 +429,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let animationId = null;
     let originalPositions = {};
 
+    // Dimensiones de referencia del editor (típico en desktop)
+    const REFERENCE_WIDTH = 1000;
+    const REFERENCE_HEIGHT = 540;
+
+    // Escalado para ajustar coordenadas al visor
+    let scaleX = 1;
+    let scaleY = 1;
+
     // Cargar jugadas
     async function loadPlays() {
         try {
@@ -486,14 +494,53 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Calcular bounding box de todos los elementos
+    function calculateBoundingBox(data) {
+        let maxX = 0, maxY = 0;
+
+        if (data.players) {
+            data.players.forEach(p => {
+                maxX = Math.max(maxX, p.x + 20);
+                maxY = Math.max(maxY, p.y + 20);
+            });
+        }
+
+        if (data.ball) {
+            maxX = Math.max(maxX, data.ball.x + 15);
+            maxY = Math.max(maxY, data.ball.y + 15);
+        }
+
+        if (data.movements) {
+            data.movements.forEach(m => {
+                if (m.points) {
+                    m.points.forEach(p => {
+                        maxX = Math.max(maxX, p.x + 20);
+                        maxY = Math.max(maxY, p.y + 20);
+                    });
+                }
+            });
+        }
+
+        // Usar mínimo las dimensiones de referencia
+        return {
+            width: Math.max(maxX, REFERENCE_WIDTH),
+            height: Math.max(maxY, REFERENCE_HEIGHT)
+        };
+    }
+
     // Abrir modal de visualización
     function openPlayViewer(play) {
         currentPlayData = play;
         document.getElementById('viewerPlayName').textContent = play.name;
 
-        // Configurar canvas
+        // Configurar canvas con aspect ratio correcto
         viewerCanvas.width = 800;
-        viewerCanvas.height = 500;
+        viewerCanvas.height = 432; // 800 / 1.85 = 432
+
+        // Calcular escala basada en el contenido
+        const bbox = calculateBoundingBox(play.data);
+        scaleX = viewerCanvas.width / bbox.width;
+        scaleY = viewerCanvas.height / bbox.height;
 
         // Inicializar posiciones y renderizar estado inicial
         initPositions(play.data);
@@ -502,19 +549,26 @@ document.addEventListener('DOMContentLoaded', function() {
         $(modal).modal('show');
     }
 
-    // Posiciones actuales para animación
+    // Posiciones actuales para animación (ya escaladas)
     let currentPositions = {};
 
-    // Inicializar posiciones desde los datos
+    // Escalar coordenadas
+    function scale(x, y) {
+        return { x: x * scaleX, y: y * scaleY };
+    }
+
+    // Inicializar posiciones desde los datos (aplicando escala)
     function initPositions(data) {
         currentPositions = {};
         if (data.players) {
             data.players.forEach(p => {
-                currentPositions[p.number] = { x: p.x, y: p.y };
+                const pos = scale(p.x, p.y);
+                currentPositions[p.number] = pos;
             });
         }
         if (data.ball) {
-            currentPositions['ball'] = { x: data.ball.x, y: data.ball.y };
+            const pos = scale(data.ball.x, data.ball.y);
+            currentPositions['ball'] = pos;
         }
     }
 
@@ -535,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.stroke();
         }
 
-        // Dibujar trayectorias de movimiento (líneas punteadas)
+        // Dibujar trayectorias de movimiento (líneas punteadas, escaladas)
         if (data.movements) {
             data.movements.forEach(m => {
                 if (m.type === 'movement' && m.points && m.points.length > 1) {
@@ -543,23 +597,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     ctx.strokeStyle = 'rgba(0, 183, 181, 0.5)';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([5, 5]);
-                    ctx.moveTo(m.points[0].x, m.points[0].y);
-                    m.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    const firstPt = scale(m.points[0].x, m.points[0].y);
+                    ctx.moveTo(firstPt.x, firstPt.y);
+                    m.points.forEach(p => {
+                        const sp = scale(p.x, p.y);
+                        ctx.lineTo(sp.x, sp.y);
+                    });
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
             });
         }
 
+        // Tamaño de jugadores escalado
+        const playerRadius = Math.max(12, 16 * Math.min(scaleX, scaleY));
+        const fontSize = Math.max(9, 11 * Math.min(scaleX, scaleY));
+
         // Dibujar jugadores
         if (data.players) {
             data.players.forEach(p => {
-                const pos = currentPositions[p.number] || { x: p.x, y: p.y };
+                const pos = currentPositions[p.number] || scale(p.x, p.y);
                 const color = p.type === 'forward' ? '#dc3545' : '#007bff';
 
                 // Círculo del jugador
                 ctx.beginPath();
-                ctx.arc(pos.x, pos.y, 16, 0, Math.PI * 2);
+                ctx.arc(pos.x, pos.y, playerRadius, 0, Math.PI * 2);
                 ctx.fillStyle = color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
@@ -568,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Número
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px Arial';
+                ctx.font = `bold ${fontSize}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(p.number, pos.x, pos.y);
@@ -577,9 +639,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Dibujar balón
         if (data.ball) {
-            const pos = currentPositions['ball'] || { x: data.ball.x, y: data.ball.y };
+            const pos = currentPositions['ball'] || scale(data.ball.x, data.ball.y);
+            const ballW = Math.max(8, 10 * scaleX);
+            const ballH = Math.max(6, 7 * scaleY);
             ctx.beginPath();
-            ctx.ellipse(pos.x, pos.y, 10, 7, Math.PI / 4, 0, Math.PI * 2);
+            ctx.ellipse(pos.x, pos.y, ballW, ballH, Math.PI / 4, 0, Math.PI * 2);
             ctx.fillStyle = '#8B4513';
             ctx.fill();
             ctx.strokeStyle = '#fff';
@@ -616,10 +680,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Animar cada movimiento
             movements.forEach(m => {
                 if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
-                    // Obtener posición inicial del jugador
-                    const player = data.players.find(p => p.number === m.playerId);
-                    if (!player) return;
-
                     // Interpolar a lo largo del path
                     const pathLength = m.points.length - 1;
                     const pathProgress = progress * pathLength;
@@ -629,10 +689,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const startPoint = m.points[segmentIndex];
                     const endPoint = m.points[segmentIndex + 1] || startPoint;
 
-                    currentPositions[m.playerId] = {
-                        x: startPoint.x + (endPoint.x - startPoint.x) * segmentProgress,
-                        y: startPoint.y + (endPoint.y - startPoint.y) * segmentProgress
-                    };
+                    // Interpolar y escalar
+                    const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
+                    const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
+                    currentPositions[m.playerId] = scale(interpX, interpY);
                 }
             });
 
@@ -680,9 +740,10 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let frame = 0; frame <= totalFrames; frame++) {
                 const progress = frame / totalFrames;
 
-                // Resetear y calcular posiciones para este frame
+                // Resetear posiciones para este frame
                 initPositions(data);
 
+                // Calcular posiciones animadas para este frame
                 movements.forEach(m => {
                     if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
                         const pathLength = m.points.length - 1;
@@ -693,10 +754,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         const startPoint = m.points[segmentIndex];
                         const endPoint = m.points[segmentIndex + 1] || startPoint;
 
-                        currentPositions[m.playerId] = {
-                            x: startPoint.x + (endPoint.x - startPoint.x) * segmentProgress,
-                            y: startPoint.y + (endPoint.y - startPoint.y) * segmentProgress
-                        };
+                        // Interpolar y escalar
+                        const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
+                        const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
+                        currentPositions[m.playerId] = scale(interpX, interpY);
                     }
                 });
 
