@@ -10,6 +10,7 @@ let annotationMode = false;
 let fabricCanvas = null;
 let currentTool = 'arrow';
 let isDrawing = false;
+let isDraggingObject = false; // Flag para saber si estamos arrastrando un objeto existente
 let currentAnnotation = null;
 let savedAnnotations = [];
 let currentDisplayedAnnotations = [];
@@ -134,10 +135,13 @@ function setupCanvasEvents() {
         // Si se hizo clic en un objeto existente, permitir selección/arrastre sin dibujar
         const clickedObject = fabricCanvas.findTarget(event.e);
         if (clickedObject && !clickedObject.isAreaPoint) {
+            isDraggingObject = true; // Marcamos que estamos arrastrando
             fabricCanvas.setActiveObject(clickedObject);
             fabricCanvas.renderAll();
             return;
         }
+
+        isDraggingObject = false; // No estamos arrastrando, estamos dibujando
 
         const pointer = fabricCanvas.getPointer(event.e);
         startX = pointer.x;
@@ -179,6 +183,12 @@ function setupCanvasEvents() {
 
     fabricCanvas.on('mouse:up', function (event) {
         if (!annotationMode) return;
+
+        // Si estábamos arrastrando un objeto, solo resetear el flag
+        if (isDraggingObject) {
+            isDraggingObject = false;
+            return;
+        }
 
         isDrawing = false;
         currentAnnotation = null;
