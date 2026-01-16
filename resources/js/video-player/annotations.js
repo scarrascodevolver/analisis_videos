@@ -132,6 +132,11 @@ function setupCanvasEvents() {
     fabricCanvas.on('mouse:down', function (event) {
         if (!annotationMode) return;
 
+        // Ignorar clicks en el toolbar (evita dibujar cuando se usan los controles)
+        if (event.e && event.e.target && event.e.target.closest('#annotationToolbar')) {
+            return;
+        }
+
         const pointer = fabricCanvas.getPointer(event.e);
         const clickedObject = fabricCanvas.findTarget(event.e);
         const activeObject = fabricCanvas.getActiveObject();
