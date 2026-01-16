@@ -71,19 +71,57 @@
                                     </button>
                                 </div>
                                 <div class="toolbar-buttons">
-                                    <button id="annotationArrow" class="toolbar-btn active" data-tool="arrow">
+                                    {{-- Herramientas básicas --}}
+                                    <button id="annotationArrow" class="toolbar-btn active" data-tool="arrow" title="Flecha recta">
                                         <i class="fas fa-arrow-right"></i> Flecha
                                     </button>
-                                    <button id="annotationCircle" class="toolbar-btn" data-tool="circle">
+                                    <button id="annotationCircle" class="toolbar-btn" data-tool="circle" title="Círculo">
                                         <i class="fas fa-circle"></i> Círculo
                                     </button>
-                                    <button id="annotationLine" class="toolbar-btn" data-tool="line">
+                                    <button id="annotationRectangle" class="toolbar-btn" data-tool="rectangle" title="Rectángulo">
+                                        <i class="fas fa-square"></i> Rect
+                                    </button>
+                                    <button id="annotationLine" class="toolbar-btn" data-tool="line" title="Línea recta">
                                         <i class="fas fa-minus"></i> Línea
                                     </button>
-                                    <button id="annotationText" class="toolbar-btn" data-tool="text">
+                                    <button id="annotationText" class="toolbar-btn" data-tool="text" title="Texto">
                                         <i class="fas fa-font"></i> Texto
                                     </button>
+                                    <button id="annotationFreeDraw" class="toolbar-btn" data-tool="free_draw" title="Dibujo libre">
+                                        <i class="fas fa-pencil-alt"></i> Libre
+                                    </button>
                                     <div class="toolbar-separator"></div>
+                                    {{-- Herramienta de área --}}
+                                    <button id="annotationArea" class="toolbar-btn" data-tool="area" title="Marcar área (click puntos, doble-click o Enter para cerrar)">
+                                        <i class="fas fa-draw-polygon"></i> Área
+                                    </button>
+                                    {{-- Spotlight --}}
+                                    <button id="annotationSpotlight" class="toolbar-btn spotlight-btn" title="Spotlight (foco)">
+                                        <i class="fas fa-bullseye"></i> Foco
+                                    </button>
+                                    <div class="toolbar-separator"></div>
+                                    {{-- Símbolos rápidos --}}
+                                    <div class="dropdown d-inline-block">
+                                        <button class="toolbar-btn dropdown-toggle" type="button" data-toggle="dropdown" title="Símbolos">
+                                            <i class="fas fa-icons"></i>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-dark" style="background: #252525; border: 1px solid #444;">
+                                            <button class="dropdown-item text-white symbol-btn" data-symbol="tackle">
+                                                <i class="fas fa-bolt" style="color: #dc3545;"></i> Tackle / Impacto
+                                            </button>
+                                            <button class="dropdown-item text-white symbol-btn" data-symbol="ball">
+                                                <i class="fas fa-football-ball" style="color: #8B4513;"></i> Balón
+                                            </button>
+                                            <button class="dropdown-item text-white symbol-btn" data-symbol="x">
+                                                <i class="fas fa-times" style="color: #dc3545;"></i> Error / Fallo
+                                            </button>
+                                            <button class="dropdown-item text-white symbol-btn" data-symbol="check">
+                                                <i class="fas fa-check" style="color: #28a745;"></i> Correcto / Bien
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="toolbar-separator"></div>
+                                    {{-- Color y duración --}}
                                     <div class="color-picker-container">
                                         <label style="color: white; font-size: 11px;">Color:</label>
                                         <input type="color" id="annotationColor" value="#ff0000" style="width: 30px; height: 25px; border: none; border-radius: 3px;">
@@ -102,6 +140,13 @@
                                         </select>
                                     </div>
                                     <div class="toolbar-separator"></div>
+                                    {{-- Acciones --}}
+                                    <button id="undoAnnotation" class="toolbar-btn" title="Deshacer (Ctrl+Z)" disabled>
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    <button id="redoAnnotation" class="toolbar-btn" title="Rehacer (Ctrl+Y)" disabled>
+                                        <i class="fas fa-redo"></i>
+                                    </button>
                                     <button id="saveAnnotation" class="toolbar-btn save-btn">
                                         <i class="fas fa-save"></i> Guardar
                                     </button>

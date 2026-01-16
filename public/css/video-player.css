@@ -222,6 +222,51 @@
     margin: 0 5px;
 }
 
+/* Annotation Toolbar - Enhanced for Rugby Tools */
+.toolbar-btn.dropdown-toggle {
+    background: rgba(0, 183, 181, 0.3);
+    border-color: #00B7B5;
+}
+
+.toolbar-btn.dropdown-toggle:hover {
+    background: rgba(0, 183, 181, 0.5);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Rugby dropdown menu dark theme */
+.dropdown-menu-dark {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.dropdown-menu-dark .dropdown-item {
+    font-size: 13px;
+    padding: 8px 15px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu-dark .dropdown-item:hover {
+    background: #005461 !important;
+}
+
+/* Undo/Redo buttons subtle style */
+#undoAnnotation,
+#redoAnnotation {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    padding: 8px 10px;
+}
+
+#undoAnnotation:hover:not(:disabled),
+#redoAnnotation:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
 /* Canvas overlay */
 #annotationCanvas {
     cursor: crosshair;

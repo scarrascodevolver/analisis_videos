@@ -16,6 +16,15 @@ let currentDisplayedAnnotations = [];
 let hasTemporaryDrawing = false;
 let startX, startY;
 
+// Undo/Redo state
+let undoStack = [];
+let redoStack = [];
+const MAX_UNDO_STEPS = 50;
+
+// Area tool state
+let areaPoints = [];
+let areaPreviewPath = null;
+
 /**
  * Initialize annotations system
  */
@@ -120,25 +129,51 @@ function setupCanvasEvents() {
     if (!fabricCanvas) return;
 
     fabricCanvas.on('mouse:down', function (event) {
-        if (!annotationMode || currentTool === 'free_draw') return;
+        if (!annotationMode) return;
+
+        // Si se hizo clic en un objeto existente, permitir selección/arrastre sin dibujar
+        const clickedObject = fabricCanvas.findTarget(event.e);
+        if (clickedObject && !clickedObject.isAreaPoint) {
+            fabricCanvas.setActiveObject(clickedObject);
+            fabricCanvas.renderAll();
+            return;
+        }
 
         const pointer = fabricCanvas.getPointer(event.e);
         startX = pointer.x;
         startY = pointer.y;
 
+        // Handle area tool - click to add points
+        if (currentTool === 'area') {
+            handleAreaClick(pointer.x, pointer.y);
+            return;
+        }
+
+        if (currentTool === 'free_draw') return;
+
         if (currentTool === 'text') {
+            saveToUndoStack();
             startDrawing(currentTool, startX, startY);
             return;
         }
 
         isDrawing = true;
+        saveToUndoStack();
         startDrawing(currentTool, startX, startY);
     });
 
     fabricCanvas.on('mouse:move', function (event) {
-        if (!annotationMode || !isDrawing || currentTool === 'free_draw') return;
+        if (!annotationMode) return;
 
         const pointer = fabricCanvas.getPointer(event.e);
+
+        // Preview area polygon
+        if (currentTool === 'area' && areaPoints.length > 0) {
+            previewArea(pointer.x, pointer.y);
+            return;
+        }
+
+        if (!isDrawing || currentTool === 'free_draw') return;
         updateDrawing(currentTool, pointer.x, pointer.y, startX, startY);
     });
 
@@ -153,6 +188,22 @@ function setupCanvasEvents() {
             if (line.type === 'line') {
                 addArrowHead(line);
             }
+        }
+    });
+
+    // Double-click to finish area
+    fabricCanvas.on('mouse:dblclick', function(event) {
+        if (!annotationMode) return;
+
+        if (currentTool === 'area' && areaPoints.length >= 3) {
+            finishArea();
+        }
+    });
+
+    // Save to undo stack after free draw
+    fabricCanvas.on('path:created', function() {
+        if (currentTool === 'free_draw') {
+            saveToUndoStack();
         }
     });
 }
@@ -181,6 +232,9 @@ function setupToolbarEvents() {
         $('.toolbar-btn[data-tool]').removeClass('active');
         $(this).addClass('active');
 
+        // Reset area tool state when switching tools
+        clearAreaPoints();
+
         if (fabricCanvas) {
             fabricCanvas.isDrawingMode = false;
             fabricCanvas.selection = false;
@@ -188,8 +242,16 @@ function setupToolbarEvents() {
             if (tool === 'free_draw') {
                 fabricCanvas.isDrawingMode = true;
                 fabricCanvas.freeDrawingBrush.width = 3;
-                fabricCanvas.freeDrawingBrush.color = '#ff0000';
+                const colorPicker = document.getElementById('annotationColor');
+                fabricCanvas.freeDrawingBrush.color = colorPicker ? colorPicker.value : '#ff0000';
             }
+        }
+    });
+
+    // Update free draw color when color picker changes
+    $('#annotationColor').on('change', function() {
+        if (fabricCanvas && fabricCanvas.isDrawingMode) {
+            fabricCanvas.freeDrawingBrush.color = this.value;
         }
     });
 
@@ -199,9 +261,60 @@ function setupToolbarEvents() {
     // Clear annotations
     $('#clearAnnotations').on('click', function () {
         if (fabricCanvas) {
+            saveToUndoStack();
             fabricCanvas.clear();
             hasTemporaryDrawing = false;
         }
+    });
+
+    // Undo/Redo buttons
+    $('#undoAnnotation').on('click', undo);
+    $('#redoAnnotation').on('click', redo);
+
+    // Keyboard shortcuts for undo/redo
+    $(document).on('keydown', function(e) {
+        if (!annotationMode) return;
+
+        // Ignore if typing in input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        // Ctrl+Z = Undo
+        if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undo();
+        }
+        // Ctrl+Y or Ctrl+Shift+Z = Redo
+        if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
+            e.preventDefault();
+            redo();
+        }
+
+        // Enter = Finish area
+        if (e.key === 'Enter' && currentTool === 'area' && areaPoints.length >= 3) {
+            e.preventDefault();
+            finishArea();
+        }
+
+        // Escape = Cancel current drawing
+        if (e.key === 'Escape' && currentTool === 'area') {
+            e.preventDefault();
+            clearAreaPoints();
+        }
+    });
+
+    // Spotlight button
+    $(document).on('click', '.spotlight-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        addSpotlight();
+    });
+
+    // Symbol buttons
+    $(document).on('click', '.symbol-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const symbol = $(this).data('symbol');
+        addSymbol(symbol);
     });
 
     // Timestamp button clicks in annotation list
@@ -266,6 +379,380 @@ function setupDeleteEvents() {
 }
 
 /**
+ * Handle click for area tool
+ */
+function handleAreaClick(x, y) {
+    areaPoints.push({ x, y });
+
+    // Show point indicator
+    const pointMarker = new fabric.Circle({
+        left: x,
+        top: y,
+        radius: 5,
+        fill: '#ffc107',
+        stroke: '#fff',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        isAreaPoint: true
+    });
+    fabricCanvas.add(pointMarker);
+    fabricCanvas.renderAll();
+
+    hasTemporaryDrawing = true;
+}
+
+/**
+ * Preview area polygon while moving mouse
+ */
+function previewArea(mouseX, mouseY) {
+    // Remove previous preview
+    if (areaPreviewPath) {
+        fabricCanvas.remove(areaPreviewPath);
+    }
+
+    if (areaPoints.length < 1) return;
+
+    const colorPicker = document.getElementById('annotationColor');
+    const selectedColor = colorPicker ? colorPicker.value : '#ffc107';
+
+    // Create temporary polygon including mouse position
+    const points = [...areaPoints, { x: mouseX, y: mouseY }];
+
+    areaPreviewPath = new fabric.Polygon(points, {
+        fill: hexToRgba(selectedColor, 0.2),
+        stroke: selectedColor,
+        strokeWidth: 2,
+        strokeDashArray: [5, 3],
+        selectable: false,
+        evented: false
+    });
+
+    fabricCanvas.add(areaPreviewPath);
+    fabricCanvas.renderAll();
+}
+
+/**
+ * Finish and create the area polygon
+ */
+function finishArea() {
+    if (areaPoints.length < 3) {
+        // Need at least 3 points for a polygon
+        clearAreaPoints();
+        return;
+    }
+
+    saveToUndoStack();
+
+    const colorPicker = document.getElementById('annotationColor');
+    const selectedColor = colorPicker ? colorPicker.value : '#ffc107';
+
+    // Create final polygon
+    const finalArea = new fabric.Polygon(areaPoints, {
+        fill: hexToRgba(selectedColor, 0.3),
+        stroke: selectedColor,
+        strokeWidth: 3,
+        selectable: true,
+        evented: true
+    });
+
+    fabricCanvas.add(finalArea);
+    finalArea.sendToBack();
+
+    // Bring other objects to front
+    fabricCanvas.getObjects().forEach(obj => {
+        if (!obj.isAreaPoint && obj !== finalArea) {
+            obj.bringToFront();
+        }
+    });
+
+    clearAreaPoints();
+    fabricCanvas.renderAll();
+}
+
+/**
+ * Clear area points and preview
+ */
+function clearAreaPoints() {
+    if (!fabricCanvas) return;
+
+    // Remove point markers
+    const pointMarkers = fabricCanvas.getObjects().filter(obj => obj.isAreaPoint);
+    pointMarkers.forEach(marker => fabricCanvas.remove(marker));
+
+    // Remove preview polygon
+    if (areaPreviewPath) {
+        fabricCanvas.remove(areaPreviewPath);
+        areaPreviewPath = null;
+    }
+
+    areaPoints = [];
+    fabricCanvas.renderAll();
+}
+
+/**
+ * Helper: Convert hex color to rgba
+ */
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * Save current canvas state to undo stack
+ */
+function saveToUndoStack() {
+    if (!fabricCanvas) return;
+
+    const canvasState = JSON.stringify(fabricCanvas.toJSON());
+    undoStack.push(canvasState);
+
+    // Limit stack size
+    if (undoStack.length > MAX_UNDO_STEPS) {
+        undoStack.shift();
+    }
+
+    // Clear redo stack when new action is performed
+    redoStack = [];
+
+    updateUndoRedoButtons();
+}
+
+/**
+ * Undo last action
+ */
+function undo() {
+    if (!fabricCanvas || undoStack.length === 0) return;
+
+    // Save current state to redo stack
+    const currentState = JSON.stringify(fabricCanvas.toJSON());
+    redoStack.push(currentState);
+
+    // Restore previous state
+    const previousState = undoStack.pop();
+    fabricCanvas.loadFromJSON(previousState, function() {
+        fabricCanvas.renderAll();
+        updateUndoRedoButtons();
+    });
+}
+
+/**
+ * Redo last undone action
+ */
+function redo() {
+    if (!fabricCanvas || redoStack.length === 0) return;
+
+    // Save current state to undo stack
+    const currentState = JSON.stringify(fabricCanvas.toJSON());
+    undoStack.push(currentState);
+
+    // Restore next state
+    const nextState = redoStack.pop();
+    fabricCanvas.loadFromJSON(nextState, function() {
+        fabricCanvas.renderAll();
+        updateUndoRedoButtons();
+    });
+}
+
+/**
+ * Update undo/redo button states
+ */
+function updateUndoRedoButtons() {
+    $('#undoAnnotation').prop('disabled', undoStack.length === 0);
+    $('#redoAnnotation').prop('disabled', redoStack.length === 0);
+}
+
+/**
+ * Add spotlight effect to canvas
+ */
+function addSpotlight() {
+    if (!fabricCanvas) return;
+
+    saveToUndoStack();
+
+    const centerX = fabricCanvas.width / 2;
+    const centerY = fabricCanvas.height / 2;
+
+    // Create spotlight circle with glow effect
+    const spotlight = new fabric.Circle({
+        left: centerX,
+        top: centerY,
+        radius: 80,
+        fill: 'transparent',
+        stroke: '#00B7B5',
+        strokeWidth: 4,
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        evented: true,
+        shadow: new fabric.Shadow({
+            color: 'rgba(0, 183, 181, 0.6)',
+            blur: 20,
+            offsetX: 0,
+            offsetY: 0
+        })
+    });
+
+    // Add inner glow ring
+    const innerRing = new fabric.Circle({
+        left: centerX,
+        top: centerY,
+        radius: 75,
+        fill: 'transparent',
+        stroke: 'rgba(0, 183, 181, 0.3)',
+        strokeWidth: 8,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false
+    });
+
+    const spotlightGroup = new fabric.Group([innerRing, spotlight], {
+        left: centerX,
+        top: centerY,
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        evented: true
+    });
+
+    fabricCanvas.add(spotlightGroup);
+    fabricCanvas.setActiveObject(spotlightGroup);
+    fabricCanvas.renderAll();
+    hasTemporaryDrawing = true;
+}
+
+/**
+ * Add symbol to canvas
+ */
+function addSymbol(symbolType) {
+    if (!fabricCanvas) return;
+
+    saveToUndoStack();
+
+    const centerX = fabricCanvas.width / 2;
+    const centerY = fabricCanvas.height / 2;
+
+    let symbol;
+
+    switch(symbolType) {
+        case 'tackle':
+            // Impact/tackle symbol - starburst
+            const points = [];
+            const outerRadius = 25;
+            const innerRadius = 12;
+            const spikes = 8;
+
+            for (let i = 0; i < spikes * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = (Math.PI / spikes) * i - Math.PI / 2;
+                points.push({
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+
+            symbol = new fabric.Polygon(points, {
+                fill: '#dc3545',
+                stroke: '#fff',
+                strokeWidth: 2,
+                originX: 'center',
+                originY: 'center',
+                shadow: new fabric.Shadow({
+                    color: 'rgba(220, 53, 69, 0.5)',
+                    blur: 10,
+                    offsetX: 0,
+                    offsetY: 0
+                })
+            });
+            break;
+
+        case 'ball':
+            // Rugby ball shape (ellipse)
+            symbol = new fabric.Ellipse({
+                left: centerX,
+                top: centerY,
+                rx: 20,
+                ry: 12,
+                fill: '#8B4513',
+                stroke: '#fff',
+                strokeWidth: 2,
+                originX: 'center',
+                originY: 'center',
+                angle: -30
+            });
+            break;
+
+        case 'x':
+            // X mark for errors
+            const line1 = new fabric.Line([-15, -15, 15, 15], {
+                stroke: '#dc3545',
+                strokeWidth: 6,
+                strokeLineCap: 'round'
+            });
+            const line2 = new fabric.Line([15, -15, -15, 15], {
+                stroke: '#dc3545',
+                strokeWidth: 6,
+                strokeLineCap: 'round'
+            });
+            symbol = new fabric.Group([line1, line2], {
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.4)',
+                    blur: 4,
+                    offsetX: 2,
+                    offsetY: 2
+                })
+            });
+            break;
+
+        case 'check':
+            // Checkmark for correct actions
+            const checkPath = new fabric.Path('M -12 0 L -4 10 L 15 -12', {
+                fill: 'transparent',
+                stroke: '#28a745',
+                strokeWidth: 6,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            symbol = new fabric.Group([checkPath], {
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.4)',
+                    blur: 4,
+                    offsetX: 2,
+                    offsetY: 2
+                })
+            });
+            break;
+
+        default:
+            return;
+    }
+
+    if (symbol) {
+        symbol.set({
+            selectable: true,
+            evented: true
+        });
+        fabricCanvas.add(symbol);
+        fabricCanvas.setActiveObject(symbol);
+        fabricCanvas.renderAll();
+        hasTemporaryDrawing = true;
+    }
+}
+
+/**
  * Enter annotation mode
  */
 function enterAnnotationMode() {
@@ -319,6 +806,15 @@ export function exitAnnotationMode() {
     // Reset state
     currentDisplayedAnnotations = [];
     hasTemporaryDrawing = false;
+
+    // Clear area state
+    areaPoints = [];
+    areaPreviewPath = null;
+
+    // Clear undo/redo stacks
+    undoStack = [];
+    redoStack = [];
+    updateUndoRedoButtons();
 
     // Re-check for saved annotations at current time
     setTimeout(() => checkAndShowAnnotations(), 100);
