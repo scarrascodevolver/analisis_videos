@@ -442,6 +442,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const BALL_OFFSET_X = 25; // El balón va adelante del jugador
     const BALL_OFFSET_Y = 0;
 
+    // Sistema de animación de pases
+    let activePass = null; // { from, to, startFrame, duration, startPos }
+    const PASS_DURATION_FRAMES = 20; // ~333ms a 60fps
+
     // Cargar jugadas
     async function loadPlays() {
         try {
@@ -682,6 +686,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Función de easing (easeOutQuad)
+    function easeOutQuad(t) {
+        return t * (2 - t);
+    }
+
     // Reproducir animación
     document.getElementById('btnViewerPlay').addEventListener('click', function() {
         if (!currentPlayData || !currentPlayData.data) return;
@@ -701,23 +710,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Cancelar animación anterior
         if (animationId) cancelAnimationFrame(animationId);
 
-        // Resetear posiciones
+        // Resetear posiciones y estado de pases
         initPositions(data);
+        activePass = null;
 
         const totalFrames = 120;
         let frame = 0;
 
         // Sistema de pases SECUENCIALES
-        // Cada pase divide el tiempo: si hay 2 pases, pase1 en 33%, pase2 en 66%
         const numPasses = passes.length;
         const passFrames = [];
         if (numPasses > 0) {
             for (let i = 0; i < numPasses; i++) {
-                // Distribuir pases uniformemente en el 80% de la animación
-                const passFrame = Math.floor(((i + 1) / (numPasses + 1)) * totalFrames * 0.85);
+                // Distribuir pases, dejando espacio para la animación del pase
+                const passFrame = Math.floor(((i + 1) / (numPasses + 1)) * totalFrames * 0.80);
                 passFrames.push({
                     ...passes[i],
                     triggerFrame: passFrame,
+                    started: false,
                     completed: false
                 });
             }
@@ -753,17 +763,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Procesar pases SECUENCIALES
+            // Iniciar pases cuando llegue su momento
             passFrames.forEach(pass => {
-                if (!pass.completed && frame >= pass.triggerFrame) {
-                    console.log(`   🏈 Pase ejecutado: ${pass.from} → ${pass.to} (frame ${frame})`);
-                    currentBallHolder = pass.to;
-                    pass.completed = true;
+                if (!pass.started && frame >= pass.triggerFrame) {
+                    console.log(`   🏈 Pase iniciado: ${pass.from} → ${pass.to} (frame ${frame})`);
+                    // Guardar posición inicial del balón para la animación
+                    const fromPos = currentPositions[pass.from] || currentPositions['ball'];
+                    activePass = {
+                        from: pass.from,
+                        to: pass.to,
+                        startFrame: frame,
+                        startPos: { x: fromPos.x + BALL_OFFSET_X * scaleX, y: fromPos.y }
+                    };
+                    pass.started = true;
                 }
             });
 
-            // Actualizar posición del balón según el poseedor actual
-            if (currentBallHolder && currentPositions[currentBallHolder]) {
+            // Animar el pase activo (balón volando)
+            if (activePass) {
+                const passProgress = (frame - activePass.startFrame) / PASS_DURATION_FRAMES;
+
+                if (passProgress >= 1) {
+                    // Pase completado
+                    console.log(`   ✓ Pase completado → ${activePass.to}`);
+                    currentBallHolder = activePass.to;
+                    activePass = null;
+                } else {
+                    // Balón en vuelo - interpolar hacia el receptor
+                    const toPos = currentPositions[activePass.to];
+                    if (toPos) {
+                        const easedProgress = easeOutQuad(passProgress);
+                        const targetX = toPos.x + BALL_OFFSET_X * scaleX;
+                        const targetY = toPos.y + BALL_OFFSET_Y * scaleY;
+
+                        currentPositions['ball'] = {
+                            x: activePass.startPos.x + (targetX - activePass.startPos.x) * easedProgress,
+                            y: activePass.startPos.y + (targetY - activePass.startPos.y) * easedProgress
+                        };
+                    }
+                }
+            }
+
+            // Si no hay pase activo, el balón sigue al poseedor
+            if (!activePass && currentBallHolder && currentPositions[currentBallHolder]) {
                 const holderPos = currentPositions[currentBallHolder];
                 currentPositions['ball'] = {
                     x: holderPos.x + BALL_OFFSET_X * scaleX,
@@ -816,33 +858,29 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const totalFrames = 60;
+            const GIF_PASS_DURATION = 10; // Frames para animación de pase en GIF
 
             // Sistema de pases SECUENCIALES para GIF
             const numPasses = passes.length;
             const passFrames = [];
             for (let i = 0; i < numPasses; i++) {
-                const passFrame = Math.floor(((i + 1) / (numPasses + 1)) * totalFrames * 0.85);
+                const passFrame = Math.floor(((i + 1) / (numPasses + 1)) * totalFrames * 0.80);
                 passFrames.push({
                     ...passes[i],
-                    triggerFrame: passFrame
+                    triggerFrame: passFrame,
+                    endFrame: passFrame + GIF_PASS_DURATION
                 });
             }
+
+            // Poseedor inicial
+            let gifBallHolder = passes.length > 0 ? passes[0].from : currentBallHolder;
+            let gifActivePass = null;
 
             for (let frame = 0; frame <= totalFrames; frame++) {
                 const progress = frame / totalFrames;
 
                 // Resetear posiciones para este frame
                 initPositions(data);
-
-                // Determinar poseedor inicial
-                let frameHolder = passes.length > 0 ? passes[0].from : currentBallHolder;
-
-                // Simular pases hasta este frame
-                passFrames.forEach(pass => {
-                    if (frame >= pass.triggerFrame) {
-                        frameHolder = pass.to;
-                    }
-                });
 
                 // Calcular posiciones animadas para este frame
                 playerMovements.forEach(m => {
@@ -861,9 +899,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
-                // Actualizar posición del balón según el poseedor de este frame
-                if (frameHolder && currentPositions[frameHolder]) {
-                    const holderPos = currentPositions[frameHolder];
+                // Verificar si hay un pase que deba iniciar
+                passFrames.forEach(pass => {
+                    if (frame >= pass.triggerFrame && frame < pass.endFrame && !gifActivePass) {
+                        const fromPos = currentPositions[pass.from];
+                        if (fromPos) {
+                            gifActivePass = {
+                                ...pass,
+                                startPos: { x: fromPos.x + BALL_OFFSET_X * scaleX, y: fromPos.y }
+                            };
+                        }
+                    }
+                });
+
+                // Animar pase activo
+                if (gifActivePass) {
+                    const passProgress = (frame - gifActivePass.triggerFrame) / GIF_PASS_DURATION;
+
+                    if (passProgress >= 1) {
+                        gifBallHolder = gifActivePass.to;
+                        gifActivePass = null;
+                    } else {
+                        const toPos = currentPositions[gifActivePass.to];
+                        if (toPos) {
+                            const easedProgress = easeOutQuad(passProgress);
+                            const targetX = toPos.x + BALL_OFFSET_X * scaleX;
+                            const targetY = toPos.y + BALL_OFFSET_Y * scaleY;
+
+                            currentPositions['ball'] = {
+                                x: gifActivePass.startPos.x + (targetX - gifActivePass.startPos.x) * easedProgress,
+                                y: gifActivePass.startPos.y + (targetY - gifActivePass.startPos.y) * easedProgress
+                            };
+                        }
+                    }
+                }
+
+                // Si no hay pase activo, balón sigue al poseedor
+                if (!gifActivePass && gifBallHolder && currentPositions[gifBallHolder]) {
+                    const holderPos = currentPositions[gifBallHolder];
                     currentPositions['ball'] = {
                         x: holderPos.x + BALL_OFFSET_X * scaleX,
                         y: holderPos.y + BALL_OFFSET_Y * scaleY
