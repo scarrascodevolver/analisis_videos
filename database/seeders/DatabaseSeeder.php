@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             RugbySituationSeeder::class,
             PlayersSeeder::class,
+            PaymentSystemSeeder::class,
         ]);
 
         // Create sample users with different roles
