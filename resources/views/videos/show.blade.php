@@ -657,17 +657,19 @@
 
 @section('js')
 <!-- Video Player Configuration -->
+@php
+    $currentOrgId = auth()->user()->currentOrganization()?->id;
+    $orgUsers = \App\Models\User::select('id', 'name', 'role')
+        ->whereHas('organizations', fn($q) => $q->where('organizations.id', $currentOrgId))
+        ->get();
+@endphp
 <script>
 window.VideoPlayer = {
     config: {
         videoId: {{ $video->id }},
         csrfToken: '{{ csrf_token() }}',
         comments: @json($comments),
-        allUsers: @json(\App\Models\User::select('id', 'name', 'role')
-            ->whereHas('organizations', function($q) {
-                $q->where('organizations.id', auth()->user()->currentOrganization()?->id);
-            })
-            ->get()),
+        allUsers: @json($orgUsers),
         user: {
             id: {{ auth()->id() }},
             name: '{{ auth()->user()->name }}',
