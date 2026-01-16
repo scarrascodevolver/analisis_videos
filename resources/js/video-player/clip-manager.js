@@ -192,7 +192,7 @@ async function loadClips() {
         const response = await fetch(config.routes.clips);
         clips = await response.json();
 
-        renderClipsList();
+        // Solo actualizar contadores - el renderizado lo hace show.blade.php
         updateClipCount();
     } catch (error) {
         console.error('Error loading clips:', error);
@@ -238,6 +238,9 @@ function renderClipsList(clipsToShow = null) {
             </div>
             <div class="clip-actions">
                 ${clip.is_highlight ? '<i class="fas fa-star text-warning mr-2" title="Destacado"></i>' : ''}
+                <button class="btn btn-sm btn-outline-info export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}" title="Exportar GIF">
+                    <i class="fas fa-file-image"></i>
+                </button>
                 <button class="btn btn-sm btn-outline-danger delete-clip-btn" data-clip-id="${clip.id}" title="Eliminar">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -264,6 +267,17 @@ function renderClipsList(clipsToShow = null) {
             if (confirm('¿Eliminar este clip?')) {
                 await deleteClip(parseInt(btn.dataset.clipId));
             }
+        });
+    });
+
+    // Add click handlers for GIF export
+    container.querySelectorAll('.export-gif-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const startTime = parseFloat(btn.dataset.start);
+            const endTime = parseFloat(btn.dataset.end);
+            const title = btn.dataset.title;
+            await exportClipAsGif(startTime, endTime, title, btn);
         });
     });
 }
@@ -652,12 +666,16 @@ async function createClip(category) {
 
         if (data.success) {
             clips.push(data.clip);
-            renderClipsList();
             updateClipCount();
             showNotification(`Clip "${category.name}" creado (${formatTime(Math.floor(startTime))} - ${formatTime(Math.floor(endTime))})`, 'success');
 
             // Flash the button
             flashButton(category.id);
+
+            // Refresh sidebar
+            if (typeof window.refreshSidebarClips === 'function') {
+                window.refreshSidebarClips();
+            }
         } else {
             showNotification('Error al crear clip', 'error');
         }
@@ -687,11 +705,10 @@ async function deleteClip(clipId) {
 
         if (data.success) {
             clips = clips.filter(c => c.id !== clipId);
-            renderClipsList();
             updateClipCount();
             showNotification('Clip eliminado', 'info');
 
-            // Refresh sidebar clips if available
+            // Refresh sidebar
             if (typeof window.refreshSidebarClips === 'function') {
                 window.refreshSidebarClips();
             }
@@ -952,6 +969,151 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Export a clip as GIF
+ * Uses gif.js library to capture video frames and generate GIF
+ */
+async function exportClipAsGif(startTime, endTime, title, buttonEl) {
+    const video = getVideo();
+    if (!video) {
+        showNotification('No se encontró el video', 'error');
+        return;
+    }
+
+    // Check if GIF library is loaded
+    if (typeof GIF === 'undefined') {
+        showNotification('Librería GIF no disponible', 'error');
+        return;
+    }
+
+    // Show loading state
+    const originalContent = buttonEl.innerHTML;
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    showNotification('Generando GIF... esto puede tardar unos segundos', 'info');
+
+    // Save current video state
+    const wasPlaying = !video.paused;
+    const originalTime = video.currentTime;
+    video.pause();
+
+    // Calculate dimensions (maintain aspect ratio, max 480px width)
+    const maxWidth = 480;
+    const scale = Math.min(1, maxWidth / video.videoWidth);
+    const width = Math.floor(video.videoWidth * scale);
+    const height = Math.floor(video.videoHeight * scale);
+
+    // Create canvas for frame capture
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // GIF settings
+    const fps = 10; // frames per second
+    const frameInterval = 1 / fps;
+    const duration = endTime - startTime;
+    const totalFrames = Math.min(Math.floor(duration * fps), 100); // Max 100 frames
+
+    // Initialize GIF encoder
+    const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        width: width,
+        height: height,
+        workerScript: '/js/gif.worker.js'
+    });
+
+    // Capture frames
+    let framesAdded = 0;
+
+    try {
+        for (let i = 0; i < totalFrames; i++) {
+            const frameTime = startTime + (i * frameInterval);
+
+            // Seek to frame time
+            await seekToTime(video, frameTime);
+
+            // Draw frame to canvas
+            ctx.drawImage(video, 0, 0, width, height);
+
+            // Add frame to GIF
+            gif.addFrame(ctx, { copy: true, delay: Math.floor(1000 / fps) });
+            framesAdded++;
+
+            // Update progress
+            if (i % 10 === 0) {
+                buttonEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${Math.floor((i / totalFrames) * 100)}%`;
+            }
+        }
+
+        // Render GIF
+        buttonEl.innerHTML = '<i class="fas fa-cog fa-spin"></i>';
+
+        gif.on('finished', function(blob) {
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${sanitizeFilename(title)}_${formatTime(Math.floor(startTime))}-${formatTime(Math.floor(endTime))}.gif`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Restore button
+            buttonEl.disabled = false;
+            buttonEl.innerHTML = originalContent;
+            showNotification(`GIF exportado correctamente (${framesAdded} frames)`, 'success');
+
+            // Restore video state
+            video.currentTime = originalTime;
+            if (wasPlaying) video.play();
+        });
+
+        gif.on('progress', function(p) {
+            buttonEl.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${Math.floor(p * 100)}%`;
+        });
+
+        gif.render();
+
+    } catch (error) {
+        console.error('Error exporting GIF:', error);
+        buttonEl.disabled = false;
+        buttonEl.innerHTML = originalContent;
+        showNotification('Error al exportar GIF', 'error');
+
+        // Restore video state
+        video.currentTime = originalTime;
+        if (wasPlaying) video.play();
+    }
+}
+
+/**
+ * Promise-based video seek
+ */
+function seekToTime(video, time) {
+    return new Promise((resolve) => {
+        const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            // Small delay to ensure frame is rendered
+            setTimeout(resolve, 50);
+        };
+        video.addEventListener('seeked', onSeeked);
+        video.currentTime = time;
+    });
+}
+
+/**
+ * Sanitize filename for download
+ */
+function sanitizeFilename(name) {
+    return name
+        .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-_]/g, '')
+        .replace(/\s+/g, '_')
+        .substring(0, 50) || 'clip';
+}
 
 // Expose functions globally for external access
 window.loadCategories = loadCategories;

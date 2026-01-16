@@ -928,6 +928,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             </span>
                             <div>
                                 ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                                <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
+                                        style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                        title="Exportar GIF">
+                                    <i class="fas fa-file-image"></i>
+                                </button>
                                 <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
                                         style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                         title="Eliminar clip">
@@ -998,6 +1003,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+
+        // Add click handlers for GIF export buttons
+        document.querySelectorAll('.sidebar-export-gif-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                const startTime = parseFloat(this.dataset.start);
+                const endTime = parseFloat(this.dataset.end);
+                const title = this.dataset.title;
+                await exportClipAsGif(startTime, endTime, title, this);
+            });
+        });
     }
 
     // Filter change
@@ -1014,12 +1030,116 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
+    // Export clip as GIF
+    async function exportClipAsGif(startTime, endTime, title, buttonEl) {
+        const video = document.getElementById('rugbyVideo');
+        if (!video) {
+            alert('No se encontró el video');
+            return;
+        }
+
+        if (typeof GIF === 'undefined') {
+            alert('Librería GIF no disponible. Recarga la página.');
+            return;
+        }
+
+        // Show loading state
+        const originalContent = buttonEl.innerHTML;
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // Save current video state
+        const wasPlaying = !video.paused;
+        const originalTime = video.currentTime;
+        video.pause();
+
+        // Calculate dimensions (max 480px width)
+        const maxWidth = 480;
+        const scale = Math.min(1, maxWidth / video.videoWidth);
+        const width = Math.floor(video.videoWidth * scale);
+        const height = Math.floor(video.videoHeight * scale);
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        // GIF settings
+        const fps = 10;
+        const frameInterval = 1 / fps;
+        const duration = endTime - startTime;
+        const totalFrames = Math.min(Math.floor(duration * fps), 100);
+
+        const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            width: width,
+            height: height,
+            workerScript: '/js/gif.worker.js'
+        });
+
+        let framesAdded = 0;
+
+        try {
+            for (let i = 0; i < totalFrames; i++) {
+                const frameTime = startTime + (i * frameInterval);
+                await seekToTime(video, frameTime);
+                ctx.drawImage(video, 0, 0, width, height);
+                gif.addFrame(ctx, { copy: true, delay: Math.floor(1000 / fps) });
+                framesAdded++;
+
+                if (i % 10 === 0) {
+                    buttonEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+                }
+            }
+
+            buttonEl.innerHTML = '<i class="fas fa-cog fa-spin"></i>';
+
+            gif.on('finished', function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const safeTitle = (title || 'clip').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_').substring(0, 50);
+                a.download = `${safeTitle}_${formatTime(Math.floor(startTime))}-${formatTime(Math.floor(endTime))}.gif`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                buttonEl.disabled = false;
+                buttonEl.innerHTML = originalContent;
+
+                video.currentTime = originalTime;
+                if (wasPlaying) video.play();
+            });
+
+            gif.render();
+
+        } catch (error) {
+            console.error('Error exporting GIF:', error);
+            buttonEl.disabled = false;
+            buttonEl.innerHTML = originalContent;
+            video.currentTime = originalTime;
+            if (wasPlaying) video.play();
+        }
+    }
+
+    function seekToTime(video, time) {
+        return new Promise((resolve) => {
+            const onSeeked = () => {
+                video.removeEventListener('seeked', onSeeked);
+                setTimeout(resolve, 50);
+            };
+            video.addEventListener('seeked', onSeeked);
+            video.currentTime = time;
+        });
+    }
+
     // Expose function to refresh sidebar clips from outside
     window.refreshSidebarClips = function() {
         sidebarClipsData = []; // Reset to force reload
-        if (tabClips && tabClips.style.display !== 'none') {
-            loadSidebarClips();
-        }
+        loadSidebarClips(); // Always reload, even if tab hidden (data will be ready when shown)
     };
 
     // Auto-cargar clips al inicio si el tab está visible (para analistas)
@@ -1034,6 +1154,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">
 <script src="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.min.js"></script>
 
+<!-- GIF.js for clip export -->
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
 
 <!-- Video Player Styles -->
 <link rel="stylesheet" href="{{ asset('css/video-player.css') }}">
