@@ -166,6 +166,9 @@ function setupCanvasEvents() {
             return;
         }
 
+        // Modo selección - no dibujar, solo permitir seleccionar/mover objetos
+        if (currentTool === 'select') return;
+
         if (currentTool === 'free_draw') return;
 
         if (currentTool === 'text') {
@@ -647,6 +650,10 @@ function addSpotlight() {
     fabricCanvas.setActiveObject(spotlightGroup);
     fabricCanvas.renderAll();
     hasTemporaryDrawing = true;
+
+    // Cambiar a modo selección para evitar dibujar accidentalmente
+    currentTool = 'select';
+    $('.toolbar-btn[data-tool]').removeClass('active');
 }
 
 /**
@@ -772,6 +779,10 @@ function addSymbol(symbolType) {
         fabricCanvas.setActiveObject(symbol);
         fabricCanvas.renderAll();
         hasTemporaryDrawing = true;
+
+        // Cambiar a modo selección para evitar dibujar accidentalmente
+        currentTool = 'select';
+        $('.toolbar-btn[data-tool]').removeClass('active');
     }
 }
 
