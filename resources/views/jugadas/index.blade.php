@@ -967,19 +967,23 @@ document.addEventListener('DOMContentLoaded', function() {
 {{-- ═══════════════════════════════════════════════════════════ --}}
 {{-- SCRIPTS PARA VISTA EDITOR (analista/entrenador)             --}}
 {{-- ═══════════════════════════════════════════════════════════ --}}
+@php
+    // Version para cache-busting (cambiar al hacer deploy)
+    $jsVersion = '2026.01.16';
+@endphp
 <script>
     const isMobileView = window.innerWidth < 992;
 </script>
-<script src="{{ asset('jugadas-static/js/app.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/field.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/players.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/ball.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/movements.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/animation.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/passes.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/formations.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/storage.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/export.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('jugadas-static/js/events.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('jugadas-static/js/app.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/field.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/players.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/ball.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/movements.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/animation.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/passes.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/formations.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/storage.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/export.js') }}?v={{ $jsVersion }}"></script>
+<script src="{{ asset('jugadas-static/js/events.js') }}?v={{ $jsVersion }}"></script>
 @endif
 @endsection
