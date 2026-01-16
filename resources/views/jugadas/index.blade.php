@@ -495,73 +495,38 @@ document.addEventListener('DOMContentLoaded', function() {
         viewerCanvas.width = 800;
         viewerCanvas.height = 500;
 
-        // Renderizar estado inicial
-        renderPlayState(play.data);
-        saveOriginalPositions(play.data);
+        // Inicializar posiciones y renderizar estado inicial
+        initPositions(play.data);
+        render(play.data);
 
         $(modal).modal('show');
     }
 
-    // Guardar posiciones originales para reset
-    function saveOriginalPositions(data) {
-        originalPositions = {};
+    // Posiciones actuales para animación
+    let currentPositions = {};
+
+    // Inicializar posiciones desde los datos
+    function initPositions(data) {
+        currentPositions = {};
         if (data.players) {
             data.players.forEach(p => {
-                originalPositions['player_' + p.number] = { x: p.x, y: p.y };
+                currentPositions[p.number] = { x: p.x, y: p.y };
             });
         }
         if (data.ball) {
-            originalPositions['ball'] = { x: data.ball.x, y: data.ball.y };
+            currentPositions['ball'] = { x: data.ball.x, y: data.ball.y };
         }
     }
 
-    // Renderizar estado de la jugada
-    function renderPlayState(data) {
-        // Limpiar canvas
+    // Renderizar estado actual
+    function render(data) {
+        // Limpiar canvas con color de campo
         ctx.fillStyle = '#2d5a27';
         ctx.fillRect(0, 0, viewerCanvas.width, viewerCanvas.height);
 
         // Dibujar líneas del campo
-        drawFieldLines();
-
-        // Dibujar movimientos (líneas)
-        if (data.movements) {
-            data.movements.forEach(m => {
-                ctx.beginPath();
-                ctx.strokeStyle = m.type === 'pass' ? '#ffc107' : '#00B7B5';
-                ctx.lineWidth = 2;
-                ctx.setLineDash(m.type === 'pass' ? [5, 5] : []);
-
-                const points = m.points || [{ x: m.startX, y: m.startY }, { x: m.endX, y: m.endY }];
-                if (points.length > 0) {
-                    ctx.moveTo(points[0].x, points[0].y);
-                    points.forEach(p => ctx.lineTo(p.x, p.y));
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);
-            });
-        }
-
-        // Dibujar jugadores
-        if (data.players) {
-            data.players.forEach(p => {
-                const pos = originalPositions['player_' + p.number] || p;
-                drawPlayer(pos.x, pos.y, p.number, p.color || '#00B7B5');
-            });
-        }
-
-        // Dibujar balón
-        if (data.ball) {
-            const pos = originalPositions['ball'] || data.ball;
-            drawBall(pos.x, pos.y);
-        }
-    }
-
-    // Dibujar líneas del campo
-    function drawFieldLines() {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.lineWidth = 2;
-        // Líneas horizontales
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
         for (let i = 0; i <= 10; i++) {
             const x = (viewerCanvas.width / 10) * i;
             ctx.beginPath();
@@ -569,87 +534,133 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.lineTo(x, viewerCanvas.height);
             ctx.stroke();
         }
-    }
 
-    // Dibujar jugador
-    function drawPlayer(x, y, number, color) {
-        ctx.beginPath();
-        ctx.arc(x, y, 18, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Dibujar trayectorias de movimiento (líneas punteadas)
+        if (data.movements) {
+            data.movements.forEach(m => {
+                if (m.type === 'movement' && m.points && m.points.length > 1) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(0, 183, 181, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(m.points[0].x, m.points[0].y);
+                    m.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+        }
 
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(number, x, y);
-    }
+        // Dibujar jugadores
+        if (data.players) {
+            data.players.forEach(p => {
+                const pos = currentPositions[p.number] || { x: p.x, y: p.y };
+                const color = p.type === 'forward' ? '#dc3545' : '#007bff';
 
-    // Dibujar balón
-    function drawBall(x, y) {
-        ctx.beginPath();
-        ctx.ellipse(x, y, 12, 8, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#8B4513';
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+                // Círculo del jugador
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 16, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Número
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(p.number, pos.x, pos.y);
+            });
+        }
+
+        // Dibujar balón
+        if (data.ball) {
+            const pos = currentPositions['ball'] || { x: data.ball.x, y: data.ball.y };
+            ctx.beginPath();
+            ctx.ellipse(pos.x, pos.y, 10, 7, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#8B4513';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
     }
 
     // Reproducir animación
     document.getElementById('btnViewerPlay').addEventListener('click', function() {
-        if (!currentPlayData || !currentPlayData.data.movements) return;
+        if (!currentPlayData || !currentPlayData.data) return;
 
-        const movements = currentPlayData.data.movements;
-        let currentStep = 0;
-        const totalSteps = 60; // frames de animación
+        const data = currentPlayData.data;
+        const movements = data.movements || [];
+
+        if (movements.length === 0) {
+            alert('Esta jugada no tiene movimientos animados');
+            return;
+        }
+
+        // Cancelar animación anterior
+        if (animationId) cancelAnimationFrame(animationId);
+
+        // Resetear posiciones
+        initPositions(data);
+
+        const totalFrames = 90;
+        let frame = 0;
 
         function animate() {
-            currentStep++;
-            const progress = currentStep / totalSteps;
+            frame++;
+            const progress = Math.min(frame / totalFrames, 1);
 
-            // Actualizar posiciones
+            // Animar cada movimiento
             movements.forEach(m => {
-                const targetKey = m.playerId ? 'player_' + m.playerId : (m.targetType === 'ball' ? 'ball' : null);
-                if (targetKey && originalPositions[targetKey]) {
-                    const start = originalPositions[targetKey];
-                    const endX = m.endX || (m.points ? m.points[m.points.length - 1].x : start.x);
-                    const endY = m.endY || (m.points ? m.points[m.points.length - 1].y : start.y);
+                if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
+                    // Obtener posición inicial del jugador
+                    const player = data.players.find(p => p.number === m.playerId);
+                    if (!player) return;
 
-                    originalPositions[targetKey] = {
-                        x: start.x + (endX - start.x) * progress,
-                        y: start.y + (endY - start.y) * progress
+                    // Interpolar a lo largo del path
+                    const pathLength = m.points.length - 1;
+                    const pathProgress = progress * pathLength;
+                    const segmentIndex = Math.min(Math.floor(pathProgress), pathLength - 1);
+                    const segmentProgress = pathProgress - segmentIndex;
+
+                    const startPoint = m.points[segmentIndex];
+                    const endPoint = m.points[segmentIndex + 1] || startPoint;
+
+                    currentPositions[m.playerId] = {
+                        x: startPoint.x + (endPoint.x - startPoint.x) * segmentProgress,
+                        y: startPoint.y + (endPoint.y - startPoint.y) * segmentProgress
                     };
                 }
             });
 
-            renderPlayState(currentPlayData.data);
+            render(data);
 
-            if (currentStep < totalSteps) {
+            if (frame < totalFrames) {
                 animationId = requestAnimationFrame(animate);
             }
         }
 
-        // Reset y comenzar
-        saveOriginalPositions(currentPlayData.data);
         animate();
     });
 
     // Reiniciar
     document.getElementById('btnViewerReset').addEventListener('click', function() {
         if (animationId) cancelAnimationFrame(animationId);
-        if (currentPlayData) {
-            saveOriginalPositions(currentPlayData.data);
-            renderPlayState(currentPlayData.data);
+        if (currentPlayData && currentPlayData.data) {
+            initPositions(currentPlayData.data);
+            render(currentPlayData.data);
         }
     });
 
     // Exportar GIF
     document.getElementById('btnViewerExportGif').addEventListener('click', async function() {
-        if (!currentPlayData) return;
+        if (!currentPlayData || !currentPlayData.data) return;
+
+        const data = currentPlayData.data;
+        const movements = data.movements || [];
 
         const btn = this;
         btn.disabled = true;
@@ -664,34 +675,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 workerScript: '/js/gif.worker.js'
             });
 
-            // Reset posiciones
-            saveOriginalPositions(currentPlayData.data);
-
-            const movements = currentPlayData.data.movements || [];
-            const totalFrames = 30;
+            const totalFrames = 45;
 
             for (let frame = 0; frame <= totalFrames; frame++) {
                 const progress = frame / totalFrames;
 
-                // Actualizar posiciones para este frame
+                // Resetear y calcular posiciones para este frame
+                initPositions(data);
+
                 movements.forEach(m => {
-                    const targetKey = m.playerId ? 'player_' + m.playerId : (m.targetType === 'ball' ? 'ball' : null);
-                    if (targetKey) {
-                        const start = currentPlayData.data.players?.find(p => 'player_' + p.number === targetKey) ||
-                                      (targetKey === 'ball' ? currentPlayData.data.ball : null);
-                        if (start) {
-                            const endX = m.endX || (m.points ? m.points[m.points.length - 1].x : start.x);
-                            const endY = m.endY || (m.points ? m.points[m.points.length - 1].y : start.y);
-                            originalPositions[targetKey] = {
-                                x: start.x + (endX - start.x) * progress,
-                                y: start.y + (endY - start.y) * progress
-                            };
-                        }
+                    if (m.type === 'movement' && m.playerId && m.points && m.points.length > 1) {
+                        const pathLength = m.points.length - 1;
+                        const pathProgress = progress * pathLength;
+                        const segmentIndex = Math.min(Math.floor(pathProgress), pathLength - 1);
+                        const segmentProgress = pathProgress - segmentIndex;
+
+                        const startPoint = m.points[segmentIndex];
+                        const endPoint = m.points[segmentIndex + 1] || startPoint;
+
+                        currentPositions[m.playerId] = {
+                            x: startPoint.x + (endPoint.x - startPoint.x) * segmentProgress,
+                            y: startPoint.y + (endPoint.y - startPoint.y) * segmentProgress
+                        };
                     }
                 });
 
-                renderPlayState(currentPlayData.data);
-                gif.addFrame(ctx, { copy: true, delay: 100 });
+                render(data);
+                gif.addFrame(ctx, { copy: true, delay: 80 });
             }
 
             gif.on('finished', function(blob) {
