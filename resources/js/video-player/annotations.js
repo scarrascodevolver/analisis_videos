@@ -763,7 +763,12 @@ function addSymbol(symbolType) {
     if (symbol) {
         symbol.set({
             selectable: true,
-            evented: true
+            evented: true,
+            hasControls: false, // Sin controles de escala (más fácil de mover)
+            hasBorders: true,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true
         });
         fabricCanvas.add(symbol);
         fabricCanvas.setActiveObject(symbol);
