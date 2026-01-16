@@ -242,9 +242,6 @@
                         <button id="btnViewerPlay" class="btn btn-success">
                             <i class="fas fa-play"></i> Reproducir
                         </button>
-                        <button id="btnViewerReset" class="btn btn-secondary">
-                            <i class="fas fa-undo"></i> Reiniciar
-                        </button>
                         <button id="btnViewerExportGif" class="btn btn-info">
                             <i class="fas fa-file-image"></i> Descargar GIF
                         </button>
@@ -823,15 +820,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         animate();
-    });
-
-    // Reiniciar
-    document.getElementById('btnViewerReset').addEventListener('click', function() {
-        if (animationId) cancelAnimationFrame(animationId);
-        if (currentPlayData && currentPlayData.data) {
-            initPositions(currentPlayData.data);
-            render(currentPlayData.data);
-        }
     });
 
     // Exportar GIF
