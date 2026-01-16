@@ -240,12 +240,14 @@
                     </div>
                     <div class="modal-footer border-top border-secondary">
                         <button id="btnViewerPlay" class="btn btn-success">
-                            <i class="fas fa-play"></i> Reproducir
+                            <i class="fas fa-play-circle"></i> Reproducir Jugada
                         </button>
-                        <button id="btnViewerExportGif" class="btn btn-info">
+                        <button id="btnViewerExportGif" class="btn btn-warning">
                             <i class="fas fa-file-image"></i> Descargar GIF
                         </button>
-                        <button type="button" class="btn btn-outline-light" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-outline-light" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -484,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="play-card-actions">
                         <button class="btn btn-sm btn-rugby view-play-btn" data-play='${JSON.stringify(j)}'>
-                            <i class="fas fa-play"></i> Ver
+                            <i class="fas fa-play-circle"></i> Ver Jugada
                         </button>
                     </div>
                 </div>
