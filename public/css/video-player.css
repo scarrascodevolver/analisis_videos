@@ -305,7 +305,7 @@
 
 .speed-control-wrapper {
     position: absolute;
-    bottom: 110px;
+    bottom: 160px;
     right: 15px;
     z-index: 25;
     opacity: 0.3;
@@ -344,9 +344,9 @@
 
 .speed-menu {
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     right: 0;
-    margin-top: 8px;
+    margin-bottom: 8px;
     background: rgba(26, 26, 26, 0.98);
     border-radius: 10px;
     padding: 8px 0;
