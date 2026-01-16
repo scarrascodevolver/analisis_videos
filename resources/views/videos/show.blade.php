@@ -663,7 +663,11 @@ window.VideoPlayer = {
         videoId: {{ $video->id }},
         csrfToken: '{{ csrf_token() }}',
         comments: @json($comments),
-        allUsers: @json(\App\Models\User::select('id', 'name', 'role')->get()),
+        allUsers: @json(\App\Models\User::select('id', 'name', 'role')
+            ->whereHas('organizations', function($q) {
+                $q->where('organizations.id', auth()->user()->currentOrganization()?->id);
+            })
+            ->get()),
         user: {
             id: {{ auth()->id() }},
             name: '{{ auth()->user()->name }}',

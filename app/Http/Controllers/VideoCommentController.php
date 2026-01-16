@@ -134,11 +134,21 @@ class VideoCommentController extends Controller
 
         $mentionedNames = array_unique($matches[1]);
 
-        // Buscar usuarios mencionados por nombre (cualquier rol)
-        $mentionedUsers = User::whereIn('name', $mentionedNames)->get();
+        // Buscar usuarios mencionados por nombre, solo de la misma organización
+        $currentOrg = auth()->user()->currentOrganization();
+
+        if (!$currentOrg) {
+            return; // No hay organización actual
+        }
+
+        $mentionedUsers = User::whereIn('name', $mentionedNames)
+            ->whereHas('organizations', function($query) use ($currentOrg) {
+                $query->where('organizations.id', $currentOrg->id);
+            })
+            ->get();
 
         if ($mentionedUsers->isEmpty()) {
-            return; // Ningún usuario encontrado
+            return; // Ningún usuario encontrado en la organización
         }
 
         foreach ($mentionedUsers as $user) {
