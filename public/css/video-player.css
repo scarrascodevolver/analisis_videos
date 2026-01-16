@@ -305,7 +305,7 @@
 
 .speed-control-wrapper {
     position: absolute;
-    bottom: 70px;
+    bottom: 120px;
     right: 15px;
     z-index: 25;
     opacity: 0.3;
