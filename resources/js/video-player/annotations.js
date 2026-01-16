@@ -248,6 +248,9 @@ function setupToolbarEvents() {
         // Reset area tool state when switching tools
         clearAreaPoints();
 
+        // Mostrar tip para herramienta de área
+        showAreaTip(tool === 'area');
+
         if (fabricCanvas) {
             fabricCanvas.isDrawingMode = false;
             fabricCanvas.selection = false;
@@ -486,6 +489,11 @@ function finishArea() {
 
     clearAreaPoints();
     fabricCanvas.renderAll();
+
+    // Ocultar tip y cambiar a modo selección
+    showAreaTip(false);
+    currentTool = 'select';
+    $('.toolbar-btn[data-tool]').removeClass('active');
 }
 
 /**
@@ -506,6 +514,31 @@ function clearAreaPoints() {
 
     areaPoints = [];
     fabricCanvas.renderAll();
+}
+
+/**
+ * Show/hide area tool tip
+ */
+let areaTipTimeout = null;
+function showAreaTip(show) {
+    const tip = document.getElementById('areaTip');
+    if (!tip) return;
+
+    // Clear any existing timeout
+    if (areaTipTimeout) {
+        clearTimeout(areaTipTimeout);
+        areaTipTimeout = null;
+    }
+
+    if (show) {
+        tip.style.display = 'block';
+        // Auto-hide after 4 seconds
+        areaTipTimeout = setTimeout(() => {
+            tip.style.display = 'none';
+        }, 4000);
+    } else {
+        tip.style.display = 'none';
+    }
 }
 
 /**
@@ -829,8 +862,9 @@ export function exitAnnotationMode() {
         .addClass('btn-rugby-outline')
         .html('<i class="fas fa-paint-brush"></i> Anotar');
 
-    // Hide delete button
+    // Hide delete button and area tip
     $('#deleteAnnotationBtn').hide();
+    showAreaTip(false);
 
     // Reset state
     currentDisplayedAnnotations = [];

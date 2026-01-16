@@ -156,8 +156,14 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        
+
+                        <!-- Tip flotante para herramienta de área -->
+                        <div id="areaTip" class="area-tip" style="display: none;">
+                            <i class="fas fa-lightbulb"></i>
+                            Clic para agregar puntos. <strong>Doble clic</strong> o <strong>Enter</strong> para cerrar.
+                        </div>
+
+
                         <!-- Delete Annotation Button (visible solo cuando hay anotación) -->
                         <button id="deleteAnnotationBtn" class="btn btn-sm btn-danger"
                                 style="position: absolute; top: 10px; right: 10px; z-index: 20; display: none;"

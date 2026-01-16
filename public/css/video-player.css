@@ -267,6 +267,46 @@
     background: rgba(255, 255, 255, 0.15);
 }
 
+/* Area tool tip */
+.area-tip {
+    position: absolute;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 84, 97, 0.98);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 30;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 183, 181, 0.5);
+    animation: tipFadeIn 0.3s ease;
+}
+
+.area-tip i {
+    color: #ffc107;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.area-tip strong {
+    color: #00B7B5;
+    font-weight: 700;
+}
+
+@keyframes tipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 /* Canvas overlay */
 #annotationCanvas {
     cursor: crosshair;
