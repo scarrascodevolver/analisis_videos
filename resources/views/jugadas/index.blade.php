@@ -843,15 +843,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const gif = new GIF({
-                workers: 2,
-                quality: 10,
+                workers: 4,
+                quality: 15,
                 width: viewerCanvas.width,
                 height: viewerCanvas.height,
                 workerScript: '/js/gif.worker.js'
             });
 
-            const totalFrames = 60;
-            const GIF_PASS_DURATION = 10; // Frames para animación de pase en GIF
+            const totalFrames = 45;
+            const GIF_PASS_DURATION = 8; // Frames para animación de pase en GIF
 
             // Sistema de pases SECUENCIALES para GIF
             const numPasses = passes.length;
@@ -937,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 render(data);
-                gif.addFrame(ctx, { copy: true, delay: 70 });
+                gif.addFrame(ctx, { copy: true, delay: 65 });
             }
 
             gif.on('finished', function(blob) {
@@ -1081,9 +1081,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Start recording
             mediaRecorder.start();
 
-            // Animation parameters
-            const MP4_ANIMATION_DURATION = 4000; // 4 seconds
-            const MP4_PASS_DURATION = 300; // ms
+            // Animation parameters (optimized for faster export)
+            const MP4_ANIMATION_DURATION = 2500; // 2.5 seconds
+            const MP4_PASS_DURATION = 200; // ms
             const mp4StartTime = performance.now();
 
             // Setup passes with timing
