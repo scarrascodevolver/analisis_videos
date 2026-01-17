@@ -245,6 +245,9 @@
                         <button id="btnViewerExportGif" class="btn btn-warning">
                             <i class="fas fa-file-image"></i> Descargar GIF
                         </button>
+                        <button id="btnViewerExportMp4" class="btn btn-info">
+                            <i class="fas fa-video"></i> Descargar MP4
+                        </button>
                         <button type="button" class="btn btn-outline-light" data-dismiss="modal">
                             <i class="fas fa-times"></i> Cerrar
                         </button>
@@ -942,7 +945,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = currentPlayData.name.replace(/[^a-zA-Z0-9]/g, '_') + '.gif';
+                // Safari requires anchor to be in DOM for click to work
+                a.style.display = 'none';
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
                 btn.disabled = false;
@@ -955,6 +962,213 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-file-image"></i> Descargar GIF';
             alert('Error al exportar GIF');
+        }
+    });
+
+    // Exportar MP4 usando MediaRecorder
+    document.getElementById('btnViewerExportMp4').addEventListener('click', async function() {
+        if (!currentPlayData || !currentPlayData.data) return;
+
+        const data = currentPlayData.data;
+        const allMovements = data.movements || [];
+
+        const playerMovements = allMovements.filter(m => m.type === 'movement');
+        const passes = allMovements.filter(m => m.type === 'pass');
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Grabando...';
+
+        try {
+            // Check MediaRecorder support
+            if (!window.MediaRecorder) {
+                throw new Error('Tu navegador no soporta grabación de video');
+            }
+
+            // Get canvas stream
+            const stream = viewerCanvas.captureStream(30); // 30 FPS
+
+            // Try to use webm/vp9, fallback to webm/vp8, then webm
+            let mimeType = 'video/webm;codecs=vp9';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm;codecs=vp8';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm';
+                }
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, { mimeType });
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                const filename = currentPlayData.name.replace(/[^a-zA-Z0-9]/g, '_');
+
+                // Try server-side MP4 conversion first
+                try {
+                    const formData = new FormData();
+                    formData.append('video', blob, filename + '.webm');
+                    formData.append('_token', '{{ csrf_token() }}');
+
+                    const response = await fetch('/jugadas/convert-to-mp4', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const mp4Blob = await response.blob();
+                        const url = URL.createObjectURL(mp4Blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename + '.mp4';
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } else {
+                        // Fallback: download WebM directly
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename + '.webm';
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }
+                } catch (conversionError) {
+                    console.warn('MP4 conversion failed, downloading WebM:', conversionError);
+                    // Fallback: download WebM
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename + '.webm';
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-video"></i> Descargar MP4';
+            };
+
+            // Start recording
+            mediaRecorder.start();
+
+            // Animation parameters
+            const ANIMATION_DURATION = 4000; // 4 seconds
+            const PASS_DURATION = 300; // ms
+            const startTime = performance.now();
+
+            // Setup passes with timing
+            const numPasses = passes.length;
+            const passTimes = passes.map((pass, i) => ({
+                ...pass,
+                triggerTime: ((i + 1) / (numPasses + 1)) * ANIMATION_DURATION * 0.80
+            }));
+
+            let mp4BallHolder = passes.length > 0 ? passes[0].from : currentBallHolder;
+            let mp4ActivePass = null;
+
+            function animateForRecording(timestamp) {
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+
+                // Reset positions
+                initPositions(data);
+
+                // Calculate animated positions
+                playerMovements.forEach(m => {
+                    if (m.playerId && m.points && m.points.length > 1) {
+                        const pathLength = m.points.length - 1;
+                        const pathProgress = progress * pathLength;
+                        const segmentIndex = Math.min(Math.floor(pathProgress), pathLength - 1);
+                        const segmentProgress = pathProgress - segmentIndex;
+
+                        const startPoint = m.points[segmentIndex];
+                        const endPoint = m.points[segmentIndex + 1] || startPoint;
+
+                        const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
+                        const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
+                        currentPositions[m.playerId] = scale(interpX, interpY);
+                    }
+                });
+
+                // Check for pass triggers
+                passTimes.forEach(pass => {
+                    if (elapsed >= pass.triggerTime && elapsed < pass.triggerTime + PASS_DURATION && !mp4ActivePass) {
+                        const fromPos = currentPositions[pass.from];
+                        if (fromPos) {
+                            mp4ActivePass = {
+                                ...pass,
+                                startPos: { x: fromPos.x + BALL_OFFSET_X * scaleX, y: fromPos.y },
+                                startTime: elapsed
+                            };
+                        }
+                    }
+                });
+
+                // Animate active pass
+                if (mp4ActivePass) {
+                    const passElapsed = elapsed - mp4ActivePass.startTime;
+                    const passProgress = passElapsed / PASS_DURATION;
+
+                    if (passProgress >= 1) {
+                        mp4BallHolder = mp4ActivePass.to;
+                        mp4ActivePass = null;
+                    } else {
+                        const toPos = currentPositions[mp4ActivePass.to];
+                        if (toPos) {
+                            const easedProgress = easeOutQuad(passProgress);
+                            const targetX = toPos.x + BALL_OFFSET_X * scaleX;
+                            const targetY = toPos.y + BALL_OFFSET_Y * scaleY;
+
+                            currentPositions['ball'] = {
+                                x: mp4ActivePass.startPos.x + (targetX - mp4ActivePass.startPos.x) * easedProgress,
+                                y: mp4ActivePass.startPos.y + (targetY - mp4ActivePass.startPos.y) * easedProgress
+                            };
+                        }
+                    }
+                }
+
+                // Ball follows holder if no active pass
+                if (!mp4ActivePass && mp4BallHolder && currentPositions[mp4BallHolder]) {
+                    const holderPos = currentPositions[mp4BallHolder];
+                    currentPositions['ball'] = {
+                        x: holderPos.x + BALL_OFFSET_X * scaleX,
+                        y: holderPos.y + BALL_OFFSET_Y * scaleY
+                    };
+                }
+
+                render(data);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateForRecording);
+                } else {
+                    // Stop recording after animation completes
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                    }, 100);
+                }
+            }
+
+            requestAnimationFrame(animateForRecording);
+
+        } catch (error) {
+            console.error('Error exportando MP4:', error);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-video"></i> Descargar MP4';
+            alert('Error al exportar video: ' + error.message);
         }
     });
 
