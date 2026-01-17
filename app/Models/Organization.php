@@ -130,6 +130,44 @@ class Organization extends Model
     }
 
     /**
+     * Suscripciones de esta organización
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Pagos de esta organización
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Verificar si tiene suscripción activa
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where('ends_at', '>', now())
+            ->exists();
+    }
+
+    /**
+     * Obtener suscripción activa
+     */
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where('ends_at', '>', now())
+            ->first();
+    }
+
+    /**
      * Scope para organizaciones activas
      */
     public function scopeActive($query)

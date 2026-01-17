@@ -38,7 +38,8 @@
       "WebFetch(domain:www.flow.cl)",
       "WebFetch(domain:developers.flow.cl)",
       "WebFetch(domain:docs.stripe.com)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": []

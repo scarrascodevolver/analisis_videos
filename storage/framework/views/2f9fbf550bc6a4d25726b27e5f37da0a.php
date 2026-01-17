@@ -37,6 +37,52 @@
 
     <style>
         /* ========================================
+           FIX: Prevent horizontal overflow on mobile
+           ======================================== */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        /* Fix dropdown-menu-lg causing overflow on small screens */
+        @media (max-width: 350px) {
+            .dropdown-menu-lg {
+                min-width: auto !important;
+                max-width: calc(100vw - 20px) !important;
+            }
+        }
+
+        /* Fix toast animations causing overflow */
+        #toast-container {
+            max-width: calc(100vw - 40px);
+        }
+
+        /* Ensure wrapper doesn't overflow */
+        .wrapper {
+            overflow-x: hidden;
+        }
+
+        /* Fix content-wrapper on mobile */
+        .content-wrapper {
+            overflow-x: hidden;
+        }
+
+        /* User dropdown responsive on mobile */
+        @media (max-width: 576px) {
+            .user-dropdown-menu {
+                position: absolute;
+                right: 0;
+                left: auto;
+                min-width: 150px;
+            }
+
+            /* Ensure all navbar dropdowns stay within viewport */
+            .navbar .dropdown-menu {
+                max-width: calc(100vw - 20px);
+            }
+        }
+
+        /* ========================================
            VARIABLES CSS CENTRALIZADAS
            ======================================== */
         :root {
@@ -495,14 +541,13 @@
                         role="button" data-toggle="dropdown">
                         <?php if(Auth::user()->profile && Auth::user()->profile->avatar): ?>
                             <img src="<?php echo e(asset('storage/' . Auth::user()->profile->avatar)); ?>" alt="Avatar"
-                                class="img-circle mr-2" style="width: 28px; height: 28px; object-fit: cover;">
+                                class="img-circle" style="width: 28px; height: 28px; object-fit: cover;">
                         <?php else: ?>
-                            <i class="fas fa-user mr-2"></i>
+                            <i class="fas fa-user"></i>
                         <?php endif; ?>
-                        <?php echo e(Auth::user()->name); ?>
-
+                        <span class="d-none d-md-inline ml-2"><?php echo e(Auth::user()->name); ?></span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right">
+                    <div class="dropdown-menu dropdown-menu-right user-dropdown-menu">
                         <a class="dropdown-item" href="<?php echo e(route('profile.show')); ?>">
                             <i class="fas fa-user"></i> Perfil
                         </a>
@@ -631,15 +676,11 @@
                                     <p>Mis Resultados</p>
                                 </a>
                             </li>
-                            <!-- Funcionalidades Futuras -->
+                            <!-- Ver Jugadas (acceso para jugadores) -->
                             <li class="nav-item">
-                                <a href="#" class="nav-link upcoming-feature" data-toggle="modal"
-                                    data-target="#upcomingFeatureModal" data-feature="Jugadas">
+                                <a href="<?php echo e(route('jugadas.index')); ?>" class="nav-link <?php echo e(request()->routeIs('jugadas.*') ? 'active' : ''); ?>">
                                     <i class="nav-icon fas fa-football-ball"></i>
-                                    <p>
-                                        Jugadas
-                                        <span class="badge badge-success right">Próximamente</span>
-                                    </p>
+                                    <p>Jugadas</p>
                                 </a>
                             </li>
                             <li class="nav-item">

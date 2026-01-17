@@ -139,20 +139,20 @@ function showCommentNotification(comment) {
 
     notification.style.cssText = `
         position: absolute;
-        top: 10px;
+        bottom: 0;
         left: ${leftPosition}px;
         transform: translateX(${transformX});
         max-width: ${notificationWidth}px;
         min-width: ${minWidth}px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 2px solid var(--color-accent, #4B9DA9);
+        background: rgba(30, 30, 30, 0.95);
+        border: 2px solid var(--color-accent, #00B7B5);
         border-radius: 12px;
         padding: ${padding};
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         z-index: 1000;
-        animation: fadeIn 0.5s ease;
+        animation: slideUp 0.3s ease;
         pointer-events: auto;
-        backdrop-filter: blur(3px);
+        backdrop-filter: blur(5px);
     `;
 
     notification.innerHTML = `
@@ -166,16 +166,16 @@ function showCommentNotification(comment) {
                         ${comment.priority.charAt(0).toUpperCase() + comment.priority.slice(1)}
                     </span>
                 </div>
-                <p class="mb-2 text-dark" style="font-size: 13px; line-height: 1.3; font-weight: 500;">
+                <p class="mb-2" style="font-size: 13px; line-height: 1.3; font-weight: 500; color: #fff;">
                     ${comment.comment.length > 80 ? comment.comment.substring(0, 80) + '...' : comment.comment}
                 </p>
-                <small class="text-muted" style="font-size: 11px;">
+                <small style="font-size: 11px; color: #aaa;">
                     <i class="fas fa-user"></i> ${comment.user.name}
                     <span class="ml-2"><i class="fas fa-clock"></i> ${formatTime(comment.timestamp_seconds)}</span>
                 </small>
             </div>
-            <button class="btn btn-sm btn-link text-muted p-1 ml-2"
-                    style="font-size: 12px; opacity: 0.8;"
+            <button class="btn btn-sm btn-link p-1 ml-2"
+                    style="font-size: 12px; color: #888;"
                     onclick="closeNotification(${comment.id})"
                     title="Cerrar">
                 <i class="fas fa-times"></i>

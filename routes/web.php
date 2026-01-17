@@ -349,3 +349,57 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::delete('/users/{user}', [App\Http\Controllers\SuperAdminController::class, 'destroyUser'])->name('users.destroy');
     Route::get('/storage', [App\Http\Controllers\SuperAdminController::class, 'storageStats'])->name('storage');
 });
+
+// ======================================
+// SUBSCRIPTION ROUTES
+// ======================================
+// Página pública de precios
+Route::get('/pricing', [App\Http\Controllers\SubscriptionController::class, 'pricing'])->name('subscription.pricing');
+
+// Rutas de checkout (requieren auth)
+Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->group(function () {
+    Route::get('/checkout/{plan}', [App\Http\Controllers\SubscriptionController::class, 'checkout'])->name('checkout');
+    // PayPal
+    Route::post('/paypal/create-order/{plan}', [App\Http\Controllers\SubscriptionController::class, 'createPayPalOrder'])->name('paypal.create');
+    Route::get('/paypal/capture/{plan}', [App\Http\Controllers\SubscriptionController::class, 'capturePayPalOrder'])->name('paypal.capture');
+    // Mercado Pago
+    Route::post('/mercadopago/create-order/{plan}', [App\Http\Controllers\SubscriptionController::class, 'createMercadoPagoOrder'])->name('mercadopago.create');
+    Route::get('/mercadopago/callback/{plan}', [App\Http\Controllers\SubscriptionController::class, 'mercadoPagoCallback'])->name('mercadopago.callback');
+    // Success
+    Route::get('/success/{subscription}', [App\Http\Controllers\SubscriptionController::class, 'success'])->name('success');
+});
+
+// Webhooks de pago (sin auth, usan firma)
+Route::post('/webhooks/paypal', [App\Http\Controllers\SubscriptionController::class, 'paypalWebhook'])->name('webhooks.paypal');
+Route::post('/webhooks/mercadopago', [App\Http\Controllers\SubscriptionController::class, 'mercadoPagoWebhook'])->name('webhooks.mercadopago');
+
+// ======================================
+// OWNER PANEL ROUTES (Payment System)
+// ======================================
+Route::middleware(['auth', 'owner'])->prefix('owner')->name('owner.')->group(function () {
+    // Dashboard de pagos
+    Route::get('/', [App\Http\Controllers\Owner\PaymentReportController::class, 'index'])->name('dashboard');
+    Route::get('/payments', [App\Http\Controllers\Owner\PaymentReportController::class, 'index'])->name('payments.index');
+
+    // Splits (reparto de ingresos)
+    Route::get('/splits', [App\Http\Controllers\Owner\PaymentReportController::class, 'splits'])->name('splits.index');
+    Route::post('/splits/{split}/transfer', [App\Http\Controllers\Owner\PaymentReportController::class, 'markTransferred'])->name('splits.transfer');
+    Route::post('/splits/bulk-transfer', [App\Http\Controllers\Owner\PaymentReportController::class, 'markMultipleTransferred'])->name('splits.bulk-transfer');
+    Route::get('/splits/export', [App\Http\Controllers\Owner\PaymentReportController::class, 'exportCsv'])->name('splits.export');
+
+    // OAuth para conectar cuentas de Mercado Pago de socios (DEBE ir ANTES del resource)
+    Route::prefix('partners/oauth')->name('partners.oauth.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Owner\PartnerOAuthController::class, 'index'])->name('index');
+        Route::get('/connect/{partner}', [App\Http\Controllers\Owner\PartnerOAuthController::class, 'connect'])->name('connect');
+        Route::get('/callback', [App\Http\Controllers\Owner\PartnerOAuthController::class, 'callback'])->name('callback');
+        Route::delete('/disconnect/{partner}', [App\Http\Controllers\Owner\PartnerOAuthController::class, 'disconnect'])->name('disconnect');
+        Route::get('/refresh/{partner}', [App\Http\Controllers\Owner\PartnerOAuthController::class, 'refresh'])->name('refresh');
+    });
+
+    // Gestión de socios (solo owner con can_edit_settings)
+    Route::resource('partners', App\Http\Controllers\Owner\PartnerController::class)->except(['show']);
+
+    // Gestión de planes de suscripción
+    Route::resource('plans', App\Http\Controllers\Owner\PlanController::class);
+    Route::post('/plans/{plan}/toggle', [App\Http\Controllers\Owner\PlanController::class, 'toggle'])->name('plans.toggle');
+});

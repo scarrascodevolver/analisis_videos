@@ -13,6 +13,11 @@ class Partner extends Model
         'role',
         'paypal_email',
         'mercadopago_email',
+        'mp_user_id',
+        'mp_access_token',
+        'mp_refresh_token',
+        'mp_token_expires_at',
+        'mp_connected',
         'split_percentage',
         'is_active',
         'can_edit_settings',
@@ -22,6 +27,8 @@ class Partner extends Model
         'split_percentage' => 'decimal:2',
         'is_active' => 'boolean',
         'can_edit_settings' => 'boolean',
+        'mp_connected' => 'boolean',
+        'mp_token_expires_at' => 'datetime',
     ];
 
     /**
@@ -87,5 +94,38 @@ class Partner extends Model
                 $q->where('status', 'completed');
             })
             ->sum('amount');
+    }
+
+    /**
+     * Verificar si tiene Mercado Pago conectado
+     */
+    public function hasMercadoPagoConnected(): bool
+    {
+        return $this->mp_connected && !empty($this->mp_user_id);
+    }
+
+    /**
+     * Verificar si el token de MP está vigente
+     */
+    public function isMpTokenValid(): bool
+    {
+        if (!$this->mp_access_token || !$this->mp_token_expires_at) {
+            return false;
+        }
+        return $this->mp_token_expires_at->isFuture();
+    }
+
+    /**
+     * Desconectar Mercado Pago
+     */
+    public function disconnectMercadoPago(): void
+    {
+        $this->update([
+            'mp_user_id' => null,
+            'mp_access_token' => null,
+            'mp_refresh_token' => null,
+            'mp_token_expires_at' => null,
+            'mp_connected' => false,
+        ]);
     }
 }
