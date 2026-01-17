@@ -32,7 +32,8 @@ class VideoCommentMention extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Solo database por ahora, mail se habilitará cuando se configure SMTP
+        return ['database'];
     }
 
     /**
