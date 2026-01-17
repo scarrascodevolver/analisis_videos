@@ -2,20 +2,28 @@
  * ball.js - Gestión del balón y sistema de posesión
  */
 
-function crearBalon(x = 600, y = 325) {
+function crearBalon(x = null, y = null) {
     if (rugbyBall) {
         alert('⚠️ Ya existe un balón en la cancha');
         return null;
     }
 
+    // Usar tamaños escalados
+    const ballSize = getBallSize();
+    const strokeWidth = Math.max(1, Math.round(2 * getScaleFactor()));
+
+    // Posición por defecto escalada
+    const defaultX = x !== null ? x : scaleX(600);
+    const defaultY = y !== null ? y : scaleY(325);
+
     const ball = new fabric.Ellipse({
-        rx: 15,
-        ry: 10,
+        rx: ballSize.rx,
+        ry: ballSize.ry,
         fill: '#FFD700',
         stroke: '#8B4513',
-        strokeWidth: 2,
-        left: x,
-        top: y,
+        strokeWidth: strokeWidth,
+        left: defaultX,
+        top: defaultY,
         angle: -30,
         originX: 'center',
         originY: 'center',
@@ -27,7 +35,7 @@ function crearBalon(x = 600, y = 325) {
         isBall: true,
         shadow: new fabric.Shadow({
             color: 'rgba(0, 0, 0, 0.5)',
-            blur: 8,
+            blur: Math.round(8 * getScaleFactor()),
             offsetX: 2,
             offsetY: 2
         })
@@ -38,7 +46,7 @@ function crearBalon(x = 600, y = 325) {
     canvas.renderAll();
     updatePossessionUI();
     updatePassButton();
-    console.log('🏈 Balón agregado en:', x, y);
+    console.log('🏈 Balón agregado en:', defaultX, defaultY);
     return ball;
 }
 

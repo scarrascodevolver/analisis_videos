@@ -6,32 +6,41 @@ function addPlayer(type = 'player', x = null, y = null, num = null) {
     const color = '#DC3545';
     const playerNum = num !== null ? num : playerCounter;
 
+    // Usar tamaños escalados según el canvas
+    const playerRadius = getPlayerRadius();
+    const playerFont = getPlayerFontSize();
+    const strokeWidth = Math.max(2, Math.round(3 * getScaleFactor()));
+
     const circle = new fabric.Circle({
-        radius: 20,
+        radius: playerRadius,
         fill: color,
         stroke: 'white',
-        strokeWidth: 3,
+        strokeWidth: strokeWidth,
         originX: 'center',
         originY: 'center',
         shadow: new fabric.Shadow({
             color: 'rgba(0, 0, 0, 0.8)',
-            blur: 10,
+            blur: Math.round(10 * getScaleFactor()),
             offsetX: 2,
             offsetY: 2
         })
     });
 
     const text = new fabric.Text(playerNum.toString(), {
-        fontSize: 18,
+        fontSize: playerFont,
         fill: 'white',
         fontWeight: 'bold',
         originX: 'center',
         originY: 'center'
     });
 
+    // Posición por defecto escalada
+    const defaultX = x !== null ? x : scaleX(300) + Math.random() * scaleX(400);
+    const defaultY = y !== null ? y : scaleY(200) + Math.random() * scaleY(200);
+
     const player = new fabric.Group([circle, text], {
-        left: x !== null ? x : 300 + Math.random() * 400,
-        top: y !== null ? y : 200 + Math.random() * 200,
+        left: defaultX,
+        top: defaultY,
         hasControls: false,
         hasBorders: true,
         borderColor: '#ffeb3b',

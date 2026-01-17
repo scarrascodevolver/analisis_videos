@@ -969,7 +969,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {{-- ═══════════════════════════════════════════════════════════ --}}
 @php
     // Version para cache-busting (cambiar al hacer deploy)
-    $jsVersion = '2026.01.16';
+    $jsVersion = '2026.01.17';
 @endphp
 <script>
     const isMobileView = window.innerWidth < 992;
