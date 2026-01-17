@@ -625,6 +625,45 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.stroke();
         }
 
+        // Dibujar postes H (goalposts) - Vista desde arriba (cenital)
+        const postColor = 'rgba(255, 255, 255, 0.7)';
+        const postWidth = Math.max(3, 4 * scaleX);
+        const postLength = viewerCanvas.width * 0.04; // Largo de cada poste horizontal
+        const crossbarLength = viewerCanvas.height * 0.06; // Largo del crossbar vertical
+        const centerY = viewerCanvas.height * 0.5;
+
+        ctx.strokeStyle = postColor;
+        ctx.lineWidth = postWidth;
+        ctx.lineCap = 'round';
+
+        // H izquierda (zona de try izquierda) - vista desde arriba (H acostada)
+        const leftX = viewerCanvas.width * 0.01;
+        ctx.beginPath();
+        // Poste superior (línea horizontal)
+        ctx.moveTo(leftX, centerY - crossbarLength/2);
+        ctx.lineTo(leftX + postLength, centerY - crossbarLength/2);
+        // Poste inferior (línea horizontal)
+        ctx.moveTo(leftX, centerY + crossbarLength/2);
+        ctx.lineTo(leftX + postLength, centerY + crossbarLength/2);
+        // Crossbar (línea vertical en el centro conectando los postes)
+        ctx.moveTo(leftX + postLength/2, centerY - crossbarLength/2);
+        ctx.lineTo(leftX + postLength/2, centerY + crossbarLength/2);
+        ctx.stroke();
+
+        // H derecha (zona de try derecha) - vista desde arriba (H acostada)
+        const rightX = viewerCanvas.width * 0.99;
+        ctx.beginPath();
+        // Poste superior (línea horizontal)
+        ctx.moveTo(rightX, centerY - crossbarLength/2);
+        ctx.lineTo(rightX - postLength, centerY - crossbarLength/2);
+        // Poste inferior (línea horizontal)
+        ctx.moveTo(rightX, centerY + crossbarLength/2);
+        ctx.lineTo(rightX - postLength, centerY + crossbarLength/2);
+        // Crossbar (línea vertical en el centro conectando los postes)
+        ctx.moveTo(rightX - postLength/2, centerY - crossbarLength/2);
+        ctx.lineTo(rightX - postLength/2, centerY + crossbarLength/2);
+        ctx.stroke();
+
         // Dibujar trayectorias de movimiento (líneas punteadas, escaladas)
         if (data.movements) {
             data.movements.forEach(m => {
