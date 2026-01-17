@@ -1224,13 +1224,13 @@
             <ul class="nav-links">
                 <li><a href="#features">Funciones</a></li>
                 <li><a href="#how-it-works">Como funciona</a></li>
-                <li><a href="#pricing">Planes</a></li>
+                <li><a href="#contacto">Contacto</a></li>
                 <li><a href="#faq">FAQ</a></li>
             </ul>
 
             <div class="nav-buttons">
                 <a href="{{ route('login') }}" class="btn btn-ghost">Iniciar Sesion</a>
-                <a href="{{ route('register') }}" class="btn btn-primary">Comenzar Gratis</a>
+                <a href="#contacto" class="btn btn-primary">Contactar</a>
             </div>
 
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -1246,10 +1246,10 @@
         </button>
         <a href="#features" onclick="toggleMobileMenu()">Funciones</a>
         <a href="#how-it-works" onclick="toggleMobileMenu()">Como funciona</a>
-        <a href="#pricing" onclick="toggleMobileMenu()">Planes</a>
+        <a href="#contacto" onclick="toggleMobileMenu()">Contacto</a>
         <a href="#faq" onclick="toggleMobileMenu()">FAQ</a>
         <a href="{{ route('login') }}" class="btn btn-ghost">Iniciar Sesion</a>
-        <a href="{{ route('register') }}" class="btn btn-primary">Comenzar Gratis</a>
+        <a href="#contacto" class="btn btn-primary">Contactar</a>
     </div>
 
     <!-- Hero Section -->
@@ -1278,9 +1278,9 @@
                 </p>
 
                 <div class="hero-buttons">
-                    <a href="{{ route('register') }}" class="btn btn-primary btn-large">
-                        <i class="fas fa-rocket"></i>
-                        Comenzar Gratis
+                    <a href="#contacto" class="btn btn-primary btn-large">
+                        <i class="fas fa-comments"></i>
+                        Solicitar Demo
                     </a>
                     <a href="#features" class="btn btn-outline btn-large">
                         Ver funciones
@@ -1457,73 +1457,64 @@
         </div>
     </section>
 
-    <!-- Pricing Section -->
-    <section class="pricing" id="pricing">
+    <!-- Contacto Section -->
+    <section class="pricing" id="contacto">
         <div class="section-container">
             <div class="section-header">
                 <div class="section-badge">
-                    <i class="fas fa-tag"></i>
-                    Planes
+                    <i class="fas fa-phone"></i>
+                    Contacto
                 </div>
-                <h2 class="section-title">Precios simples y transparentes</h2>
+                <h2 class="section-title">Hablemos de tu proyecto</h2>
                 <p class="section-description">
-                    Elige el plan que mejor se adapte a las necesidades de tu club.
+                    Contáctanos por WhatsApp y te mostraremos cómo RugbyHub puede ayudar a tu club.
                 </p>
             </div>
 
             <div class="pricing-grid">
-                <!-- Free Plan -->
-                <div class="pricing-card">
-                    <h3 class="pricing-name">Starter</h3>
-                    <p class="pricing-description">Perfecto para comenzar</p>
-                    <div class="pricing-price">
-                        <span class="price-currency">$</span>
-                        <span class="price-amount">0</span>
-                        <span class="price-period">/ mes</span>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Hasta 5 videos</li>
-                        <li><i class="fas fa-check"></i> 10 usuarios</li>
-                        <li><i class="fas fa-check"></i> Comentarios basicos</li>
-                        <li><i class="fas fa-check"></i> 1 categoria</li>
-                    </ul>
-                    <a href="{{ route('register') }}" class="btn btn-outline">Comenzar Gratis</a>
-                </div>
-
-                <!-- Pro Plan -->
+                <!-- WhatsApp España -->
                 <div class="pricing-card featured">
-                    <h3 class="pricing-name">Pro</h3>
-                    <p class="pricing-description">Para clubes en crecimiento</p>
-                    <div class="pricing-price">
-                        <span class="price-currency">$</span>
-                        <span class="price-amount">49</span>
-                        <span class="price-period">/ mes</span>
+                    <div class="feature-icon" style="background: #25D366; margin: 0 auto 1.5rem;">
+                        <i class="fab fa-whatsapp"></i>
                     </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Videos ilimitados</li>
-                        <li><i class="fas fa-check"></i> Usuarios ilimitados</li>
-                        <li><i class="fas fa-check"></i> Editor de jugadas</li>
-                        <li><i class="fas fa-check"></i> Evaluaciones 360</li>
-                        <li><i class="fas fa-check"></i> Soporte prioritario</li>
-                    </ul>
-                    <a href="{{ route('register') }}" class="btn btn-primary">Elegir Pro</a>
+                    <h3 class="pricing-name">España</h3>
+                    <p class="pricing-description">Atención en horario europeo</p>
+                    <div class="pricing-price">
+                        <span class="price-amount" style="font-size: 1.8rem;">+34 614 065 223</span>
+                    </div>
+                    <a href="https://wa.me/34614065223?text=Hola,%20quiero%20información%20sobre%20RugbyHub" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
+                        <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
+                    </a>
                 </div>
 
-                <!-- Enterprise Plan -->
-                <div class="pricing-card">
-                    <h3 class="pricing-name">Enterprise</h3>
-                    <p class="pricing-description">Para uniones y federaciones</p>
-                    <div class="pricing-price">
-                        <span class="price-amount">Contactar</span>
+                <!-- WhatsApp Chile -->
+                <div class="pricing-card featured">
+                    <div class="feature-icon" style="background: #25D366; margin: 0 auto 1.5rem;">
+                        <i class="fab fa-whatsapp"></i>
                     </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Todo de Pro</li>
-                        <li><i class="fas fa-check"></i> Multiples clubes</li>
-                        <li><i class="fas fa-check"></i> API dedicada</li>
-                        <li><i class="fas fa-check"></i> SSO / SAML</li>
-                        <li><i class="fas fa-check"></i> SLA garantizado</li>
-                    </ul>
-                    <a href="mailto:contacto@rugbyhub.com" class="btn btn-outline">Contactar Ventas</a>
+                    <h3 class="pricing-name">Chile</h3>
+                    <p class="pricing-description">Atención en horario chileno</p>
+                    <div class="pricing-price">
+                        <span class="price-amount" style="font-size: 1.8rem;">+56 9 8544 4418</span>
+                    </div>
+                    <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20RugbyHub" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
+                        <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
+                    </a>
+                </div>
+
+                <!-- Email -->
+                <div class="pricing-card">
+                    <div class="feature-icon" style="background: var(--accent); margin: 0 auto 1.5rem;">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="pricing-name">Email</h3>
+                    <p class="pricing-description">También puedes escribirnos</p>
+                    <div class="pricing-price">
+                        <span class="price-amount" style="font-size: 1.3rem;">contacto@rugbyhub.com</span>
+                    </div>
+                    <a href="mailto:contacto@rugbyhub.com?subject=Consulta%20sobre%20RugbyHub" class="btn btn-outline" style="margin-top: 2rem;">
+                        <i class="fas fa-envelope"></i> Enviar Email
+                    </a>
                 </div>
             </div>
         </div>
@@ -1624,16 +1615,16 @@
         <div class="cta-container">
             <h2 class="cta-title">Listo para transformar tu equipo?</h2>
             <p class="cta-description">
-                Unete a los clubes que ya estan mejorando su rendimiento con RugbyHub.
+                Solicita una demo personalizada y descubre todo lo que podemos hacer por tu club.
             </p>
             <div class="cta-buttons">
-                <a href="{{ route('register') }}" class="btn btn-primary btn-large">
-                    <i class="fas fa-rocket"></i>
-                    Comenzar Gratis
+                <a href="https://wa.me/34614065223?text=Hola,%20quiero%20una%20demo%20de%20RugbyHub" target="_blank" class="btn btn-primary btn-large" style="background: #25D366;">
+                    <i class="fab fa-whatsapp"></i>
+                    WhatsApp España
                 </a>
-                <a href="mailto:contacto@rugbyhub.com" class="btn btn-outline btn-large">
-                    <i class="fas fa-envelope"></i>
-                    Contactar
+                <a href="https://wa.me/56985444418?text=Hola,%20quiero%20una%20demo%20de%20RugbyHub" target="_blank" class="btn btn-outline btn-large">
+                    <i class="fab fa-whatsapp"></i>
+                    WhatsApp Chile
                 </a>
             </div>
         </div>
@@ -1658,7 +1649,7 @@
                     <h4 class="footer-title">Producto</h4>
                     <ul class="footer-links">
                         <li><a href="#features">Funciones</a></li>
-                        <li><a href="#pricing">Precios</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
                 </div>
