@@ -7,6 +7,7 @@ import { formatTime, getVideo, getCommentsData, setsAreEqual } from './utils.js'
 
 let lastCheckedTime = -1;
 let activeCommentIds = new Set();
+let notificationsEnabled = true; // Flag para habilitar/deshabilitar notificaciones
 
 /**
  * Initialize notification system
@@ -34,7 +35,7 @@ export function checkAndShowCommentNotifications() {
     const video = getVideo();
     const commentsData = getCommentsData();
 
-    if (!video) return;
+    if (!video || !notificationsEnabled) return;
 
     const currentTime = Math.floor(video.currentTime);
 
@@ -120,21 +121,22 @@ function showCommentNotification(comment) {
     const minWidth = isMobileView ? 200 : 250;
     const padding = isMobileView ? '8px 12px' : '12px 15px';
 
-    // Smart positioning to keep notification within bounds
+    // Smart positioning to keep notification within bounds (aplica a desktop y mobile)
     let leftPosition = relativePosition;
     let transformX = '-50%';
 
-    if (isMobileView) {
-        const halfWidth = notificationWidth / 2;
-        const margin = 10;
+    const halfWidth = notificationWidth / 2;
+    const margin = isMobileView ? 10 : 15;
 
-        if (relativePosition < halfWidth + margin) {
-            leftPosition = margin;
-            transformX = '0%';
-        } else if (relativePosition > notificationAreaWidth - halfWidth - margin) {
-            leftPosition = notificationAreaWidth - margin;
-            transformX = '-100%';
-        }
+    // Si está muy a la izquierda (ej: segundo 0), alinear al borde izquierdo
+    if (relativePosition < halfWidth + margin) {
+        leftPosition = margin;
+        transformX = '0%';
+    }
+    // Si está muy a la derecha (ej: final del video), alinear al borde derecho
+    else if (relativePosition > notificationAreaWidth - halfWidth - margin) {
+        leftPosition = notificationAreaWidth - margin;
+        transformX = '-100%';
     }
 
     notification.style.cssText = `
@@ -234,4 +236,38 @@ export function closeNotification(commentId) {
  */
 export function getActiveCommentIds() {
     return activeCommentIds;
+}
+
+/**
+ * Toggle notifications on/off
+ * @returns {boolean} New state
+ */
+export function toggleNotifications() {
+    notificationsEnabled = !notificationsEnabled;
+
+    if (!notificationsEnabled) {
+        hideAllNotifications();
+    }
+
+    return notificationsEnabled;
+}
+
+/**
+ * Set notifications enabled state
+ * @param {boolean} enabled
+ */
+export function setNotificationsEnabled(enabled) {
+    notificationsEnabled = enabled;
+
+    if (!notificationsEnabled) {
+        hideAllNotifications();
+    }
+}
+
+/**
+ * Check if notifications are enabled
+ * @returns {boolean}
+ */
+export function areNotificationsEnabled() {
+    return notificationsEnabled;
 }

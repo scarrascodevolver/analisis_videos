@@ -5,6 +5,7 @@
 
 import { formatTime, getVideo, getConfig } from './utils.js';
 import { createTimelineMarkers } from './timeline.js';
+import { setNotificationsEnabled, hideAllNotifications } from './notifications.js';
 
 // Reference to comments data (will be updated dynamically)
 let commentsData = [];
@@ -59,8 +60,12 @@ function initTimestampButtons() {
 
 /**
  * Initialize toggle comments section button
+ * Oculta/muestra el panel de comentarios Y las notificaciones del timeline
  */
 function initToggleComments() {
+    // Track state for notifications (for players who don't have commentsSection)
+    let notificationsVisible = true;
+
     $('#toggleCommentsBtn').on('click', function () {
         const commentsSection = $('#commentsSection');
         const videoSection = $('#videoSection');
@@ -68,20 +73,46 @@ function initToggleComments() {
         const toggleText = $('#toggleCommentsText');
         const toggleIcon = toggleBtn.find('i');
 
-        if (commentsSection.is(':visible')) {
-            commentsSection.hide();
-            videoSection.removeClass('col-lg-8').addClass('col-lg-12');
-            toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
-            toggleText.text('Mostrar Comentarios');
-            toggleBtn.removeClass('btn-rugby-outline').addClass('btn-rugby-light');
-            $('#rugbyVideo').css('height', '600px');
+        // Check if commentsSection exists (analysts/coaches have it, players don't)
+        const hasSidebar = commentsSection.length > 0;
+
+        if (hasSidebar) {
+            // Analysts/Coaches: toggle sidebar + notifications
+            if (commentsSection.is(':visible')) {
+                commentsSection.hide();
+                videoSection.removeClass('col-lg-8').addClass('col-lg-12');
+                toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+                toggleText.text('Mostrar Comentarios');
+                toggleBtn.removeClass('btn-rugby-outline').addClass('btn-rugby-light');
+                $('#rugbyVideo').css('height', '600px');
+                // Disable timeline notifications
+                setNotificationsEnabled(false);
+            } else {
+                commentsSection.show();
+                videoSection.removeClass('col-lg-12').addClass('col-lg-8');
+                toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+                toggleText.text('Ocultar Comentarios');
+                toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
+                $('#rugbyVideo').css('height', '500px');
+                // Enable timeline notifications
+                setNotificationsEnabled(true);
+            }
         } else {
-            commentsSection.show();
-            videoSection.removeClass('col-lg-12').addClass('col-lg-8');
-            toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
-            toggleText.text('Ocultar Comentarios');
-            toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
-            $('#rugbyVideo').css('height', '500px');
+            // Players: only toggle notifications (no sidebar)
+            notificationsVisible = !notificationsVisible;
+
+            if (notificationsVisible) {
+                toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+                toggleText.text('Ocultar Comentarios');
+                toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
+                setNotificationsEnabled(true);
+            } else {
+                toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+                toggleText.text('Mostrar Comentarios');
+                toggleBtn.removeClass('btn-rugby-outline').addClass('btn-rugby-light');
+                setNotificationsEnabled(false);
+                hideAllNotifications();
+            }
         }
     });
 }
