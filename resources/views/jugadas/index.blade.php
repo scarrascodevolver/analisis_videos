@@ -1066,28 +1066,38 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaRecorder.start();
 
             // Animation parameters
-            const ANIMATION_DURATION = 4000; // 4 seconds
-            const PASS_DURATION = 300; // ms
-            const startTime = performance.now();
+            const MP4_ANIMATION_DURATION = 4000; // 4 seconds
+            const MP4_PASS_DURATION = 300; // ms
+            const mp4StartTime = performance.now();
 
             // Setup passes with timing
             const numPasses = passes.length;
-            const passTimes = passes.map((pass, i) => ({
-                ...pass,
-                triggerTime: ((i + 1) / (numPasses + 1)) * ANIMATION_DURATION * 0.80
+            const mp4PassTimes = passes.map((pass, i) => ({
+                from: pass.from,
+                to: pass.to,
+                triggerTime: ((i + 1) / (numPasses + 1)) * MP4_ANIMATION_DURATION * 0.80
             }));
 
-            let mp4BallHolder = passes.length > 0 ? passes[0].from : currentBallHolder;
+            // Get initial ball holder
+            let mp4BallHolder = null;
+            if (passes.length > 0 && passes[0].from) {
+                mp4BallHolder = passes[0].from;
+            } else if (data.originalBallHolder) {
+                mp4BallHolder = data.originalBallHolder;
+            } else if (data.ballPossession) {
+                mp4BallHolder = data.ballPossession;
+            }
+
             let mp4ActivePass = null;
 
             function animateForRecording(timestamp) {
-                const elapsed = timestamp - startTime;
-                const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+                const elapsed = timestamp - mp4StartTime;
+                const progress = Math.min(elapsed / MP4_ANIMATION_DURATION, 1);
 
-                // Reset positions
+                // Reset positions from original data
                 initPositions(data);
 
-                // Calculate animated positions
+                // Calculate animated positions for players with movements
                 playerMovements.forEach(m => {
                     if (m.playerId && m.points && m.points.length > 1) {
                         const pathLength = m.points.length - 1;
@@ -1096,39 +1106,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         const segmentProgress = pathProgress - segmentIndex;
 
                         const startPoint = m.points[segmentIndex];
-                        const endPoint = m.points[segmentIndex + 1] || startPoint;
+                        const endPoint = m.points[segmentIndex + 1];
 
-                        const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
-                        const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
-                        currentPositions[m.playerId] = scale(interpX, interpY);
-                    }
-                });
-
-                // Check for pass triggers
-                passTimes.forEach(pass => {
-                    if (elapsed >= pass.triggerTime && elapsed < pass.triggerTime + PASS_DURATION && !mp4ActivePass) {
-                        const fromPos = currentPositions[pass.from];
-                        if (fromPos) {
-                            mp4ActivePass = {
-                                ...pass,
-                                startPos: { x: fromPos.x + BALL_OFFSET_X * scaleX, y: fromPos.y },
-                                startTime: elapsed
-                            };
+                        if (startPoint && endPoint && typeof startPoint.x === 'number' && typeof endPoint.x === 'number') {
+                            const interpX = startPoint.x + (endPoint.x - startPoint.x) * segmentProgress;
+                            const interpY = startPoint.y + (endPoint.y - startPoint.y) * segmentProgress;
+                            currentPositions[m.playerId] = scale(interpX, interpY);
                         }
                     }
                 });
 
+                // Check for pass triggers
+                for (let i = 0; i < mp4PassTimes.length; i++) {
+                    const pass = mp4PassTimes[i];
+                    if (elapsed >= pass.triggerTime && elapsed < pass.triggerTime + MP4_PASS_DURATION && !mp4ActivePass) {
+                        const fromPos = currentPositions[pass.from];
+                        if (fromPos && typeof fromPos.x === 'number') {
+                            mp4ActivePass = {
+                                from: pass.from,
+                                to: pass.to,
+                                startPos: { x: fromPos.x + BALL_OFFSET_X * scaleX, y: fromPos.y + BALL_OFFSET_Y * scaleY },
+                                startTime: elapsed
+                            };
+                            break;
+                        }
+                    }
+                }
+
                 // Animate active pass
                 if (mp4ActivePass) {
                     const passElapsed = elapsed - mp4ActivePass.startTime;
-                    const passProgress = passElapsed / PASS_DURATION;
+                    const passProgress = passElapsed / MP4_PASS_DURATION;
 
                     if (passProgress >= 1) {
                         mp4BallHolder = mp4ActivePass.to;
                         mp4ActivePass = null;
                     } else {
                         const toPos = currentPositions[mp4ActivePass.to];
-                        if (toPos) {
+                        if (toPos && typeof toPos.x === 'number' && mp4ActivePass.startPos) {
                             const easedProgress = easeOutQuad(passProgress);
                             const targetX = toPos.x + BALL_OFFSET_X * scaleX;
                             const targetY = toPos.y + BALL_OFFSET_Y * scaleY;
@@ -1142,12 +1157,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Ball follows holder if no active pass
-                if (!mp4ActivePass && mp4BallHolder && currentPositions[mp4BallHolder]) {
+                if (!mp4ActivePass && mp4BallHolder) {
                     const holderPos = currentPositions[mp4BallHolder];
-                    currentPositions['ball'] = {
-                        x: holderPos.x + BALL_OFFSET_X * scaleX,
-                        y: holderPos.y + BALL_OFFSET_Y * scaleY
-                    };
+                    if (holderPos && typeof holderPos.x === 'number') {
+                        currentPositions['ball'] = {
+                            x: holderPos.x + BALL_OFFSET_X * scaleX,
+                            y: holderPos.y + BALL_OFFSET_Y * scaleY
+                        };
+                    }
                 }
 
                 render(data);
