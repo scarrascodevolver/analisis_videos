@@ -1013,20 +1013,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Try server-side MP4 conversion first
                 try {
                     const formData = new FormData();
-                    formData.append('video', blob, filename + '.webm');
-                    formData.append('_token', '{{ csrf_token() }}');
+                    formData.append('video', blob, 'video.webm');
+                    formData.append('filename', filename);
 
-                    const response = await fetch('/jugadas/convert-to-mp4', {
+                    const response = await fetch('/api/jugadas/convert-to-mp4', {
                         method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
                         body: formData
                     });
 
-                    if (response.ok) {
-                        const mp4Blob = await response.blob();
+                    const data = await response.json();
+                    console.log('🔄 Respuesta conversión MP4:', data);
+
+                    if (data.success) {
+                        // Convert base64 to blob and download
+                        const byteCharacters = atob(data.video);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const mp4Blob = new Blob([byteArray], { type: 'video/mp4' });
+
                         const url = URL.createObjectURL(mp4Blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = filename + '.mp4';
+                        a.download = data.filename;
                         a.style.display = 'none';
                         document.body.appendChild(a);
                         a.click();
@@ -1034,6 +1049,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         URL.revokeObjectURL(url);
                     } else {
                         // Fallback: download WebM directly
+                        console.warn('Conversión fallida, descargando WebM:', data.message);
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
