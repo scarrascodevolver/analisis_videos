@@ -1471,7 +1471,7 @@
                 </p>
             </div>
 
-            <div class="pricing-grid">
+            <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 900px; margin: 4rem auto 0;">
                 <!-- WhatsApp España -->
                 <div class="pricing-card featured">
                     <div class="feature-icon" style="background: #25D366; margin: 0 auto 1.5rem;">
@@ -1499,21 +1499,6 @@
                     </div>
                     <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20RugbyHub" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
                         <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
-                    </a>
-                </div>
-
-                <!-- Email -->
-                <div class="pricing-card">
-                    <div class="feature-icon" style="background: var(--accent); margin: 0 auto 1.5rem;">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <h3 class="pricing-name">Email</h3>
-                    <p class="pricing-description">También puedes escribirnos</p>
-                    <div class="pricing-price">
-                        <span class="price-amount" style="font-size: 1.3rem;">contacto@rugbyhub.com</span>
-                    </div>
-                    <a href="mailto:contacto@rugbyhub.com?subject=Consulta%20sobre%20RugbyHub" class="btn btn-outline" style="margin-top: 2rem;">
-                        <i class="fas fa-envelope"></i> Enviar Email
                     </a>
                 </div>
             </div>
