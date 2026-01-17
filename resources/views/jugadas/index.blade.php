@@ -610,8 +610,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Renderizar estado actual
     function render(data) {
-        // Limpiar canvas con color de campo
-        ctx.fillStyle = '#2d5a27';
+        // Limpiar canvas con color de campo (verde más claro)
+        ctx.fillStyle = '#3d7a3d';
         ctx.fillRect(0, 0, viewerCanvas.width, viewerCanvas.height);
 
         // Dibujar líneas del campo
