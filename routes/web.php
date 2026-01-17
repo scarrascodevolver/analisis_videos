@@ -16,8 +16,8 @@ use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\JugadasController;
 
-// Public route - Redirect directly to login
-Route::redirect('/', '/login');
+// Landing Page (público)
+Route::view('/', 'landing')->name('landing');
 
 // Authentication Routes
 Auth::routes();

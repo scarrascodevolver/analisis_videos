@@ -62,10 +62,12 @@
             z-index: 1000;
             padding: 1rem 2rem;
             transition: all 0.3s ease;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(10px);
         }
 
         .navbar.scrolled {
-            background: rgba(10, 10, 10, 0.95);
+            background: rgba(10, 10, 10, 0.98);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -211,22 +213,30 @@
             z-index: 0;
         }
 
-        /* ========== HERO BACKGROUND IMAGE ========== */
-        .hero-image-bg {
+        /* ========== HERO BACKGROUND VIDEO ========== */
+        .hero-video-bg {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
             z-index: 0;
-            /* Imagen local - guardar como public/images/hero-bg.jpg */
-            background-image: url('/images/hero-bg.jpg');
-            background-size: cover;
-            background-position: center center;
-            background-color: var(--primary-dark);
+            overflow: hidden;
         }
 
-        .hero-image-bg::before {
+        .hero-video-bg video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        .hero-video-bg::before {
             content: '';
             position: absolute;
             top: 0;
@@ -235,13 +245,14 @@
             bottom: 0;
             background: linear-gradient(
                 135deg,
-                rgba(0, 84, 97, 0.85) 0%,
-                rgba(10, 10, 10, 0.75) 50%,
-                rgba(0, 84, 97, 0.80) 100%
+                rgba(0, 84, 97, 0.45) 0%,
+                rgba(10, 10, 10, 0.35) 50%,
+                rgba(0, 84, 97, 0.40) 100%
             );
+            z-index: 1;
         }
 
-        .hero-image-bg::after {
+        .hero-video-bg::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -249,6 +260,7 @@
             right: 0;
             height: 200px;
             background: linear-gradient(to top, var(--dark) 0%, transparent 100%);
+            z-index: 1;
         }
 
         .hero-grid {
@@ -1242,7 +1254,11 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-image-bg"></div>
+        <div class="hero-video-bg">
+            <video autoplay muted loop playsinline>
+                <source src="{{ asset('images/fondo.mp4') }}" type="video/mp4">
+            </video>
+        </div>
         <div class="hero-bg"></div>
 
         <div class="hero-container">
@@ -1253,12 +1269,12 @@
                 </div>
 
                 <h1 class="hero-title">
-                    Lleva tu equipo al
-                    <span class="highlight">siguiente nivel</span>
+                    Analiza cada jugada
+                    <span class="highlight">como un profesional</span>
                 </h1>
 
                 <p class="hero-description">
-                    Analiza videos, transmite scores en vivo, gestiona lesiones y crea jugadas tacticas. Todo lo que tu club necesita en una sola plataforma.
+                    Estudia el juego, domina la cancha. Crea clips, comenta jugadas clave y diseña tacticas animadas. Todo lo que tu club necesita en una sola plataforma.
                 </p>
 
                 <div class="hero-buttons">
@@ -1273,86 +1289,20 @@
 
                 <div class="hero-stats">
                     <div class="stat">
-                        <div class="stat-number">500+</div>
-                        <div class="stat-label">Videos analizados</div>
+                        <div class="stat-number"><i class="fas fa-infinity"></i></div>
+                        <div class="stat-label">Clips Ilimitados</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">50+</div>
-                        <div class="stat-label">Equipos activos</div>
+                        <div class="stat-number"><i class="fas fa-sitemap"></i></div>
+                        <div class="stat-label">Multi-Organizacion</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">98%</div>
-                        <div class="stat-label">Satisfaccion</div>
+                        <div class="stat-number"><i class="fas fa-cloud"></i></div>
+                        <div class="stat-label">100% en la Nube</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Live Score Mockup -->
-            <div class="hero-visual">
-                <div class="live-score-mockup">
-                    <div class="mockup-header">
-                        <div class="live-badge">
-                            <span class="live-dot"></span>
-                            EN VIVO
-                        </div>
-                        <span class="match-time">67:32</span>
-                    </div>
-                    <div class="mockup-teams">
-                        <div class="team-score">
-                            <div class="team-logo home">LT</div>
-                            <div class="team-info">
-                                <span class="team-name">Los Troncos</span>
-                                <span class="score" id="homeScore">24</span>
-                            </div>
-                        </div>
-                        <div class="vs-divider">VS</div>
-                        <div class="team-score">
-                            <div class="team-info right">
-                                <span class="team-name">San Isidro</span>
-                                <span class="score">19</span>
-                            </div>
-                            <div class="team-logo away">SI</div>
-                        </div>
-                    </div>
-                    <div class="mockup-events">
-                        <div class="event-item">
-                            <span class="event-time">65'</span>
-                            <i class="fas fa-football-ball event-icon try"></i>
-                            <span class="event-text">Try - Juan Perez</span>
-                        </div>
-                        <div class="event-item">
-                            <span class="event-time">62'</span>
-                            <i class="fas fa-bullseye event-icon conversion"></i>
-                            <span class="event-text">Conversion</span>
-                        </div>
-                        <div class="event-item">
-                            <span class="event-time">58'</span>
-                            <i class="fas fa-exchange-alt event-icon sub"></i>
-                            <span class="event-text">Cambio - Martinez x Lopez</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="hero-float-card card-1">
-                    <div class="float-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <div class="float-text">
-                        <strong>Control de lesiones</strong>
-                        <span>Historial medico</span>
-                    </div>
-                </div>
-
-                <div class="hero-float-card card-2">
-                    <div class="float-icon">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <div class="float-text">
-                        <strong>Gestion de cuotas</strong>
-                        <span>Pagos del club</span>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -1371,19 +1321,8 @@
             </div>
 
             <div class="features-grid">
-                <!-- Row 1: Core Features -->
+                <!-- Funciones REALES implementadas -->
                 <div class="feature-card featured">
-                    <div class="feature-icon">
-                        <i class="fas fa-broadcast-tower"></i>
-                    </div>
-                    <h3 class="feature-title">Score en Vivo</h3>
-                    <p class="feature-description">
-                        Transmite resultados en tiempo real. Cualquier usuario puede actualizar el marcador desde la cancha y todos lo ven al instante.
-                    </p>
-                    <span class="feature-badge">Nuevo</span>
-                </div>
-
-                <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-film"></i>
                     </div>
@@ -1393,58 +1332,43 @@
                     </p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card featured">
+                    <div class="feature-icon">
+                        <i class="fas fa-scissors"></i>
+                    </div>
+                    <h3 class="feature-title">Clips Destacados</h3>
+                    <p class="feature-description">
+                        Crea clips de momentos importantes. Categoriza por tipo de jugada (try, tackle, lineout) y exporta clips individuales.
+                    </p>
+                </div>
+
+                <div class="feature-card featured">
                     <div class="feature-icon">
                         <i class="fas fa-draw-polygon"></i>
                     </div>
                     <h3 class="feature-title">Editor de Jugadas</h3>
                     <p class="feature-description">
-                        Crea jugadas tacticas con nuestro editor visual. Dibuja movimientos, posiciones y exporta a video.
+                        Crea jugadas tacticas con nuestro editor visual. Dibuja movimientos, posiciones y exporta a GIF o MP4 animado.
                     </p>
                 </div>
 
-                <!-- Row 2: New Features -->
-                <div class="feature-card featured">
-                    <div class="feature-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h3 class="feature-title">Control de Lesiones</h3>
-                    <p class="feature-description">
-                        Registra lesiones de cada jugador con historial medico completo. Controla tiempos de recuperacion y disponibilidad.
-                    </p>
-                    <span class="feature-badge">Nuevo</span>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <h3 class="feature-title">Gestion de Cuotas</h3>
-                    <p class="feature-description">
-                        Administra las cuotas del club. Los jugadores pueden pagar online y llevas control de quien esta al dia.
-                    </p>
-                    <span class="feature-badge">Nuevo</span>
-                </div>
-
-                <div class="feature-card featured">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <h3 class="feature-title">Estadisticas</h3>
-                    <p class="feature-description">
-                        Metricas de rendimiento por jugador y equipo. Tries, tackles, asistencias y mas en dashboards visuales.
-                    </p>
-                    <span class="feature-badge">Nuevo</span>
-                </div>
-
-                <!-- Row 3: Existing Features -->
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-comments"></i>
                     </div>
                     <h3 class="feature-title">Comentarios en Video</h3>
                     <p class="feature-description">
-                        Agrega comentarios en momentos especificos del video. Menciona jugadores para notificarlos.
+                        Agrega comentarios en momentos especificos del video. Menciona jugadores con @ para notificarlos al instante.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-pencil-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Anotaciones en Video</h3>
+                    <p class="feature-description">
+                        Dibuja directamente sobre el video. Marca jugadores, señala movimientos y guarda tus anotaciones con timestamp.
                     </p>
                 </div>
 
@@ -1454,7 +1378,7 @@
                     </div>
                     <h3 class="feature-title">Asignaciones</h3>
                     <p class="feature-description">
-                        Asigna videos a jugadores para que estudien. Trackea quien ha visto cada contenido.
+                        Asigna videos a jugadores para que estudien. Trackea quien ha visto cada contenido y por cuanto tiempo.
                     </p>
                 </div>
 
@@ -1464,7 +1388,27 @@
                     </div>
                     <h3 class="feature-title">Evaluacion 360</h3>
                     <p class="feature-description">
-                        Sistema de evaluacion entre pares. Los jugadores evaluan a sus companeros anonimamente.
+                        Sistema de evaluacion entre pares. Los jugadores evaluan a sus companeros de forma anonima por periodos.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3 class="feature-title">Tracking de Visualizaciones</h3>
+                    <p class="feature-description">
+                        Ve quien ha visto cada video, cuanto tiempo y cuantas veces. Ideal para verificar que estudien el material.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3 class="feature-title">Multi-Tenant</h3>
+                    <p class="feature-description">
+                        Cada club tiene su espacio aislado. Videos, usuarios y datos completamente separados por organizacion.
                     </p>
                 </div>
             </div>

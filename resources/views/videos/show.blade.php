@@ -189,7 +189,7 @@
                         </div>
 
                         <!-- Mobile Fullscreen Button -->
-                        <div class="video-controls-overlay" style="position: absolute; bottom: 60px; right: 10px; z-index: 10;">
+                        <div class="video-controls-overlay" style="position: absolute; bottom: 90px; right: 10px; z-index: 10;">
                             <button id="mobileFullscreenBtn" class="btn btn-sm btn-dark mr-2" title="Pantalla completa" style="display: none;">
                                 <i class="fas fa-expand"></i>
                             </button>
