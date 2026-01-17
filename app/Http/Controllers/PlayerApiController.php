@@ -13,8 +13,22 @@ class PlayerApiController extends Controller
      */
     public function all(Request $request)
     {
+        // Obtener la organización actual del usuario autenticado
+        $currentOrg = auth()->user()->currentOrganization();
+
+        if (!$currentOrg) {
+            return response()->json([
+                'players' => [],
+                'error' => 'No hay organización seleccionada'
+            ]);
+        }
+
         // Get all players, coaches and staff (users with role 'jugador', 'entrenador' or staff that can receive assignments)
-        $players = User::where(function($query) {
+        // Filtrados por organización actual
+        $players = User::whereHas('organizations', function($q) use ($currentOrg) {
+                $q->where('organizations.id', $currentOrg->id);
+            })
+            ->where(function($query) {
                 $query->where('role', 'jugador')
                       ->orWhere('role', 'entrenador')
                       ->orWhereHas('profile', function($q) {
@@ -62,24 +76,37 @@ class PlayerApiController extends Controller
             ]);
         }
 
-        // Get players, coaches and staff (users with role 'jugador', 'entrenador' or staff that can receive assignments)
-        $players = User::where(function($mainQuery) {
+        // Obtener la organización actual del usuario autenticado
+        $currentOrg = auth()->user()->currentOrganization();
+
+        if (!$currentOrg) {
+            return response()->json([
+                'players' => [],
+                'error' => 'No hay organización seleccionada'
+            ]);
+        }
+
+        // Get players, coaches and staff filtrados por organización actual
+        $players = User::whereHas('organizations', function($orgQuery) use ($currentOrg) {
+                $orgQuery->where('organizations.id', $currentOrg->id);
+            })
+            ->where(function($mainQuery) {
                 $mainQuery->where('role', 'jugador')
                           ->orWhere('role', 'entrenador')
                           ->orWhereHas('profile', function($q) {
                               $q->where('can_receive_assignments', true);
                           });
             })
-            ->where(function($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%");
-            })
-            ->orWhereHas('profile', function($q) use ($query) {
-                $q->where('position', 'LIKE', "%{$query}%")
-                  ->orWhere('secondary_position', 'LIKE', "%{$query}%");
-            })
-            ->orWhereHas('profile.category', function($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%");
+            ->where(function($searchQuery) use ($query) {
+                $searchQuery->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%")
+                  ->orWhereHas('profile', function($q) use ($query) {
+                      $q->where('position', 'LIKE', "%{$query}%")
+                        ->orWhere('secondary_position', 'LIKE', "%{$query}%");
+                  })
+                  ->orWhereHas('profile.category', function($q) use ($query) {
+                      $q->where('name', 'LIKE', "%{$query}%");
+                  });
             })
             ->with(['profile.category'])
             ->withCount(['assignedVideos as video_count'])
@@ -116,6 +143,24 @@ class PlayerApiController extends Controller
      */
     public function playerVideos(Request $request, User $player)
     {
+        // Verificar que el jugador pertenece a la organización actual
+        $currentOrg = auth()->user()->currentOrganization();
+
+        if (!$currentOrg) {
+            return response()->json([
+                'error' => 'No hay organización seleccionada'
+            ], 400);
+        }
+
+        // Verificar que el jugador pertenece a la misma organización
+        $playerBelongsToOrg = $player->organizations()->where('organizations.id', $currentOrg->id)->exists();
+
+        if (!$playerBelongsToOrg) {
+            return response()->json([
+                'error' => 'Jugador no encontrado'
+            ], 404);
+        }
+
         // Verify the user is actually a player, coach or staff that can receive assignments
         if (!in_array($player->role, ['jugador', 'entrenador']) && !($player->profile && $player->profile->can_receive_assignments)) {
             return response()->json([
