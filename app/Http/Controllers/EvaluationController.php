@@ -16,6 +16,7 @@ class EvaluationController extends Controller
     public function index()
     {
         $currentUser = auth()->user();
+        $currentOrg = $currentUser->currentOrganization();
         $categoryId = $currentUser->profile->user_category_id ?? null;
 
         if (!$categoryId) {
@@ -29,14 +30,22 @@ class EvaluationController extends Controller
             return redirect()->route('dashboard')->with('warning', 'No hay un período de evaluación activo actualmente. Consulta con tu entrenador.');
         }
 
-        // Obtener jugadores de la misma categoría (excepto el usuario actual)
-        $players = User::whereHas('profile', function($q) use ($categoryId) {
+        // Obtener jugadores de la misma categoría y organización (excepto el usuario actual)
+        $playersQuery = User::whereHas('profile', function($q) use ($categoryId) {
             $q->where('user_category_id', $categoryId);
         })
         ->where('id', '!=', $currentUser->id)
         ->where('role', 'jugador')
-        ->with('profile')
-        ->get();
+        ->with('profile');
+
+        // Filtrar por organización actual
+        if ($currentOrg) {
+            $playersQuery->whereHas('organizations', function($q) use ($currentOrg) {
+                $q->where('organizations.id', $currentOrg->id);
+            });
+        }
+
+        $players = $playersQuery->get();
 
         // Posiciones de Forwards
         $forwardsPositions = [
@@ -93,6 +102,7 @@ class EvaluationController extends Controller
     public function wizard($playerId)
     {
         $currentUser = auth()->user();
+        $currentOrg = $currentUser->currentOrganization();
         $categoryId = $currentUser->profile->user_category_id ?? null;
 
         // Verificar si las evaluaciones están habilitadas (solo para jugadores)
@@ -110,6 +120,14 @@ class EvaluationController extends Controller
 
         if ($player->profile->user_category_id !== $categoryId) {
             return redirect()->route('evaluations.index')->with('error', 'Solo puedes evaluar jugadores de tu misma categoría.');
+        }
+
+        // Validar que el jugador pertenece a la misma organización
+        if ($currentOrg) {
+            $playerInOrg = $player->organizations()->where('organizations.id', $currentOrg->id)->exists();
+            if (!$playerInOrg) {
+                return redirect()->route('evaluations.index')->with('error', 'Solo puedes evaluar jugadores de tu misma organización.');
+            }
         }
 
         // Determinar si es Forward o Back
@@ -134,6 +152,7 @@ class EvaluationController extends Controller
     public function store(Request $request)
     {
         $currentUser = auth()->user();
+        $currentOrg = $currentUser->currentOrganization();
 
         // Verificar si las evaluaciones están habilitadas (solo para jugadores)
         if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
@@ -205,6 +224,17 @@ class EvaluationController extends Controller
             ], 403);
         }
 
+        // Validar que sea de la misma organización
+        if ($currentOrg) {
+            $playerInOrg = $evaluatedPlayer->organizations()->where('organizations.id', $currentOrg->id)->exists();
+            if (!$playerInOrg) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo puedes evaluar jugadores de tu misma organización.'
+                ], 403);
+            }
+        }
+
         // Obtener período activo
         $activePeriod = EvaluationPeriod::getActive();
 
@@ -247,6 +277,7 @@ class EvaluationController extends Controller
     public function dashboard()
     {
         $currentUser = auth()->user();
+        $currentOrg = $currentUser->currentOrganization();
 
         // Obtener todos los períodos disponibles para el selector
         $allPeriods = EvaluationPeriod::orderBy('started_at', 'desc')->get();
@@ -273,16 +304,24 @@ class EvaluationController extends Controller
                 ->with(['profile'])
                 ->get();
 
-            // Obtener jugadores de su categoría para calcular total posible
+            // Obtener jugadores de su categoría y organización para calcular total posible
             $categoryId = $currentUser->profile->user_category_id ?? null;
-            $totalInCategory = User::where('role', 'jugador')
+            $totalInCategoryQuery = User::where('role', 'jugador')
                 ->where('id', '!=', $currentUser->id)
                 ->whereHas('profile', function($q) use ($categoryId) {
                     if ($categoryId) {
                         $q->where('user_category_id', $categoryId);
                     }
-                })
-                ->count();
+                });
+
+            // Filtrar por organización actual
+            if ($currentOrg) {
+                $totalInCategoryQuery->whereHas('organizations', function($q) use ($currentOrg) {
+                    $q->where('organizations.id', $currentOrg->id);
+                });
+            }
+
+            $totalInCategory = $totalInCategoryQuery->count();
 
             // Calcular estadísticas del jugador actual con filtro de período
             $playersStats = $players->map(function($player) use ($totalInCategory, $periodId) {
@@ -331,21 +370,29 @@ class EvaluationController extends Controller
         }
 
         // Para entrenadores/analistas: mostrar todos los resultados
-        // Obtener todas las categorías para el filtro
+        // Obtener todas las categorías para el filtro (ya filtradas por org via trait)
         $categories = \App\Models\Category::all();
 
         // Filtro de categoría (por defecto, la del entrenador)
         $categoryId = request('category_id', $currentUser->profile->user_category_id ?? null);
 
-        // Obtener jugadores de la categoría
-        $players = User::where('role', 'jugador')
+        // Obtener jugadores de la categoría y organización actual
+        $playersQuery = User::where('role', 'jugador')
             ->whereHas('profile', function($q) use ($categoryId) {
                 if ($categoryId) {
                     $q->where('user_category_id', $categoryId);
                 }
             })
-            ->with(['profile'])
-            ->get();
+            ->with(['profile']);
+
+        // Filtrar por organización actual
+        if ($currentOrg) {
+            $playersQuery->whereHas('organizations', function($q) use ($currentOrg) {
+                $q->where('organizations.id', $currentOrg->id);
+            });
+        }
+
+        $players = $playersQuery->get();
 
         // Calcular estadísticas para cada jugador con filtro de período
         $playersStats = $players->map(function($player) use ($players, $periodId) {
