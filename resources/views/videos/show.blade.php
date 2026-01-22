@@ -242,6 +242,33 @@
                             </div>
                         </div>
 
+                        {{-- Timeline Visual de Clips (Editor) --}}
+                        <div id="clipTimelineWrapper">
+                            <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
+                                <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
+                                <strong>Sincronizar Línea de Tiempo</strong>
+                                <i id="clipTimelineArrow" class="fas fa-chevron-down float-right mt-1"></i>
+                            </button>
+
+                            <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 15px; max-height: 400px; overflow-y: auto;">
+                                {{-- Lista de clips con timeline individual --}}
+                                <div id="clipsTimelineList">
+                                    <div class="text-center py-4" style="color: #666;">
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando clips...
+                                    </div>
+                                </div>
+
+                                {{-- Instrucciones --}}
+                                <div class="alert alert-dark py-2 mt-3 mb-0" style="background: #1a1a1a; border: 1px solid #333; font-size: 11px;">
+                                    <i class="fas fa-lightbulb text-warning"></i>
+                                    <strong>Cómo usar:</strong><br>
+                                    • <strong>Arrastra el bloque</strong> completo para mover el clip<br>
+                                    • <strong>Arrastra los bordes</strong> (izquierdo/derecho) para ajustar inicio/fin<br>
+                                    • <strong>Click en ▶</strong> para previsualizar el clip
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Timeline de Comentarios (Colapsable para analistas) --}}
                         <div id="timelineWrapper">
                             <button id="toggleTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
@@ -833,8 +860,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarTotalClips = document.getElementById('sidebarTotalClips');
     const sidebarHighlights = document.getElementById('sidebarHighlights');
 
-    let sidebarClipsData = [];
-    let sidebarCategoriesData = [];
+    // Exposed globally for visual timeline editor access
+    window.sidebarClipsData = window.sidebarClipsData || [];
+    window.sidebarCategoriesData = window.sidebarCategoriesData || [];
 
     // Tab switching
     tabButtons.forEach(btn => {
@@ -867,22 +895,27 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadSidebarClips() {
         try {
             // Load categories for filter
-            if (sidebarCategoriesData.length === 0) {
+            if (window.sidebarCategoriesData.length === 0) {
                 const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
-                sidebarCategoriesData = await catResponse.json();
+                window.sidebarCategoriesData = await catResponse.json();
 
                 // Populate filter dropdown
                 sidebarClipFilter.innerHTML = '<option value="">Todos</option>' +
-                    sidebarCategoriesData.map(cat =>
+                    window.sidebarCategoriesData.map(cat =>
                         `<option value="${cat.id}" style="color: ${cat.color};">${cat.name}</option>`
                     ).join('');
             }
 
             // Load clips
             const response = await fetch('{{ route("api.clips.index", $video) }}');
-            sidebarClipsData = await response.json();
+            window.sidebarClipsData = await response.json();
 
             renderSidebarClips();
+
+            // Also update visual timeline if visible
+            if (typeof window.renderVisualTimeline === 'function') {
+                window.renderVisualTimeline();
+            }
         } catch (error) {
             console.error('Error loading sidebar clips:', error);
         }
@@ -890,16 +923,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Render clips in sidebar
     function renderSidebarClips(filterCategoryId = null) {
-        let clips = [...sidebarClipsData].sort((a, b) => a.start_time - b.start_time); // Chronological order
+        let clips = [...window.sidebarClipsData].sort((a, b) => a.start_time - b.start_time); // Chronological order
 
         if (filterCategoryId) {
             clips = clips.filter(c => c.clip_category_id == filterCategoryId);
         }
 
         // Update counts
-        sidebarClipCount.textContent = sidebarClipsData.length;
-        sidebarTotalClips.textContent = sidebarClipsData.length;
-        sidebarHighlights.textContent = sidebarClipsData.filter(c => c.is_highlight).length;
+        sidebarClipCount.textContent = window.sidebarClipsData.length;
+        sidebarTotalClips.textContent = window.sidebarClipsData.length;
+        sidebarHighlights.textContent = window.sidebarClipsData.filter(c => c.is_highlight).length;
 
         if (clips.length === 0) {
             sidebarClipsList.innerHTML = `
@@ -996,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     const data = await response.json();
                     if (data.success) {
-                        sidebarClipsData = sidebarClipsData.filter(c => c.id != clipId);
+                        window.sidebarClipsData = window.sidebarClipsData.filter(c => c.id != clipId);
                         renderSidebarClips(sidebarClipFilter.value || null);
                         // Sync with clip-manager local array
                         if (typeof window.removeClipFromLocalArray === 'function') {
@@ -1158,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Expose function to refresh sidebar clips from outside
     window.refreshSidebarClips = function() {
-        sidebarClipsData = []; // Reset to force reload
+        window.sidebarClipsData = []; // Reset to force reload
         loadSidebarClips(); // Always reload, even if tab hidden (data will be ready when shown)
     };
 
@@ -1720,15 +1753,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#editClipModal').modal('hide');
 
                 // Update local data and re-render
-                if (typeof sidebarClipsData !== 'undefined') {
-                    const clipIndex = sidebarClipsData.findIndex(c => c.id == clipId);
+                if (window.sidebarClipsData && window.sidebarClipsData.length > 0) {
+                    const clipIndex = window.sidebarClipsData.findIndex(c => c.id == clipId);
                     if (clipIndex !== -1) {
-                        sidebarClipsData[clipIndex].start_time = startTime;
-                        sidebarClipsData[clipIndex].end_time = endTime;
-                        sidebarClipsData[clipIndex].title = title;
-                        sidebarClipsData[clipIndex].notes = notes;
+                        window.sidebarClipsData[clipIndex].start_time = startTime;
+                        window.sidebarClipsData[clipIndex].end_time = endTime;
+                        window.sidebarClipsData[clipIndex].title = title;
+                        window.sidebarClipsData[clipIndex].notes = notes;
                     }
-                    renderSidebarClips(document.getElementById('sidebarClipFilter')?.value || null);
+                    if (typeof renderSidebarClips === 'function') {
+                        renderSidebarClips(document.getElementById('sidebarClipFilter')?.value || null);
+                    }
                 }
 
                 // Sync with clip-manager if available
@@ -1748,6 +1783,426 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })();
 @endif
+
+// ============================================
+// VISUAL TIMELINE EDITOR - Lista de Clips
+// ============================================
+(function() {
+    const video = document.getElementById('rugbyVideo');
+    const toggleBtn = document.getElementById('toggleClipTimeline');
+    const content = document.getElementById('clipTimelineContent');
+    const arrow = document.getElementById('clipTimelineArrow');
+    const clipsListContainer = document.getElementById('clipsTimelineList');
+
+    if (!toggleBtn || !content) return;
+
+    let videoDuration = {{ $video->duration ?? 300 }};
+
+    // Toggle panel
+    toggleBtn.addEventListener('click', async function() {
+        const isVisible = content.style.display !== 'none';
+        content.style.display = isVisible ? 'none' : 'block';
+        arrow.classList.toggle('fa-chevron-down', isVisible);
+        arrow.classList.toggle('fa-chevron-up', !isVisible);
+
+        if (!isVisible) {
+            // Load clips if not loaded yet
+            if (!window.sidebarClipsData || window.sidebarClipsData.length === 0) {
+                clipsListContainer.innerHTML = `
+                    <div class="text-center py-4" style="color: #666;">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p class="mb-0">Cargando clips...</p>
+                    </div>`;
+
+                // Trigger load and wait a bit
+                if (typeof window.refreshSidebarClips === 'function') {
+                    window.refreshSidebarClips();
+                    // Wait for data to load, then render
+                    setTimeout(() => renderClipsTimeline(), 500);
+                } else {
+                    renderClipsTimeline();
+                }
+            } else {
+                renderClipsTimeline();
+            }
+        }
+    });
+
+    // Update video duration when metadata loads
+    if (video) {
+        video.addEventListener('loadedmetadata', function() {
+            videoDuration = video.duration || {{ $video->duration ?? 300 }};
+        });
+
+        // Update playheads when video time changes
+        video.addEventListener('timeupdate', function() {
+            if (content.style.display !== 'none') {
+                updateAllPlayheads();
+            }
+        });
+    }
+
+    function formatTimeShort(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Update playheads in all clip timelines
+    function updateAllPlayheads() {
+        if (!video) return;
+        const percent = (video.currentTime / videoDuration) * 100;
+        document.querySelectorAll('.clip-playhead').forEach(ph => {
+            ph.style.left = `${percent}%`;
+        });
+    }
+
+    // Render clips timeline list
+    window.renderVisualTimeline = function() {
+        renderClipsTimeline();
+    };
+
+    function renderClipsTimeline() {
+        if (!clipsListContainer || !window.sidebarClipsData) return;
+
+        // Build category color map
+        const categoryColors = {};
+        if (window.sidebarCategoriesData && window.sidebarCategoriesData.length > 0) {
+            window.sidebarCategoriesData.forEach(cat => {
+                categoryColors[cat.id] = { color: cat.color, name: cat.name };
+            });
+        }
+
+        if (window.sidebarClipsData.length === 0) {
+            clipsListContainer.innerHTML = `
+                <div class="text-center py-4" style="color: #666;">
+                    <i class="fas fa-film fa-2x mb-2"></i>
+                    <p class="mb-0">No hay clips para sincronizar</p>
+                </div>`;
+            return;
+        }
+
+        // Sort clips by start time
+        const sortedClips = [...window.sidebarClipsData].sort((a, b) => a.start_time - b.start_time);
+
+        let html = '';
+        sortedClips.forEach((clip, index) => {
+            const cat = categoryColors[clip.clip_category_id] || { color: '#666', name: 'Sin categoría' };
+            const duration = (clip.end_time - clip.start_time).toFixed(1);
+            const startPercent = (clip.start_time / videoDuration) * 100;
+            const widthPercent = ((clip.end_time - clip.start_time) / videoDuration) * 100;
+
+            html += `
+                <div class="clip-timeline-row mb-3 p-3" data-clip-id="${clip.id}" style="background: #1a1a1a; border-radius: 8px; border-left: 4px solid ${cat.color};">
+                    {{-- Header con info del clip --}}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span style="color: ${cat.color}; font-weight: bold; font-size: 14px;">
+                                <i class="fas fa-tag"></i> ${cat.name}
+                            </span>
+                            <span style="color: #888; font-size: 12px; margin-left: 10px;">
+                                ${clip.title || ''}
+                            </span>
+                        </div>
+                        <div style="color: #888; font-size: 12px;">
+                            <span style="color: #fff; font-weight: bold;">${duration}s</span>
+                            <button class="btn btn-sm ml-2 preview-clip-btn" data-start="${clip.start_time}" data-end="${clip.end_time}" style="background: #333; color: #00B7B5; border: none; padding: 2px 8px;">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Timeline visual --}}
+                    <div class="clip-timeline-bar" data-clip-id="${clip.id}" style="position: relative; height: 40px; background: #252525; border-radius: 4px; cursor: pointer; overflow: hidden;">
+                        {{-- Marcas de tiempo de fondo --}}
+                        <div style="position: absolute; top: 0; left: 25%; bottom: 0; width: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <div style="position: absolute; top: 0; left: 50%; bottom: 0; width: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <div style="position: absolute; top: 0; left: 75%; bottom: 0; width: 1px; background: rgba(255,255,255,0.1);"></div>
+
+                        {{-- Playhead (posición actual del video) --}}
+                        <div class="clip-playhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #ff0000; z-index: 5; left: 0%;"></div>
+
+                        {{-- Bloque del clip --}}
+                        <div class="clip-block"
+                             data-clip-id="${clip.id}"
+                             data-start="${clip.start_time}"
+                             data-end="${clip.end_time}"
+                             style="position: absolute; top: 4px; bottom: 4px; left: ${startPercent}%; width: ${Math.max(widthPercent, 1)}%; background: ${cat.color}; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+
+                            {{-- Handle izquierdo (inicio) --}}
+                            <div class="resize-handle resize-left" style="position: absolute; left: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,0.3); border-radius: 4px 0 0 4px;">
+                                <div style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: rgba(255,255,255,0.5); border-radius: 1px;"></div>
+                            </div>
+
+                            {{-- Contenido central --}}
+                            <span style="pointer-events: none; padding: 0 12px;">${formatTimeShort(clip.start_time)} - ${formatTimeShort(clip.end_time)}</span>
+
+                            {{-- Handle derecho (fin) --}}
+                            <div class="resize-handle resize-right" style="position: absolute; right: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,0.3); border-radius: 0 4px 4px 0;">
+                                <div style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: rgba(255,255,255,0.5); border-radius: 1px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Escala de tiempo --}}
+                    <div class="d-flex justify-content-between mt-1" style="color: #555; font-size: 10px;">
+                        <span>0:00</span>
+                        <span>${formatTimeShort(videoDuration * 0.25)}</span>
+                        <span>${formatTimeShort(videoDuration * 0.5)}</span>
+                        <span>${formatTimeShort(videoDuration * 0.75)}</span>
+                        <span>${formatTimeShort(videoDuration)}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        clipsListContainer.innerHTML = html;
+
+        // Initialize drag handlers
+        initDragHandlers();
+        initPreviewButtons();
+        initTimelineClicks();
+    }
+
+    // Initialize preview buttons
+    function initPreviewButtons() {
+        document.querySelectorAll('.preview-clip-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const start = parseFloat(this.dataset.start);
+                const end = parseFloat(this.dataset.end);
+
+                if (video) {
+                    video.currentTime = start;
+                    video.play();
+
+                    const checkEnd = setInterval(() => {
+                        if (video.currentTime >= end || video.paused) {
+                            video.pause();
+                            clearInterval(checkEnd);
+                        }
+                    }, 100);
+                }
+            });
+        });
+    }
+
+    // Initialize timeline bar clicks (seek to position)
+    function initTimelineClicks() {
+        document.querySelectorAll('.clip-timeline-bar').forEach(bar => {
+            bar.addEventListener('click', function(e) {
+                if (e.target.closest('.clip-block')) return;
+
+                const rect = this.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                const seekTime = percent * videoDuration;
+
+                if (video) {
+                    video.currentTime = Math.max(0, Math.min(seekTime, videoDuration));
+                }
+            });
+        });
+    }
+
+    // Drag handlers
+    let isDragging = false;
+    let dragType = null; // 'move', 'resize-left', 'resize-right'
+    let draggedBlock = null;
+    let dragStartX = 0;
+    let originalStart = 0;
+    let originalEnd = 0;
+    let parentBar = null;
+
+    function initDragHandlers() {
+        document.querySelectorAll('.clip-block').forEach(block => {
+            // Resize left handle
+            block.querySelector('.resize-left')?.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                startDrag(e, block, 'resize-left');
+            });
+
+            // Resize right handle
+            block.querySelector('.resize-right')?.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                startDrag(e, block, 'resize-right');
+            });
+
+            // Move entire block
+            block.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.resize-handle')) return;
+                startDrag(e, block, 'move');
+            });
+        });
+    }
+
+    function startDrag(e, block, type) {
+        e.preventDefault();
+        isDragging = true;
+        dragType = type;
+        draggedBlock = block;
+        dragStartX = e.clientX;
+        originalStart = parseFloat(block.dataset.start);
+        originalEnd = parseFloat(block.dataset.end);
+        parentBar = block.closest('.clip-timeline-bar');
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', endDrag);
+
+        block.style.opacity = '0.8';
+        block.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+    }
+
+    function onDrag(e) {
+        if (!isDragging || !draggedBlock || !parentBar) return;
+
+        const rect = parentBar.getBoundingClientRect();
+        const deltaX = e.clientX - dragStartX;
+        const deltaSeconds = (deltaX / rect.width) * videoDuration;
+
+        let newStart = originalStart;
+        let newEnd = originalEnd;
+
+        if (dragType === 'move') {
+            const duration = originalEnd - originalStart;
+            newStart = Math.max(0, Math.min(originalStart + deltaSeconds, videoDuration - duration));
+            newEnd = newStart + duration;
+        } else if (dragType === 'resize-left') {
+            newStart = Math.max(0, Math.min(originalStart + deltaSeconds, originalEnd - 0.5));
+        } else if (dragType === 'resize-right') {
+            newEnd = Math.max(originalStart + 0.5, Math.min(originalEnd + deltaSeconds, videoDuration));
+        }
+
+        // Update visual position
+        const startPercent = (newStart / videoDuration) * 100;
+        const widthPercent = ((newEnd - newStart) / videoDuration) * 100;
+
+        draggedBlock.style.left = `${startPercent}%`;
+        draggedBlock.style.width = `${Math.max(widthPercent, 1)}%`;
+
+        // Update displayed time
+        const timeSpan = draggedBlock.querySelector('span');
+        if (timeSpan) {
+            timeSpan.textContent = `${formatTimeShort(newStart)} - ${formatTimeShort(newEnd)}`;
+        }
+
+        // Store temp values
+        draggedBlock.dataset.tempStart = newStart;
+        draggedBlock.dataset.tempEnd = newEnd;
+    }
+
+    function endDrag(e) {
+        if (!isDragging || !draggedBlock) return;
+
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', endDrag);
+
+        const newStart = parseFloat(draggedBlock.dataset.tempStart || draggedBlock.dataset.start);
+        const newEnd = parseFloat(draggedBlock.dataset.tempEnd || draggedBlock.dataset.end);
+        const clipId = draggedBlock.dataset.clipId;
+
+        // Only save if changed significantly
+        if (Math.abs(newStart - originalStart) > 0.05 || Math.abs(newEnd - originalEnd) > 0.05) {
+            saveClipChanges(clipId, newStart, newEnd);
+        }
+
+        draggedBlock.style.opacity = '1';
+        draggedBlock.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
+        delete draggedBlock.dataset.tempStart;
+        delete draggedBlock.dataset.tempEnd;
+
+        isDragging = false;
+        dragType = null;
+        draggedBlock = null;
+    }
+
+    // Save clip changes
+    async function saveClipChanges(clipId, newStart, newEnd) {
+        try {
+            const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_time: parseFloat(newStart.toFixed(2)),
+                    end_time: parseFloat(newEnd.toFixed(2))
+                })
+            });
+
+            if (response.ok) {
+                // Update local data
+                const clipIndex = window.sidebarClipsData.findIndex(c => c.id == clipId);
+                if (clipIndex !== -1) {
+                    window.sidebarClipsData[clipIndex].start_time = newStart;
+                    window.sidebarClipsData[clipIndex].end_time = newEnd;
+                }
+
+                // Update only the specific clip's UI elements (no full re-render)
+                updateClipUIElements(clipId, newStart, newEnd);
+            }
+        } catch (error) {
+            console.error('Error saving clip:', error);
+            // Only revert on error
+            renderClipsTimeline();
+        }
+    }
+
+    // Update specific clip UI without re-rendering everything
+    function updateClipUIElements(clipId, newStart, newEnd) {
+        const duration = (newEnd - newStart).toFixed(1);
+
+        // Update duration text in timeline header
+        const clipRow = document.querySelector(`.clip-timeline-row[data-clip-id="${clipId}"]`);
+        if (clipRow) {
+            const durationSpan = clipRow.querySelector('div > div > div:last-child > span');
+            if (durationSpan) {
+                durationSpan.textContent = `${duration}s`;
+            }
+            // Update preview button data attributes
+            const previewBtn = clipRow.querySelector('.preview-clip-btn');
+            if (previewBtn) {
+                previewBtn.dataset.start = newStart;
+                previewBtn.dataset.end = newEnd;
+            }
+        }
+
+        // Update clip block data attributes (already visually correct)
+        const clipBlock = document.querySelector(`.clip-block[data-clip-id="${clipId}"]`);
+        if (clipBlock) {
+            clipBlock.dataset.start = newStart;
+            clipBlock.dataset.end = newEnd;
+        }
+
+        // Update sidebar clip item
+        const sidebarItem = document.querySelector(`.sidebar-clip-item[data-clip-id="${clipId}"]`);
+        if (sidebarItem) {
+            sidebarItem.dataset.start = newStart;
+            sidebarItem.dataset.end = newEnd;
+            // Update time text in sidebar
+            // Structure: .sidebar-clip-item > div.d-flex > div.flex-grow-1 > [0: header, 1: time, 2?: title]
+            const flexGrow = sidebarItem.querySelector('.flex-grow-1');
+            if (flexGrow && flexGrow.children.length >= 2) {
+                const timeDiv = flexGrow.children[1]; // Second child is always the time div
+                timeDiv.innerHTML = `${formatTimeShort(newStart)} - ${formatTimeShort(newEnd)} <span style="color: #666; margin-left: 5px;">(${duration}s)</span>`;
+            }
+            // Update edit button data
+            const editBtn = sidebarItem.querySelector('.sidebar-edit-clip-btn');
+            if (editBtn) {
+                editBtn.dataset.start = newStart;
+                editBtn.dataset.end = newEnd;
+            }
+            // Update export button data
+            const exportBtn = sidebarItem.querySelector('.sidebar-export-gif-btn');
+            if (exportBtn) {
+                exportBtn.dataset.start = newStart;
+                exportBtn.dataset.end = newEnd;
+            }
+        }
+    }
+})();
 </script>
 
 @endsection
