@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\CompressVideoJob;
 use App\Models\Video;
 use App\Models\VideoAssignment;
+use App\Services\LongoMatchXmlParser;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,27 @@ use Illuminate\Support\Str;
 
 class DirectUploadController extends Controller
 {
+    protected LongoMatchXmlParser $xmlParser;
+
+    public function __construct(LongoMatchXmlParser $xmlParser)
+    {
+        $this->xmlParser = $xmlParser;
+    }
+
+    /**
+     * Validate LongoMatch XML content
+     */
+    public function validateXml(Request $request)
+    {
+        $request->validate([
+            'xml_content' => 'required|string',
+        ]);
+
+        $result = $this->xmlParser->validate($request->xml_content);
+
+        return response()->json($result);
+    }
+
     /**
      * Generate a pre-signed URL for direct upload to DigitalOcean Spaces
      */
@@ -109,6 +131,7 @@ class DirectUploadController extends Controller
             'assigned_players.*' => 'exists:users,id',
             'assignment_notes' => 'nullable|string|max:1000',
             'visibility_type' => 'required|in:public,forwards,backs,specific',
+            'xml_content' => 'nullable|string', // LongoMatch XML content
         ]);
 
         // Retrieve upload info from cache
@@ -170,17 +193,36 @@ class DirectUploadController extends Controller
                 }
             }
 
+            // Process LongoMatch XML if provided
+            $xmlImportStats = null;
+            if ($request->filled('xml_content')) {
+                try {
+                    $parsedData = $this->xmlParser->parse($request->xml_content);
+                    $xmlImportStats = $this->xmlParser->importToVideo($video, $parsedData, true);
+                    Log::info("LongoMatch XML imported for video {$video->id}", $xmlImportStats);
+                } catch (\Exception $e) {
+                    Log::warning("Failed to import LongoMatch XML for video {$video->id}: " . $e->getMessage());
+                    // Don't fail the whole upload, just log the error
+                }
+            }
+
             // Clear cache
             cache()->forget("direct_upload_{$request->upload_id}");
 
             $successMessage = $this->getSuccessMessage($request->visibility_type, $request->assigned_players ?? []);
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => $successMessage,
                 'video_id' => $video->id,
                 'redirect' => route('videos.show', $video),
-            ]);
+            ];
+
+            if ($xmlImportStats) {
+                $response['xml_import'] = $xmlImportStats;
+            }
+
+            return response()->json($response);
 
         } catch (\Exception $e) {
             Log::error('Failed to confirm upload: ' . $e->getMessage());

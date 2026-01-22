@@ -44,6 +44,48 @@
                             </div>
                         </div>
 
+                        <!-- LongoMatch XML File (Optional) -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="xml_file">
+                                        <i class="fas fa-file-code"></i> Archivo XML de LongoMatch
+                                        <small class="text-muted">(Opcional)</small>
+                                    </label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input"
+                                               id="xml_file" name="xml_file" accept=".xml">
+                                        <label class="custom-file-label" for="xml_file">Seleccionar archivo XML...</label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Si tienes un archivo XML de LongoMatch con la línea de tiempo, súbelo aquí para importar los clips automáticamente.
+                                    </small>
+                                </div>
+
+                                <!-- XML Preview (hidden by default) -->
+                                <div id="xmlPreview" class="alert alert-info" style="display: none;">
+                                    <h6><i class="fas fa-check-circle"></i> XML válido detectado</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Clips encontrados:</strong> <span id="xmlClipsCount">0</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Categorías:</strong> <span id="xmlCategoriesCount">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <strong>Categorías detectadas:</strong>
+                                        <div id="xmlCategoriesList" class="mt-1"></div>
+                                    </div>
+                                </div>
+
+                                <!-- XML Error (hidden by default) -->
+                                <div id="xmlError" class="alert alert-danger" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle"></i> <span id="xmlErrorText"></span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Video Information -->
                         <div class="row">
                             <div class="col-md-8">
@@ -320,11 +362,14 @@
 @section('js')
 <script>
 $(document).ready(function() {
-    // Custom file input
-    $('.custom-file-input').on('change', function() {
+    // Variable to store XML content
+    var xmlContent = null;
+
+    // Custom file input for video
+    $('#video_file').on('change', function() {
         var fileName = $(this).val().split('\\').pop();
         $(this).siblings('.custom-file-label').addClass('selected').html(fileName);
-        
+
         // Show file info
         if (this.files && this.files[0]) {
             var file = this.files[0];
@@ -333,6 +378,72 @@ $(document).ready(function() {
             $(this).siblings('.custom-file-label').html(info);
         }
     });
+
+    // XML file handling
+    $('#xml_file').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).siblings('.custom-file-label').addClass('selected').html(fileName);
+
+        $('#xmlPreview').hide();
+        $('#xmlError').hide();
+        xmlContent = null;
+
+        if (this.files && this.files[0]) {
+            var file = this.files[0];
+
+            if (!file.name.toLowerCase().endsWith('.xml')) {
+                $('#xmlErrorText').text('El archivo debe ser XML');
+                $('#xmlError').show();
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                xmlContent = e.target.result;
+                validateXml(xmlContent);
+            };
+            reader.onerror = function() {
+                $('#xmlErrorText').text('Error leyendo el archivo');
+                $('#xmlError').show();
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    function validateXml(content) {
+        $.ajax({
+            url: '{{ route("api.xml.validate") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                xml_content: content
+            },
+            success: function(response) {
+                if (response.valid) {
+                    $('#xmlClipsCount').text(response.preview.clips_count);
+                    $('#xmlCategoriesCount').text(response.preview.categories_used.length);
+
+                    var categoriesHtml = response.preview.categories_used.map(function(cat) {
+                        return '<span class="badge badge-secondary mr-1 mb-1">' + cat + '</span>';
+                    }).join('');
+                    $('#xmlCategoriesList').html(categoriesHtml);
+
+                    $('#xmlPreview').show();
+                    $('#xmlError').hide();
+                } else {
+                    xmlContent = null;
+                    $('#xmlErrorText').text(response.error || 'XML inválido');
+                    $('#xmlError').show();
+                    $('#xmlPreview').hide();
+                }
+            },
+            error: function(xhr) {
+                xmlContent = null;
+                $('#xmlErrorText').text('Error validando XML');
+                $('#xmlError').show();
+            }
+        });
+    }
 
     // Form validation and upload with real progress
     $('#videoUploadForm').on('submit', function(e) {
@@ -441,7 +552,11 @@ $(document).ready(function() {
     }
 
     function confirmUpload(uploadId, formData) {
-        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Guardando información del video...');
+        var statusMsg = '<i class="fas fa-spinner fa-spin text-warning"></i> Guardando información del video...';
+        if (xmlContent) {
+            statusMsg += '<br><small class="text-info"><i class="fas fa-file-code"></i> Importando clips desde XML...</small>';
+        }
+        $('#uploadStatus').html(statusMsg);
 
         // Build confirm data from form
         var confirmData = {
@@ -458,6 +573,11 @@ $(document).ready(function() {
             assignment_notes: formData.get('assignment_notes')
         };
 
+        // Add XML content if present
+        if (xmlContent) {
+            confirmData['xml_content'] = xmlContent;
+        }
+
         // Add assigned players if any
         var assignedPlayers = formData.getAll('assigned_players[]');
         if (assignedPlayers.length > 0) {
@@ -472,7 +592,21 @@ $(document).ready(function() {
                 if (response.success) {
                     $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)');
                     $('#progressText').text('¡Completado!');
-                    $('#uploadStatus').html('<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong><br><small class="text-muted">El video se está optimizando en segundo plano.</small>');
+
+                    var successMsg = '<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong>';
+                    successMsg += '<br><small class="text-muted">El video se está optimizando en segundo plano.</small>';
+
+                    // Show XML import stats if available
+                    if (response.xml_import) {
+                        successMsg += '<br><small class="text-success"><i class="fas fa-file-code"></i> ';
+                        successMsg += response.xml_import.clips_created + ' clips importados';
+                        if (response.xml_import.categories_created > 0) {
+                            successMsg += ', ' + response.xml_import.categories_created + ' categorías creadas';
+                        }
+                        successMsg += '</small>';
+                    }
+
+                    $('#uploadStatus').html(successMsg);
 
                     setTimeout(function() {
                         window.location.href = response.redirect || '/videos';

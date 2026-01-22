@@ -890,7 +890,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Render clips in sidebar
     function renderSidebarClips(filterCategoryId = null) {
-        let clips = [...sidebarClipsData].sort((a, b) => b.id - a.id); // Newest first
+        let clips = [...sidebarClipsData].sort((a, b) => a.start_time - b.start_time); // Chronological order
 
         if (filterCategoryId) {
             clips = clips.filter(c => c.clip_category_id == filterCategoryId);
@@ -928,6 +928,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             </span>
                             <div>
                                 ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                                <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
+                                        style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                        title="Editar clip">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                                 <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
                                         style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                         title="Exportar GIF">
@@ -1012,6 +1017,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const endTime = parseFloat(this.dataset.end);
                 const title = this.dataset.title;
                 await exportClipAsGif(startTime, endTime, title, this);
+            });
+        });
+
+        // Add click handlers for edit buttons
+        document.querySelectorAll('.sidebar-edit-clip-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                openEditClipModal(
+                    this.dataset.clipId,
+                    parseFloat(this.dataset.start),
+                    parseFloat(this.dataset.end),
+                    this.dataset.title,
+                    this.dataset.notes,
+                    this.dataset.categoryId
+                );
             });
         });
     }
@@ -1302,6 +1322,90 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Modal Editar Clip -->
+@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<div class="modal fade" id="editClipModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="background: #1a1a1a; color: #fff;">
+            <div class="modal-header" style="border-bottom: 1px solid #333; background: #003d4a;">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Editar Clip</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editClipForm">
+                    <input type="hidden" id="editClipId">
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label><i class="fas fa-play"></i> Tiempo Inicio (seg)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" id="editClipStart" class="form-control" style="background: #252525; color: #fff; border-color: #333;" required>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-info" id="useCurrentStartBtn" title="Usar tiempo actual del video">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small style="color: #888;" id="editClipStartFormatted">00:00</small>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label><i class="fas fa-stop"></i> Tiempo Fin (seg)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" id="editClipEnd" class="form-control" style="background: #252525; color: #fff; border-color: #333;" required>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-info" id="useCurrentEndBtn" title="Usar tiempo actual del video">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small style="color: #888;" id="editClipEndFormatted">00:00</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-heading"></i> Título</label>
+                        <input type="text" id="editClipTitle" class="form-control" style="background: #252525; color: #fff; border-color: #333;" placeholder="Título del clip...">
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-sticky-note"></i> Notas</label>
+                        <textarea id="editClipNotes" class="form-control" style="background: #252525; color: #fff; border-color: #333;" rows="2" placeholder="Notas adicionales..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info py-2" style="background: #003d4a; border: none;">
+                        <small>
+                            <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Reproduce el video, pausa en el momento deseado y usa los botones <i class="fas fa-crosshairs"></i> para capturar el tiempo exacto.
+                        </small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button type="button" class="btn btn-sm" style="background: #252525; color: #fff;" id="previewClipBtn">
+                            <i class="fas fa-play-circle"></i> Preview
+                        </button>
+                        <div>
+                            <button type="button" class="btn btn-sm" style="background: #333; color: #888;" id="adjustClipMinus">
+                                <i class="fas fa-minus"></i> 0.5s
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background: #333; color: #888;" id="adjustClipPlus">
+                                <i class="fas fa-plus"></i> 0.5s
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #333;">
+                <button type="button" class="btn" style="background: #333; color: #fff;" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn" style="background: #00B7B5; color: #fff;" id="saveEditClipBtn">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <script>
 // Abrir modal de categoría (crear o editar)
 function openCategoryModal(category = null) {
@@ -1480,6 +1584,170 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ============================================
+// EDIT CLIP MODAL FUNCTIONALITY
+// ============================================
+@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+(function() {
+    const video = document.getElementById('rugbyVideo');
+    const editClipModal = document.getElementById('editClipModal');
+    const editClipId = document.getElementById('editClipId');
+    const editClipStart = document.getElementById('editClipStart');
+    const editClipEnd = document.getElementById('editClipEnd');
+    const editClipTitle = document.getElementById('editClipTitle');
+    const editClipNotes = document.getElementById('editClipNotes');
+    const editClipStartFormatted = document.getElementById('editClipStartFormatted');
+    const editClipEndFormatted = document.getElementById('editClipEndFormatted');
+
+    // Format seconds to MM:SS
+    function formatTimeEdit(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Update formatted time displays
+    function updateFormattedTimes() {
+        const start = parseFloat(editClipStart.value) || 0;
+        const end = parseFloat(editClipEnd.value) || 0;
+        editClipStartFormatted.textContent = formatTimeEdit(start);
+        editClipEndFormatted.textContent = formatTimeEdit(end);
+    }
+
+    // Open edit modal
+    window.openEditClipModal = function(clipId, start, end, title, notes, categoryId) {
+        editClipId.value = clipId;
+        editClipStart.value = start.toFixed(1);
+        editClipEnd.value = end.toFixed(1);
+        editClipTitle.value = title || '';
+        editClipNotes.value = notes || '';
+        updateFormattedTimes();
+        $('#editClipModal').modal('show');
+    };
+
+    // Input change handlers
+    if (editClipStart) {
+        editClipStart.addEventListener('input', updateFormattedTimes);
+    }
+    if (editClipEnd) {
+        editClipEnd.addEventListener('input', updateFormattedTimes);
+    }
+
+    // Use current time buttons
+    document.getElementById('useCurrentStartBtn')?.addEventListener('click', function() {
+        if (video) {
+            editClipStart.value = video.currentTime.toFixed(1);
+            updateFormattedTimes();
+        }
+    });
+
+    document.getElementById('useCurrentEndBtn')?.addEventListener('click', function() {
+        if (video) {
+            editClipEnd.value = video.currentTime.toFixed(1);
+            updateFormattedTimes();
+        }
+    });
+
+    // Adjust buttons (+/- 0.5s)
+    document.getElementById('adjustClipMinus')?.addEventListener('click', function() {
+        const start = parseFloat(editClipStart.value) || 0;
+        editClipStart.value = Math.max(0, start - 0.5).toFixed(1);
+        updateFormattedTimes();
+    });
+
+    document.getElementById('adjustClipPlus')?.addEventListener('click', function() {
+        const end = parseFloat(editClipEnd.value) || 0;
+        editClipEnd.value = (end + 0.5).toFixed(1);
+        updateFormattedTimes();
+    });
+
+    // Preview button
+    document.getElementById('previewClipBtn')?.addEventListener('click', function() {
+        if (!video) return;
+
+        const start = parseFloat(editClipStart.value) || 0;
+        const end = parseFloat(editClipEnd.value) || start + 5;
+
+        video.currentTime = start;
+        video.play();
+
+        // Auto-pause at end
+        const checkEnd = setInterval(() => {
+            if (video.currentTime >= end || video.paused) {
+                video.pause();
+                clearInterval(checkEnd);
+            }
+        }, 100);
+    });
+
+    // Save button
+    document.getElementById('saveEditClipBtn')?.addEventListener('click', async function() {
+        const clipId = editClipId.value;
+        const startTime = parseFloat(editClipStart.value);
+        const endTime = parseFloat(editClipEnd.value);
+        const title = editClipTitle.value.trim();
+        const notes = editClipNotes.value.trim();
+
+        if (startTime >= endTime) {
+            alert('El tiempo de inicio debe ser menor al tiempo de fin');
+            return;
+        }
+
+        const saveBtn = this;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        try {
+            const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_time: startTime,
+                    end_time: endTime,
+                    title: title,
+                    notes: notes
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                $('#editClipModal').modal('hide');
+
+                // Update local data and re-render
+                if (typeof sidebarClipsData !== 'undefined') {
+                    const clipIndex = sidebarClipsData.findIndex(c => c.id == clipId);
+                    if (clipIndex !== -1) {
+                        sidebarClipsData[clipIndex].start_time = startTime;
+                        sidebarClipsData[clipIndex].end_time = endTime;
+                        sidebarClipsData[clipIndex].title = title;
+                        sidebarClipsData[clipIndex].notes = notes;
+                    }
+                    renderSidebarClips(document.getElementById('sidebarClipFilter')?.value || null);
+                }
+
+                // Sync with clip-manager if available
+                if (typeof window.updateClipInLocalArray === 'function') {
+                    window.updateClipInLocalArray(parseInt(clipId), { start_time: startTime, end_time: endTime, title, notes });
+                }
+            } else {
+                alert(result.message || 'Error al guardar clip');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al guardar clip');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        }
+    });
+})();
+@endif
 </script>
 
 @endsection

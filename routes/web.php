@@ -79,6 +79,9 @@ Route::middleware(['auth'])->group(function () {
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
     Route::post('api/upload/confirm', [DirectUploadController::class, 'confirmUpload'])->name('api.upload.confirm');
+
+    // LongoMatch XML validation
+    Route::post('api/xml/validate', [DirectUploadController::class, 'validateXml'])->name('api.xml.validate');
     Route::delete('comments/{comment}', [VideoCommentController::class, 'destroy'])->name('comments.destroy');
 
     // Player API Routes (for AJAX search functionality)
