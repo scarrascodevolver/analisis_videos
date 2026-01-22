@@ -1,6 +1,6 @@
 # CLAUDE.md - RugbyHub (Sistema Multi-Tenant)
 
-## Ultima actualizacion: 2026-01-12
+## Ultima actualizacion: 2026-01-23
 
 ---
 
@@ -26,6 +26,8 @@ El sistema evolucion de "Los Troncos" a **RugbyHub** - plataforma multi-tenant p
 - Branding dinamico (logo/nombre por organizacion)
 - Comentarios via AJAX sin recarga
 - UI actualizada: colores verde rugby (#00B7B5 accent)
+- Importacion XML de LongoMatch para clips de video
+- Editor visual de timeline (drag & drop para ajustar clips)
 
 ---
 
@@ -91,6 +93,8 @@ php artisan videos:migrate-to-org-folders --org=los-troncos
 | `EvaluationPeriod` | Periodos de evaluacion |
 | `CommentMention` | Menciones en comentarios |
 | `Setting` | Configuraciones del sistema |
+| `VideoClip` | Clips de video (inicio, fin, categoria) |
+| `ClipCategory` | Categorias de clips (color, nombre) |
 
 ---
 
