@@ -1710,13 +1710,16 @@ $(document).ready(function() {
     // Close annotation mode
     $('#closeAnnotationMode').on('click', exitAnnotationMode);
 
-    // Tool selection
-    $('.toolbar-btn[data-tool]').on('click', function() {
+    // Tool selection (event delegation for dynamic/hidden elements)
+    $(document).on('click', '.toolbar-btn[data-tool], .toolbar-btn-v[data-tool]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         const tool = $(this).data('tool');
         currentTool = tool;
 
         // Update active state
-        $('.toolbar-btn[data-tool]').removeClass('active');
+        $('.toolbar-btn[data-tool], .toolbar-btn-v[data-tool]').removeClass('active');
         $(this).addClass('active');
 
         // Configure canvas for tool
@@ -1727,10 +1730,35 @@ $(document).ready(function() {
             if (tool === 'free_draw') {
                 fabricCanvas.isDrawingMode = true;
                 fabricCanvas.freeDrawingBrush.width = 3;
-                fabricCanvas.freeDrawingBrush.color = '#ff0000';
+                fabricCanvas.freeDrawingBrush.color = $('#annotationColor').val() || '#ff0000';
+            } else if (tool === 'highlighter') {
+                // Highlighter: thick stroke with semi-transparency
+                fabricCanvas.isDrawingMode = true;
+                const hexColor = $('#annotationColor').val() || '#ff0000';
+                // Convert hex to rgba with 50% opacity
+                const r = parseInt(hexColor.slice(1, 3), 16);
+                const g = parseInt(hexColor.slice(3, 5), 16);
+                const b = parseInt(hexColor.slice(5, 7), 16);
+                fabricCanvas.freeDrawingBrush.width = 18;
+                fabricCanvas.freeDrawingBrush.color = `rgba(${r}, ${g}, ${b}, 0.5)`;
             }
         }
 
+        console.log('Tool selected:', tool); // Debug
+    });
+
+    // Update brush color when color picker changes
+    $('#annotationColor').on('input change', function() {
+        if (!fabricCanvas || !fabricCanvas.freeDrawingBrush) return;
+        const hexColor = $(this).val();
+        if (currentTool === 'highlighter') {
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            fabricCanvas.freeDrawingBrush.color = `rgba(${r}, ${g}, ${b}, 0.5)`;
+        } else if (currentTool === 'free_draw') {
+            fabricCanvas.freeDrawingBrush.color = hexColor;
+        }
     });
 
     // Drawing functionality
@@ -1834,7 +1862,7 @@ $(document).ready(function() {
                     initAnnotationSystem();
 
                     fabricCanvas.on('mouse:down', function(event) {
-                        if (!annotationMode || currentTool === 'free_draw') return;
+                        if (!annotationMode || currentTool === 'free_draw' || currentTool === 'highlighter') return;
 
                         const pointer = fabricCanvas.getPointer(event.e);
                         startX = pointer.x;
@@ -1851,7 +1879,7 @@ $(document).ready(function() {
                     });
 
                     fabricCanvas.on('mouse:move', function(event) {
-                        if (!annotationMode || !isDrawing || currentTool === 'free_draw') return;
+                        if (!annotationMode || !isDrawing || currentTool === 'free_draw' || currentTool === 'highlighter') return;
 
                         const pointer = fabricCanvas.getPointer(event.e);
                         updateDrawing(currentTool, pointer.x, pointer.y, startX, startY);

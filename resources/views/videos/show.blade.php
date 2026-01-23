@@ -61,99 +61,88 @@
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
                         </canvas>
 
-                        <!-- Toolbar de anotaciones (oculto por defecto) -->
-                        <div id="annotationToolbar" class="annotation-toolbar" style="display: none;">
-                            <div class="toolbar-container">
-                                <div class="toolbar-title">
-                                    <i class="fas fa-paint-brush"></i> Herramientas de Anotación
-                                    <button id="closeAnnotationMode" class="btn btn-sm btn-outline-light ml-2">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="toolbar-buttons">
-                                    {{-- Herramientas básicas --}}
-                                    <button id="annotationArrow" class="toolbar-btn active" data-tool="arrow" title="Flecha recta">
-                                        <i class="fas fa-arrow-right"></i> Flecha
-                                    </button>
-                                    <button id="annotationCircle" class="toolbar-btn" data-tool="circle" title="Círculo">
-                                        <i class="fas fa-circle"></i> Círculo
-                                    </button>
-                                    <button id="annotationRectangle" class="toolbar-btn" data-tool="rectangle" title="Rectángulo">
-                                        <i class="fas fa-square"></i> Rect
-                                    </button>
-                                    <button id="annotationLine" class="toolbar-btn" data-tool="line" title="Línea recta">
-                                        <i class="fas fa-minus"></i> Línea
-                                    </button>
-                                    <button id="annotationText" class="toolbar-btn" data-tool="text" title="Texto">
-                                        <i class="fas fa-font"></i> Texto
-                                    </button>
-                                    <button id="annotationFreeDraw" class="toolbar-btn" data-tool="free_draw" title="Dibujo libre">
-                                        <i class="fas fa-pencil-alt"></i> Libre
-                                    </button>
-                                    <div class="toolbar-separator"></div>
-                                    {{-- Herramienta de área --}}
-                                    <button id="annotationArea" class="toolbar-btn" data-tool="area" title="Marcar área (click puntos, doble-click o Enter para cerrar)">
-                                        <i class="fas fa-draw-polygon"></i> Área
-                                    </button>
-                                    {{-- Spotlight --}}
-                                    <button id="annotationSpotlight" class="toolbar-btn spotlight-btn" title="Spotlight (foco)">
-                                        <i class="fas fa-bullseye"></i> Foco
-                                    </button>
-                                    <div class="toolbar-separator"></div>
-                                    {{-- Símbolos rápidos --}}
-                                    <div class="dropdown d-inline-block">
-                                        <button class="toolbar-btn dropdown-toggle" type="button" data-toggle="dropdown" title="Símbolos">
-                                            <i class="fas fa-icons"></i>
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-dark" style="background: #252525; border: 1px solid #444;">
-                                            <button class="dropdown-item text-white symbol-btn" data-symbol="tackle">
-                                                <i class="fas fa-bolt" style="color: #dc3545;"></i> Tackle / Impacto
-                                            </button>
-                                            <button class="dropdown-item text-white symbol-btn" data-symbol="ball">
-                                                <i class="fas fa-football-ball" style="color: #8B4513;"></i> Balón
-                                            </button>
-                                            <button class="dropdown-item text-white symbol-btn" data-symbol="x">
-                                                <i class="fas fa-times" style="color: #dc3545;"></i> Error / Fallo
-                                            </button>
-                                            <button class="dropdown-item text-white symbol-btn" data-symbol="check">
-                                                <i class="fas fa-check" style="color: #28a745;"></i> Correcto / Bien
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="toolbar-separator"></div>
-                                    {{-- Color y duración --}}
-                                    <div class="color-picker-container">
-                                        <label style="color: white; font-size: 11px;">Color:</label>
-                                        <input type="color" id="annotationColor" value="#ff0000" style="width: 30px; height: 25px; border: none; border-radius: 3px;">
-                                    </div>
-                                    <div class="toolbar-separator"></div>
-                                    <div class="duration-picker-container">
-                                        <label style="color: white; font-size: 11px;">Duración:</label>
-                                        <select id="annotationDuration" style="width: 60px; height: 25px; border: none; border-radius: 3px; background: white;">
-                                            <option value="1">1s</option>
-                                            <option value="2">2s</option>
-                                            <option value="4" selected>4s</option>
-                                            <option value="6">6s</option>
-                                            <option value="8">8s</option>
-                                            <option value="10">10s</option>
-                                            <option value="permanent">Fijo</option>
-                                        </select>
-                                    </div>
-                                    <div class="toolbar-separator"></div>
-                                    {{-- Acciones --}}
-                                    <button id="undoAnnotation" class="toolbar-btn" title="Deshacer (Ctrl+Z)" disabled>
-                                        <i class="fas fa-undo"></i>
-                                    </button>
-                                    <button id="redoAnnotation" class="toolbar-btn" title="Rehacer (Ctrl+Y)" disabled>
-                                        <i class="fas fa-redo"></i>
-                                    </button>
-                                    <button id="saveAnnotation" class="toolbar-btn save-btn">
-                                        <i class="fas fa-save"></i> Guardar
-                                    </button>
-                                    <button id="clearAnnotations" class="toolbar-btn clear-btn">
-                                        <i class="fas fa-trash"></i> Limpiar
-                                    </button>
-                                </div>
+                        <!-- Toolbar de anotaciones LATERAL COMPACTO -->
+                        <div id="annotationToolbar" class="annotation-toolbar-vertical" style="display: none;">
+                            {{-- Fila 1: Cerrar + Color + Duración --}}
+                            <div class="toolbar-header-row">
+                                <button id="closeAnnotationMode" class="toolbar-btn-small close-btn" title="Cerrar (ESC)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <input type="color" id="annotationColor" value="#ff0000" class="toolbar-color-v" title="Color">
+                                <select id="annotationDuration" class="toolbar-duration-v" title="Duración">
+                                    <option value="2">2s</option>
+                                    <option value="4" selected>4s</option>
+                                    <option value="8">8s</option>
+                                    <option value="permanent">∞</option>
+                                </select>
+                            </div>
+
+                            {{-- Herramientas básicas --}}
+                            <div class="toolbar-section">
+                                <button id="annotationArrow" class="toolbar-btn toolbar-btn-v active" data-tool="arrow" title="Flecha">
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span>Flecha</span>
+                                </button>
+                                <button id="annotationCircle" class="toolbar-btn toolbar-btn-v" data-tool="circle" title="Círculo">
+                                    <i class="fas fa-circle"></i>
+                                    <span>Círculo</span>
+                                </button>
+                                <button id="annotationLine" class="toolbar-btn toolbar-btn-v" data-tool="line" title="Línea">
+                                    <i class="fas fa-minus"></i>
+                                    <span>Línea</span>
+                                </button>
+                                <button id="annotationFreeDraw" class="toolbar-btn toolbar-btn-v" data-tool="free_draw" title="Dibujo libre">
+                                    <i class="fas fa-pencil-alt"></i>
+                                    <span>Dibujar</span>
+                                </button>
+                                <button id="annotationText" class="toolbar-btn toolbar-btn-v" data-tool="text" title="Texto">
+                                    <i class="fas fa-font"></i>
+                                    <span>Texto</span>
+                                </button>
+                            </div>
+
+                            {{-- Herramientas adicionales --}}
+                            <div class="toolbar-section">
+                                <button id="annotationRectangle" class="toolbar-btn toolbar-btn-v" data-tool="rectangle" title="Rectángulo">
+                                    <i class="fas fa-square"></i>
+                                    <span>Rectángulo</span>
+                                </button>
+                                <button id="annotationArea" class="toolbar-btn toolbar-btn-v" data-tool="area" title="Área">
+                                    <i class="fas fa-draw-polygon"></i>
+                                    <span>Área</span>
+                                </button>
+                                <button id="annotationSpotlight" class="toolbar-btn toolbar-btn-v spotlight-btn" data-tool="spotlight" title="Foco">
+                                    <i class="fas fa-bullseye"></i>
+                                    <span>Foco</span>
+                                </button>
+                            </div>
+
+                            {{-- Símbolos rápidos --}}
+                            <div class="toolbar-section toolbar-symbols">
+                                <button class="toolbar-btn toolbar-btn-v symbol-btn" data-symbol="tackle" title="Tackle">
+                                    <i class="fas fa-bolt" style="color: #dc3545;"></i>
+                                    <span>Tackle</span>
+                                </button>
+                                <button class="toolbar-btn toolbar-btn-v symbol-btn" data-symbol="ball" title="Balón">
+                                    <i class="fas fa-football-ball" style="color: #8B4513;"></i>
+                                    <span>Balón</span>
+                                </button>
+                                <button class="toolbar-btn toolbar-btn-v symbol-btn" data-symbol="x" title="Error">
+                                    <i class="fas fa-times" style="color: #dc3545;"></i>
+                                    <span>Error</span>
+                                </button>
+                                <button class="toolbar-btn toolbar-btn-v symbol-btn" data-symbol="check" title="OK">
+                                    <i class="fas fa-check" style="color: #28a745;"></i>
+                                    <span>OK</span>
+                                </button>
+                            </div>
+
+                            {{-- Acciones --}}
+                            <div class="toolbar-section" style="border-bottom: none;">
+                                <button id="undoAnnotation" class="toolbar-btn-small" title="Deshacer" disabled><i class="fas fa-undo"></i></button>
+                                <button id="redoAnnotation" class="toolbar-btn-small" title="Rehacer" disabled><i class="fas fa-redo"></i></button>
+                                <button id="saveAnnotation" class="toolbar-btn-small save-btn" title="Guardar"><i class="fas fa-save"></i></button>
+                                <button id="clearAnnotations" class="toolbar-btn-small clear-btn" title="Limpiar"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
 
@@ -171,9 +160,20 @@
                             <i class="fas fa-times-circle"></i> Eliminar Anotación
                         </button>
 
-                        <!-- Speed Control Button -->
-                        <div id="speedControlWrapper" class="speed-control-wrapper">
-                            <button id="speedControlBtn" class="speed-control-btn" title="Velocidad de reproducción">
+                        <!-- Video Utility Controls -->
+                        <div class="video-utility-controls">
+                            <!-- Picture-in-Picture Button -->
+                            <button id="pipBtn" class="video-utility-btn" title="Picture-in-Picture (Mini ventana)">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+
+                            <!-- Download Button -->
+                            <button id="downloadBtn" class="video-utility-btn" title="Descargar video">
+                                <i class="fas fa-download"></i>
+                            </button>
+
+                            <!-- Speed Control Button -->
+                            <button id="speedControlBtn" class="video-utility-btn" title="Velocidad de reproducción">
                                 <i class="fas fa-tachometer-alt"></i> <span id="currentSpeed">1x</span>
                             </button>
                             <div id="speedMenu" class="speed-menu">
@@ -766,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const video = document.getElementById('rugbyVideo');
     const speedBtn = document.getElementById('speedControlBtn');
     const speedMenu = document.getElementById('speedMenu');
-    const speedWrapper = document.getElementById('speedControlWrapper');
+    const utilityControls = document.querySelector('.video-utility-controls');
     const currentSpeedDisplay = document.getElementById('currentSpeed');
     const speedOptions = document.querySelectorAll('.speed-option');
 
@@ -780,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Close menu when clicking outside
     document.addEventListener('click', function(e) {
-        if (!speedWrapper.contains(e.target)) {
+        if (!utilityControls.contains(e.target)) {
             speedMenu.classList.remove('show');
         }
     });
@@ -843,6 +843,68 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Highlight button
         speedBtn.classList.toggle('speed-modified', newSpeed !== 1);
+    }
+});
+</script>
+
+<script>
+// Picture-in-Picture and Download Controls
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('rugbyVideo');
+    const pipBtn = document.getElementById('pipBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    if (!video) return;
+
+    // ========== Picture-in-Picture ==========
+    if (pipBtn) {
+        // Check if PiP is supported
+        if (!document.pictureInPictureEnabled) {
+            pipBtn.disabled = true;
+            pipBtn.title = 'Picture-in-Picture no soportado en este navegador';
+        } else {
+            pipBtn.addEventListener('click', async function() {
+                try {
+                    if (document.pictureInPictureElement) {
+                        // Si ya está en PiP, salir
+                        await document.exitPictureInPicture();
+                    } else {
+                        // Entrar en PiP
+                        await video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error('Error con Picture-in-Picture:', error);
+                    alert('No se pudo activar Picture-in-Picture. Asegúrate de que el video esté reproduciendo.');
+                }
+            });
+
+            // Update button icon when entering/exiting PiP
+            video.addEventListener('enterpictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                pipBtn.title = 'Salir de Picture-in-Picture';
+            });
+
+            video.addEventListener('leavepictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+                pipBtn.title = 'Picture-in-Picture (Mini ventana)';
+            });
+        }
+    }
+
+    // ========== Download Video ==========
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            const videoSrc = video.querySelector('source').src;
+            const videoTitle = '{{ $video->title }}';
+
+            // Create download link
+            const a = document.createElement('a');
+            a.href = videoSrc;
+            a.download = videoTitle.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_') + '.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
     }
 });
 </script>
