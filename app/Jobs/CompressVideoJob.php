@@ -259,27 +259,44 @@ class CompressVideoJob implements ShouldQueue
     {
         $filename = 'compressed_' . time() . '_' . $video->file_name;
 
-        // Try to upload to Spaces first, fallback to local
-        try {
-            $path = Storage::disk('spaces')->putFileAs(
-                'videos',
-                new \Illuminate\Http\File($compressedPath),
-                $filename,
-                'public'
-            );
+        // Get organization slug for folder structure
+        $orgSlug = $video->organization ? $video->organization->slug : 'default';
+        $uploadPath = "videos/{$orgSlug}";
 
-            Log::info("CompressVideoJob: Uploaded to DigitalOcean Spaces");
-            return $path;
+        // Production: upload to Spaces with fallback to local
+        // Local/Development: use local storage directly (faster, no network delays)
+        if (app()->environment('production')) {
+            try {
+                $path = Storage::disk('spaces')->putFileAs(
+                    $uploadPath,
+                    new \Illuminate\Http\File($compressedPath),
+                    $filename,
+                    'public'
+                );
 
-        } catch (Exception $e) {
-            Log::warning("CompressVideoJob: Failed to upload to Spaces, using local storage: " . $e->getMessage());
+                Log::info("CompressVideoJob: Uploaded to DigitalOcean Spaces");
+                return $path;
 
+            } catch (Exception $e) {
+                Log::warning("CompressVideoJob: Failed to upload to Spaces, using local storage: " . $e->getMessage());
+
+                $path = Storage::disk('public')->putFileAs(
+                    $uploadPath,
+                    new \Illuminate\Http\File($compressedPath),
+                    $filename
+                );
+
+                return $path;
+            }
+        } else {
+            // Local environment: use local storage directly
             $path = Storage::disk('public')->putFileAs(
-                'videos',
+                $uploadPath,
                 new \Illuminate\Http\File($compressedPath),
                 $filename
             );
 
+            Log::info("CompressVideoJob: Uploaded to local storage (development environment)");
             return $path;
         }
     }

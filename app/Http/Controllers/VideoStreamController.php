@@ -136,8 +136,8 @@ class VideoStreamController extends Controller
 
     public function stream(Video $video, Request $request)
     {
-        // Skip Spaces completely in local environment for faster development
-        if (config('app.env') !== 'local') {
+        // Production: Use Spaces/CDN as primary source
+        if (config('app.env') === 'production') {
             // Check if file is in DigitalOcean Spaces (new uploads)
             try {
                 if (Storage::disk('spaces')->exists($video->file_path)) {
@@ -165,7 +165,42 @@ class VideoStreamController extends Controller
             }
         }
 
-        // Fallback to local storage for old videos
+        // Local/Development: Try local storage first (fast), then Spaces as fallback (slow but works)
+        if (config('app.env') === 'local') {
+            $path = storage_path('app/public/' . $video->file_path);
+
+            // Try local storage first (instant loading for new videos)
+            if (file_exists($path)) {
+                \Log::debug('Streaming from local storage - video: ' . $video->id);
+                // Continue to stream from local (code below)
+            } else {
+                // Local file doesn't exist, try Spaces as fallback (for old videos)
+                try {
+                    if (Storage::disk('spaces')->exists($video->file_path)) {
+                        \Log::info('Local file not found, streaming from Spaces - video: ' . $video->id);
+
+                        $cdnBaseUrl = config('filesystems.disks.spaces.url');
+
+                        // Try CDN first if configured and healthy
+                        if ($cdnBaseUrl && $this->isCdnHealthy()) {
+                            $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+                            return redirect($cdnUrl);
+                        }
+
+                        // CDN not available - use direct Spaces streaming
+                        return $this->streamFromSpaces($video, $request);
+                    }
+                } catch (Exception $e) {
+                    \Log::warning('Spaces fallback failed in local environment: ' . $e->getMessage());
+                }
+
+                // File not found in local or Spaces
+                \Log::error('Video file not found anywhere - video: ' . $video->id . ' path: ' . $video->file_path);
+                abort(404, 'Video file not found');
+            }
+        }
+
+        // Fallback to local storage (for other environments or production fallback)
         $path = storage_path('app/public/' . $video->file_path);
 
         if (!file_exists($path)) {
@@ -347,11 +382,12 @@ class VideoStreamController extends Controller
 
     public function streamByPath($filename, Request $request)
     {
-        // Skip Spaces completely in local environment for faster development
-        if (config('app.env') !== 'local') {
+        $spacesPath = 'videos/' . $filename;
+
+        // Production: Use Spaces/CDN as primary source
+        if (config('app.env') === 'production') {
             // Check if file is in DigitalOcean Spaces (new uploads)
             try {
-                $spacesPath = 'videos/' . $filename;
                 if (Storage::disk('spaces')->exists($spacesPath)) {
                     $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
@@ -374,9 +410,44 @@ class VideoStreamController extends Controller
             } catch (Exception $e) {
                 // Log error and continue to local fallback
                 \Log::warning('DigitalOcean Spaces access failed for path: ' . $e->getMessage());
+            }
         }
 
-        // Fallback to local storage for old videos
+        // Local/Development: Try local storage first (fast), then Spaces as fallback (slow but works)
+        if (config('app.env') === 'local') {
+            $path = storage_path('app/public/videos/' . $filename);
+
+            // Try local storage first (instant loading for new videos)
+            if (file_exists($path)) {
+                \Log::debug('Streaming from local storage - file: ' . $filename);
+                // Continue to stream from local (code below)
+            } else {
+                // Local file doesn't exist, try Spaces as fallback (for old videos)
+                try {
+                    if (Storage::disk('spaces')->exists($spacesPath)) {
+                        \Log::info('Local file not found, streaming from Spaces - file: ' . $filename);
+
+                        $cdnBaseUrl = config('filesystems.disks.spaces.url');
+
+                        // Try CDN first if configured and healthy
+                        if ($cdnBaseUrl && $this->isCdnHealthy()) {
+                            $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
+                            return redirect($cdnUrl);
+                        }
+
+                        // CDN not available - use direct Spaces streaming
+                        return $this->streamFileFromSpaces($spacesPath, $request);
+                    }
+                } catch (Exception $e) {
+                    \Log::warning('Spaces fallback failed in local environment: ' . $e->getMessage());
+                }
+
+                // File not found in local or Spaces
+                abort(404, 'Video file not found');
+            }
+        }
+
+        // Fallback to local storage for old videos (other environments or production fallback)
         $path = storage_path('app/public/videos/' . $filename);
 
         if (!file_exists($path)) {
