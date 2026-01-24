@@ -3,6 +3,16 @@
  * Extracted from resources/views/videos/show.blade.php
  */
 
+/* Video container - auto height adjustment */
+.video-container {
+    min-height: 300px; /* Mínimo para móviles */
+}
+
+#rugbyVideo {
+    object-fit: contain; /* Mantiene aspect ratio sin cortar */
+    background: #000;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -881,5 +891,71 @@
         min-width: 50px !important;
         padding: 5px 6px !important;
         font-size: 10px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Timeline Lanes - Compact Layout                             */
+/* ═══════════════════════════════════════════════════════════ */
+
+.timeline-lane {
+    transition: background 0.2s ease;
+}
+
+.timeline-lane:hover {
+    background: #222 !important;
+}
+
+.lane-bar {
+    cursor: crosshair;
+}
+
+.clip-block {
+    transition: all 0.15s ease;
+}
+
+.clip-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6) !important;
+    z-index: 15 !important;
+}
+
+.clip-block:active {
+    transform: translateY(0);
+}
+
+.resize-handle {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.clip-block:hover .resize-handle {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.lane-playhead {
+    pointer-events: none;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .lane-label {
+        width: 80px !important;
+        min-width: 80px !important;
+        font-size: 10px !important;
+    }
+
+    .timeline-lane {
+        min-height: 28px !important;
+    }
+
+    .clip-block {
+        font-size: 8px !important;
+    }
+
+    #timelineScale {
+        margin-left: 85px !important;
+        font-size: 9px !important;
     }
 }

@@ -301,10 +301,19 @@
                                 </div>
 
                                 {{-- Timeline con Carriles por Categoría --}}
-                                <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 8px; padding: 15px;">
+                                <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 8px; padding: 10px;">
                                     <div class="text-center py-4" style="color: #666;">
                                         <i class="fas fa-spinner fa-spin"></i> Cargando clips...
                                     </div>
+                                </div>
+
+                                {{-- Legend: Time scale (shown once at bottom) --}}
+                                <div id="timelineScale" class="d-flex justify-content-between mt-2 px-2" style="color: #555; font-size: 10px; margin-left: 120px;">
+                                    <span>0:00</span>
+                                    <span id="scale25"></span>
+                                    <span id="scale50"></span>
+                                    <span id="scale75"></span>
+                                    <span id="scaleEnd"></span>
                                 </div>
 
                                 {{-- Instrucciones --}}
@@ -2045,7 +2054,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTimelineLanes();
     };
 
-    // Render Timeline with Lanes by Category
+    // Render Timeline with Lanes by Category (compact layout)
     function renderTimelineLanes() {
         if (!lanesContainer || !window.sidebarClipsData) return;
 
@@ -2080,7 +2089,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Render lanes
+        // Update time scale
+        const scale25 = document.getElementById('scale25');
+        const scale50 = document.getElementById('scale50');
+        const scale75 = document.getElementById('scale75');
+        const scaleEnd = document.getElementById('scaleEnd');
+
+        if (scale25) scale25.textContent = formatTimeShort(videoDuration * 0.25);
+        if (scale50) scale50.textContent = formatTimeShort(videoDuration * 0.5);
+        if (scale75) scale75.textContent = formatTimeShort(videoDuration * 0.75);
+        if (scaleEnd) scaleEnd.textContent = formatTimeShort(videoDuration);
+
+        // Render lanes with compact layout (category on left, timeline on right)
         let html = '';
         Object.keys(categoryMap).forEach(catId => {
             const category = categoryMap[catId];
@@ -2089,38 +2109,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const clipsCount = category.clips.length;
 
             html += `
-                <div class="timeline-lane mb-3" data-category-id="${catId}" style="background: #1a1a1a; border-radius: 8px; border-left: 4px solid ${category.color}; padding: 12px;">
-                    {{-- Lane Header --}}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span style="color: ${category.color}; font-weight: bold; font-size: 14px;">
-                            <i class="fas fa-tag"></i> ${category.name}
+                <div class="timeline-lane" data-category-id="${catId}" style="display: flex; align-items: stretch; margin-bottom: 2px; background: #1a1a1a; border-radius: 4px; overflow: hidden; min-height: 32px;">
+                    {{-- Category Label (left column) --}}
+                    <div class="lane-label" style="width: 110px; min-width: 110px; background: #0f0f0f; border-right: 3px solid ${category.color}; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center;">
+                        <span style="color: ${category.color}; font-weight: bold; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${category.name}
                         </span>
-                        <span style="color: #888; font-size: 12px;">
+                        <span style="color: #666; font-size: 9px; margin-top: 2px;">
                             ${clipsCount} clip${clipsCount > 1 ? 's' : ''}
                         </span>
                     </div>
 
-                    {{-- Lane Timeline Bar --}}
-                    <div class="lane-bar" data-category-id="${catId}" style="position: relative; height: 50px; background: #252525; border-radius: 4px; overflow: visible;">
+                    {{-- Timeline Bar (right column) --}}
+                    <div class="lane-bar" data-category-id="${catId}" style="flex: 1; position: relative; background: #252525; overflow: visible;">
                         {{-- Time markers --}}
-                        <div style="position: absolute; top: 0; left: 25%; bottom: 0; width: 1px; background: rgba(255,255,255,0.08);"></div>
-                        <div style="position: absolute; top: 0; left: 50%; bottom: 0; width: 1px; background: rgba(255,255,255,0.08);"></div>
-                        <div style="position: absolute; top: 0; left: 75%; bottom: 0; width: 1px; background: rgba(255,255,255,0.08);"></div>
+                        <div style="position: absolute; top: 0; left: 25%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
+                        <div style="position: absolute; top: 0; left: 50%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
+                        <div style="position: absolute; top: 0; left: 75%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
 
                         {{-- Playhead --}}
                         <div class="lane-playhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #ff0000; z-index: 10; left: 0%;"></div>
 
                         {{-- Clips in this lane --}}
                         ${renderClipsInLane(category.clips, category.color)}
-                    </div>
-
-                    {{-- Time scale --}}
-                    <div class="d-flex justify-content-between mt-1" style="color: #555; font-size: 10px;">
-                        <span>0:00</span>
-                        <span>${formatTimeShort(videoDuration * 0.25)}</span>
-                        <span>${formatTimeShort(videoDuration * 0.5)}</span>
-                        <span>${formatTimeShort(videoDuration * 0.75)}</span>
-                        <span>${formatTimeShort(videoDuration)}</span>
                     </div>
                 </div>
             `;
@@ -2133,7 +2144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initLaneClicks();
     }
 
-    // Render clips in a single lane
+    // Render clips in a single lane (compact version)
     function renderClipsInLane(clips, categoryColor) {
         let html = '';
 
@@ -2158,22 +2169,22 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-start="${clip.start_time}"
                      data-end="${clip.end_time}"
                      data-category-id="${clip.clip_category_id}"
-                     title="${clip.title || ''} (${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)})"
-                     style="position: absolute; top: 6px; bottom: 6px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.7); box-shadow: 0 2px 6px rgba(0,0,0,0.4); z-index: 5;">
+                     title="${clip.title || ''}\n${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)} (${duration}s)"
+                     style="position: absolute; top: 3px; bottom: 3px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: move; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
 
                     {{-- Resize handle left --}}
-                    <div class="resize-handle resize-left" style="position: absolute; left: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: rgba(255,255,255,0.6);"></div>
+                    <div class="resize-handle resize-left" style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; background: rgba(0,0,0,0.25); border-radius: 3px 0 0 3px;">
+                        <div style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 1px; height: 12px; background: rgba(255,255,255,0.5);"></div>
                     </div>
 
                     {{-- Content --}}
-                    <span style="pointer-events: none; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span style="pointer-events: none; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px;">
                         ${duration}s
                     </span>
 
                     {{-- Resize handle right --}}
-                    <div class="resize-handle resize-right" style="position: absolute; right: 0; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,0.3);">
-                        <div style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: rgba(255,255,255,0.6);"></div>
+                    <div class="resize-handle resize-right" style="position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; background: rgba(0,0,0,0.25); border-radius: 0 3px 3px 0;">
+                        <div style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 1px; height: 12px; background: rgba(255,255,255,0.5);"></div>
                     </div>
                 </div>
             `;
