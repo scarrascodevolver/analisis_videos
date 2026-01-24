@@ -136,30 +136,33 @@ class VideoStreamController extends Controller
 
     public function stream(Video $video, Request $request)
     {
-        // Check if file is in DigitalOcean Spaces (new uploads)
-        try {
-            if (Storage::disk('spaces')->exists($video->file_path)) {
-                $cdnBaseUrl = config('filesystems.disks.spaces.url');
+        // Skip Spaces completely in local environment for faster development
+        if (config('app.env') !== 'local') {
+            // Check if file is in DigitalOcean Spaces (new uploads)
+            try {
+                if (Storage::disk('spaces')->exists($video->file_path)) {
+                    $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
-                // Try CDN first if configured and healthy
-                if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                    $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+                    // Try CDN first if configured and healthy
+                    if ($cdnBaseUrl && $this->isCdnHealthy()) {
+                        $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                    \Log::debug('CDN redirect - video: ' . $video->id);
+                        \Log::debug('CDN redirect - video: ' . $video->id);
 
-                    return redirect($cdnUrl);
+                        return redirect($cdnUrl);
+                    }
+
+                    // CDN not available - use direct Spaces streaming as fallback
+                    if ($cdnBaseUrl && !$this->isCdnHealthy()) {
+                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for video: ' . $video->id);
+                    }
+
+                    return $this->streamFromSpaces($video, $request);
                 }
-
-                // CDN not available - use direct Spaces streaming as fallback
-                if ($cdnBaseUrl && !$this->isCdnHealthy()) {
-                    \Log::warning('CDN unhealthy - using Spaces SDK fallback for video: ' . $video->id);
-                }
-
-                return $this->streamFromSpaces($video, $request);
+            } catch (Exception $e) {
+                // Log error and continue to local fallback
+                \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
             }
-        } catch (Exception $e) {
-            // Log error and continue to local fallback
-            \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
         }
 
         // Fallback to local storage for old videos
@@ -344,31 +347,33 @@ class VideoStreamController extends Controller
 
     public function streamByPath($filename, Request $request)
     {
-        // Check if file is in DigitalOcean Spaces (new uploads)
-        try {
-            $spacesPath = 'videos/' . $filename;
-            if (Storage::disk('spaces')->exists($spacesPath)) {
-                $cdnBaseUrl = config('filesystems.disks.spaces.url');
+        // Skip Spaces completely in local environment for faster development
+        if (config('app.env') !== 'local') {
+            // Check if file is in DigitalOcean Spaces (new uploads)
+            try {
+                $spacesPath = 'videos/' . $filename;
+                if (Storage::disk('spaces')->exists($spacesPath)) {
+                    $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
-                // Try CDN first if configured and healthy
-                if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                    $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
+                    // Try CDN first if configured and healthy
+                    if ($cdnBaseUrl && $this->isCdnHealthy()) {
+                        $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
-                    \Log::debug('CDN redirect by path - file: ' . $filename);
+                        \Log::debug('CDN redirect by path - file: ' . $filename);
 
-                    return redirect($cdnUrl);
+                        return redirect($cdnUrl);
+                    }
+
+                    // CDN not available - use direct Spaces streaming as fallback
+                    if ($cdnBaseUrl && !$this->isCdnHealthy()) {
+                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for file: ' . $filename);
+                    }
+
+                    return $this->streamFileFromSpaces($spacesPath, $request);
                 }
-
-                // CDN not available - use direct Spaces streaming as fallback
-                if ($cdnBaseUrl && !$this->isCdnHealthy()) {
-                    \Log::warning('CDN unhealthy - using Spaces SDK fallback for file: ' . $filename);
-                }
-
-                return $this->streamFileFromSpaces($spacesPath, $request);
-            }
-        } catch (Exception $e) {
-            // Log error and continue to local fallback
-            \Log::warning('DigitalOcean Spaces access failed for path: ' . $e->getMessage());
+            } catch (Exception $e) {
+                // Log error and continue to local fallback
+                \Log::warning('DigitalOcean Spaces access failed for path: ' . $e->getMessage());
         }
 
         // Fallback to local storage for old videos
