@@ -147,9 +147,9 @@ class VideoStreamController extends Controller
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
                         $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
 
-                        \Log::debug('CDN redirect - video: ' . $video->id);
+                        \Log::debug('CDN proxy streaming (CORS fix) - video: ' . $video->id);
 
-                        return redirect($cdnUrl);
+                        return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
@@ -184,7 +184,7 @@ class VideoStreamController extends Controller
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
                             $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
-                            return redirect($cdnUrl);
+                            return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
                         }
 
                         // CDN not available - use direct Spaces streaming
@@ -395,9 +395,9 @@ class VideoStreamController extends Controller
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
                         $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
 
-                        \Log::debug('CDN redirect by path - file: ' . $filename);
+                        \Log::debug('CDN proxy streaming by path (CORS fix) - file: ' . $filename);
 
-                        return redirect($cdnUrl);
+                        return $this->optimizedProxyStreamFromCDN($cdnUrl, null, $request);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
@@ -432,7 +432,7 @@ class VideoStreamController extends Controller
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
                             $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
-                            return redirect($cdnUrl);
+                            return $this->optimizedProxyStreamFromCDN($cdnUrl, null, $request);
                         }
 
                         // CDN not available - use direct Spaces streaming
