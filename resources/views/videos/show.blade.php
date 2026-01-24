@@ -321,9 +321,9 @@
                                     <i class="fas fa-lightbulb text-warning"></i>
                                     <strong>Cómo usar:</strong><br>
                                     • <strong>Ajusta el offset</strong> con el slider para sincronizar todos los clips<br>
-                                    • <strong>Arrastra clips</strong> individualmente para ajustes finos<br>
-                                    • <strong>Arrastra los bordes</strong> para cambiar inicio/fin del clip<br>
-                                    • <strong>Click en la barra</strong> para saltar a ese momento del video
+                                    • <strong>Click en un clip</strong> (cuadrado de color) para reproducirlo<br>
+                                    • <strong>Click en la barra</strong> para saltar a ese momento del video<br>
+                                    • Los clips importados de XML son de solo lectura
                                 </div>
                             </div>
                         </div>
@@ -2140,7 +2140,6 @@ document.addEventListener('DOMContentLoaded', function() {
         lanesContainer.innerHTML = html;
 
         // Initialize interactions
-        initDragHandlers();
         initLaneClicks();
     }
 
@@ -2174,22 +2173,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-end="${clipEnd}"
                      data-category-id="${clip.clip_category_id}"
                      title="${clip.title || ''}\n${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)} (${duration}s)"
-                     style="position: absolute; top: 3px; bottom: 3px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: move; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
-
-                    {{-- Resize handle left --}}
-                    <div class="resize-handle resize-left" style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; background: rgba(0,0,0,0.25); border-radius: 3px 0 0 3px;">
-                        <div style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 1px; height: 12px; background: rgba(255,255,255,0.5);"></div>
-                    </div>
-
-                    {{-- Content --}}
-                    <span style="pointer-events: none; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px;">
-                        ${duration}s
-                    </span>
-
-                    {{-- Resize handle right --}}
-                    <div class="resize-handle resize-right" style="position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; background: rgba(0,0,0,0.25); border-radius: 0 3px 3px 0;">
-                        <div style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 1px; height: 12px; background: rgba(255,255,255,0.5);"></div>
-                    </div>
+                     style="position: absolute; top: 3px; bottom: 3px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
                 </div>
             `;
         });
@@ -2197,11 +2181,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
 
-    // Initialize lane bar clicks (seek to position in video)
+    // Initialize lane bar clicks (seek to position in video or play clip)
     function initLaneClicks() {
         document.querySelectorAll('.lane-bar').forEach(bar => {
             bar.addEventListener('click', function(e) {
-                // Don't seek if clicking on a clip
+                // Check if clicking on a clip
                 if (e.target.closest('.clip-block')) {
                     // Play clip on click
                     const clipBlock = e.target.closest('.clip-block');
@@ -2222,7 +2206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // Seek to clicked position
+                // Seek to clicked position in timeline
                 const rect = this.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
                 const seekTime = percent * videoDuration;
@@ -2234,6 +2218,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /*
+     * ══════════════════════════════════════════════════════════════════════
+     * DRAG & DROP DESHABILITADO POR DECISIÓN DEL ANALISTA
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * Los clips importados de XML de LongoMatch NO deben poder editarse
+     * individualmente en el timeline. Solo el offset global puede ajustarse.
+     *
+     * Si en el futuro se necesita habilitar drag & drop, descomentar este
+     * bloque y agregar la llamada initDragHandlers() en renderTimelineLanes().
+     *
+     * Código comentado: 2024-01-24
+     * ══════════════════════════════════════════════════════════════════════
+     */
+
+    /*
     // Drag & Drop handlers for clips in lanes
     let isDragging = false;
     let dragType = null; // 'move', 'resize-left', 'resize-right'
@@ -2454,6 +2454,10 @@ document.addEventListener('DOMContentLoaded', function() {
             renderTimelineLanes(); // Re-render on error
         }
     }
+    */
+    // ══════════════════════════════════════════════════════════════════════
+    // FIN DEL BLOQUE DE DRAG & DROP COMENTADO
+    // ══════════════════════════════════════════════════════════════════════
 })();
 </script>
 

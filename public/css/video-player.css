@@ -924,15 +924,8 @@
     transform: translateY(0);
 }
 
-.resize-handle {
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
-}
-
-.clip-block:hover .resize-handle {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.5) !important;
-}
+/* Resize handles deshabilitados - clips no editables individualmente */
+/* .resize-handle { ... } */
 
 .lane-playhead {
     pointer-events: none;
