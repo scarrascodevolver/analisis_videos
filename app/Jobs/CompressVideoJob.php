@@ -69,6 +69,21 @@ class CompressVideoJob implements ShouldQueue
             return;
         }
 
+        // Skip compression in local/development environment
+        if (!app()->environment('production')) {
+            Log::info("CompressVideoJob: Skipping compression in local environment for video {$video->id}");
+
+            $video->update([
+                'processing_status' => 'completed',
+                'processing_completed_at' => now(),
+                'status' => 'active',
+            ]);
+
+            // Delete job from queue
+            $this->delete();
+            return;
+        }
+
         Log::info("CompressVideoJob: Starting compression for video {$video->id}: {$video->title}");
 
         try {
