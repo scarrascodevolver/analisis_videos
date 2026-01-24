@@ -49,7 +49,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="xml_file">
-                                        <i class="fas fa-file-code"></i> Archivo XML de LongoMatch
+                                        <i class="fas fa-file-code"></i> Archivo XML 
                                         <small class="text-muted">(Opcional)</small>
                                     </label>
                                     <div class="custom-file">
@@ -58,7 +58,7 @@
                                         <label class="custom-file-label" for="xml_file">Seleccionar archivo XML...</label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Si tienes un archivo XML de LongoMatch con la línea de tiempo, súbelo aquí para importar los clips automáticamente.
+                                        Si tienes un archivo XML con la línea de tiempo, súbelo aquí para importar los clips automáticamente.
                                     </small>
                                 </div>
 

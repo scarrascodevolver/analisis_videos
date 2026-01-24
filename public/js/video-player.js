@@ -1410,6 +1410,13 @@ $(document).ready(function() {
         window.addEventListener('resize', resizeCanvas);
         video.addEventListener('loadedmetadata', resizeCanvas);
 
+        // ResizeObserver para detectar cambios en el tamaño del video (por aspect ratio auto)
+        if (typeof ResizeObserver !== 'undefined') {
+            const videoResizeObserver = new ResizeObserver(() => {
+                resizeCanvas();
+            });
+            videoResizeObserver.observe(video);
+        }
 
         // Cargar anotaciones existentes
         loadExistingAnnotations();

@@ -39,7 +39,10 @@
       "WebFetch(domain:developers.flow.cl)",
       "WebFetch(domain:docs.stripe.com)",
       "Bash(grep:*)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/mnt/c/xampp/php/php artisan route:list --path=xml)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

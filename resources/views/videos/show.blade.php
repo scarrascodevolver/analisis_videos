@@ -206,120 +206,171 @@
 
                     @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
                         {{-- ═══════════════════════════════════════════════════════════ --}}
-                        {{-- ANALISTA/ENTRENADOR: Panel de Clips PRIMERO, Timeline ABAJO --}}
+                        {{-- ORDEN DIFERENTE POR ROL:                                   --}}
+                        {{-- - ENTRENADOR: Timeline primero (sync es prioridad)        --}}
+                        {{-- - ANALISTA: Clips primero (crear clips es prioridad)      --}}
                         {{-- ═══════════════════════════════════════════════════════════ --}}
 
-                        {{-- Panel de Clips (Prioridad para analistas) --}}
-                        <div id="clipPanelWrapper" style="background: #0f0f0f;">
-                            <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #252525; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
-                                <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
-                                <strong>Modo Análisis - Clips</strong>
-                                <span id="clipCount" class="badge ml-2" style="background: #00B7B5;">0</span>
-                                {{-- Analistas/Entrenadores: expandido por defecto (flecha arriba) --}}
-                                <i id="clipPanelArrow" class="fas fa-chevron-up float-right mt-1"></i>
-                            </button>
+                        @if(auth()->user()->role === 'entrenador')
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            {{-- ENTRENADOR: ORDEN 1 - Timeline de Sincronización     --}}
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            <div id="clipTimelineWrapper">
+                                <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
+                                    <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
+                                    <strong>Sincronizar Línea de Tiempo</strong>
+                                    <i id="clipTimelineArrow" class="fas fa-chevron-down float-right mt-1"></i>
+                                </button>
 
-                            {{-- Analistas/Entrenadores: visible por defecto --}}
-                            <div id="clipPanel" style="display: block; background: #0f0f0f;">
-                                <div class="p-3" style="color: #ccc;">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div id="clipButtonsContainer" class="d-flex flex-wrap" style="gap: 8px; flex: 1;">
-                                            <div style="color: #888;">Cargando categorías...</div>
+                                <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 10px; max-height: 600px; overflow-y: auto;">
+                                    <div class="timeline-control-bar" style="background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 300px;">
+                                            <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
+                                                <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
+                                            </label>
+                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="{{ $video->timeline_offset ?? 0 }}" style="flex: 1; cursor: pointer; max-width: 200px;">
+                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">{{ $video->timeline_offset ?? 0 }}s</span>
                                         </div>
-                                        <div class="ml-3" style="white-space: nowrap;">
-                                            <button type="button" class="btn btn-sm" style="background: #005461; color: #fff; border: none;" onclick="openCategoryModal()" title="Crear nueva categoría">
-                                                <i class="fas fa-plus"></i> Crear
-                                            </button>
-                                            <button type="button" class="btn btn-sm ml-1" style="background: #003d4a; color: #fff; border: none;" data-toggle="modal" data-target="#manageCategoriesModal" title="Gestionar categorías">
-                                                <i class="fas fa-cog"></i> Editar
-                                            </button>
+                                        <div style="display: flex; gap: 6px;">
+                                            <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;"><i class="fas fa-check"></i> Aplicar</button>
+                                            <button id="resetOffsetBtn" class="btn btn-sm btn-secondary" style="font-size: 11px; padding: 4px 10px; border: none;" title="Resetear a 0s"><i class="fas fa-undo"></i></button>
                                         </div>
+                                        <div id="offsetClipCount" style="color: #888; font-size: 11px; margin-left: auto; white-space: nowrap;"><i class="fas fa-film"></i> <span id="totalClipsCount">0</span> clips</div>
                                     </div>
-                                    <small class="d-block mt-2" style="color: #666;">
-                                        <i class="fas fa-info-circle"></i> Presiona una categoría para iniciar/terminar grabación. Ver clips en el tab lateral.
-                                    </small>
+
+                                    <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 6px; padding: 10px;">
+                                        <div class="text-center py-4" style="color: #666;"><i class="fas fa-spinner fa-spin"></i> Cargando clips...</div>
+                                    </div>
+
+                                    <div id="timelineScale" class="d-flex justify-content-between mt-2 px-2" style="color: #555; font-size: 10px; margin-left: 120px;">
+                                        <span>0:00</span><span id="scale25"></span><span id="scale50"></span><span id="scale75"></span><span id="scaleEnd"></span>
+                                    </div>
+
+                                    <div class="alert alert-dark py-2 mt-3 mb-0" style="background: #1a1a1a; border: 1px solid #333; font-size: 11px;">
+                                        <i class="fas fa-lightbulb text-warning"></i> <strong>Cómo usar:</strong><br>
+                                        • <strong>Ajusta el offset</strong> con el slider para sincronizar todos los clips<br>
+                                        • <strong>Click en un clip</strong> (cuadrado de color) para reproducirlo<br>
+                                        • <strong>Click en la barra</strong> para saltar a ese momento del video<br>
+                                        • Los clips importados de XML son de solo lectura
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- Timeline Visual de Clips (Editor con Carriles por Categoría) --}}
-                        <div id="clipTimelineWrapper">
-                            <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
-                                <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
-                                <strong>Sincronizar Línea de Tiempo</strong>
-                                <i id="clipTimelineArrow" class="fas fa-chevron-down float-right mt-1"></i>
-                            </button>
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            {{-- ENTRENADOR: ORDEN 2 - Panel de Clips                 --}}
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            <div id="clipPanelWrapper" style="background: #0f0f0f;">
+                                <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #252525; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
+                                    <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
+                                    <strong>Modo Análisis - Clips</strong>
+                                    <span id="clipCount" class="badge ml-2" style="background: #00B7B5;">0</span>
+                                    <i id="clipPanelArrow" class="fas fa-chevron-up float-right mt-1"></i>
+                                </button>
 
-                            <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 10px; max-height: 600px; overflow-y: auto;">
-
-                                {{-- Barra de Control Compacta (Offset Global) - Estilo Chrome DevTools --}}
-                                <div class="timeline-control-bar" style="background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-
-                                    {{-- Label + Slider --}}
-                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 300px;">
-                                        <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
-                                            <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
-                                        </label>
-                                        <input
-                                            type="range"
-                                            id="timelineOffsetSlider"
-                                            class="custom-range"
-                                            min="-300"
-                                            max="300"
-                                            step="0.5"
-                                            value="{{ $video->timeline_offset ?? 0 }}"
-                                            style="flex: 1; cursor: pointer; max-width: 200px;"
-                                        >
-                                        <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">
-                                            {{ $video->timeline_offset ?? 0 }}s
-                                        </span>
+                                <div id="clipPanel" style="display: block; background: #0f0f0f;">
+                                    <div class="p-3" style="color: #ccc;">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div id="clipButtonsContainer" class="d-flex flex-wrap" style="gap: 8px; flex: 1;">
+                                                <div style="color: #888;">Cargando categorías...</div>
+                                            </div>
+                                            <div class="ml-3" style="white-space: nowrap;">
+                                                <button type="button" class="btn btn-sm" style="background: #005461; color: #fff; border: none;" onclick="openCategoryModal()" title="Crear nueva categoría">
+                                                    <i class="fas fa-plus"></i> Crear
+                                                </button>
+                                                <button type="button" class="btn btn-sm ml-1" style="background: #003d4a; color: #fff; border: none;" data-toggle="modal" data-target="#manageCategoriesModal" title="Gestionar categorías">
+                                                    <i class="fas fa-cog"></i> Editar
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <small class="d-block mt-2" style="color: #666;">
+                                            <i class="fas fa-info-circle"></i> Presiona una categoría para iniciar/terminar grabación. Ver clips en el tab lateral.
+                                        </small>
                                     </div>
-
-                                    {{-- Botones --}}
-                                    <div style="display: flex; gap: 6px;">
-                                        <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;">
-                                            <i class="fas fa-check"></i> Aplicar
-                                        </button>
-                                        <button id="resetOffsetBtn" class="btn btn-sm btn-secondary" style="font-size: 11px; padding: 4px 10px; border: none;" title="Resetear a 0s">
-                                            <i class="fas fa-undo"></i>
-                                        </button>
-                                    </div>
-
-                                    {{-- Contador de clips --}}
-                                    <div id="offsetClipCount" style="color: #888; font-size: 11px; margin-left: auto; white-space: nowrap;">
-                                        <i class="fas fa-film"></i> <span id="totalClipsCount">0</span> clips
-                                    </div>
-                                </div>
-
-                                {{-- Timeline con Carriles por Categoría --}}
-                                <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 6px; padding: 10px;">
-                                    <div class="text-center py-4" style="color: #666;">
-                                        <i class="fas fa-spinner fa-spin"></i> Cargando clips...
-                                    </div>
-                                </div>
-
-                                {{-- Legend: Time scale (shown once at bottom) --}}
-                                <div id="timelineScale" class="d-flex justify-content-between mt-2 px-2" style="color: #555; font-size: 10px; margin-left: 120px;">
-                                    <span>0:00</span>
-                                    <span id="scale25"></span>
-                                    <span id="scale50"></span>
-                                    <span id="scale75"></span>
-                                    <span id="scaleEnd"></span>
-                                </div>
-
-                                {{-- Instrucciones --}}
-                                <div class="alert alert-dark py-2 mt-3 mb-0" style="background: #1a1a1a; border: 1px solid #333; font-size: 11px;">
-                                    <i class="fas fa-lightbulb text-warning"></i>
-                                    <strong>Cómo usar:</strong><br>
-                                    • <strong>Ajusta el offset</strong> con el slider para sincronizar todos los clips<br>
-                                    • <strong>Click en un clip</strong> (cuadrado de color) para reproducirlo<br>
-                                    • <strong>Click en la barra</strong> para saltar a ese momento del video<br>
-                                    • Los clips importados de XML son de solo lectura
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- Timeline de Comentarios (Colapsable para analistas) --}}
+                        @else
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            {{-- ANALISTA: ORDEN 1 - Panel de Clips                   --}}
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            <div id="clipPanelWrapper" style="background: #0f0f0f;">
+                                <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #252525; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
+                                    <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
+                                    <strong>Modo Análisis - Clips</strong>
+                                    <span id="clipCount" class="badge ml-2" style="background: #00B7B5;">0</span>
+                                    <i id="clipPanelArrow" class="fas fa-chevron-up float-right mt-1"></i>
+                                </button>
+
+                                <div id="clipPanel" style="display: block; background: #0f0f0f;">
+                                    <div class="p-3" style="color: #ccc;">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div id="clipButtonsContainer" class="d-flex flex-wrap" style="gap: 8px; flex: 1;">
+                                                <div style="color: #888;">Cargando categorías...</div>
+                                            </div>
+                                            <div class="ml-3" style="white-space: nowrap;">
+                                                <button type="button" class="btn btn-sm" style="background: #005461; color: #fff; border: none;" onclick="openCategoryModal()" title="Crear nueva categoría">
+                                                    <i class="fas fa-plus"></i> Crear
+                                                </button>
+                                                <button type="button" class="btn btn-sm ml-1" style="background: #003d4a; color: #fff; border: none;" data-toggle="modal" data-target="#manageCategoriesModal" title="Gestionar categorías">
+                                                    <i class="fas fa-cog"></i> Editar
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <small class="d-block mt-2" style="color: #666;">
+                                            <i class="fas fa-info-circle"></i> Presiona una categoría para iniciar/terminar grabación. Ver clips en el tab lateral.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            {{-- ANALISTA: ORDEN 2 - Timeline de Sincronización       --}}
+                            {{-- ══════════════════════════════════════════════════════ --}}
+                            <div id="clipTimelineWrapper">
+                                <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
+                                    <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
+                                    <strong>Sincronizar Línea de Tiempo</strong>
+                                    <i id="clipTimelineArrow" class="fas fa-chevron-down float-right mt-1"></i>
+                                </button>
+
+                                <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 10px; max-height: 600px; overflow-y: auto;">
+                                    <div class="timeline-control-bar" style="background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 300px;">
+                                            <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
+                                                <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
+                                            </label>
+                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="{{ $video->timeline_offset ?? 0 }}" style="flex: 1; cursor: pointer; max-width: 200px;">
+                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">{{ $video->timeline_offset ?? 0 }}s</span>
+                                        </div>
+                                        <div style="display: flex; gap: 6px;">
+                                            <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;"><i class="fas fa-check"></i> Aplicar</button>
+                                            <button id="resetOffsetBtn" class="btn btn-sm btn-secondary" style="font-size: 11px; padding: 4px 10px; border: none;" title="Resetear a 0s"><i class="fas fa-undo"></i></button>
+                                        </div>
+                                        <div id="offsetClipCount" style="color: #888; font-size: 11px; margin-left: auto; white-space: nowrap;"><i class="fas fa-film"></i> <span id="totalClipsCount">0</span> clips</div>
+                                    </div>
+
+                                    <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 6px; padding: 10px;">
+                                        <div class="text-center py-4" style="color: #666;"><i class="fas fa-spinner fa-spin"></i> Cargando clips...</div>
+                                    </div>
+
+                                    <div id="timelineScale" class="d-flex justify-content-between mt-2 px-2" style="color: #555; font-size: 10px; margin-left: 120px;">
+                                        <span>0:00</span><span id="scale25"></span><span id="scale50"></span><span id="scale75"></span><span id="scaleEnd"></span>
+                                    </div>
+
+                                    <div class="alert alert-dark py-2 mt-3 mb-0" style="background: #1a1a1a; border: 1px solid #333; font-size: 11px;">
+                                        <i class="fas fa-lightbulb text-warning"></i> <strong>Cómo usar:</strong><br>
+                                        • <strong>Ajusta el offset</strong> con el slider para sincronizar todos los clips<br>
+                                        • <strong>Click en un clip</strong> (cuadrado de color) para reproducirlo<br>
+                                        • <strong>Click en la barra</strong> para saltar a ese momento del video<br>
+                                        • Los clips importados de XML son de solo lectura
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- ══════════════════════════════════════════════════════ --}}
+                        {{-- AMBOS ROLES: ORDEN 3 - Timeline de Comentarios       --}}
+                        {{-- ══════════════════════════════════════════════════════ --}}
                         <div id="timelineWrapper">
                             <button id="toggleTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
                                 <i class="fas fa-comments mr-2" style="color: #00B7B5;"></i>
