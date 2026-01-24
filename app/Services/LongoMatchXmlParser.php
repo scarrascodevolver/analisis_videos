@@ -367,7 +367,7 @@ class LongoMatchXmlParser
                 'preview' => [
                     'categories_count' => count($parsed['categories']),
                     'clips_count' => count($parsed['clips']),
-                    'categories_used' => array_unique(array_column($parsed['clips'], 'code')),
+                    'categories_used' => array_values(array_unique(array_column($parsed['clips'], 'code'))),
                 ],
             ];
         } catch (\Exception $e) {
