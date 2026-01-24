@@ -537,6 +537,14 @@ async function finishClip(category, currentTime) {
             } else {
                 renderClipsList();
             }
+
+            // Also refresh visual timeline if available
+            if (typeof window.renderVisualTimeline === 'function') {
+                // Wait a bit for sidebar data to load, then refresh timeline
+                setTimeout(() => {
+                    window.renderVisualTimeline();
+                }, 300);
+            }
         } else {
             showNotification('Error al crear clip', 'error');
         }
@@ -676,6 +684,13 @@ async function createClip(category) {
             if (typeof window.refreshSidebarClips === 'function') {
                 window.refreshSidebarClips();
             }
+
+            // Also refresh visual timeline if available
+            if (typeof window.renderVisualTimeline === 'function') {
+                setTimeout(() => {
+                    window.renderVisualTimeline();
+                }, 300);
+            }
         } else {
             showNotification('Error al crear clip', 'error');
         }
@@ -711,6 +726,13 @@ async function deleteClip(clipId) {
             // Refresh sidebar
             if (typeof window.refreshSidebarClips === 'function') {
                 window.refreshSidebarClips();
+            }
+
+            // Also refresh visual timeline if available
+            if (typeof window.renderVisualTimeline === 'function') {
+                setTimeout(() => {
+                    window.renderVisualTimeline();
+                }, 300);
             }
         }
     } catch (error) {
