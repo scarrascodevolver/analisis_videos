@@ -2058,6 +2058,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTimelineLanes() {
         if (!lanesContainer || !window.sidebarClipsData) return;
 
+        // DEBUG: Log video duration
+        console.log('🎥 Video Duration:', videoDuration, 'seconds');
+        console.log('📊 Total clips to render:', window.sidebarClipsData.length);
+
         // Build category map
         const categoryMap = {};
         if (window.sidebarCategoriesData && window.sidebarCategoriesData.length > 0) {
@@ -2149,12 +2153,35 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '';
 
         clips.forEach(clip => {
+            // Parse clip times as floats (may come as strings from API)
+            const clipStart = parseFloat(clip.start_time) || 0;
+            const clipEnd = parseFloat(clip.end_time) || 0;
+
+            // DEBUG: Log clip data
+            console.log('🎬 Clip:', {
+                id: clip.id,
+                raw_start: clip.start_time,
+                raw_end: clip.end_time,
+                parsed_start: clipStart,
+                parsed_end: clipEnd,
+                currentOffset: currentOffset,
+                videoDuration: videoDuration
+            });
+
             // Apply offset to clip times
-            const adjustedStart = Math.max(0, clip.start_time + currentOffset);
-            const adjustedEnd = clip.end_time + currentOffset;
+            const adjustedStart = Math.max(0, clipStart + currentOffset);
+            const adjustedEnd = clipEnd + currentOffset;
 
             const startPercent = (adjustedStart / videoDuration) * 100;
             const widthPercent = ((adjustedEnd - adjustedStart) / videoDuration) * 100;
+
+            // DEBUG: Log calculated positions
+            console.log('📍 Positions:', {
+                adjustedStart: adjustedStart.toFixed(2),
+                adjustedEnd: adjustedEnd.toFixed(2),
+                startPercent: startPercent.toFixed(2) + '%',
+                widthPercent: widthPercent.toFixed(2) + '%'
+            });
 
             // Check if clip is out of bounds
             if (adjustedStart >= videoDuration || adjustedEnd <= 0) {
@@ -2166,8 +2193,8 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `
                 <div class="clip-block"
                      data-clip-id="${clip.id}"
-                     data-start="${clip.start_time}"
-                     data-end="${clip.end_time}"
+                     data-start="${clipStart}"
+                     data-end="${clipEnd}"
                      data-category-id="${clip.clip_category_id}"
                      title="${clip.title || ''}\n${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)} (${duration}s)"
                      style="position: absolute; top: 3px; bottom: 3px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: move; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
