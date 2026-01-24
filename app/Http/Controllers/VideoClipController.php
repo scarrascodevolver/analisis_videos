@@ -157,4 +157,22 @@ class VideoClipController extends Controller
 
         return response()->json($clips);
     }
+
+    // Actualizar offset global de timeline para sincronización
+    public function updateTimelineOffset(Request $request, Video $video)
+    {
+        $request->validate([
+            'timeline_offset' => 'required|numeric|min:-600|max:600',
+        ]);
+
+        $video->update([
+            'timeline_offset' => $request->timeline_offset
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Offset de timeline actualizado',
+            'timeline_offset' => $video->timeline_offset,
+        ]);
+    }
 }

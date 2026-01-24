@@ -17,6 +17,7 @@ class Video extends Model
         'file_size',
         'mime_type',
         'duration',
+        'timeline_offset', // Offset en segundos para sincronizar clips con el video
         'uploaded_by',
         'analyzed_team_name', // Nombre del equipo analizado (= organización)
         'rival_team_name',    // Nombre del rival (texto libre)
@@ -39,6 +40,7 @@ class Video extends Model
     protected function casts(): array
     {
         return [
+            'timeline_offset' => 'decimal:2',
             'match_date' => 'date',
             'processing_started_at' => 'datetime',
             'processing_completed_at' => 'datetime',

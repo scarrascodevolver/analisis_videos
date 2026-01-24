@@ -101,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('api/videos/{video}/clips')->name('api.clips.')->group(function () {
         Route::get('/', [VideoClipController::class, 'apiIndex'])->name('index');
         Route::post('/quick', [VideoClipController::class, 'quickStore'])->name('quick-store');
+        Route::post('/timeline-offset', [VideoClipController::class, 'updateTimelineOffset'])->name('timeline-offset');
     });
 
     // Clip Categories API
