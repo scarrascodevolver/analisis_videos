@@ -2058,10 +2058,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTimelineLanes() {
         if (!lanesContainer || !window.sidebarClipsData) return;
 
-        // DEBUG: Log video duration
-        console.log('🎥 Video Duration:', videoDuration, 'seconds');
-        console.log('📊 Total clips to render:', window.sidebarClipsData.length);
-
         // Build category map
         const categoryMap = {};
         if (window.sidebarCategoriesData && window.sidebarCategoriesData.length > 0) {
@@ -2157,31 +2153,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const clipStart = parseFloat(clip.start_time) || 0;
             const clipEnd = parseFloat(clip.end_time) || 0;
 
-            // DEBUG: Log clip data
-            console.log('🎬 Clip:', {
-                id: clip.id,
-                raw_start: clip.start_time,
-                raw_end: clip.end_time,
-                parsed_start: clipStart,
-                parsed_end: clipEnd,
-                currentOffset: currentOffset,
-                videoDuration: videoDuration
-            });
-
             // Apply offset to clip times
             const adjustedStart = Math.max(0, clipStart + currentOffset);
             const adjustedEnd = clipEnd + currentOffset;
 
             const startPercent = (adjustedStart / videoDuration) * 100;
             const widthPercent = ((adjustedEnd - adjustedStart) / videoDuration) * 100;
-
-            // DEBUG: Log calculated positions
-            console.log('📍 Positions:', {
-                adjustedStart: adjustedStart.toFixed(2),
-                adjustedEnd: adjustedEnd.toFixed(2),
-                startPercent: startPercent.toFixed(2) + '%',
-                widthPercent: widthPercent.toFixed(2) + '%'
-            });
 
             // Check if clip is out of bounds
             if (adjustedStart >= videoDuration || adjustedEnd <= 0) {
