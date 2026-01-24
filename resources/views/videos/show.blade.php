@@ -250,58 +250,49 @@
                                 <i id="clipTimelineArrow" class="fas fa-chevron-down float-right mt-1"></i>
                             </button>
 
-                            <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 15px; max-height: 600px; overflow-y: auto;">
-                                {{-- Panel de Control de Offset Global --}}
-                                <div class="mb-4 p-3" style="background: #1a1a1a; border: 2px solid #ffc107; border-radius: 8px;">
-                                    <h6 class="text-light mb-3">
-                                        <i class="fas fa-sync-alt text-warning"></i>
-                                        Ajustar Sincronización Global
-                                    </h6>
+                            <div id="clipTimelineContent" style="display: none; background: #0a0a0a; padding: 10px; max-height: 600px; overflow-y: auto;">
 
-                                    <div class="row align-items-center">
-                                        <div class="col-md-8">
-                                            <label class="text-light mb-2" style="font-size: 12px;">
-                                                Offset (segundos):
-                                                <span id="offsetDisplay" class="badge ml-2" style="background: #ffc107; color: #000; font-weight: bold;">
-                                                    {{ $video->timeline_offset ?? 0 }}s
-                                                </span>
-                                            </label>
-                                            <input
-                                                type="range"
-                                                id="timelineOffsetSlider"
-                                                class="custom-range w-100"
-                                                min="-300"
-                                                max="300"
-                                                step="0.5"
-                                                value="{{ $video->timeline_offset ?? 0 }}"
-                                                style="cursor: pointer;"
-                                            >
-                                            <div class="d-flex justify-content-between mt-1" style="font-size: 10px; color: #888;">
-                                                <span>-5min</span>
-                                                <span>0s</span>
-                                                <span>+5min</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 text-right">
-                                            <button id="applyOffsetBtn" class="btn btn-sm mb-1" style="background: #00B7B5; color: #fff; font-weight: bold; width: 100%;">
-                                                <i class="fas fa-check"></i> Aplicar
-                                            </button>
-                                            <button id="resetOffsetBtn" class="btn btn-sm btn-secondary" style="width: 100%;">
-                                                <i class="fas fa-undo"></i> Resetear
-                                            </button>
-                                        </div>
+                                {{-- Barra de Control Compacta (Offset Global) - Estilo Chrome DevTools --}}
+                                <div class="timeline-control-bar" style="background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+
+                                    {{-- Label + Slider --}}
+                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 300px;">
+                                        <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
+                                            <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
+                                        </label>
+                                        <input
+                                            type="range"
+                                            id="timelineOffsetSlider"
+                                            class="custom-range"
+                                            min="-300"
+                                            max="300"
+                                            step="0.5"
+                                            value="{{ $video->timeline_offset ?? 0 }}"
+                                            style="flex: 1; cursor: pointer; max-width: 200px;"
+                                        >
+                                        <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">
+                                            {{ $video->timeline_offset ?? 0 }}s
+                                        </span>
                                     </div>
 
-                                    <div id="offsetInfo" class="mt-2 p-2" style="background: #252525; border-radius: 4px; font-size: 11px; color: #aaa;">
-                                        <i class="fas fa-info-circle"></i>
-                                        <span id="offsetInfoText">
-                                            Ajusta el offset si el video es de otro ángulo/cámara que comenzó en distinto momento.
-                                        </span>
+                                    {{-- Botones --}}
+                                    <div style="display: flex; gap: 6px;">
+                                        <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;">
+                                            <i class="fas fa-check"></i> Aplicar
+                                        </button>
+                                        <button id="resetOffsetBtn" class="btn btn-sm btn-secondary" style="font-size: 11px; padding: 4px 10px; border: none;" title="Resetear a 0s">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </div>
+
+                                    {{-- Contador de clips --}}
+                                    <div id="offsetClipCount" style="color: #888; font-size: 11px; margin-left: auto; white-space: nowrap;">
+                                        <i class="fas fa-film"></i> <span id="totalClipsCount">0</span> clips
                                     </div>
                                 </div>
 
                                 {{-- Timeline con Carriles por Categoría --}}
-                                <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 8px; padding: 10px;">
+                                <div id="clipsTimelineLanes" style="background: #0f0f0f; border-radius: 6px; padding: 10px;">
                                     <div class="text-center py-4" style="color: #666;">
                                         <i class="fas fa-spinner fa-spin"></i> Cargando clips...
                                     </div>
@@ -1918,7 +1909,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const offsetDisplay = document.getElementById('offsetDisplay');
     const applyOffsetBtn = document.getElementById('applyOffsetBtn');
     const resetOffsetBtn = document.getElementById('resetOffsetBtn');
-    const offsetInfo = document.getElementById('offsetInfoText');
 
     if (!toggleBtn || !content) return;
 
@@ -1960,10 +1950,6 @@ document.addEventListener('DOMContentLoaded', function() {
         offsetSlider.addEventListener('input', function() {
             tempOffset = parseFloat(this.value);
             offsetDisplay.textContent = `${tempOffset > 0 ? '+' : ''}${tempOffset}s`;
-
-            // Update info text
-            const totalClips = window.sidebarClipsData?.length || 0;
-            offsetInfo.textContent = `Video comienza: ${formatTimeShort(Math.max(0, tempOffset))} | Clips ajustados: ${totalClips}`;
         });
     }
 
@@ -2016,7 +2002,6 @@ document.addEventListener('DOMContentLoaded', function() {
             offsetSlider.value = 0;
             tempOffset = 0;
             offsetDisplay.textContent = '0s';
-            offsetInfo.textContent = 'Ajusta el offset si el video es de otro ángulo/cámara que comenzó en distinto momento.';
         });
     }
 
@@ -2057,6 +2042,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Render Timeline with Lanes by Category (compact layout)
     function renderTimelineLanes() {
         if (!lanesContainer || !window.sidebarClipsData) return;
+
+        // Update clip count in control bar
+        const clipCountEl = document.getElementById('totalClipsCount');
+        if (clipCountEl) {
+            clipCountEl.textContent = window.sidebarClipsData.length;
+        }
 
         // Build category map
         const categoryMap = {};

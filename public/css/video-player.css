@@ -931,6 +931,15 @@
     pointer-events: none;
 }
 
+/* Timeline Control Bar (Compact) */
+.timeline-control-bar {
+    transition: background 0.2s ease;
+}
+
+.timeline-control-bar:hover {
+    background: #222 !important;
+}
+
 /* Responsive - Mobile */
 @media (max-width: 768px) {
     .lane-label {
@@ -950,5 +959,29 @@
     #timelineScale {
         margin-left: 85px !important;
         font-size: 9px !important;
+    }
+
+    /* Compact control bar on mobile */
+    .timeline-control-bar {
+        padding: 6px 8px !important;
+        gap: 8px !important;
+    }
+
+    .timeline-control-bar label {
+        font-size: 11px !important;
+    }
+
+    .timeline-control-bar #offsetDisplay {
+        font-size: 10px !important;
+        min-width: 40px !important;
+    }
+
+    .timeline-control-bar .btn {
+        font-size: 10px !important;
+        padding: 3px 8px !important;
+    }
+
+    .timeline-control-bar #offsetClipCount {
+        font-size: 10px !important;
     }
 }
