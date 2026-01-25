@@ -283,7 +283,7 @@ function renderClipsList(clipsToShow = null) {
 }
 
 /**
- * Play a single clip from start to end, then pause (LongoMatch style)
+ * Play a single clip in infinite loop until another clip is selected or ESC is pressed
  */
 function playSingleClip(startTime, endTime, clipElement) {
     const video = getVideo();
@@ -302,17 +302,17 @@ function playSingleClip(startTime, endTime, clipElement) {
     video.currentTime = startTime;
     video.play();
 
-    // Setup handler to pause when reaching end
+    // Setup handler to loop when reaching end
     singleClipHandler = () => {
         if (video.currentTime >= endTime) {
-            video.pause();
-            stopSingleClipMode();
-            showNotification('Fin del clip', 'info');
+            // Loop back to start instead of pausing
+            video.currentTime = startTime;
+            video.play(); // Ensure video continues playing
         }
     };
     video.addEventListener('timeupdate', singleClipHandler);
 
-    showNotification(`Reproduciendo clip... (ESC para cancelar)`, 'info');
+    showNotification(`Reproduciendo clip en loop... (ESC para cancelar)`, 'info');
 }
 
 /**

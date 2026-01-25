@@ -1966,6 +1966,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let videoDuration = {{ $video->duration ?? 300 }};
     let currentOffset = {{ $video->timeline_offset ?? 0 }};
     let tempOffset = currentOffset;
+    let clipLoopInterval = null; // Track active clip loop interval
 
     // Toggle panel
     toggleBtn.addEventListener('click', async function() {
@@ -2066,6 +2067,14 @@ document.addEventListener('DOMContentLoaded', function() {
         video.addEventListener('timeupdate', function() {
             if (content.style.display !== 'none') {
                 updateAllPlayheads();
+            }
+        });
+
+        // Stop clip loop when video is paused manually
+        video.addEventListener('pause', function() {
+            if (clipLoopInterval) {
+                clearInterval(clipLoopInterval);
+                clipLoopInterval = null;
             }
         });
     }
@@ -2229,26 +2238,40 @@ document.addEventListener('DOMContentLoaded', function() {
             bar.addEventListener('click', function(e) {
                 // Check if clicking on a clip
                 if (e.target.closest('.clip-block')) {
-                    // Play clip on click
+                    // Play clip on click in infinite loop
                     const clipBlock = e.target.closest('.clip-block');
                     const start = parseFloat(clipBlock.dataset.start) + currentOffset;
                     const end = parseFloat(clipBlock.dataset.end) + currentOffset;
 
                     if (video) {
+                        // Clear any previous clip loop
+                        if (clipLoopInterval) {
+                            clearInterval(clipLoopInterval);
+                            clipLoopInterval = null;
+                        }
+
+                        // Start playing from clip start
                         video.currentTime = Math.max(0, start);
                         video.play();
 
-                        const checkEnd = setInterval(() => {
-                            if (video.currentTime >= end || video.paused) {
-                                video.pause();
-                                clearInterval(checkEnd);
+                        // Setup loop: when reaching end, restart from beginning
+                        clipLoopInterval = setInterval(() => {
+                            if (video.currentTime >= end) {
+                                // Loop back to start
+                                video.currentTime = Math.max(0, start);
+                                video.play(); // Ensure video continues playing
                             }
                         }, 100);
                     }
                     return;
                 }
 
-                // Seek to clicked position in timeline
+                // Seek to clicked position in timeline (stops clip loop)
+                if (clipLoopInterval) {
+                    clearInterval(clipLoopInterval);
+                    clipLoopInterval = null;
+                }
+
                 const rect = this.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
                 const seekTime = percent * videoDuration;
