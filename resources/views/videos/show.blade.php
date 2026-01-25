@@ -1967,6 +1967,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentOffset = {{ $video->timeline_offset ?? 0 }};
     let tempOffset = currentOffset;
     let clipLoopInterval = null; // Track active clip loop interval
+    let isLooping = false; // Track if we're in loop mode
 
     // Toggle panel
     toggleBtn.addEventListener('click', async function() {
@@ -2070,11 +2071,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Stop clip loop when video is paused manually
+        // Stop clip loop when video is paused manually (user clicks pause button)
         video.addEventListener('pause', function() {
-            if (clipLoopInterval) {
-                clearInterval(clipLoopInterval);
-                clipLoopInterval = null;
+            // Only stop loop if we're actually in loop mode
+            // Don't stop during seeking (which also triggers pause momentarily)
+            if (isLooping && !video.seeking) {
+                setTimeout(() => {
+                    // Check again after a delay to avoid stopping during seeks
+                    if (video.paused && !video.seeking) {
+                        isLooping = false;
+                        if (clipLoopInterval) {
+                            clearInterval(clipLoopInterval);
+                            clipLoopInterval = null;
+                        }
+                    }
+                }, 100);
             }
         });
     }
@@ -2250,16 +2261,38 @@ document.addEventListener('DOMContentLoaded', function() {
                             clipLoopInterval = null;
                         }
 
+                        isLooping = true;
+
                         // Start playing from clip start
                         video.currentTime = Math.max(0, start);
-                        video.play();
+
+                        // Wait for seek to complete before starting playback
+                        setTimeout(() => {
+                            const playPromise = video.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(error => {
+                                    console.warn('Play was prevented:', error);
+                                });
+                            }
+                        }, 50);
 
                         // Setup loop: when reaching end, restart from beginning
                         clipLoopInterval = setInterval(() => {
-                            if (video.currentTime >= end) {
+                            if (isLooping && video.currentTime >= end) {
                                 // Loop back to start
                                 video.currentTime = Math.max(0, start);
-                                video.play(); // Ensure video continues playing
+
+                                // Wait for seek to complete before playing
+                                setTimeout(() => {
+                                    if (isLooping) {
+                                        const loopPlayPromise = video.play();
+                                        if (loopPlayPromise !== undefined) {
+                                            loopPlayPromise.catch(error => {
+                                                console.warn('Loop play was prevented:', error);
+                                            });
+                                        }
+                                    }
+                                }, 50);
                             }
                         }, 100);
                     }
@@ -2267,6 +2300,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Seek to clicked position in timeline (stops clip loop)
+                isLooping = false;
                 if (clipLoopInterval) {
                     clearInterval(clipLoopInterval);
                     clipLoopInterval = null;

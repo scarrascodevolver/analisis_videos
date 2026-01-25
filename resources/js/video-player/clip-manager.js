@@ -300,14 +300,30 @@ function playSingleClip(startTime, endTime, clipElement) {
 
     // Jump to start and play
     video.currentTime = startTime;
-    video.play();
+    const playPromise = video.play();
+
+    // Handle play promise to avoid errors
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.warn('Play was prevented:', error);
+        });
+    }
 
     // Setup handler to loop when reaching end
     singleClipHandler = () => {
         if (video.currentTime >= endTime) {
             // Loop back to start instead of pausing
             video.currentTime = startTime;
-            video.play(); // Ensure video continues playing
+
+            // Wait a bit for seek to complete, then play
+            setTimeout(() => {
+                const loopPlayPromise = video.play();
+                if (loopPlayPromise !== undefined) {
+                    loopPlayPromise.catch(error => {
+                        console.warn('Loop play was prevented:', error);
+                    });
+                }
+            }, 50);
         }
     };
     video.addEventListener('timeupdate', singleClipHandler);
