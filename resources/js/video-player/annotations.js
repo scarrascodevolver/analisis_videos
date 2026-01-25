@@ -52,8 +52,7 @@ export function initAnnotations() {
     setupToolbarEvents();
     setupDeleteEvents();
 
-    // Listen for video timeupdate to show/hide annotations
-    video.addEventListener('timeupdate', checkAndShowAnnotations);
+    // Listen for video seeked to show/hide annotations (timeupdate moved to time-manager)
     video.addEventListener('seeked', checkAndShowAnnotations);
 
     // Expose functions globally for compatibility

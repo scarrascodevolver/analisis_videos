@@ -38,10 +38,7 @@ export function initTimeline() {
         }
     });
 
-    // Update timeline progress
-    video.addEventListener('timeupdate', function () {
-        updateProgressIndicator();
-    });
+    // Note: timeline progress update moved to time-manager.js for better performance
 
     // Force timeline creation if video is already loaded
     if (video.readyState >= 2) {
@@ -144,26 +141,34 @@ export function createTimelineMarkers() {
         // Tooltip on hover
         marker.title = `${formatTime(comment.timestamp_seconds)}: ${comment.comment.substring(0, 50)}...`;
 
-        // Click to seek
-        marker.addEventListener('click', function (e) {
-            e.stopPropagation();
-            video.currentTime = comment.timestamp_seconds;
-            if (video.paused) {
-                video.play();
-            }
-        });
-
+        // Note: Click handler moved to event delegation below
         progressContainer.appendChild(marker);
     });
 
-    // Timeline click to seek
+    // Event delegation: Single click handler for all markers and timeline
     progressContainer.addEventListener('click', function (e) {
-        const rect = this.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = clickX / rect.width;
-        const newTime = percentage * videoDuration;
+        // Check if clicked on a marker
+        const marker = e.target.closest('.comment-marker');
 
-        video.currentTime = newTime;
+        if (marker) {
+            // Clicked on a marker - seek to comment timestamp
+            e.stopPropagation();
+            const timestamp = parseFloat(marker.getAttribute('data-timestamp'));
+            if (!isNaN(timestamp)) {
+                video.currentTime = timestamp;
+                if (video.paused) {
+                    video.play();
+                }
+            }
+        } else {
+            // Clicked on timeline - seek to percentage
+            const rect = this.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const newTime = percentage * videoDuration;
+
+            video.currentTime = newTime;
+        }
     });
 
     timeline.appendChild(progressContainer);

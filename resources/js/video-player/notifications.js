@@ -11,15 +11,13 @@ let notificationsEnabled = true; // Flag para habilitar/deshabilitar notificacio
 
 /**
  * Initialize notification system
+ * Note: timeupdate handler moved to time-manager.js for performance
  */
 export function initNotifications() {
     const video = getVideo();
     if (!video) return;
 
-    video.addEventListener('timeupdate', function () {
-        checkAndShowCommentNotifications();
-    });
-
+    // Keep seeked listener for immediate notifications after seeking
     video.addEventListener('seeked', function () {
         checkAndShowCommentNotifications();
     });

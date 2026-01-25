@@ -7,6 +7,8 @@
 
 // Import all modules
 import { formatTime, getVideo, getConfig, getCommentsData } from './utils.js';
+import { initTimeManager, registerTimeupdateCallback, updateTimestampInput, checkViewTracking, checkAutoComplete } from './time-manager.js';
+import { initCleanup } from './cleanup.js';
 import { initViewTracking } from './view-tracking.js';
 import { initTimeline, createTimelineMarkers, updateProgressIndicator } from './timeline.js';
 import { initNotifications, checkAndShowCommentNotifications } from './notifications.js';
@@ -37,10 +39,30 @@ $(document).ready(function () {
 
     console.log('Initializing Video Player...');
 
-    // Initialize timestamp input functionality
-    initTimestampInput();
+    // Initialize cleanup handlers FIRST (to catch any errors)
+    initCleanup();
 
-    // Initialize all modules
+    // Initialize centralized time manager
+    initTimeManager();
+
+    // Register timeupdate callbacks (consolidated from multiple modules)
+    registerTimeupdateCallback(updateTimestampInput, 'timestamp-input');
+    registerTimeupdateCallback(checkViewTracking, 'view-tracking');
+    registerTimeupdateCallback(checkAutoComplete, 'auto-complete');
+    registerTimeupdateCallback((currentTime, video) => {
+        updateProgressIndicator();
+    }, 'timeline-progress');
+    registerTimeupdateCallback((currentTime, video) => {
+        checkAndShowCommentNotifications();
+    }, 'comment-notifications');
+    registerTimeupdateCallback((currentTime, video) => {
+        checkAndShowAnnotations();
+    }, 'annotations-check');
+
+    // Initialize timestamp input controls
+    initTimestampInputControls();
+
+    // Initialize all modules (without their own timeupdate listeners)
     initViewTracking();
     initTimeline();
     initNotifications();
@@ -55,22 +77,14 @@ $(document).ready(function () {
 });
 
 /**
- * Initialize timestamp input and display
+ * Initialize timestamp input controls (non-timeupdate functionality)
  */
-function initTimestampInput() {
+function initTimestampInputControls() {
     const video = getVideo();
     const timestampInput = document.getElementById('timestamp_seconds');
     const timestampDisplay = document.getElementById('timestampDisplay');
 
     if (!video || !timestampInput || !timestampDisplay) return;
-
-    // Update timestamp input to current video time
-    video.addEventListener('timeupdate', function () {
-        if (document.activeElement !== timestampInput) {
-            timestampInput.value = Math.floor(video.currentTime);
-            timestampDisplay.textContent = formatTime(Math.floor(video.currentTime));
-        }
-    });
 
     // Use current time button
     const useCurrentTimeBtn = document.getElementById('useCurrentTime');

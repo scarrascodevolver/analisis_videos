@@ -11,25 +11,18 @@ let durationUpdateInterval = null;
 let viewTracked = false;
 
 /**
- * Initialize view tracking
+ * Initialize view tracking (now uses custom events from time-manager)
  */
 export function initViewTracking() {
-    const video = getVideo();
-    if (!video) return;
+    // Listen for track event from time-manager
+    window.addEventListener('videoview:track', function() {
+        trackView();
+    });
 
-    video.addEventListener('timeupdate', function () {
-        // 1. Count view after 20 seconds of playback
-        if (!viewTracked && video.currentTime >= 20) {
-            trackView();
-            viewTracked = true;
-        }
-
-        // 2. Auto-complete at 90% of video
-        if (currentViewId && video.duration > 0) {
-            const percentWatched = (video.currentTime / video.duration) * 100;
-            if (percentWatched >= 90) {
-                markVideoCompleted();
-            }
+    // Listen for complete event from time-manager
+    window.addEventListener('videoview:complete', function() {
+        if (currentViewId) {
+            markVideoCompleted();
         }
     });
 }
@@ -156,4 +149,18 @@ function updateViewCount(totalViews, uniqueViewers) {
     if (uniqueViewersElement) {
         uniqueViewersElement.textContent = uniqueViewers;
     }
+}
+
+/**
+ * Cleanup function for view tracking
+ */
+export function cleanupViewTracking() {
+    if (durationUpdateInterval) {
+        clearInterval(durationUpdateInterval);
+        durationUpdateInterval = null;
+    }
+    currentViewId = null;
+    trackingActive = false;
+    viewTracked = false;
+    console.log('View tracking cleaned up');
 }
