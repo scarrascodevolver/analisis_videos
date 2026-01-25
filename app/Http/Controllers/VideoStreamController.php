@@ -55,9 +55,13 @@ class VideoStreamController extends Controller
             return Cache::get($cacheKey);
         }
 
-        // Perform health check
-        $cdnBaseUrl = config('filesystems.disks.spaces.url');
-        if (!$cdnBaseUrl) {
+        // Check Worker URL if enabled, otherwise check CDN
+        $workerEnabled = config('filesystems.cloudflare.worker_enabled', false);
+        $checkUrl = $workerEnabled
+            ? config('filesystems.cloudflare.worker_url')
+            : config('filesystems.disks.spaces.url');
+
+        if (!$checkUrl) {
             return false;
         }
 
@@ -74,25 +78,27 @@ class VideoStreamController extends Controller
                 ]
             ]);
 
-            // Check CDN base URL accessibility
-            $headers = @get_headers($cdnBaseUrl, true, $context);
+            // Check URL accessibility (Worker or CDN)
+            $headers = @get_headers($checkUrl, true, $context);
             $isHealthy = $headers && (
                 strpos($headers[0], '200') !== false ||
-                strpos($headers[0], '403') !== false || // 403 is OK - means CDN is responding
-                strpos($headers[0], '404') !== false    // 404 is OK - means CDN is responding
+                strpos($headers[0], '403') !== false || // 403 is OK - means service is responding
+                strpos($headers[0], '404') !== false    // 404 is OK - means service is responding
             );
 
             // Cache result
             Cache::put($cacheKey, $isHealthy, self::CDN_HEALTH_CACHE_SECONDS);
 
             if (!$isHealthy) {
-                \Log::warning('CDN health check failed - Response: ' . ($headers[0] ?? 'No response'));
+                $service = $workerEnabled ? 'Worker' : 'CDN';
+                \Log::warning("$service health check failed - Response: " . ($headers[0] ?? 'No response'));
             }
 
             return $isHealthy;
 
         } catch (Exception $e) {
-            \Log::error('CDN health check exception: ' . $e->getMessage());
+            $service = $workerEnabled ? 'Worker' : 'CDN';
+            \Log::error("$service health check exception: " . $e->getMessage());
             Cache::put($cacheKey, false, 60); // Cache failure for 1 minute only
             return false;
         }
@@ -105,6 +111,30 @@ class VideoStreamController extends Controller
     {
         Cache::forget('cdn_health_status');
         return $this->isCdnHealthy();
+    }
+
+    /**
+     * Get the optimal CDN URL (Worker if enabled, CDN otherwise)
+     *
+     * When Cloudflare Worker is enabled, returns the Worker URL which adds
+     * CORS headers at the edge (0ms overhead vs Laravel proxy).
+     *
+     * @param string $filePath Path to the file in storage
+     * @return string Full URL to access the file
+     */
+    private function getOptimalCdnUrl(string $filePath): string
+    {
+        $workerEnabled = config('filesystems.cloudflare.worker_enabled', false);
+        $workerUrl = config('filesystems.cloudflare.worker_url');
+        $cdnUrl = config('filesystems.disks.spaces.url');
+
+        if ($workerEnabled && $workerUrl) {
+            // Use Cloudflare Worker (fast - 0ms overhead)
+            return rtrim($workerUrl, '/') . '/' . ltrim($filePath, '/');
+        }
+
+        // Fallback to CDN direct (will use proxy if needed)
+        return rtrim($cdnUrl, '/') . '/' . ltrim($filePath, '/');
     }
 
     /**
@@ -121,11 +151,16 @@ class VideoStreamController extends Controller
             $isHealthy = $this->isCdnHealthy();
         }
 
+        $workerEnabled = config('filesystems.cloudflare.worker_enabled', false);
+        $workerUrl = config('filesystems.cloudflare.worker_url');
         $cdnUrl = config('filesystems.disks.spaces.url');
 
         return response()->json([
             'cdn_healthy' => $isHealthy,
             'cdn_url' => $cdnUrl,
+            'worker_enabled' => $workerEnabled,
+            'worker_url' => $workerUrl,
+            'active_endpoint' => $workerEnabled ? $workerUrl : $cdnUrl,
             'cached' => !$forceRefresh && Cache::has('cdn_health_status'),
             'cache_ttl_seconds' => self::CDN_HEALTH_CACHE_SECONDS,
             'fallback_available' => true,
@@ -145,11 +180,11 @@ class VideoStreamController extends Controller
 
                     // Try CDN first if configured and healthy
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                        $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
+                        $cdnUrl = $this->getOptimalCdnUrl($video->file_path);
 
-                        \Log::debug('CDN proxy streaming (CORS fix) - video: ' . $video->id);
+                        \Log::debug('CDN redirect via Worker - video: ' . $video->id);
 
-                        return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
+                        return redirect($cdnUrl);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
@@ -183,8 +218,8 @@ class VideoStreamController extends Controller
 
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                            $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($video->file_path, '/');
-                            return $this->optimizedProxyStreamFromCDN($cdnUrl, $video, $request);
+                            $cdnUrl = $this->getOptimalCdnUrl($video->file_path);
+                            return redirect($cdnUrl);
                         }
 
                         // CDN not available - use direct Spaces streaming
@@ -393,11 +428,11 @@ class VideoStreamController extends Controller
 
                     // Try CDN first if configured and healthy
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                        $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
+                        $cdnUrl = $this->getOptimalCdnUrl($spacesPath);
 
-                        \Log::debug('CDN proxy streaming by path (CORS fix) - file: ' . $filename);
+                        \Log::debug('CDN redirect by path via Worker - file: ' . $filename);
 
-                        return $this->optimizedProxyStreamFromCDN($cdnUrl, null, $request);
+                        return redirect($cdnUrl);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
@@ -431,8 +466,8 @@ class VideoStreamController extends Controller
 
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
-                            $cdnUrl = rtrim($cdnBaseUrl, '/') . '/' . ltrim($spacesPath, '/');
-                            return $this->optimizedProxyStreamFromCDN($cdnUrl, null, $request);
+                            $cdnUrl = $this->getOptimalCdnUrl($spacesPath);
+                            return redirect($cdnUrl);
                         }
 
                         // CDN not available - use direct Spaces streaming

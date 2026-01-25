@@ -82,6 +82,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cloudflare Worker Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Cloudflare Worker provides edge-level CORS header injection for video
+    | streaming without proxying through Laravel (0ms overhead).
+    |
+    | When enabled, video URLs redirect to the Worker URL which adds CORS
+    | headers at the edge and streams directly from the CDN.
+    |
+    */
+
+    'cloudflare' => [
+        'worker_enabled' => env('CLOUDFLARE_WORKER_ENABLED', false),
+        'worker_url' => env('CLOUDFLARE_WORKER_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Symbolic Links
     |--------------------------------------------------------------------------
     |
