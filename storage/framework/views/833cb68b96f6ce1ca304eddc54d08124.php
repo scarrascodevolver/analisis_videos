@@ -1,14 +1,12 @@
-@extends('layouts.app')
+<?php $__env->startSection('page_title', $video->title); ?>
 
-@section('page_title', $video->title)
+<?php $__env->startSection('breadcrumbs'); ?>
+    <li class="breadcrumb-item"><a href="<?php echo e(route('videos.index')); ?>"><i class="fas fa-home"></i></a></li>
+    <li class="breadcrumb-item"><a href="<?php echo e(route('videos.index')); ?>">Videos</a></li>
+    <li class="breadcrumb-item active"><?php echo e($video->title); ?></li>
+<?php $__env->stopSection(); ?>
 
-@section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
-    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}">Videos</a></li>
-    <li class="breadcrumb-item active">{{ $video->title }}</li>
-@endsection
-
-@section('main_content')
+<?php $__env->startSection('main_content'); ?>
     <div class="row">
         <!-- Video Player Section -->
         <div class="col-lg-10" id="videoSection">
@@ -16,32 +14,33 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-play"></i>
-                        {{ $video->title }}
+                        <?php echo e($video->title); ?>
+
                         <br>
                         <small class="text-muted">
-                            <i class="fas fa-eye"></i> <span id="viewCount">{{ $video->view_count }}</span> visualizaciones
-                            • <i class="fas fa-users"></i> <span id="uniqueViewers">{{ $video->unique_viewers }}</span> usuarios
+                            <i class="fas fa-eye"></i> <span id="viewCount"><?php echo e($video->view_count); ?></span> visualizaciones
+                            • <i class="fas fa-users"></i> <span id="uniqueViewers"><?php echo e($video->unique_viewers); ?></span> usuarios
                         </small>
                     </h3>
                     <div class="card-tools">
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
+                        <?php if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador'])): ?>
                             <button id="viewStatsBtn" class="btn btn-sm btn-rugby-light mr-2" data-toggle="modal" data-target="#statsModal">
                                 <i class="fas fa-eye"></i> Visualizaciones
                             </button>
-                        @endif
+                        <?php endif; ?>
                         <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
                             <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
                         </button>
-                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by)
-                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-sm btn-rugby-light">
+                        <?php if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by): ?>
+                            <a href="<?php echo e(route('videos.edit', $video)); ?>" class="btn btn-sm btn-rugby-light">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
-                        @endif
-                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
+                        <?php endif; ?>
+                        <?php if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador'): ?>
                             <button type="button" class="btn btn-sm btn-rugby-dark" data-toggle="modal" data-target="#deleteModal">
                                 <i class="fas fa-trash"></i> Eliminar
                             </button>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -51,9 +50,9 @@
                                preload="metadata"
                                crossorigin="anonymous"
                                x-webkit-airplay="allow">
-                            <source src="{{ route('videos.stream', $video) }}" type="video/mp4">
+                            <source src="<?php echo e(route('videos.stream', $video)); ?>" type="video/mp4">
                             Tu navegador no soporta la reproducción de video.
-                            <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
+                            <p>Video no disponible. Archivo: <?php echo e($video->file_path); ?></p>
                         </video>
 
                         <!-- Canvas overlay para anotaciones -->
@@ -63,7 +62,7 @@
 
                         <!-- Toolbar de anotaciones LATERAL COMPACTO -->
                         <div id="annotationToolbar" class="annotation-toolbar-vertical" style="display: none;">
-                            {{-- Fila 1: Cerrar + Color + Duración --}}
+                            
                             <div class="toolbar-header-row">
                                 <button id="closeAnnotationMode" class="toolbar-btn-small close-btn" title="Cerrar (ESC)">
                                     <i class="fas fa-times"></i>
@@ -77,7 +76,7 @@
                                 </select>
                             </div>
 
-                            {{-- Herramientas básicas --}}
+                            
                             <div class="toolbar-section">
                                 <button id="annotationArrow" class="toolbar-btn toolbar-btn-v active" data-tool="arrow" title="Flecha">
                                     <i class="fas fa-arrow-right"></i>
@@ -101,7 +100,7 @@
                                 </button>
                             </div>
 
-                            {{-- Herramientas adicionales --}}
+                            
                             <div class="toolbar-section">
                                 <button id="annotationRectangle" class="toolbar-btn toolbar-btn-v" data-tool="rectangle" title="Rectángulo">
                                     <i class="fas fa-square"></i>
@@ -117,7 +116,7 @@
                                 </button>
                             </div>
 
-                            {{-- Símbolos rápidos --}}
+                            
                             <div class="toolbar-section toolbar-symbols">
                                 <button class="toolbar-btn toolbar-btn-v symbol-btn" data-symbol="tackle" title="Tackle">
                                     <i class="fas fa-bolt" style="color: #dc3545;"></i>
@@ -137,7 +136,7 @@
                                 </button>
                             </div>
 
-                            {{-- Acciones --}}
+                            
                             <div class="toolbar-section" style="border-bottom: none;">
                                 <button id="undoAnnotation" class="toolbar-btn-small" title="Deshacer" disabled><i class="fas fa-undo"></i></button>
                                 <button id="redoAnnotation" class="toolbar-btn-small" title="Rehacer" disabled><i class="fas fa-redo"></i></button>
@@ -196,25 +195,25 @@
                             <button id="addCommentBtn" class="btn btn-sm btn-rugby font-weight-bold mr-2">
                                 <i class="fas fa-comment-plus"></i> Comentar aquí
                             </button>
-                            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                            <?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
                                 <button id="toggleAnnotationMode" class="btn btn-sm btn-rugby-outline font-weight-bold">
                                     <i class="fas fa-paint-brush"></i> Anotar
                                 </button>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
 
-                    @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
-                        {{-- ═══════════════════════════════════════════════════════════ --}}
-                        {{-- ORDEN DIFERENTE POR ROL:                                   --}}
-                        {{-- - ENTRENADOR: Timeline primero (sync es prioridad)        --}}
-                        {{-- - ANALISTA: Clips primero (crear clips es prioridad)      --}}
-                        {{-- ═══════════════════════════════════════════════════════════ --}}
+                    <?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
+                        
+                        
+                        
+                        
+                        
 
-                        @if(auth()->user()->role === 'entrenador')
-                            {{-- ══════════════════════════════════════════════════════ --}}
-                            {{-- ENTRENADOR: ORDEN 1 - Timeline de Sincronización     --}}
-                            {{-- ══════════════════════════════════════════════════════ --}}
+                        <?php if(auth()->user()->role === 'entrenador'): ?>
+                            
+                            
+                            
                             <div id="clipTimelineWrapper">
                                 <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
                                     <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
@@ -228,8 +227,8 @@
                                             <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
                                                 <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
                                             </label>
-                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="{{ $video->timeline_offset ?? 0 }}" style="flex: 1; cursor: pointer; max-width: 200px;">
-                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">{{ $video->timeline_offset ?? 0 }}s</span>
+                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="<?php echo e($video->timeline_offset ?? 0); ?>" style="flex: 1; cursor: pointer; max-width: 200px;">
+                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;"><?php echo e($video->timeline_offset ?? 0); ?>s</span>
                                         </div>
                                         <div style="display: flex; gap: 6px;">
                                             <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;"><i class="fas fa-check"></i> Aplicar</button>
@@ -256,9 +255,9 @@
                                 </div>
                             </div>
 
-                            {{-- ══════════════════════════════════════════════════════ --}}
-                            {{-- ENTRENADOR: ORDEN 2 - Panel de Clips                 --}}
-                            {{-- ══════════════════════════════════════════════════════ --}}
+                            
+                            
+                            
                             <div id="clipPanelWrapper" style="background: #0f0f0f;">
                                 <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #252525; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
                                     <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
@@ -289,10 +288,10 @@
                                 </div>
                             </div>
 
-                        @else
-                            {{-- ══════════════════════════════════════════════════════ --}}
-                            {{-- ANALISTA: ORDEN 1 - Panel de Clips                   --}}
-                            {{-- ══════════════════════════════════════════════════════ --}}
+                        <?php else: ?>
+                            
+                            
+                            
                             <div id="clipPanelWrapper" style="background: #0f0f0f;">
                                 <button id="toggleClipPanel" class="btn btn-block text-left py-2 px-3" style="background: #252525; border: none; border-radius: 0; color: #fff; border-bottom: 1px solid #333;">
                                     <i class="fas fa-film mr-2" style="color: #00B7B5;"></i>
@@ -323,9 +322,9 @@
                                 </div>
                             </div>
 
-                            {{-- ══════════════════════════════════════════════════════ --}}
-                            {{-- ANALISTA: ORDEN 2 - Timeline de Sincronización       --}}
-                            {{-- ══════════════════════════════════════════════════════ --}}
+                            
+                            
+                            
                             <div id="clipTimelineWrapper">
                                 <button id="toggleClipTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
                                     <i class="fas fa-sliders-h mr-2" style="color: #ffc107;"></i>
@@ -339,8 +338,8 @@
                                             <label style="color: #aaa; font-size: 12px; margin: 0; white-space: nowrap;">
                                                 <i class="fas fa-sync-alt" style="color: #ffc107;"></i> Offset:
                                             </label>
-                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="{{ $video->timeline_offset ?? 0 }}" style="flex: 1; cursor: pointer; max-width: 200px;">
-                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;">{{ $video->timeline_offset ?? 0 }}s</span>
+                                            <input type="range" id="timelineOffsetSlider" class="custom-range" min="-300" max="300" step="0.5" value="<?php echo e($video->timeline_offset ?? 0); ?>" style="flex: 1; cursor: pointer; max-width: 200px;">
+                                            <span id="offsetDisplay" class="badge" style="background: #ffc107; color: #000; font-weight: bold; font-size: 11px; min-width: 45px; text-align: center;"><?php echo e($video->timeline_offset ?? 0); ?>s</span>
                                         </div>
                                         <div style="display: flex; gap: 6px;">
                                             <button id="applyOffsetBtn" class="btn btn-sm" style="background: #00B7B5; color: #fff; font-weight: 600; font-size: 11px; padding: 4px 12px; border: none;"><i class="fas fa-check"></i> Aplicar</button>
@@ -366,50 +365,50 @@
                                     </div>
                                 </div>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
-                        {{-- ══════════════════════════════════════════════════════ --}}
-                        {{-- AMBOS ROLES: ORDEN 3 - Timeline de Comentarios       --}}
-                        {{-- ══════════════════════════════════════════════════════ --}}
+                        
+                        
+                        
                         <div id="timelineWrapper">
                             <button id="toggleTimeline" class="btn btn-block text-left py-2 px-3" style="background: #1a1a1a; border: none; border-radius: 0; color: #fff; border-top: 1px solid #333;">
                                 <i class="fas fa-comments mr-2" style="color: #00B7B5;"></i>
                                 <strong>Timeline de Comentarios</strong>
-                                <span id="commentCountBadge" class="badge ml-2" style="background: #00B7B5;">{{ $comments->count() }}</span>
+                                <span id="commentCountBadge" class="badge ml-2" style="background: #00B7B5;"><?php echo e($comments->count()); ?></span>
                                 <i id="timelineArrow" class="fas fa-chevron-up float-right mt-1"></i>
                             </button>
 
                             <div id="timelineContent" class="video-timeline p-3 position-relative" style="background: #1a1a1a; overflow: visible;">
-                                {{-- Notificaciones arriba del timeline (casi en el video) --}}
+                                
                                 <div id="commentNotifications" class="position-absolute" style="bottom: 100%; left: 10px; right: 10px; margin-bottom: 5px; pointer-events: none; z-index: 100;">
                                 </div>
                                 <div id="timelineMarkers" class="position-relative" style="height: 40px; background: #333; border-radius: 5px; margin: 10px 0; cursor: pointer;">
                                 </div>
                                 <div class="d-flex justify-content-between small" style="color: #888;">
                                     <span>00:00</span>
-                                    <span id="videoDuration">{{ gmdate('H:i:s', $video->duration ?? 0) }}</span>
+                                    <span id="videoDuration"><?php echo e(gmdate('H:i:s', $video->duration ?? 0)); ?></span>
                                 </div>
                             </div>
                         </div>
 
-                    @else
-                        {{-- ═══════════════════════════════════════════════════════════ --}}
-                        {{-- JUGADOR: Solo Timeline de Comentarios (siempre visible)    --}}
-                        {{-- ═══════════════════════════════════════════════════════════ --}}
+                    <?php else: ?>
+                        
+                        
+                        
 
                         <div class="video-timeline p-3 position-relative" style="background: #1a1a1a; overflow: visible;">
                             <h6 class="text-light mb-2"><i class="fas fa-clock"></i> Timeline de Comentarios</h6>
-                            {{-- Notificaciones arriba del timeline (casi en el video) --}}
+                            
                             <div id="commentNotifications" class="position-absolute" style="bottom: 100%; left: 10px; right: 10px; margin-bottom: 5px; pointer-events: none; z-index: 100;">
                             </div>
                             <div id="timelineMarkers" class="position-relative" style="height: 40px; background: #333; border-radius: 5px; margin: 10px 0; cursor: pointer;">
                             </div>
                             <div class="d-flex justify-content-between small" style="color: #888;">
                                 <span>00:00</span>
-                                <span id="videoDuration">{{ gmdate('H:i:s', $video->duration ?? 0) }}</span>
+                                <span id="videoDuration"><?php echo e(gmdate('H:i:s', $video->duration ?? 0)); ?></span>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -423,37 +422,40 @@
                                 <tr>
                                     <td><strong>Equipos:</strong></td>
                                     <td>
-                                        {{ $video->analyzed_team_name }}
-                                        @if($video->rival_name)
-                                            vs {{ $video->rival_name }}
-                                        @endif
+                                        <?php echo e($video->analyzed_team_name); ?>
+
+                                        <?php if($video->rival_name): ?>
+                                            vs <?php echo e($video->rival_name); ?>
+
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Categoría:</strong></td>
-                                    <td><span class="badge badge-rugby">{{ $video->category->name }}</span></td>
+                                    <td><span class="badge badge-rugby"><?php echo e($video->category->name); ?></span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Fecha:</strong></td>
-                                    <td>{{ $video->match_date->format('d/m/Y') }}</td>
+                                    <td><?php echo e($video->match_date->format('d/m/Y')); ?></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Subido por:</strong></td>
                                     <td>
-                                        {{ $video->uploader->name }}
-                                        <span class="badge badge-sm badge-info">{{ ucfirst($video->uploader->role) }}</span>
+                                        <?php echo e($video->uploader->name); ?>
+
+                                        <span class="badge badge-sm badge-info"><?php echo e(ucfirst($video->uploader->role)); ?></span>
                                     </td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
                             <h6><i class="fas fa-align-left"></i> Descripción</h6>
-                            <p class="text-muted">{{ $video->description ?? 'Sin descripción' }}</p>
+                            <p class="text-muted"><?php echo e($video->description ?? 'Sin descripción'); ?></p>
                             
                             <div class="mt-3">
                                 <small class="text-muted">
-                                    <i class="fas fa-file"></i> {{ $video->file_name }} 
-                                    ({{ number_format($video->file_size / 1024 / 1024, 2) }} MB)
+                                    <i class="fas fa-file"></i> <?php echo e($video->file_name); ?> 
+                                    (<?php echo e(number_format($video->file_size / 1024 / 1024, 2)); ?> MB)
                                 </small>
                             </div>
                         </div>
@@ -464,7 +466,7 @@
 
         <!-- Sidebar Section -->
         <div class="col-lg-2" id="sidebarSection">
-            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+            <?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
             <!-- Tabs para alternar entre Comentarios y Clips -->
             <!-- Analistas/Entrenadores: Clips primero -->
             <div class="sidebar-tabs mb-2" style="display: flex; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
@@ -475,11 +477,11 @@
                     <i class="fas fa-film"></i> Clips <span id="sidebarClipCount" class="badge badge-light ml-1">0</span>
                 </button>
             </div>
-            @endif
+            <?php endif; ?>
 
             <!-- Tab Content: Comentarios -->
             <!-- Analistas/Entrenadores: oculto por defecto (Clips visible), Jugadores: visible -->
-            <div id="tabComments" class="tab-content-sidebar" @if(in_array(auth()->user()->role, ['analista', 'entrenador'])) style="display: none;" @endif>
+            <div id="tabComments" class="tab-content-sidebar" <?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?> style="display: none;" <?php endif; ?>>
             <!-- Add Comment Form -->
             <div class="card">
                 <div class="card-header">
@@ -489,8 +491,8 @@
                     </h5>
                 </div>
                 <div class="card-body py-2 px-3">
-                    <form id="commentForm" action="{{ route('video.comments.store', $video) }}" method="POST" data-video-id="{{ $video->id }}">
-                        @csrf
+                    <form id="commentForm" action="<?php echo e(route('video.comments.store', $video)); ?>" method="POST" data-video-id="<?php echo e($video->id); ?>">
+                        <?php echo csrf_field(); ?>
                         <div class="form-group mb-2">
                             <label class="mb-1">Timestamp</label>
                             <div class="input-group">
@@ -548,89 +550,88 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-list"></i>
-                        Comentarios ({{ $comments->count() }})
+                        Comentarios (<?php echo e($comments->count()); ?>)
                     </h5>
                 </div>
                 <div class="card-body p-0 comments-scroll-container" style="max-height: 400px; overflow-y: scroll; overflow-x: hidden;">
-                    @forelse($comments as $comment)
-                        <div class="comment-item border-bottom p-2" data-timestamp="{{ $comment->timestamp_seconds }}">
+                    <?php $__empty_1 = true; $__currentLoopData = $comments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $comment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <div class="comment-item border-bottom p-2" data-timestamp="<?php echo e($comment->timestamp_seconds); ?>">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
                                         <button class="btn btn-sm btn-rugby-light timestamp-btn mr-2" 
-                                                data-timestamp="{{ $comment->timestamp_seconds }}">
-                                            {{ $comment->formatted_timestamp }}
+                                                data-timestamp="<?php echo e($comment->timestamp_seconds); ?>">
+                                            <?php echo e($comment->formatted_timestamp); ?>
+
                                         </button>
-                                        <span class="badge badge-{{ 
-                                            $comment->category === 'tecnico' ? 'info' : 
+                                        <span class="badge badge-<?php echo e($comment->category === 'tecnico' ? 'info' : 
                                             ($comment->category === 'tactico' ? 'warning' : 
-                                            ($comment->category === 'fisico' ? 'success' : 'purple')) 
-                                        }}">
-                                            {{ ucfirst($comment->category) }}
+                                            ($comment->category === 'fisico' ? 'success' : 'purple'))); ?>">
+                                            <?php echo e(ucfirst($comment->category)); ?>
+
                                         </span>
-                                        <span class="badge badge-{{ 
-                                            $comment->priority === 'critica' ? 'danger' : 
+                                        <span class="badge badge-<?php echo e($comment->priority === 'critica' ? 'danger' : 
                                             ($comment->priority === 'alta' ? 'warning' : 
-                                            ($comment->priority === 'media' ? 'info' : 'secondary')) 
-                                        }} ml-1">
-                                            {{ ucfirst($comment->priority) }}
+                                            ($comment->priority === 'media' ? 'info' : 'secondary'))); ?> ml-1">
+                                            <?php echo e(ucfirst($comment->priority)); ?>
+
                                         </span>
                                     </div>
-                                    <p class="mb-2">{{ $comment->comment }}</p>
+                                    <p class="mb-2"><?php echo e($comment->comment); ?></p>
                                     <small class="text-muted">
-                                        <i class="fas fa-user"></i> {{ $comment->user->name }}
-                                        <span class="badge badge-sm badge-{{ 
-                                            $comment->user->role === 'analista' ? 'primary' : 
-                                            ($comment->user->role === 'entrenador' ? 'success' : 'info') 
-                                        }}">
-                                            {{ ucfirst($comment->user->role) }}
+                                        <i class="fas fa-user"></i> <?php echo e($comment->user->name); ?>
+
+                                        <span class="badge badge-sm badge-<?php echo e($comment->user->role === 'analista' ? 'primary' : 
+                                            ($comment->user->role === 'entrenador' ? 'success' : 'info')); ?>">
+                                            <?php echo e(ucfirst($comment->user->role)); ?>
+
                                         </span>
                                     </small>
                                     <small class="text-muted ml-2">
-                                        {{ $comment->created_at->diffForHumans() }}
+                                        <?php echo e($comment->created_at->diffForHumans()); ?>
+
                                     </small>
 
                                     <!-- Badges de menciones -->
-                                    @if($comment->mentionedUsers && $comment->mentionedUsers->count() > 0)
+                                    <?php if($comment->mentionedUsers && $comment->mentionedUsers->count() > 0): ?>
                                         <div class="mt-2">
                                             <span class="badge badge-light border">
                                                 <i class="fas fa-at text-primary"></i>
                                                 Menciona a:
-                                                @foreach($comment->mentionedUsers as $mentionedUser)
-                                                    <span class="badge badge-{{
-                                                        $mentionedUser->role === 'jugador' ? 'info' :
-                                                        ($mentionedUser->role === 'entrenador' ? 'success' : 'primary')
-                                                    }} ml-1">
-                                                        {{ $mentionedUser->name }}
+                                                <?php $__currentLoopData = $comment->mentionedUsers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mentionedUser): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <span class="badge badge-<?php echo e($mentionedUser->role === 'jugador' ? 'info' :
+                                                        ($mentionedUser->role === 'entrenador' ? 'success' : 'primary')); ?> ml-1">
+                                                        <?php echo e($mentionedUser->name); ?>
+
                                                     </span>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </span>
                                         </div>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-secondary" data-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        <button class="dropdown-item dropdown-item-sm reply-btn" data-comment-id="{{ $comment->id }}">
+                                        <button class="dropdown-item dropdown-item-sm reply-btn" data-comment-id="<?php echo e($comment->id); ?>">
                                             <i class="fas fa-reply"></i> Responder
                                         </button>
-                                        @if($comment->user_id === auth()->id())
+                                        <?php if($comment->user_id === auth()->id()): ?>
                                             <div class="dropdown-divider"></div>
                                             <button class="dropdown-item dropdown-item-sm text-danger delete-comment-btn"
-                                                    data-comment-id="{{ $comment->id }}">
+                                                    data-comment-id="<?php echo e($comment->id); ?>">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Reply Form (Hidden by default) -->
-                            <div class="reply-form mt-3" id="replyForm{{ $comment->id }}" style="display: none;">
-                                <form class="reply-form-submit" data-comment-id="{{ $comment->id }}" data-video-id="{{ $video->id }}">
-                                    @csrf
+                            <div class="reply-form mt-3" id="replyForm<?php echo e($comment->id); ?>" style="display: none;">
+                                <form class="reply-form-submit" data-comment-id="<?php echo e($comment->id); ?>" data-video-id="<?php echo e($video->id); ?>">
+                                    <?php echo csrf_field(); ?>
                                     <textarea class="form-control form-control-sm mb-2" name="reply_comment" rows="2"
                                               placeholder="Escribe tu respuesta..." required></textarea>
                                     <button class="btn btn-rugby btn-sm" type="submit">
@@ -640,21 +641,21 @@
                             </div>
 
                             <!-- Replies -->
-                            @if($comment->replies->count() > 0)
+                            <?php if($comment->replies->count() > 0): ?>
                                 <div class="replies ml-4 mt-3">
-                                    @foreach($comment->replies as $reply)
-                                        @include('videos.partials.reply', ['reply' => $reply, 'video' => $video])
-                                    @endforeach
+                                    <?php $__currentLoopData = $comment->replies; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reply): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php echo $__env->make('videos.partials.reply', ['reply' => $reply, 'video' => $video], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="text-center p-4 text-muted">
                             <i class="fas fa-comments fa-3x mb-3"></i>
                             <p>No hay comentarios aún.</p>
                             <p>Sé el primero en agregar un comentario de análisis.</p>
                         </div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -676,7 +677,7 @@
             </div>
             </div><!-- End tabComments -->
 
-            @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+            <?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
             <!-- Tab Content: Clips -->
             <!-- Analistas/Entrenadores: visible por defecto -->
             <div id="tabClips" class="tab-content-sidebar" style="display: block;">
@@ -718,12 +719,12 @@
                     </div>
                 </div>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
     <!-- Modal de Visualizaciones -->
-    @if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']))
+    <?php if(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador'])): ?>
     <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -742,7 +743,7 @@
                                 <span class="info-box-icon"><i class="fas fa-eye"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Total Visualizaciones</span>
-                                    <span class="info-box-number" id="modalTotalViews">{{ $video->view_count }}</span>
+                                    <span class="info-box-number" id="modalTotalViews"><?php echo e($video->view_count); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -751,7 +752,7 @@
                                 <span class="info-box-icon"><i class="fas fa-users"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Usuarios Únicos</span>
-                                    <span class="info-box-number" id="modalUniqueViewers">{{ $video->unique_viewers }}</span>
+                                    <span class="info-box-number" id="modalUniqueViewers"><?php echo e($video->unique_viewers); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -785,49 +786,50 @@
             </div>
         </div>
     </div>
-    @endif
-@endsection
+    <?php endif; ?>
+<?php $__env->stopSection(); ?>
 
 
-@section('js')
+<?php $__env->startSection('js'); ?>
 <!-- Video Player Configuration -->
-@php
+<?php
     $currentOrgId = auth()->user()->currentOrganization()?->id;
     $orgUsers = \App\Models\User::select('id', 'name', 'role')
         ->whereHas('organizations', fn($q) => $q->where('organizations.id', $currentOrgId))
         ->get();
-@endphp
+?>
 <script>
 window.VideoPlayer = {
     config: {
-        videoId: {{ $video->id }},
-        csrfToken: '{{ csrf_token() }}',
-        comments: @json($comments),
-        allUsers: @json($orgUsers),
+        videoId: <?php echo e($video->id); ?>,
+        csrfToken: '<?php echo e(csrf_token()); ?>',
+        comments: <?php echo json_encode($comments, 15, 512) ?>,
+        allUsers: <?php echo json_encode($orgUsers, 15, 512) ?>,
         user: {
-            id: {{ auth()->id() }},
-            name: '{{ auth()->user()->name }}',
-            role: '{{ auth()->user()->role }}',
-            canViewStats: {{ in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']) ? 'true' : 'false' }},
-            canCreateClips: {{ in_array(auth()->user()->role, ['analista', 'entrenador']) ? 'true' : 'false' }}
+            id: <?php echo e(auth()->id()); ?>,
+            name: '<?php echo e(auth()->user()->name); ?>',
+            role: '<?php echo e(auth()->user()->role); ?>',
+            canViewStats: <?php echo e(in_array(auth()->user()->role, ['analista', 'entrenador', 'jugador']) ? 'true' : 'false'); ?>,
+            canCreateClips: <?php echo e(in_array(auth()->user()->role, ['analista', 'entrenador']) ? 'true' : 'false'); ?>
+
         },
         routes: {
-            trackView: '{{ route("api.videos.track-view", $video) }}',
-            updateDuration: '{{ route("api.videos.update-duration", $video) }}',
-            markCompleted: '{{ route("api.videos.mark-completed", $video) }}',
-            stats: '{{ route("api.videos.stats", $video) }}',
-            clipCategories: '{{ route("api.clip-categories.index") }}',
-            clips: '{{ route("api.clips.index", $video) }}',
-            createClip: '{{ route("api.clips.quick-store", $video) }}'
+            trackView: '<?php echo e(route("api.videos.track-view", $video)); ?>',
+            updateDuration: '<?php echo e(route("api.videos.update-duration", $video)); ?>',
+            markCompleted: '<?php echo e(route("api.videos.mark-completed", $video)); ?>',
+            stats: '<?php echo e(route("api.videos.stats", $video)); ?>',
+            clipCategories: '<?php echo e(route("api.clip-categories.index")); ?>',
+            clips: '<?php echo e(route("api.clips.index", $video)); ?>',
+            createClip: '<?php echo e(route("api.clips.quick-store", $video)); ?>'
         }
     }
 };
 </script>
 
 <!-- Video Player Scripts (Vite bundled) -->
-@vite('resources/js/video-player/index.js')
+<?php echo app('Illuminate\Foundation\Vite')('resources/js/video-player/index.js'); ?>
 
-@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
 <script>
 // Toggle Timeline para analistas/entrenadores
 document.addEventListener('DOMContentLoaded', function() {
@@ -847,7 +849,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endif
+<?php endif; ?>
 
 <script>
 // Auto-hide sidebar on video play (mejor experiencia de visualización)
@@ -996,7 +998,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function() {
             const videoSrc = video.querySelector('source').src;
-            const videoTitle = '{{ $video->title }}';
+            const videoTitle = '<?php echo e($video->title); ?>';
 
             // Create download link
             const a = document.createElement('a');
@@ -1010,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
 <script>
 // Sidebar Tabs para Comentarios/Clips
 document.addEventListener('DOMContentLoaded', function() {
@@ -1059,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Load categories for filter
             if (window.sidebarCategoriesData.length === 0) {
-                const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
+                const catResponse = await fetch('<?php echo e(route("api.clip-categories.index")); ?>');
                 window.sidebarCategoriesData = await catResponse.json();
 
                 // Populate filter dropdown
@@ -1070,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Load clips
-            const response = await fetch('{{ route("api.clips.index", $video) }}');
+            const response = await fetch('<?php echo e(route("api.clips.index", $video)); ?>');
             window.sidebarClipsData = await response.json();
 
             renderSidebarClips();
@@ -1183,10 +1185,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const clipId = this.dataset.clipId;
                 try {
-                    const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+                    const response = await fetch(`/videos/<?php echo e($video->id); ?>/clips/${clipId}`, {
                         method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                             'Accept': 'application/json'
                         }
                     });
@@ -1364,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endif
+<?php endif; ?>
 
 <!-- Tribute.js CSS and JS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">
@@ -1374,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
 
 <!-- Video Player Styles -->
-<link rel="stylesheet" href="{{ asset('css/video-player.css') }}">
+<link rel="stylesheet" href="<?php echo e(asset('css/video-player.css')); ?>">
 
 <style>
 /* Scrollbar visible para comentarios */
@@ -1417,9 +1419,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <h5 class="text-center mb-3">¿Estás seguro de eliminar este video?</h5>
                 <div class="alert alert-warning">
-                    <strong>Video:</strong> {{ $video->title }}<br>
-                    <strong>Archivo:</strong> {{ $video->file_name }}<br>
-                    <strong>Tamaño:</strong> {{ number_format($video->file_size / 1048576, 2) }} MB
+                    <strong>Video:</strong> <?php echo e($video->title); ?><br>
+                    <strong>Archivo:</strong> <?php echo e($video->file_name); ?><br>
+                    <strong>Tamaño:</strong> <?php echo e(number_format($video->file_size / 1048576, 2)); ?> MB
                 </div>
                 <p class="text-danger text-center">
                     <strong>⚠️ Esta acción no se puede deshacer.</strong><br>
@@ -1430,9 +1432,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn btn-rugby-outline" data-dismiss="modal">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
-                <form method="POST" action="{{ route('videos.destroy', $video) }}" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
+                <form method="POST" action="<?php echo e(route('videos.destroy', $video)); ?>" style="display: inline;">
+                    <?php echo csrf_field(); ?>
+                    <?php echo method_field('DELETE'); ?>
                     <button type="submit" class="btn btn-rugby-dark">
                         <i class="fas fa-trash"></i> Eliminar Video
                     </button>
@@ -1519,7 +1521,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- Modal Editar Clip -->
-@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
 <div class="modal fade" id="editClipModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content" style="background: #1a1a1a; color: #fff;">
@@ -1600,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
-@endif
+<?php endif; ?>
 
 <script>
 // Abrir modal de categoría (crear o editar)
@@ -1650,7 +1652,7 @@ async function deleteCategory(categoryId, categoryName) {
         const response = await fetch(`/admin/clip-categories/${categoryId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                 'Accept': 'application/json'
             }
         });
@@ -1702,7 +1704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isEdit = !!catId;
             const url = isEdit
                 ? `/admin/clip-categories/${catId}`
-                : '{{ route("admin.clip-categories.store") }}';
+                : '<?php echo e(route("admin.clip-categories.store")); ?>';
             const method = isEdit ? 'PUT' : 'POST';
 
             try {
@@ -1713,7 +1715,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify(data)
@@ -1745,7 +1747,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cargar lista de categorías al abrir modal de gestión
     $('#manageCategoriesModal').on('show.bs.modal', async function() {
         try {
-            const response = await fetch('{{ route("api.clip-categories.index") }}');
+            const response = await fetch('<?php echo e(route("api.clip-categories.index")); ?>');
             const categories = await response.json();
 
             if (categories.length === 0) {
@@ -1784,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // EDIT CLIP MODAL FUNCTIONALITY
 // ============================================
-@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
 (function() {
     const video = document.getElementById('rugbyVideo');
     const editClipModal = document.getElementById('editClipModal');
@@ -1895,11 +1897,11 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         try {
-            const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+            const response = await fetch(`/videos/<?php echo e($video->id); ?>/clips/${clipId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1945,7 +1947,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 })();
-@endif
+<?php endif; ?>
 
 // ============================================
 // VISUAL TIMELINE EDITOR - Carriles por Categoría + Offset Global
@@ -1963,9 +1965,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!toggleBtn || !content) return;
 
-    let videoDuration = {{ $video->duration ?? 300 }};
-    let currentOffset = {{ $video->timeline_offset ?? 0 }};
+    let videoDuration = <?php echo e($video->duration ?? 300); ?>;
+    let currentOffset = <?php echo e($video->timeline_offset ?? 0); ?>;
     let tempOffset = currentOffset;
+    let clipLoopInterval = null; // Track active clip loop interval
+    let isLooping = false; // Track if we're in loop mode
 
     // Toggle panel
     toggleBtn.addEventListener('click', async function() {
@@ -2011,11 +2015,11 @@ document.addEventListener('DOMContentLoaded', function() {
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
 
             try {
-                const response = await fetch(`/api/videos/{{ $video->id }}/clips/timeline-offset`, {
+                const response = await fetch(`/api/videos/<?php echo e($video->id); ?>/clips/timeline-offset`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
@@ -2059,13 +2063,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update video duration when metadata loads
     if (video) {
         video.addEventListener('loadedmetadata', function() {
-            videoDuration = video.duration || {{ $video->duration ?? 300 }};
+            videoDuration = video.duration || <?php echo e($video->duration ?? 300); ?>;
         });
 
         // Update playheads when video time changes
         video.addEventListener('timeupdate', function() {
             if (content.style.display !== 'none') {
                 updateAllPlayheads();
+            }
+        });
+
+        // Stop clip loop when video is paused manually (user clicks pause button)
+        video.addEventListener('pause', function() {
+            // Only stop loop if we're actually in loop mode
+            // Don't stop during seeking (which also triggers pause momentarily)
+            if (isLooping && !video.seeking) {
+                setTimeout(() => {
+                    // Check again after a delay to avoid stopping during seeks
+                    if (video.paused && !video.seeking) {
+                        isLooping = false;
+                        if (clipLoopInterval) {
+                            clearInterval(clipLoopInterval);
+                            clipLoopInterval = null;
+                        }
+                    }
+                }, 100);
             }
         });
     }
@@ -2152,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             html += `
                 <div class="timeline-lane" data-category-id="${catId}" style="display: flex; align-items: stretch; margin-bottom: 2px; background: #1a1a1a; border-radius: 4px; overflow: hidden; min-height: 32px;">
-                    {{-- Category Label (left column) --}}
+                    
                     <div class="lane-label" style="width: 110px; min-width: 110px; background: #0f0f0f; border-right: 3px solid ${category.color}; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center;">
                         <span style="color: ${category.color}; font-weight: bold; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${category.name}
@@ -2162,17 +2184,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         </span>
                     </div>
 
-                    {{-- Timeline Bar (right column) --}}
+                    
                     <div class="lane-bar" data-category-id="${catId}" style="flex: 1; position: relative; background: #252525; overflow: visible;">
-                        {{-- Time markers --}}
+                        
                         <div style="position: absolute; top: 0; left: 25%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
                         <div style="position: absolute; top: 0; left: 50%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
                         <div style="position: absolute; top: 0; left: 75%; bottom: 0; width: 1px; background: rgba(255,255,255,0.06);"></div>
 
-                        {{-- Playhead --}}
+                        
                         <div class="lane-playhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #ff0000; z-index: 10; left: 0%;"></div>
 
-                        {{-- Clips in this lane --}}
+                        
                         ${renderClipsInLane(category.clips, category.color)}
                     </div>
                 </div>
@@ -2229,12 +2251,21 @@ document.addEventListener('DOMContentLoaded', function() {
             bar.addEventListener('click', function(e) {
                 // Check if clicking on a clip
                 if (e.target.closest('.clip-block')) {
-                    // Play clip from start - video continues normally
+                    // Play clip on click in infinite loop
                     const clipBlock = e.target.closest('.clip-block');
                     const start = parseFloat(clipBlock.dataset.start) + currentOffset;
+                    const end = parseFloat(clipBlock.dataset.end) + currentOffset;
 
                     if (video) {
-                        // Jump to clip start
+                        // Clear any previous clip loop
+                        if (clipLoopInterval) {
+                            clearInterval(clipLoopInterval);
+                            clipLoopInterval = null;
+                        }
+
+                        isLooping = true;
+
+                        // Start playing from clip start
                         video.currentTime = Math.max(0, start);
 
                         // Wait for seek to complete before starting playback
@@ -2246,11 +2277,37 @@ document.addEventListener('DOMContentLoaded', function() {
                                 });
                             }
                         }, 50);
+
+                        // Setup loop: when reaching end, restart from beginning
+                        clipLoopInterval = setInterval(() => {
+                            if (isLooping && video.currentTime >= end) {
+                                // Loop back to start
+                                video.currentTime = Math.max(0, start);
+
+                                // Wait for seek to complete before playing
+                                setTimeout(() => {
+                                    if (isLooping) {
+                                        const loopPlayPromise = video.play();
+                                        if (loopPlayPromise !== undefined) {
+                                            loopPlayPromise.catch(error => {
+                                                console.warn('Loop play was prevented:', error);
+                                            });
+                                        }
+                                    }
+                                }, 50);
+                            }
+                        }, 100);
                     }
                     return;
                 }
 
-                // Seek to clicked position in timeline
+                // Seek to clicked position in timeline (stops clip loop)
+                isLooping = false;
+                if (clipLoopInterval) {
+                    clearInterval(clipLoopInterval);
+                    clipLoopInterval = null;
+                }
+
                 const rect = this.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
                 const seekTime = percent * videoDuration;
@@ -2420,11 +2477,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save clip changes (stores original time without offset)
     async function saveClipChanges(clipId, newStart, newEnd) {
         try {
-            const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+            const response = await fetch(`/videos/<?php echo e($video->id); ?>/clips/${clipId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
@@ -2505,4 +2562,6 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\rugbyhub\resources\views/videos/show.blade.php ENDPATH**/ ?>

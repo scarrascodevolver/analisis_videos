@@ -283,13 +283,13 @@ function renderClipsList(clipsToShow = null) {
 }
 
 /**
- * Play a single clip in infinite loop until another clip is selected or ESC is pressed
+ * Play clip from start - video continues normally after clip ends
  */
 function playSingleClip(startTime, endTime, clipElement) {
     const video = getVideo();
     if (!video) return;
 
-    // Stop any previous single clip playback
+    // Stop any previous single clip playback handlers
     stopSingleClipMode();
 
     // Highlight this clip
@@ -298,37 +298,22 @@ function playSingleClip(startTime, endTime, clipElement) {
         clipElement.classList.add('playing');
     }
 
-    // Jump to start and play
+    // Jump to start and play - video continues normally (no loop, no pause)
     video.currentTime = startTime;
-    const playPromise = video.play();
 
-    // Handle play promise to avoid errors
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.warn('Play was prevented:', error);
-        });
-    }
+    // Small delay to ensure seek completes before playing
+    setTimeout(() => {
+        const playPromise = video.play();
 
-    // Setup handler to loop when reaching end
-    singleClipHandler = () => {
-        if (video.currentTime >= endTime) {
-            // Loop back to start instead of pausing
-            video.currentTime = startTime;
-
-            // Wait a bit for seek to complete, then play
-            setTimeout(() => {
-                const loopPlayPromise = video.play();
-                if (loopPlayPromise !== undefined) {
-                    loopPlayPromise.catch(error => {
-                        console.warn('Loop play was prevented:', error);
-                    });
-                }
-            }, 50);
+        // Handle play promise to avoid errors
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.warn('Play was prevented:', error);
+            });
         }
-    };
-    video.addEventListener('timeupdate', singleClipHandler);
+    }, 50);
 
-    showNotification(`Reproduciendo clip en loop... (ESC para cancelar)`, 'info');
+    showNotification(`Reproduciendo desde clip...`, 'info');
 }
 
 /**
