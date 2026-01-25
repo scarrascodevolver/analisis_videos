@@ -1158,19 +1158,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (e.target.closest('.sidebar-delete-clip-btn')) return;
 
                 const start = parseFloat(this.dataset.start);
-                const end = parseFloat(this.dataset.end);
                 const video = document.getElementById('rugbyVideo');
                 if (video) {
                     video.currentTime = start;
-                    video.play();
 
-                    // Auto-pause at end
-                    const checkEnd = setInterval(() => {
-                        if (video.currentTime >= end) {
-                            video.pause();
-                            clearInterval(checkEnd);
+                    // Small delay to ensure seek completes before playing
+                    setTimeout(() => {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                console.warn('Play was prevented:', error);
+                            });
                         }
-                    }, 100);
+                    }, 50);
                 }
             });
         });
