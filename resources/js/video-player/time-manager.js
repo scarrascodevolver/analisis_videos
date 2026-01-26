@@ -30,11 +30,11 @@ export function initTimeManager() {
         lastUpdateTime = currentTime;
 
         // Execute all registered callbacks
-        timeupdateCallbacks.forEach(callback => {
+        timeupdateCallbacks.forEach(({ callback, name }) => {
             try {
                 callback(currentTime, video);
             } catch (error) {
-                console.error('Error in timeupdate callback:', error);
+                console.error(`Error in timeupdate callback '${name}':`, error);
             }
         });
     };
