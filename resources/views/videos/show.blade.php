@@ -73,7 +73,7 @@
                                     <option value="2">2s</option>
                                     <option value="4" selected>4s</option>
                                     <option value="8">8s</option>
-                                    <option value="permanent">∞</option>
+                                    <option value="permanent">Fija</option>
                                 </select>
                             </div>
 
