@@ -479,6 +479,19 @@ $(document).ready(function() {
         var fileInput = $('#video_file')[0];
         var file = fileInput.files[0];
 
+        // Use multipart upload for files > 100MB
+        var multipartThreshold = 100 * 1024 * 1024; // 100MB
+
+        if (file.size > multipartThreshold) {
+            console.log('File size:', (file.size / 1024 / 1024).toFixed(2), 'MB - Using multipart upload');
+            uploadMultipart(file, formData);
+        } else {
+            console.log('File size:', (file.size / 1024 / 1024).toFixed(2), 'MB - Using single upload');
+            uploadSingle(file, formData);
+        }
+    }
+
+    function uploadSingle(file, formData) {
         $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida directa a la nube...');
 
         // Step 1: Get pre-signed URL from our server
@@ -503,6 +516,212 @@ $(document).ready(function() {
             error: function(xhr) {
                 console.error('Presigned URL error:', xhr);
                 showError('Error preparando la subida: ' + (xhr.responseJSON?.message || 'Error de conexión'));
+            }
+        });
+    }
+
+    function uploadMultipart(file, formData) {
+        var chunkSize = 50 * 1024 * 1024; // 50MB chunks
+        var totalParts = Math.ceil(file.size / chunkSize);
+
+        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida multipart (' + totalParts + ' partes)...');
+
+        // Step 1: Initiate multipart upload
+        $.ajax({
+            url: '{{ route("api.upload.multipart.initiate") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                filename: file.name,
+                content_type: file.type || 'video/mp4',
+                file_size: file.size,
+                parts_count: totalParts
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#uploadStatus').html('<i class="fas fa-cloud"></i> Iniciando subida en partes...');
+                    uploadPartsInParallel(file, formData, response.upload_id, response.s3_upload_id, chunkSize, totalParts);
+                } else {
+                    showError('Error iniciando multipart upload: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Multipart initiate error:', xhr);
+                showError('Error preparando multipart upload: ' + (xhr.responseJSON?.message || 'Error de conexión'));
+            }
+        });
+    }
+
+    function uploadPartsInParallel(file, formData, uploadId, s3UploadId, chunkSize, totalParts) {
+        var completedParts = [];
+        var uploadedBytes = 0;
+        var maxConcurrent = 4; // Upload 4 parts at a time
+        var currentPart = 1;
+        var hasError = false;
+
+        function uploadNextPart() {
+            if (hasError || currentPart > totalParts) {
+                return;
+            }
+
+            var partNumber = currentPart++;
+            var start = (partNumber - 1) * chunkSize;
+            var end = Math.min(start + chunkSize, file.size);
+            var chunk = file.slice(start, end);
+
+            // Get presigned URL for this part
+            $.ajax({
+                url: '{{ route("api.upload.multipart.part-urls") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    upload_id: uploadId,
+                    part_numbers: [partNumber]
+                },
+                success: function(response) {
+                    if (response.success) {
+                        uploadPart(chunk, partNumber, response.urls[partNumber]);
+                    } else {
+                        hasError = true;
+                        showError('Error obteniendo URL de parte ' + partNumber);
+                    }
+                },
+                error: function() {
+                    hasError = true;
+                    showError('Error preparando parte ' + partNumber);
+                }
+            });
+        }
+
+        function uploadPart(chunk, partNumber, presignedUrl) {
+            var xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    // Update progress (approximate based on completed parts + current upload)
+                    var totalUploaded = uploadedBytes + e.loaded;
+                    var percentComplete = Math.round((totalUploaded / file.size) * 100);
+                    $('#progressBar').css('width', percentComplete + '%');
+                    $('#progressText').text(percentComplete + '%');
+
+                    var loadedMB = (totalUploaded / (1024 * 1024)).toFixed(1);
+                    var totalMB = (file.size / (1024 * 1024)).toFixed(1);
+                    $('#uploadStatus').html('<i class="fas fa-cloud-upload-alt text-info"></i> Subiendo parte ' +
+                        completedParts.length + '/' + totalParts + ' (' + loadedMB + 'MB / ' + totalMB + 'MB)');
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    var etag = xhr.getResponseHeader('ETag');
+                    if (etag) {
+                        etag = etag.replace(/"/g, ''); // Remove quotes
+                    }
+
+                    completedParts.push({
+                        PartNumber: partNumber,
+                        ETag: etag
+                    });
+
+                    uploadedBytes += chunk.size;
+
+                    console.log('Part', partNumber, 'uploaded. Total:', completedParts.length, '/', totalParts);
+
+                    // Check if all parts are completed
+                    if (completedParts.length === totalParts) {
+                        $('#progressBar').css('background-color', '#ffc107');
+                        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Finalizando upload...');
+                        completeMultipartUpload(uploadId, completedParts, formData);
+                    } else {
+                        // Upload next part
+                        uploadNextPart();
+                    }
+                } else {
+                    hasError = true;
+                    console.error('Part', partNumber, 'upload failed:', xhr.status);
+                    showError('Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
+                }
+            });
+
+            xhr.addEventListener('error', function() {
+                hasError = true;
+                console.error('Part', partNumber, 'network error');
+                showError('Error de conexión subiendo parte ' + partNumber);
+            });
+
+            xhr.open('PUT', presignedUrl);
+            xhr.send(chunk);
+        }
+
+        // Start uploading first batch of parts
+        for (var i = 0; i < maxConcurrent && i < totalParts; i++) {
+            uploadNextPart();
+        }
+    }
+
+    function completeMultipartUpload(uploadId, parts, formData) {
+        // Sort parts by PartNumber
+        parts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+        var confirmData = {
+            _token: '{{ csrf_token() }}',
+            upload_id: uploadId,
+            parts: parts,
+            title: formData.get('title'),
+            description: formData.get('description'),
+            rival_team_name: formData.get('rival_team_name'),
+            category_id: formData.get('category_id'),
+            division: formData.get('division'),
+            rugby_situation_id: formData.get('rugby_situation_id'),
+            match_date: formData.get('match_date'),
+            visibility_type: formData.get('visibility_type'),
+            assignment_notes: formData.get('assignment_notes')
+        };
+
+        // Add XML content if present
+        if (xmlContent) {
+            confirmData['xml_content'] = xmlContent;
+        }
+
+        // Add assigned players if any
+        var assignedPlayers = formData.getAll('assigned_players[]');
+        if (assignedPlayers.length > 0) {
+            confirmData['assigned_players'] = assignedPlayers;
+        }
+
+        $.ajax({
+            url: '{{ route("api.upload.multipart.complete") }}',
+            method: 'POST',
+            data: confirmData,
+            success: function(response) {
+                if (response.success) {
+                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)');
+                    $('#progressText').text('¡Completado!');
+
+                    var successMsg = '<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong>';
+                    successMsg += '<br><small class="text-muted">El video se está optimizando en segundo plano.</small>';
+
+                    if (response.xml_import) {
+                        successMsg += '<br><small class="text-success"><i class="fas fa-file-code"></i> ';
+                        successMsg += response.xml_import.clips_created + ' clips importados';
+                        if (response.xml_import.categories_created > 0) {
+                            successMsg += ', ' + response.xml_import.categories_created + ' categorías creadas';
+                        }
+                        successMsg += '</small>';
+                    }
+
+                    $('#uploadStatus').html(successMsg);
+
+                    setTimeout(function() {
+                        window.location.href = response.redirect || '/videos';
+                    }, 2500);
+                } else {
+                    showError('Error finalizando video: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Complete multipart error:', xhr);
+                showError('Error finalizando upload: ' + (xhr.responseJSON?.message || 'Error de conexión'));
             }
         });
     }
