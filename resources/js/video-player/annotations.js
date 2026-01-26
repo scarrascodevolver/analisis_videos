@@ -1093,6 +1093,18 @@ export function loadExistingAnnotations() {
             if (response.success) {
                 savedAnnotations = response.annotations;
                 window.savedAnnotations = savedAnnotations;
+
+                // DEBUG: Log annotations to verify is_permanent values
+                if (savedAnnotations.length > 0) {
+                    console.log('🔍 DEBUG Annotations:', savedAnnotations.map(a => ({
+                        id: a.id,
+                        timestamp: a.timestamp,
+                        duration: a.duration_seconds,
+                        isPermanent: a.is_permanent,
+                        isPermanentType: typeof a.is_permanent
+                    })));
+                }
+
                 buildAnnotationIndex();
                 renderAnnotationsList();
 
@@ -1116,7 +1128,13 @@ function buildAnnotationIndex() {
     savedAnnotations.forEach(annotation => {
         const startTime = Math.floor(parseFloat(annotation.timestamp));
         const durationSeconds = parseInt(annotation.duration_seconds) || 4;
-        const isPermanent = annotation.is_permanent;
+
+        // Normalize is_permanent to boolean (handle both boolean and int from backend)
+        // Cast to boolean to handle: true/false, 1/0, "1"/"0", null/undefined
+        const isPermanent = Boolean(annotation.is_permanent === true || annotation.is_permanent === 1 || annotation.is_permanent === "1");
+
+        // DEBUG: Log indexing decision
+        console.log(`🏷️ Indexing annotation ${annotation.id}: isPermanent=${isPermanent} (raw: ${annotation.is_permanent}, type: ${typeof annotation.is_permanent})`);
 
         // Index annotation for each second it's visible
         if (isPermanent) {
@@ -1125,6 +1143,7 @@ function buildAnnotationIndex() {
                 annotationsBySecond.set('permanent', []);
             }
             annotationsBySecond.get('permanent').push(annotation);
+            console.log(`  → Added to 'permanent' index`);
         } else {
             // Timed annotations: index for each second in range
             const endTime = startTime + durationSeconds;
@@ -1134,6 +1153,7 @@ function buildAnnotationIndex() {
                 }
                 annotationsBySecond.get(t).push(annotation);
             }
+            console.log(`  → Added to seconds ${startTime}-${startTime + durationSeconds} (duration: ${durationSeconds}s)`);
         }
     });
 }
