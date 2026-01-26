@@ -6,6 +6,7 @@
  */
 
 import { getVideo, getConfig, formatTime } from './utils.js';
+import { VirtualScrollManager } from './virtual-scroll.js';
 
 let categories = [];
 let clips = [];
@@ -17,6 +18,8 @@ let currentClipIndex = 0;
 let clipEndHandler = null;
 let singleClipHandler = null; // Handler para reproducir un solo clip
 let pendingClip = null; // Clip en proceso de grabación (modo toggle)
+let virtualScrollManager = null; // Virtual scroll instance for large clip lists
+const VIRTUAL_SCROLL_THRESHOLD = 50; // Use virtual scroll when clips > 50
 
 /**
  * Initialize clip manager
@@ -207,8 +210,8 @@ function renderClipsList(clipsToShow = null) {
     const container = document.getElementById('sidebarClipsList') || document.getElementById('clipsList');
     if (!container) return;
 
-    // Ordenar por ID descendente (más reciente primero)
-    const displayClips = [...(clipsToShow || clips)].sort((a, b) => b.id - a.id);
+    // Ordenar por timestamp cronológico (orden de aparición en video)
+    const displayClips = [...(clipsToShow || clips)].sort((a, b) => a.start_time - b.start_time);
 
     if (displayClips.length === 0) {
         container.innerHTML = `
@@ -219,7 +222,56 @@ function renderClipsList(clipsToShow = null) {
         return;
     }
 
-    container.innerHTML = displayClips.map(clip => `
+    // Performance: Use virtual scrolling for large lists (>50 clips)
+    if (displayClips.length > VIRTUAL_SCROLL_THRESHOLD) {
+        console.log(`🚀 Using Virtual Scroll for ${displayClips.length} clips`);
+        renderClipsListVirtual(container, displayClips);
+    } else {
+        console.log(`📋 Using Standard Render for ${displayClips.length} clips`);
+        renderClipsListStandard(container, displayClips);
+    }
+}
+
+/**
+ * Render clips list using standard method (for small lists <50 clips)
+ */
+function renderClipsListStandard(container, displayClips) {
+    container.innerHTML = displayClips.map(clip => createClipItemHTML(clip)).join('');
+
+    // Performance optimization: Event delegation - single listener instead of N*3 listeners
+    setupClipListEventDelegation(container);
+}
+
+/**
+ * Render clips list using virtual scrolling (for large lists >50 clips)
+ */
+function renderClipsListVirtual(container, displayClips) {
+    // Destroy previous virtual scroll instance if exists
+    if (virtualScrollManager) {
+        virtualScrollManager.destroy();
+    }
+
+    // Create new virtual scroll manager
+    virtualScrollManager = new VirtualScrollManager(
+        container,
+        displayClips,
+        (clip, index) => createClipItemElement(clip),
+        60 // Item height in pixels (approximate)
+    );
+
+    // Setup event delegation on the container
+    // Virtual scroll creates a viewport, so we delegate on that
+    const viewport = container.querySelector('div');
+    if (viewport) {
+        setupClipListEventDelegation(viewport);
+    }
+}
+
+/**
+ * Create clip item HTML string (for standard render)
+ */
+function createClipItemHTML(clip) {
+    return `
         <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 clip-item"
              data-clip-id="${clip.id}"
              data-start="${clip.start_time}"
@@ -246,10 +298,44 @@ function renderClipsList(clipsToShow = null) {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+}
 
-    // Performance optimization: Event delegation - single listener instead of N*3 listeners
-    setupClipListEventDelegation(container);
+/**
+ * Create clip item DOM element (for virtual scroll render)
+ */
+function createClipItemElement(clip) {
+    const div = document.createElement('div');
+    div.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 clip-item';
+    div.dataset.clipId = clip.id;
+    div.dataset.start = clip.start_time;
+    div.dataset.end = clip.end_time;
+    div.style.cssText = 'cursor: pointer; background: #252525; border: none; border-bottom: 1px solid #333; color: #ccc;';
+    div.title = `Clic para reproducir clip (${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))})`;
+
+    div.innerHTML = `
+        <div class="d-flex align-items-center clip-play-area">
+            <i class="fas fa-play-circle mr-2" style="color: #00B7B5;"></i>
+            <span class="badge mr-2" style="background-color: ${clip.category?.color || '#6c757d'}; color: white;">
+                ${clip.category?.name || 'Sin categoría'}
+            </span>
+            <span class="clip-time" style="color: #00B7B5;">
+                ${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))}
+            </span>
+            ${clip.title ? `<span class="ml-2 small" style="color: #888;">${clip.title}</span>` : ''}
+        </div>
+        <div class="clip-actions">
+            ${clip.is_highlight ? '<i class="fas fa-star text-warning mr-2" title="Destacado"></i>' : ''}
+            <button class="btn btn-sm btn-outline-info export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}" title="Exportar GIF">
+                <i class="fas fa-file-image"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-clip-btn" data-clip-id="${clip.id}" title="Eliminar">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+
+    return div;
 }
 
 /**

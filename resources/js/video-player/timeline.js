@@ -1,6 +1,11 @@
 /**
  * Video Player - Timeline Module
  * Handles the comment timeline with markers and progress bar
+ *
+ * Performance optimizations:
+ * - Marker clustering to prevent overlap on dense timelines
+ * - DocumentFragment for efficient batch DOM insertion
+ * - Event delegation for all marker clicks (no individual listeners)
  */
 
 import { formatTime, getVideo, getCommentsData } from './utils.js';
@@ -115,19 +120,27 @@ export function createTimelineMarkers() {
     progressContainer.appendChild(progressBar);
     progressContainer.appendChild(progressIndicator);
 
-    // Add comment markers
-    commentsData.forEach(comment => {
-        const position = (comment.timestamp_seconds / videoDuration) * 100;
+    // Add comment markers (optimized with DocumentFragment for performance)
+    const fragment = document.createDocumentFragment();
+    const markerMinDistance = 1; // Minimum 1% distance to prevent overlap
+
+    // Group nearby markers to prevent clutter (cluster markers within 1% of timeline)
+    const clusteredMarkers = clusterMarkers(commentsData, videoDuration, markerMinDistance);
+
+    clusteredMarkers.forEach(cluster => {
+        const position = (cluster.timestamp / videoDuration) * 100;
+        const isCluster = cluster.count > 1;
 
         const marker = document.createElement('div');
         marker.className = 'comment-marker';
-        marker.setAttribute('data-timestamp', comment.timestamp_seconds);
-        marker.setAttribute('data-comment', comment.comment);
+        marker.setAttribute('data-timestamp', cluster.timestamp);
+        marker.setAttribute('data-comment', cluster.comment);
+        marker.setAttribute('data-cluster-count', cluster.count);
         marker.style.cssText = `
             position: absolute;
             top: -5px;
             left: ${position}%;
-            width: 8px;
+            width: ${isCluster ? '12px' : '8px'};
             height: 50px;
             background: var(--color-accent, #4B9DA9);
             border: 2px solid #fff;
@@ -136,14 +149,45 @@ export function createTimelineMarkers() {
             transform: translateX(-50%);
             z-index: 10;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            ${isCluster ? 'opacity: 0.9;' : ''}
         `;
 
         // Tooltip on hover
-        marker.title = `${formatTime(comment.timestamp_seconds)}: ${comment.comment.substring(0, 50)}...`;
+        if (isCluster) {
+            marker.title = `${formatTime(cluster.timestamp)}: ${cluster.count} comentarios`;
+        } else {
+            marker.title = `${formatTime(cluster.timestamp)}: ${cluster.comment.substring(0, 50)}...`;
+        }
+
+        // Badge for clustered markers
+        if (isCluster && cluster.count > 2) {
+            const badge = document.createElement('span');
+            badge.style.cssText = `
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #dc3545;
+                color: white;
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                font-size: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                pointer-events: none;
+            `;
+            badge.textContent = cluster.count > 9 ? '9+' : cluster.count;
+            marker.appendChild(badge);
+        }
 
         // Note: Click handler moved to event delegation below
-        progressContainer.appendChild(marker);
+        fragment.appendChild(marker);
     });
+
+    // Batch append all markers at once (more efficient than individual appends)
+    progressContainer.appendChild(fragment);
 
     // Event delegation: Single click handler for all markers and timeline
     progressContainer.addEventListener('click', function (e) {
@@ -193,4 +237,66 @@ export function updateProgressIndicator() {
             progressBar.style.width = percentage + '%';
         }
     }
+}
+
+/**
+ * Cluster nearby markers to prevent overlap (Performance optimization)
+ *
+ * Groups comments that are within minDistance% of each other on the timeline.
+ * For example, with 1% minDistance on a 100-second video, comments within
+ * 1 second of each other will be clustered into a single marker.
+ *
+ * @param {Array} markers - Array of marker objects with timestamp_seconds
+ * @param {number} videoDuration - Total video duration in seconds
+ * @param {number} minDistance - Minimum distance in percentage (0-100)
+ * @returns {Array} Array of clustered markers
+ */
+function clusterMarkers(markers, videoDuration, minDistance = 1) {
+    if (markers.length === 0) return [];
+
+    // Sort by timestamp
+    const sorted = [...markers].sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
+
+    const clusters = [];
+    let currentCluster = {
+        timestamp: sorted[0].timestamp_seconds,
+        comment: sorted[0].comment,
+        count: 1,
+        comments: [sorted[0]]
+    };
+
+    for (let i = 1; i < sorted.length; i++) {
+        const marker = sorted[i];
+        const prevTimestamp = currentCluster.timestamp;
+        const currentTimestamp = marker.timestamp_seconds;
+
+        // Calculate distance as percentage of timeline
+        const distance = ((currentTimestamp - prevTimestamp) / videoDuration) * 100;
+
+        if (distance < minDistance) {
+            // Add to current cluster
+            currentCluster.count++;
+            currentCluster.comments.push(marker);
+            // Use first comment's text for display
+            if (currentCluster.count === 2) {
+                currentCluster.comment = `${currentCluster.comments[0].comment.substring(0, 30)}...`;
+            }
+        } else {
+            // Start new cluster
+            clusters.push(currentCluster);
+            currentCluster = {
+                timestamp: marker.timestamp_seconds,
+                comment: marker.comment,
+                count: 1,
+                comments: [marker]
+            };
+        }
+    }
+
+    // Push last cluster
+    clusters.push(currentCluster);
+
+    console.log(`📍 Timeline: Clustered ${markers.length} markers into ${clusters.length} groups`);
+
+    return clusters;
 }
