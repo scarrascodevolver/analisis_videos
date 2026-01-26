@@ -42,7 +42,9 @@
       "Bash(node --check:*)",
       "WebFetch(domain:github.com)",
       "Bash(/mnt/c/xampp/php/php artisan route:list --path=xml)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

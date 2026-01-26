@@ -1,6 +1,8 @@
 /**
  * Video Player - Comments Module
  * Handles comment submissions, replies, and deletions via AJAX
+ *
+ * Performance optimization: Event handler cleanup + namespaces to prevent duplicates
  */
 
 import { formatTime, getVideo, getConfig } from './utils.js';
