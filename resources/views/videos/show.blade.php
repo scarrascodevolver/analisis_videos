@@ -691,7 +691,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                    <div class="card-body p-0" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                         <div id="sidebarClipsList" style="color: #ccc;">
                             <div class="text-center py-4" style="color: #666;">
                                 <i class="fas fa-film fa-2x mb-2"></i>
