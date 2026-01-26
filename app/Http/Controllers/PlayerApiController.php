@@ -47,10 +47,10 @@ class PlayerApiController extends Controller
                 'name' => $player->name,
                 'email' => $player->email,
                 'profile' => [
-                    'position' => $player->profile->position ?? null,
-                    'secondary_position' => $player->profile->secondary_position ?? null,
-                    'avatar' => $player->profile->avatar ?? null,
-                    'category' => $player->profile->category ? [
+                    'position' => $player->profile?->position ?? null,
+                    'secondary_position' => $player->profile?->secondary_position ?? null,
+                    'avatar' => $player->profile?->avatar ?? null,
+                    'category' => $player->profile?->category ? [
                         'id' => $player->profile->category->id,
                         'name' => $player->profile->category->name
                     ] : null
@@ -121,10 +121,10 @@ class PlayerApiController extends Controller
                 'name' => $player->name,
                 'email' => $player->email,
                 'profile' => [
-                    'position' => $player->profile->position ?? null,
-                    'secondary_position' => $player->profile->secondary_position ?? null,
-                    'avatar' => $player->profile->avatar ?? null,
-                    'category' => $player->profile->category ? [
+                    'position' => $player->profile?->position ?? null,
+                    'secondary_position' => $player->profile?->secondary_position ?? null,
+                    'avatar' => $player->profile?->avatar ?? null,
+                    'category' => $player->profile?->category ? [
                         'id' => $player->profile->category->id,
                         'name' => $player->profile->category->name
                     ] : null
