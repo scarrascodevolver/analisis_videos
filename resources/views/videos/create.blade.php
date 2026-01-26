@@ -614,34 +614,45 @@ $(document).ready(function() {
             xhr.addEventListener('load', function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     var etag = xhr.getResponseHeader('ETag');
+
+                    // Store part info (ETag might be null if CORS not configured)
                     if (etag) {
                         etag = etag.replace(/"/g, ''); // Remove quotes
+                        console.log('Part', partNumber, 'uploaded with ETag:', etag);
+                    } else {
+                        console.warn('Part', partNumber, 'uploaded but ETag not available (will be fetched by backend)');
                     }
 
                     completedParts.push({
                         PartNumber: partNumber,
-                        ETag: etag
+                        ETag: etag || null
                     });
 
-                    uploadedBytes += chunk.size;
+                    checkCompletion();
 
-                    console.log('Part', partNumber, 'uploaded. Total:', completedParts.length, '/', totalParts);
-
-                    // Check if all parts are completed
-                    if (completedParts.length === totalParts) {
-                        $('#progressBar').css('background-color', '#ffc107');
-                        $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Finalizando upload...');
-                        completeMultipartUpload(uploadId, completedParts, formData);
-                    } else {
-                        // Upload next part
-                        uploadNextPart();
-                    }
+                    // This code is reached when ETag is available from header
                 } else {
                     hasError = true;
                     console.error('Part', partNumber, 'upload failed:', xhr.status);
                     showError('Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
                 }
             });
+
+            function checkCompletion() {
+                uploadedBytes += chunk.size;
+
+                console.log('Part', partNumber, 'uploaded. Total:', completedParts.length, '/', totalParts);
+
+                // Check if all parts are completed
+                if (completedParts.length === totalParts) {
+                    $('#progressBar').css('background-color', '#ffc107');
+                    $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Finalizando upload...');
+                    completeMultipartUpload(uploadId, completedParts, formData);
+                } else {
+                    // Upload next part
+                    uploadNextPart();
+                }
+            }
 
             xhr.addEventListener('error', function() {
                 hasError = true;
@@ -663,10 +674,16 @@ $(document).ready(function() {
         // Sort parts by PartNumber
         parts.sort((a, b) => a.PartNumber - b.PartNumber);
 
+        // Filter out parts with null ETags (backend will fetch them)
+        var partsWithETags = parts.filter(p => p.ETag !== null);
+
+        console.log('Completing upload with', partsWithETags.length, 'parts with ETags,',
+                    (parts.length - partsWithETags.length), 'will be fetched by backend');
+
         var confirmData = {
             _token: '{{ csrf_token() }}',
             upload_id: uploadId,
-            parts: parts,
+            parts: partsWithETags.length > 0 ? partsWithETags : [],
             title: formData.get('title'),
             description: formData.get('description'),
             rival_team_name: formData.get('rival_team_name'),

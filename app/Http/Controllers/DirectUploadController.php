@@ -443,9 +443,9 @@ class DirectUploadController extends Controller
     {
         $request->validate([
             'upload_id' => 'required|string',
-            'parts' => 'required|array',
-            'parts.*.PartNumber' => 'required|integer',
-            'parts.*.ETag' => 'required|string',
+            'parts' => 'nullable|array',
+            'parts.*.PartNumber' => 'integer',
+            'parts.*.ETag' => 'string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'rival_team_name' => 'nullable|string|max:255',
@@ -487,6 +487,34 @@ class DirectUploadController extends Controller
                     'secret' => config('filesystems.disks.spaces.secret'),
                 ],
             ]);
+
+            // If parts not provided or incomplete (CORS issue), fetch from S3
+            $parts = $request->parts ?? [];
+
+            if (empty($parts) || !isset($parts[0]['ETag'])) {
+                Log::info("ETags not provided by client, fetching from Spaces", [
+                    'upload_id' => $request->upload_id,
+                ]);
+
+                // List all uploaded parts to get their ETags
+                $listResult = $client->listParts([
+                    'Bucket' => config('filesystems.disks.spaces.bucket'),
+                    'Key' => $uploadInfo['key'],
+                    'UploadId' => $uploadInfo['s3_upload_id'],
+                ]);
+
+                $parts = [];
+                foreach ($listResult['Parts'] as $part) {
+                    $parts[] = [
+                        'PartNumber' => $part['PartNumber'],
+                        'ETag' => $part['ETag'],
+                    ];
+                }
+
+                Log::info("Retrieved {count} parts from Spaces", [
+                    'count' => count($parts),
+                ]);
+            }
 
             // Complete the multipart upload
             $result = $client->completeMultipartUpload([
