@@ -76,14 +76,14 @@ class DirectUploadController extends Controller
                 'ACL' => 'public-read',
             ]);
 
-            // URL valid for 2 hours (enough for large uploads)
-            $presignedRequest = $client->createPresignedRequest($cmd, '+2 hours');
+            // URL valid for 12 hours (enough for very large uploads)
+            $presignedRequest = $client->createPresignedRequest($cmd, '+12 hours');
             $presignedUrl = (string) $presignedRequest->getUri();
 
             // Generate a unique upload ID to track this upload
             $uploadId = Str::uuid()->toString();
 
-            // Store upload info in cache for later confirmation
+            // Store upload info in cache for later confirmation (12 hours for large uploads)
             cache()->put("direct_upload_{$uploadId}", [
                 'key' => $key,
                 'filename' => $filename,
@@ -93,7 +93,13 @@ class DirectUploadController extends Controller
                 'org_slug' => $orgSlug,
                 'org_name' => $currentOrg ? $currentOrg->name : 'Mi Equipo',
                 'user_id' => auth()->id(),
-            ], now()->addHours(3));
+            ], now()->addHours(12));
+
+            Log::info("Upload ID created: {$uploadId}", [
+                'filename' => $filename,
+                'size_mb' => round($request->file_size / 1024 / 1024, 2),
+                'user_id' => auth()->id(),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -138,6 +144,10 @@ class DirectUploadController extends Controller
         $uploadInfo = cache()->get("direct_upload_{$request->upload_id}");
 
         if (!$uploadInfo) {
+            Log::warning("Upload ID not found in cache: {$request->upload_id}", [
+                'user_id' => auth()->id(),
+                'ip' => $request->ip(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Upload ID no válido o expirado',
