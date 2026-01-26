@@ -5,7 +5,7 @@
 
 import { formatTime, getVideo, getConfig } from './utils.js';
 import { createTimelineMarkers } from './timeline.js';
-import { setNotificationsEnabled, hideAllNotifications } from './notifications.js';
+import { setNotificationsEnabled, hideAllNotifications, rebuildCommentIndex } from './notifications.js';
 
 // Reference to comments data (will be updated dynamically)
 let commentsData = [];
@@ -17,12 +17,26 @@ let commentsData = [];
 export function initComments(initialComments = []) {
     commentsData = initialComments;
 
+    // Remove existing handlers to prevent duplicates (performance optimization)
+    cleanupCommentHandlers();
+
     initTimestampButtons();
     initToggleComments();
     initAddCommentButton();
     initDeleteComment();
     initReplySystem();
     initCommentForm();
+}
+
+/**
+ * Cleanup existing event handlers to prevent duplicates
+ */
+function cleanupCommentHandlers() {
+    // Remove all comment-related handlers using namespaces
+    $(document).off('.comments');
+    $('#toggleCommentsBtn').off('.comments');
+    $('#addCommentBtn').off('.comments');
+    $('#commentForm').off('.comments');
 }
 
 /**
@@ -47,7 +61,8 @@ export function updateCommentsData(newComments) {
 function initTimestampButtons() {
     const video = getVideo();
 
-    $(document).on('click', '.timestamp-btn', function () {
+    // Use namespace to prevent duplicate handlers
+    $(document).on('click.comments', '.timestamp-btn', function () {
         const timestamp = $(this).data('timestamp');
         if (video) {
             video.currentTime = timestamp;
@@ -66,7 +81,8 @@ function initToggleComments() {
     // Track state for notifications (for players who don't have commentsSection)
     let notificationsVisible = true;
 
-    $('#toggleCommentsBtn').on('click', function () {
+    // Use namespace to prevent duplicate handlers
+    $('#toggleCommentsBtn').on('click.comments', function () {
         const commentsSection = $('#commentsSection');
         const videoSection = $('#videoSection');
         const toggleBtn = $('#toggleCommentsBtn');
@@ -123,7 +139,8 @@ function initToggleComments() {
 function initAddCommentButton() {
     const video = getVideo();
 
-    $('#addCommentBtn').on('click', function () {
+    // Use namespace to prevent duplicate handlers
+    $('#addCommentBtn').on('click.comments', function () {
         const currentTime = video ? video.currentTime : 0;
 
         // Show comments section if hidden
@@ -174,7 +191,8 @@ function initAddCommentButton() {
 function initDeleteComment() {
     const video = getVideo();
 
-    $(document).on('click', '.delete-comment-btn', function () {
+    // Use namespace to prevent duplicate handlers
+    $(document).on('click.comments', '.delete-comment-btn', function () {
         const commentId = $(this).data('comment-id');
         const $commentElement = $(this).closest('.comment-item, .reply');
 
@@ -203,6 +221,9 @@ function initDeleteComment() {
                     if (commentIndex !== -1) {
                         commentsData.splice(commentIndex, 1);
                     }
+
+                    // Rebuild comment index for performance
+                    rebuildCommentIndex();
 
                     // Remove visible notification if exists
                     const notification = document.getElementById(`notification-${commentId}`);
@@ -246,8 +267,8 @@ function initDeleteComment() {
 function initReplySystem() {
     const config = getConfig();
 
-    // Show/hide reply form
-    $(document).on('click', '.reply-btn', function () {
+    // Show/hide reply form - use namespace to prevent duplicate handlers
+    $(document).on('click.comments', '.reply-btn', function () {
         const commentId = $(this).data('comment-id');
         const replyForm = $(`#replyForm${commentId}`);
 
@@ -267,8 +288,8 @@ function initReplySystem() {
         });
     });
 
-    // Submit reply via AJAX
-    $(document).on('submit', '.reply-form-submit', function (e) {
+    // Submit reply via AJAX - use namespace to prevent duplicate handlers
+    $(document).on('submit.comments', '.reply-form-submit', function (e) {
         e.preventDefault();
 
         const form = $(this);
@@ -410,7 +431,8 @@ function initCommentForm() {
     const config = getConfig();
     const video = getVideo();
 
-    $('#commentForm').on('submit', function (e) {
+    // Use namespace to prevent duplicate handlers
+    $('#commentForm').on('submit.comments', function (e) {
         e.preventDefault();
 
         const form = $(this);
@@ -545,6 +567,9 @@ function initCommentForm() {
                         priority: priority,
                         user: { name: userName }
                     });
+
+                    // Rebuild comment index for performance
+                    rebuildCommentIndex();
 
                     // Recreate timeline with new marker
                     if (video && video.duration && !isNaN(video.duration)) {

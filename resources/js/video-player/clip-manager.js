@@ -248,38 +248,56 @@ function renderClipsList(clipsToShow = null) {
         </div>
     `).join('');
 
-    // Add click handlers for playing clip (LongoMatch style)
-    container.querySelectorAll('.clip-item').forEach(el => {
-        el.addEventListener('click', (e) => {
-            // Ignore if clicking delete button
-            if (e.target.closest('.delete-clip-btn')) return;
+    // Performance optimization: Event delegation - single listener instead of N*3 listeners
+    setupClipListEventDelegation(container);
+}
 
-            const startTime = parseFloat(el.dataset.start);
-            const endTime = parseFloat(el.dataset.end);
-            playSingleClip(startTime, endTime, el);
-        });
-    });
+/**
+ * Setup event delegation for clip list (Performance optimization)
+ * Reduces N*3 event listeners to just 1 listener for the entire container
+ */
+function setupClipListEventDelegation(container) {
+    // Remove previous delegated listener if exists
+    container.removeEventListener('click', handleClipListClick);
 
-    // Add click handlers for delete
-    container.querySelectorAll('.delete-clip-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (confirm('¿Eliminar este clip?')) {
-                await deleteClip(parseInt(btn.dataset.clipId));
-            }
-        });
-    });
+    // Single delegated click handler for all clip interactions
+    container.addEventListener('click', handleClipListClick);
+}
 
-    // Add click handlers for GIF export
-    container.querySelectorAll('.export-gif-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const startTime = parseFloat(btn.dataset.start);
-            const endTime = parseFloat(btn.dataset.end);
-            const title = btn.dataset.title;
-            await exportClipAsGif(startTime, endTime, title, btn);
-        });
-    });
+/**
+ * Handle all clip list clicks via event delegation
+ */
+function handleClipListClick(e) {
+    // Handle delete button clicks
+    const deleteBtn = e.target.closest('.delete-clip-btn');
+    if (deleteBtn) {
+        e.stopPropagation();
+        const clipId = parseInt(deleteBtn.dataset.clipId);
+        if (confirm('¿Eliminar este clip?')) {
+            deleteClip(clipId);
+        }
+        return;
+    }
+
+    // Handle GIF export button clicks
+    const exportBtn = e.target.closest('.export-gif-btn');
+    if (exportBtn) {
+        e.stopPropagation();
+        const startTime = parseFloat(exportBtn.dataset.start);
+        const endTime = parseFloat(exportBtn.dataset.end);
+        const title = exportBtn.dataset.title;
+        exportClipAsGif(startTime, endTime, title, exportBtn);
+        return;
+    }
+
+    // Handle clip item clicks (play clip)
+    const clipItem = e.target.closest('.clip-item');
+    if (clipItem) {
+        const startTime = parseFloat(clipItem.dataset.start);
+        const endTime = parseFloat(clipItem.dataset.end);
+        playSingleClip(startTime, endTime, clipItem);
+        return;
+    }
 }
 
 /**

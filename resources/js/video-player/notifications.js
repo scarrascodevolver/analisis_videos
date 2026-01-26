@@ -8,6 +8,8 @@ import { formatTime, getVideo, getCommentsData, setsAreEqual } from './utils.js'
 let lastCheckedTime = -1;
 let activeCommentIds = new Set();
 let notificationsEnabled = true; // Flag para habilitar/deshabilitar notificaciones
+let notificationTimeouts = new Map(); // Track auto-hide timeouts to prevent accumulation
+let commentsBySecond = new Map(); // Performance: Index comments by second for O(1) lookup
 
 /**
  * Initialize notification system
@@ -16,6 +18,9 @@ let notificationsEnabled = true; // Flag para habilitar/deshabilitar notificacio
 export function initNotifications() {
     const video = getVideo();
     if (!video) return;
+
+    // Build comment index for performance
+    buildCommentIndex();
 
     // Keep seeked listener for immediate notifications after seeking
     video.addEventListener('seeked', function () {
@@ -27,11 +32,37 @@ export function initNotifications() {
 }
 
 /**
+ * Build timestamp index for fast comment lookup (Performance optimization)
+ */
+function buildCommentIndex() {
+    commentsBySecond.clear();
+    const commentsData = getCommentsData();
+
+    commentsData.forEach(comment => {
+        const timestamp = Math.floor(comment.timestamp_seconds);
+
+        // Index comment for its timestamp +/- 1 second (tolerance)
+        for (let t = timestamp - 1; t <= timestamp + 1; t++) {
+            if (!commentsBySecond.has(t)) {
+                commentsBySecond.set(t, []);
+            }
+            commentsBySecond.get(t).push(comment);
+        }
+    });
+}
+
+/**
+ * Rebuild comment index (call when comments are added/removed)
+ */
+export function rebuildCommentIndex() {
+    buildCommentIndex();
+}
+
+/**
  * Check and show comment notifications at current time
  */
 export function checkAndShowCommentNotifications() {
     const video = getVideo();
-    const commentsData = getCommentsData();
 
     if (!video || !notificationsEnabled) return;
 
@@ -41,10 +72,8 @@ export function checkAndShowCommentNotifications() {
     if (currentTime === lastCheckedTime) return;
     lastCheckedTime = currentTime;
 
-    // Find comments at current time (exact match or +/-1 second)
-    const currentComments = commentsData.filter(comment =>
-        Math.abs(comment.timestamp_seconds - currentTime) <= 1
-    );
+    // Performance optimization: Use indexed lookup instead of filter() - O(1) vs O(n)
+    const currentComments = commentsBySecond.get(currentTime) || [];
 
     // Get IDs of comments that should be visible now
     const currentCommentIds = new Set(currentComments.map(c => c.id));
@@ -185,23 +214,32 @@ function showCommentNotification(comment) {
 
     notificationArea.appendChild(notification);
 
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
+    // Auto-hide after 5 seconds - store timeout reference to prevent accumulation
+    const autoHideTimeout = setTimeout(() => {
         if (notification.parentNode) {
             notification.style.opacity = '0';
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
+                // Clean up timeout reference
+                notificationTimeouts.delete(comment.id);
             }, 300);
         }
     }, 5000);
+
+    // Store timeout for cleanup
+    notificationTimeouts.set(comment.id, autoHideTimeout);
 }
 
 /**
  * Hide all notifications
  */
 export function hideAllNotifications() {
+    // Clear all auto-hide timeouts to prevent accumulation
+    notificationTimeouts.forEach(timeout => clearTimeout(timeout));
+    notificationTimeouts.clear();
+
     const notificationArea = document.getElementById('commentNotifications');
     if (!notificationArea) return;
 
@@ -216,6 +254,12 @@ export function hideAllNotifications() {
  * @param {number} commentId
  */
 export function closeNotification(commentId) {
+    // Clear auto-hide timeout to prevent accumulation
+    if (notificationTimeouts.has(commentId)) {
+        clearTimeout(notificationTimeouts.get(commentId));
+        notificationTimeouts.delete(commentId);
+    }
+
     const notification = document.getElementById(`notification-${commentId}`);
     if (notification && notification.parentNode) {
         notification.style.opacity = '0';

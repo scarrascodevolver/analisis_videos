@@ -16,6 +16,7 @@ let savedAnnotations = [];
 let currentDisplayedAnnotations = [];
 let hasTemporaryDrawing = false;
 let startX, startY;
+let annotationsBySecond = new Map(); // Performance: Index annotations by second for O(1) lookup
 
 // Undo/Redo state
 let undoStack = [];
@@ -1092,6 +1093,7 @@ export function loadExistingAnnotations() {
             if (response.success) {
                 savedAnnotations = response.annotations;
                 window.savedAnnotations = savedAnnotations;
+                buildAnnotationIndex();
                 renderAnnotationsList();
 
                 if (fabricCanvas) {
@@ -1101,6 +1103,37 @@ export function loadExistingAnnotations() {
         },
         error: function (xhr) {
             console.error('Error loading annotations:', xhr);
+        }
+    });
+}
+
+/**
+ * Build timestamp index for fast annotation lookup (Performance optimization)
+ */
+function buildAnnotationIndex() {
+    annotationsBySecond.clear();
+
+    savedAnnotations.forEach(annotation => {
+        const startTime = Math.floor(parseFloat(annotation.timestamp));
+        const durationSeconds = parseInt(annotation.duration_seconds) || 4;
+        const isPermanent = annotation.is_permanent;
+
+        // Index annotation for each second it's visible
+        if (isPermanent) {
+            // Permanent annotations: add to special key
+            if (!annotationsBySecond.has('permanent')) {
+                annotationsBySecond.set('permanent', []);
+            }
+            annotationsBySecond.get('permanent').push(annotation);
+        } else {
+            // Timed annotations: index for each second in range
+            const endTime = startTime + durationSeconds;
+            for (let t = startTime; t <= endTime; t++) {
+                if (!annotationsBySecond.has(t)) {
+                    annotationsBySecond.set(t, []);
+                }
+                annotationsBySecond.get(t).push(annotation);
+            }
         }
     });
 }
@@ -1198,6 +1231,8 @@ function deleteAnnotation(annotationId) {
                     window.savedAnnotations = savedAnnotations;
                 }
 
+                // Rebuild index after deletion
+                buildAnnotationIndex();
                 renderAnnotationsList();
 
                 if (typeof toastr !== 'undefined') {
@@ -1243,17 +1278,32 @@ export function checkAndShowAnnotations() {
     if (!video) return;
 
     const currentTime = video.currentTime;
+    const currentSecond = Math.floor(currentTime);
 
-    const activeAnnotations = savedAnnotations.filter(annotation => {
-        const startTime = parseFloat(annotation.timestamp);
-        const durationSeconds = parseInt(annotation.duration_seconds) || 4;
-        const endTime = annotation.is_permanent ? Infinity : startTime + durationSeconds;
+    // Performance optimization: Use indexed lookup instead of filter() - O(1) vs O(n)
+    const activeAnnotations = [];
 
-        const TOLERANCE = 0.15;
-        const isActive = currentTime >= (startTime - TOLERANCE) && currentTime <= endTime;
+    // Get permanent annotations
+    const permanentAnnotations = annotationsBySecond.get('permanent') || [];
+    activeAnnotations.push(...permanentAnnotations);
 
-        return isActive;
-    });
+    // Get annotations for current second (with tolerance for nearby seconds)
+    for (let t = currentSecond - 1; t <= currentSecond + 1; t++) {
+        const annotations = annotationsBySecond.get(t) || [];
+        annotations.forEach(annotation => {
+            // Avoid duplicates and verify exact timing with tolerance
+            if (!activeAnnotations.includes(annotation)) {
+                const startTime = parseFloat(annotation.timestamp);
+                const durationSeconds = parseInt(annotation.duration_seconds) || 4;
+                const endTime = startTime + durationSeconds;
+                const TOLERANCE = 0.15;
+
+                if (currentTime >= (startTime - TOLERANCE) && currentTime <= endTime) {
+                    activeAnnotations.push(annotation);
+                }
+            }
+        });
+    }
 
     const activeIds = activeAnnotations.map(a => a.id).sort().join(',');
     const displayedIds = currentDisplayedAnnotations.map(a => a.id).sort().join(',');
