@@ -235,28 +235,56 @@ class CompressVideoJob implements ShouldQueue
     }
 
     /**
-     * Compress video using FFmpeg.
+     * Compress video using FFmpeg with adaptive preset based on file size.
      */
     protected function compressVideo(string $inputPath, string $outputPath): void
     {
-        // FFmpeg command optimized for rugby videos
+        // Get file size in MB
+        $fileSizeMB = filesize($inputPath) / 1024 / 1024;
+
+        // Adaptive preset and CRF based on file size
+        // Smaller files: better quality, slower preset
+        // Larger files: good quality, faster preset
+        if ($fileSizeMB < 500) {
+            $preset = 'medium';
+            $crf = 23;
+            $reason = 'Small file (<500MB): using best quality preset';
+        } elseif ($fileSizeMB < 2000) {
+            $preset = 'fast';
+            $crf = 23;
+            $reason = 'Medium file (500MB-2GB): using balanced preset';
+        } else {
+            $preset = 'veryfast';
+            $crf = 22; // Lower CRF for large files to maintain quality
+            $reason = 'Large file (>2GB): using speed-optimized preset with enhanced quality (CRF 22)';
+        }
+
+        Log::info("CompressVideoJob: File size: {$fileSizeMB} MB. {$reason}");
+
+        // FFmpeg command optimized for rugby videos with adaptive settings
         $command = sprintf(
-            'ffmpeg -i %s -c:v libx264 -preset medium -crf 23 ' .
+            'ffmpeg -i %s -c:v libx264 -preset %s -crf %d ' .
             '-vf "scale=1920:1080:force_original_aspect_ratio=decrease" ' .
             '-c:a aac -b:a 128k -movflags +faststart -threads 0 -y %s 2>&1',
             escapeshellarg($inputPath),
+            $preset,
+            $crf,
             escapeshellarg($outputPath)
         );
 
-        Log::info("CompressVideoJob: Executing FFmpeg command");
+        Log::info("CompressVideoJob: Executing FFmpeg with preset '{$preset}', CRF {$crf}");
+
+        $startTime = microtime(true);
 
         $output = [];
         $returnVar = 0;
         exec($command, $output, $returnVar);
 
+        $duration = round(microtime(true) - $startTime, 2);
+
         if ($returnVar !== 0) {
             $errorOutput = implode("\n", $output);
-            Log::error("CompressVideoJob: FFmpeg failed with code {$returnVar}: {$errorOutput}");
+            Log::error("CompressVideoJob: FFmpeg failed with code {$returnVar} after {$duration}s: {$errorOutput}");
             throw new Exception("FFmpeg compression failed: {$errorOutput}");
         }
 
@@ -264,7 +292,8 @@ class CompressVideoJob implements ShouldQueue
             throw new Exception("FFmpeg did not produce output file");
         }
 
-        Log::info("CompressVideoJob: FFmpeg completed successfully");
+        $outputSizeMB = round(filesize($outputPath) / 1024 / 1024, 2);
+        Log::info("CompressVideoJob: FFmpeg completed in {$duration}s. Output: {$outputSizeMB}MB (preset: {$preset}, CRF: {$crf})");
     }
 
     /**
