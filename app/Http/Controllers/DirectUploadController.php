@@ -522,14 +522,14 @@ class DirectUploadController extends Controller
                 'Key' => $uploadInfo['key'],
                 'UploadId' => $uploadInfo['s3_upload_id'],
                 'MultipartUpload' => [
-                    'Parts' => $request->parts,
+                    'Parts' => $parts,
                 ],
             ]);
 
             Log::info("Multipart upload completed on Spaces", [
                 'upload_id' => $request->upload_id,
                 'key' => $uploadInfo['key'],
-                'parts_count' => count($request->parts),
+                'parts_count' => count($parts),
             ]);
 
             // Ensure ACL is public-read
