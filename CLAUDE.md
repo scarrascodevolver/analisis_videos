@@ -1,6 +1,6 @@
 # CLAUDE.md - RugbyHub (Sistema Multi-Tenant)
 
-## Ultima actualizacion: 2026-01-23
+## Ultima actualizacion: 2026-01-27
 
 ---
 
@@ -28,6 +28,56 @@ El sistema evolucion de "Los Troncos" a **RugbyHub** - plataforma multi-tenant p
 - UI actualizada: colores verde rugby (#00B7B5 accent)
 - Importacion XML de LongoMatch para clips de video
 - Editor visual de timeline (drag & drop para ajustar clips)
+- **Compresion adaptativa de videos** (Enero 2026)
+
+---
+
+## SISTEMA DE COMPRESION DE VIDEOS
+
+### Compresion Adaptativa (Enero 2026)
+
+El sistema aplica diferentes niveles de compresion segun el tamano del archivo:
+
+| Tamano | Preset FFmpeg | CRF | Tiempo Estimado | Uso |
+|--------|---------------|-----|-----------------|-----|
+| < 500MB | medium | 23 | 30-60 min | Mejor calidad |
+| 500MB - 2GB | fast | 23 | 1-2 horas | Calidad balanceada |
+| 2GB - 4GB | veryfast | 22 | 2-3 horas | Optimizado velocidad |
+| > 4GB | veryfast | 24 | 3-4 horas | Max velocidad |
+
+**Configuracion Actual (VPS 2 CPU / 4GB RAM):**
+- **Timeout**: 14400s (4 horas) - permite procesar archivos >4GB
+- **Reintentos**: 1 intento (evita bloquear queue)
+- **Procesos simultaneos**: 1 (limitacion de hardware)
+
+**Capacidad con Hardware Actual:**
+- 1 video simultaneo
+- 9 usuarios = espera maxima de 16 horas
+- ⚠️ **No viable para produccion con 9 equipos**
+
+**Migracion Planeada a Hetzner VPS:**
+- Hardware: 4-8 vCPUs, 8-16GB RAM
+- Procesos simultaneos: 3-8
+- Espera maxima: 2-5 horas
+- Escalable para crecimiento
+
+**Archivos Relacionados:**
+- `app/Jobs/CompressVideoJob.php` - Job de compresion
+- `start-queue-worker.sh` - Script de inicio del worker
+- `docs/VPS_OPTIMIZATION.md` - Documentacion completa
+- `DEPLOY_VPS_OPTIMIZATION.md` - Guia de despliegue
+
+**Comandos:**
+```bash
+# Iniciar queue worker optimizado
+bash start-queue-worker.sh
+
+# Manual
+php artisan queue:work database --sleep=3 --tries=1 --timeout=14400
+
+# Ver estado de procesamiento
+tail -50 storage/logs/laravel.log | grep CompressVideoJob
+```
 
 ---
 
@@ -191,6 +241,21 @@ php artisan storage:link
 - **Thumbnails**: Generacion HTML5+Canvas
 - **Comentarios**: AJAX sin recarga de pagina
 - **Menciones**: Sistema de notificaciones con @usuario
+- **Compresion**: FFmpeg con H.264 (libx264), presets adaptativos, CRF 22-24
+- **Queue System**: Laravel queues con database driver, 1 proceso activo
+- **Multipart Upload**: Soporte para archivos >2GB con chunks de 5MB
+
+---
+
+## RAMAS DE DESARROLLO
+
+| Rama | Estado | Descripcion |
+|------|--------|-------------|
+| `main` | Estable | Produccion actual |
+| `feature/adaptive-compression` | Completada | Compresion adaptativa basica |
+| `optimize/vps-2cpu-4gb` | Activa | Optimizacion para VPS limitado (temporal) |
+
+**Nota:** La rama `optimize/vps-2cpu-4gb` es temporal hasta migracion a Hetzner.
 
 ---
 

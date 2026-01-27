@@ -21,14 +21,14 @@ class CompressVideoJob implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 3;
+    public $tries = 1; // Single attempt to avoid blocking queue with retries
 
     /**
      * The maximum number of seconds the job can run before timing out.
      *
      * @var int
      */
-    public $timeout = 7200; // 2 hours
+    public $timeout = 14400; // 4 hours - required for large files (4GB+)
 
     /**
      * The video ID to compress.
@@ -243,8 +243,9 @@ class CompressVideoJob implements ShouldQueue
         $fileSizeMB = filesize($inputPath) / 1024 / 1024;
 
         // Adaptive preset and CRF based on file size
+        // Optimized for 2 CPU / 4GB RAM VPS
         // Smaller files: better quality, slower preset
-        // Larger files: good quality, faster preset
+        // Larger files: good quality, faster preset, more aggressive compression
         if ($fileSizeMB < 500) {
             $preset = 'medium';
             $crf = 23;
@@ -253,10 +254,14 @@ class CompressVideoJob implements ShouldQueue
             $preset = 'fast';
             $crf = 23;
             $reason = 'Medium file (500MB-2GB): using balanced preset';
-        } else {
+        } elseif ($fileSizeMB < 4000) {
             $preset = 'veryfast';
             $crf = 22; // Lower CRF for large files to maintain quality
-            $reason = 'Large file (>2GB): using speed-optimized preset with enhanced quality (CRF 22)';
+            $reason = 'Large file (2GB-4GB): using speed-optimized preset with enhanced quality (CRF 22)';
+        } else {
+            $preset = 'veryfast';
+            $crf = 24; // More aggressive CRF for very large files (faster processing)
+            $reason = 'Very large file (>4GB): using speed-optimized preset with aggressive compression (CRF 24) to reduce processing time';
         }
 
         Log::info("CompressVideoJob: File size: {$fileSizeMB} MB. {$reason}");
