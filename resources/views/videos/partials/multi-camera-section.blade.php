@@ -91,8 +91,8 @@
                 {{-- Search Results --}}
                 <div id="searchResults">
                     <div class="text-center text-muted py-4">
-                        <i class="fas fa-search fa-2x mb-2"></i>
-                        <p>Usa el buscador para encontrar videos</p>
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>Cargando videos recientes...</p>
                     </div>
                 </div>
 
@@ -189,6 +189,12 @@
         loadAngles();
     }
 
+    // Load recent videos when modal opens
+    $('#associateAngleModal').on('shown.bs.modal', function() {
+        // Load recent videos automatically
+        searchVideos('');
+    });
+
     // Search videos
     $('#searchVideoBtn, #searchVideoInput').on('click keypress', function(e) {
         if (e.type === 'click' || e.which === 13) {
@@ -279,8 +285,8 @@
         });
     }
 
-    function searchVideos() {
-        const query = $('#searchVideoInput').val();
+    function searchVideos(customQuery = null) {
+        const query = customQuery !== null ? customQuery : $('#searchVideoInput').val();
 
         $.ajax({
             url: '/videos/search-for-angles',
@@ -291,7 +297,15 @@
             },
             success: function(response) {
                 if (response.success) {
-                    renderSearchResults(response.videos);
+                    if (response.videos.length > 0) {
+                        renderSearchResults(response.videos);
+                    } else {
+                        $('#searchResults').html(`
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-search"></i> No se encontraron videos
+                            </div>
+                        `);
+                    }
                 }
             },
             error: function() {
