@@ -159,6 +159,7 @@ class CompressVideoJob implements ShouldQueue
                 'file_size' => $compressedFileSize,
                 'compressed_file_size' => $compressedFileSize,
                 'compression_ratio' => $compressionRatio,
+                'thumbnail_path' => $thumbnailPath,
                 'processing_status' => 'completed',
                 'processing_completed_at' => now(),
             ]);
