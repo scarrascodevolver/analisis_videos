@@ -54,6 +54,10 @@ class Video extends Model
             'match_date' => 'date',
             'processing_started_at' => 'datetime',
             'processing_completed_at' => 'datetime',
+            // Multi-camera boolean casts
+            'is_master' => 'boolean',
+            'is_synced' => 'boolean',
+            'sync_offset' => 'decimal:2',
         ];
     }
 
@@ -433,10 +437,7 @@ class Video extends Model
      */
     public function associateToMaster(Video $masterVideo, string $cameraAngle): bool
     {
-        \Log::info("associateToMaster called - Master ID: {$masterVideo->id}, Master is_master: {$masterVideo->is_master}, Master group_id: {$masterVideo->video_group_id}");
-
         if (!$masterVideo->isMaster()) {
-            \Log::warning("associateToMaster failed - master video is not actually a master");
             return false;
         }
 
@@ -448,7 +449,6 @@ class Video extends Model
             'sync_offset' => null,
         ]);
 
-        \Log::info("associateToMaster succeeded - Slave ID: {$this->id} assigned to group {$this->video_group_id} as {$cameraAngle}");
         return true;
     }
 
