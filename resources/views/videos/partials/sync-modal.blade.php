@@ -208,8 +208,15 @@
 
 <script>
 // Sync Tool JavaScript
-jQuery(function($) {
-    let currentSlaveVideoId = null;
+(function() {
+    function init() {
+        const $ = window.jQuery;
+        if (!$) {
+            console.error('jQuery not loaded yet for sync modal');
+            return;
+        }
+
+        let currentSlaveVideoId = null;
     let currentOffset = 0;
     let masterVideo = null;
     let slaveVideo = null;
@@ -423,10 +430,18 @@ jQuery(function($) {
         });
     }
 
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
     }
-});
+
+    // Initialize when DOM and jQuery are ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 </script>

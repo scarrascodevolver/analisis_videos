@@ -180,9 +180,16 @@
 
 <script>
 // Multi-Camera Management JavaScript
-jQuery(function($) {
-    const videoId = {{ $video->id }};
-    const isPartOfGroup = {{ $video->isPartOfGroup() ? 'true' : 'false' }};
+(function() {
+    function init() {
+        const $ = window.jQuery;
+        if (!$) {
+            console.error('jQuery not loaded yet for multi-camera');
+            return;
+        }
+
+        const videoId = {{ $video->id }};
+        const isPartOfGroup = {{ $video->isPartOfGroup() ? 'true' : 'false' }};
 
     // Load angles on page load
     if (isPartOfGroup) {
@@ -451,9 +458,17 @@ jQuery(function($) {
         toastr.success(message);
     }
 
-    function showError(message) {
-        toastr.error(message);
+        function showError(message) {
+            toastr.error(message);
+        }
     }
-});
+
+    // Initialize when DOM and jQuery are ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 </script>
 @endif

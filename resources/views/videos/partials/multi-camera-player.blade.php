@@ -107,8 +107,15 @@
 
 <script>
 // Multi-Camera Player JavaScript
-jQuery(function($) {
-    let multiCameraActive = false;
+(function() {
+    function init() {
+        const $ = window.jQuery;
+        if (!$) {
+            console.error('jQuery not loaded yet for multi-camera player');
+            return;
+        }
+
+        let multiCameraActive = false;
     let masterVideo = null;
     let slaveVideos = [];
     let isPlaying = false;
@@ -360,14 +367,22 @@ jQuery(function($) {
         slaveVideos = [];
     }
 
-    function formatTime(seconds) {
-        if (isNaN(seconds)) return '00:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update viewMultiCamera function in multi-camera-section.blade.php
+        // to call this window.viewMultiCamera
     }
 
-    // Update viewMultiCamera function in multi-camera-section.blade.php
-    // to call this window.viewMultiCamera
-});
+    // Initialize when DOM and jQuery are ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 </script>
