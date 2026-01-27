@@ -73,6 +73,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
+    // Multi-Camera search route (must be BEFORE Route::resource to avoid conflict with videos/{video})
+    Route::get('videos/search-for-angles', [MultiCameraController::class, 'searchVideos'])->name('videos.search-angles');
+
     // Video Routes
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
@@ -85,7 +88,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('sync', [MultiCameraController::class, 'syncAngle'])->name('sync');
         Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
     });
-    Route::get('videos/search-for-angles', [MultiCameraController::class, 'searchVideos'])->name('videos.search-angles');
 
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
