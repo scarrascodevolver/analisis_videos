@@ -69,14 +69,18 @@ El sistema aplica diferentes niveles de compresion segun el tamano del archivo:
 
 **Comandos:**
 ```bash
-# Iniciar queue worker optimizado
-bash start-queue-worker.sh
+# Con Supervisor (PRODUCCION - recomendado)
+sudo supervisorctl status rugby-queue-worker:*
+sudo supervisorctl restart rugby-queue-worker:*
+sudo supervisorctl tail -f rugby-queue-worker:rugby-queue-worker_00
 
-# Manual
+# Sin Supervisor (desarrollo/manual)
+bash start-queue-worker.sh
 php artisan queue:work database --sleep=3 --tries=1 --timeout=14400
 
-# Ver estado de procesamiento
-tail -50 storage/logs/laravel.log | grep CompressVideoJob
+# Monitoreo
+tail -f storage/logs/laravel.log | grep CompressVideoJob
+ps aux | grep "queue:work" | grep analisis_videos
 ```
 
 ---

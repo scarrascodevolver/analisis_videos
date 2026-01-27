@@ -46,20 +46,61 @@ kill <PID>
 ps aux | grep "queue:work" | grep analisis_videos
 ```
 
-### 4. Iniciar el Nuevo Queue Worker (Opción Simple)
+### 4. Actualizar Configuración de Supervisor (CRÍTICO)
+
+Si tienes Supervisor configurado (recomendado para producción), actualiza su configuración:
+
+```bash
+# Editar configuración de supervisor
+nano /etc/supervisor/conf.d/rugby-queue-worker.conf
+```
+
+Actualiza estas líneas:
+
+```ini
+[program:rugby-queue-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/analisis_videos/artisan queue:work database --sleep=3 --tries=1 --max-time=3600 --timeout=14400
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/www/analisis_videos/storage/logs/queue-worker.log
+stopwaitsecs=14400
+```
+
+**Cambios clave:**
+- `--tries=1` (antes era 3)
+- `--timeout=14400` (antes era 7200)
+- `stopwaitsecs=14400` (antes era 7200)
+
+Luego aplica los cambios:
+
+```bash
+# Recargar configuración de supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+
+# Reiniciar el worker con nueva configuración
+sudo supervisorctl restart rugby-queue-worker:*
+
+# Verificar estado
+sudo supervisorctl status rugby-queue-worker:*
+ps aux | grep "queue:work" | grep analisis_videos
+```
+
+Deberías ver: `--tries=1 --timeout=14400` en los parámetros del proceso.
+
+### 5. Iniciar Manualmente (Si NO usas Supervisor)
 
 ```bash
 # Método rápido con script incluido
 bash start-queue-worker.sh
-```
 
-### 5. O Iniciar Manualmente (Opción Avanzada)
-
-```bash
-# Crear directorio de logs si no existe
-mkdir -p storage/logs
-
-# Iniciar worker con nuevo timeout de 4 horas
+# O manualmente:
 nohup php artisan queue:work database \
   --sleep=3 \
   --tries=1 \
@@ -124,14 +165,29 @@ for video XXX. Compression: XX.XX%
 Si necesitas volver a la versión anterior:
 
 ```bash
-# Detener el nuevo worker
+# 1. Volver a la rama anterior
+git checkout feature/adaptive-compression
+
+# 2. Si usas Supervisor, revertir su configuración
+nano /etc/supervisor/conf.d/rugby-queue-worker.conf
+```
+
+Cambiar de vuelta a:
+```ini
+command=php /var/www/analisis_videos/artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --timeout=7200
+stopwaitsecs=7200
+```
+
+Luego:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl restart rugby-queue-worker:*
+
+# 3. Si NO usas Supervisor, matar y reiniciar manualmente
 ps aux | grep "queue:work" | grep analisis_videos
 kill <PID>
 
-# Volver a la rama anterior
-git checkout feature/adaptive-compression
-
-# Iniciar el worker con configuración anterior
 nohup php artisan queue:work database \
   --sleep=3 \
   --tries=3 \
@@ -220,6 +276,58 @@ Si tienes problemas durante el despliegue:
    ls -la storage/logs/
    ls -la storage/app/temp/
    ```
+
+---
+
+## Configuración de Supervisor (Producción)
+
+**¿Por qué usar Supervisor?**
+
+Supervisor garantiza que el queue worker:
+- Se inicie automáticamente al arrancar el servidor
+- Se reinicie si se cuelga o muere inesperadamente
+- Respete los timeouts configurados antes de matar procesos
+- Registre salidas en logs centralizados
+
+**Instalación de Supervisor (si no lo tienes):**
+
+```bash
+# Instalar supervisor
+sudo apt update
+sudo apt install supervisor -y
+
+# Crear archivo de configuración
+sudo nano /etc/supervisor/conf.d/rugby-queue-worker.conf
+
+# Pegar la configuración del paso 4
+
+# Iniciar supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start rugby-queue-worker:*
+
+# Habilitar supervisor al inicio del sistema
+sudo systemctl enable supervisor
+```
+
+**Comandos útiles de Supervisor:**
+
+```bash
+# Ver estado de todos los workers
+sudo supervisorctl status
+
+# Ver logs en tiempo real
+sudo supervisorctl tail -f rugby-queue-worker:rugby-queue-worker_00
+
+# Reiniciar worker
+sudo supervisorctl restart rugby-queue-worker:*
+
+# Detener worker
+sudo supervisorctl stop rugby-queue-worker:*
+
+# Iniciar worker
+sudo supervisorctl start rugby-queue-worker:*
+```
 
 ---
 
