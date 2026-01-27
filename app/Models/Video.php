@@ -38,6 +38,13 @@ class Video extends Model
         'compression_ratio',
         'processing_started_at',
         'processing_completed_at',
+        // Multi-camera fields
+        'video_group_id',
+        'is_master',
+        'camera_angle',
+        'sync_offset',
+        'is_synced',
+        'sync_reference_event',
     ];
 
     protected function casts(): array
@@ -305,6 +312,175 @@ class Video extends Model
 
         // Para cualquier otro rol, aplicar el filtro normal
         return $query;
+    }
+
+    /**
+     * ==========================================
+     * Multi-Camera / Multi-Angle Methods
+     * ==========================================
+     */
+
+    /**
+     * Check if this video is part of a multi-camera group
+     */
+    public function isPartOfGroup(): bool
+    {
+        return !is_null($this->video_group_id);
+    }
+
+    /**
+     * Check if this video is the master of its group
+     */
+    public function isMaster(): bool
+    {
+        return $this->is_master === true;
+    }
+
+    /**
+     * Check if this video is a slave (secondary angle)
+     */
+    public function isSlave(): bool
+    {
+        return $this->isPartOfGroup() && !$this->isMaster();
+    }
+
+    /**
+     * Check if this video has been synced with the master
+     */
+    public function isSynced(): bool
+    {
+        return $this->is_synced === true && !is_null($this->sync_offset);
+    }
+
+    /**
+     * Get all videos in the same group (including this one)
+     */
+    public function groupVideos()
+    {
+        if (!$this->isPartOfGroup()) {
+            return collect([$this]);
+        }
+
+        return Video::where('video_group_id', $this->video_group_id)
+            ->orderByDesc('is_master')
+            ->orderBy('camera_angle')
+            ->get();
+    }
+
+    /**
+     * Get the master video of this group
+     */
+    public function getMasterVideo()
+    {
+        if ($this->isMaster()) {
+            return $this;
+        }
+
+        if (!$this->isPartOfGroup()) {
+            return null;
+        }
+
+        return Video::where('video_group_id', $this->video_group_id)
+            ->where('is_master', true)
+            ->first();
+    }
+
+    /**
+     * Get all slave videos (secondary angles) of this group
+     */
+    public function getSlaveVideos()
+    {
+        if (!$this->isPartOfGroup()) {
+            return collect();
+        }
+
+        return Video::where('video_group_id', $this->video_group_id)
+            ->where('is_master', false)
+            ->orderBy('camera_angle')
+            ->get();
+    }
+
+    /**
+     * Get only synced slave videos
+     */
+    public function getSyncedSlaveVideos()
+    {
+        return $this->getSlaveVideos()->filter(function ($video) {
+            return $video->isSynced();
+        });
+    }
+
+    /**
+     * Get only unsynced slave videos
+     */
+    public function getUnsyncedSlaveVideos()
+    {
+        return $this->getSlaveVideos()->filter(function ($video) {
+            return !$video->isSynced();
+        });
+    }
+
+    /**
+     * Generate a unique group ID for multi-camera videos
+     */
+    public static function generateGroupId(): string
+    {
+        return 'group_' . time() . '_' . uniqid();
+    }
+
+    /**
+     * Associate this video as a slave to a master video
+     */
+    public function associateToMaster(Video $masterVideo, string $cameraAngle): bool
+    {
+        if (!$masterVideo->isMaster()) {
+            return false;
+        }
+
+        $this->update([
+            'video_group_id' => $masterVideo->video_group_id,
+            'is_master' => false,
+            'camera_angle' => $cameraAngle,
+            'is_synced' => false,
+            'sync_offset' => null,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Sync this slave video with the master
+     */
+    public function syncWithMaster(float $offset, ?string $referenceEvent = null): bool
+    {
+        if (!$this->isSlave()) {
+            return false;
+        }
+
+        $this->update([
+            'sync_offset' => $offset,
+            'is_synced' => true,
+            'sync_reference_event' => $referenceEvent,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Remove this video from its group
+     */
+    public function removeFromGroup(): bool
+    {
+        $this->update([
+            'video_group_id' => null,
+            'is_master' => true,
+            'camera_angle' => null,
+            'sync_offset' => null,
+            'is_synced' => false,
+            'sync_reference_event' => null,
+        ]);
+
+        return true;
     }
 
     public static function getPlayerCategory($position)
