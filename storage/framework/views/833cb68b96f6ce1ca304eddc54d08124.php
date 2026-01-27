@@ -72,7 +72,7 @@
                                     <option value="2">2s</option>
                                     <option value="4" selected>4s</option>
                                     <option value="8">8s</option>
-                                    <option value="permanent">∞</option>
+                                    <option value="permanent">Fija</option>
                                 </select>
                             </div>
 
@@ -432,7 +432,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Categoría:</strong></td>
-                                    <td><span class="badge badge-rugby"><?php echo e($video->category->name); ?></span></td>
+                                    <td><span class="badge badge-rugby"><?php echo e($video->category?->name ?? 'Sin categoría'); ?></span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Fecha:</strong></td>
@@ -462,6 +462,12 @@
                     </div>
                 </div>
             </div>
+
+            
+            <?php echo $__env->make('videos.partials.multi-camera-section', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+            
+            <?php echo $__env->make('videos.partials.multi-camera-player', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
 
         <!-- Sidebar Section -->
@@ -692,7 +698,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                    <div class="card-body p-0" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                         <div id="sidebarClipsList" style="color: #ccc;">
                             <div class="text-center py-4" style="color: #666;">
                                 <i class="fas fa-film fa-2x mb-2"></i>
@@ -1160,19 +1166,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (e.target.closest('.sidebar-delete-clip-btn')) return;
 
                 const start = parseFloat(this.dataset.start);
-                const end = parseFloat(this.dataset.end);
                 const video = document.getElementById('rugbyVideo');
                 if (video) {
                     video.currentTime = start;
-                    video.play();
 
-                    // Auto-pause at end
-                    const checkEnd = setInterval(() => {
-                        if (video.currentTime >= end) {
-                            video.pause();
-                            clearInterval(checkEnd);
+                    // Small delay to ensure seek completes before playing
+                    setTimeout(() => {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                console.warn('Play was prevented:', error);
+                            });
                         }
-                    }, 100);
+                    }, 50);
                 }
             });
         });
@@ -1968,8 +1974,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let videoDuration = <?php echo e($video->duration ?? 300); ?>;
     let currentOffset = <?php echo e($video->timeline_offset ?? 0); ?>;
     let tempOffset = currentOffset;
-    let clipLoopInterval = null; // Track active clip loop interval
-    let isLooping = false; // Track if we're in loop mode
 
     // Toggle panel
     toggleBtn.addEventListener('click', async function() {
@@ -2070,24 +2074,6 @@ document.addEventListener('DOMContentLoaded', function() {
         video.addEventListener('timeupdate', function() {
             if (content.style.display !== 'none') {
                 updateAllPlayheads();
-            }
-        });
-
-        // Stop clip loop when video is paused manually (user clicks pause button)
-        video.addEventListener('pause', function() {
-            // Only stop loop if we're actually in loop mode
-            // Don't stop during seeking (which also triggers pause momentarily)
-            if (isLooping && !video.seeking) {
-                setTimeout(() => {
-                    // Check again after a delay to avoid stopping during seeks
-                    if (video.paused && !video.seeking) {
-                        isLooping = false;
-                        if (clipLoopInterval) {
-                            clearInterval(clipLoopInterval);
-                            clipLoopInterval = null;
-                        }
-                    }
-                }, 100);
             }
         });
     }
@@ -2251,21 +2237,12 @@ document.addEventListener('DOMContentLoaded', function() {
             bar.addEventListener('click', function(e) {
                 // Check if clicking on a clip
                 if (e.target.closest('.clip-block')) {
-                    // Play clip on click in infinite loop
+                    // Play clip from start - video continues normally
                     const clipBlock = e.target.closest('.clip-block');
                     const start = parseFloat(clipBlock.dataset.start) + currentOffset;
-                    const end = parseFloat(clipBlock.dataset.end) + currentOffset;
 
                     if (video) {
-                        // Clear any previous clip loop
-                        if (clipLoopInterval) {
-                            clearInterval(clipLoopInterval);
-                            clipLoopInterval = null;
-                        }
-
-                        isLooping = true;
-
-                        // Start playing from clip start
+                        // Jump to clip start
                         video.currentTime = Math.max(0, start);
 
                         // Wait for seek to complete before starting playback
@@ -2277,37 +2254,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 });
                             }
                         }, 50);
-
-                        // Setup loop: when reaching end, restart from beginning
-                        clipLoopInterval = setInterval(() => {
-                            if (isLooping && video.currentTime >= end) {
-                                // Loop back to start
-                                video.currentTime = Math.max(0, start);
-
-                                // Wait for seek to complete before playing
-                                setTimeout(() => {
-                                    if (isLooping) {
-                                        const loopPlayPromise = video.play();
-                                        if (loopPlayPromise !== undefined) {
-                                            loopPlayPromise.catch(error => {
-                                                console.warn('Loop play was prevented:', error);
-                                            });
-                                        }
-                                    }
-                                }, 50);
-                            }
-                        }, 100);
                     }
                     return;
                 }
 
-                // Seek to clicked position in timeline (stops clip loop)
-                isLooping = false;
-                if (clipLoopInterval) {
-                    clearInterval(clipLoopInterval);
-                    clipLoopInterval = null;
-                }
-
+                // Seek to clicked position in timeline
                 const rect = this.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
                 const seekTime = percent * videoDuration;
@@ -2561,6 +2512,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ══════════════════════════════════════════════════════════════════════
 })();
 </script>
+
+
+<?php echo $__env->make('videos.partials.sync-modal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <?php $__env->stopSection(); ?>
 

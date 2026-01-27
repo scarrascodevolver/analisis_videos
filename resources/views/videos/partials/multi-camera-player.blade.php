@@ -1,112 +1,68 @@
-{{-- Multi-Camera Player Component --}}
+{{-- Multi-Camera Player Component - Side by Side Layout --}}
 <div id="multiCameraPlayer" style="display: none;">
-    <div class="card card-outline card-rugby">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-video"></i> Vista Multi-Cámara
-            </h5>
-            <div class="card-tools">
-                <button type="button" class="btn btn-sm btn-rugby-outline" id="exitMultiCameraBtn">
-                    <i class="fas fa-times"></i> Salir de Vista Multi-Cámara
-                </button>
-            </div>
-        </div>
-        <div class="card-body p-2" style="background: #000;">
-            {{-- Warning for unsynced videos --}}
-            <div id="unsyncedWarning" class="alert alert-warning mb-2" style="display: none;">
-                <i class="fas fa-exclamation-triangle"></i>
-                Algunos ángulos no están sincronizados. Pueden mostrar momentos diferentes del partido.
-                <button class="btn btn-sm btn-warning ml-2" id="syncAllBtn">
-                    <i class="fas fa-sync-alt"></i> Sincronizar Ahora
-                </button>
-                <button type="button" class="close" data-dismiss="alert">
-                    <span>&times;</span>
-                </button>
-            </div>
-
-            {{-- Master Video (Large) --}}
-            <div id="masterVideoContainer" class="mb-2">
-                <div class="position-relative">
-                    <video id="multiMasterVideo" controls style="width: 100%; max-height: 500px; background: #000;">
-                        <source src="{{ route('videos.stream', $video->id) }}" type="video/mp4">
-                    </video>
-                    <div class="position-absolute" style="top: 10px; left: 10px;">
-                        <span class="badge badge-primary badge-lg">
-                            <i class="fas fa-video"></i> {{ $video->camera_angle ?? 'Master' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Slave Videos (Thumbnails) --}}
-            <div id="slaveVideosContainer" class="row">
-                {{-- Will be populated by JavaScript --}}
-            </div>
-
-            {{-- Timeline (Shared) --}}
-            <div class="card mt-2" style="background: #1a1a1a; border-color: #444;">
-                <div class="card-body p-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <button class="btn btn-sm btn-rugby" id="multiPlayPauseBtn">
-                                <i class="fas fa-play"></i> Play
-                            </button>
-                            <button class="btn btn-sm btn-secondary" id="multiBackward10Btn">
-                                <i class="fas fa-backward"></i> 10s
-                            </button>
-                            <button class="btn btn-sm btn-secondary" id="multiForward10Btn">
-                                <i class="fas fa-forward"></i> 10s
-                            </button>
-                        </div>
-                        <div class="text-white">
-                            <i class="fas fa-clock"></i>
-                            <span id="multiCurrentTime">00:00</span> / <span id="multiDuration">00:00</span>
-                        </div>
-                    </div>
-                    <input type="range" class="custom-range" id="multiSeekBar" min="0" max="100" value="0" step="0.1">
-                    <small class="text-muted d-block text-center mt-1">
-                        <i class="fas fa-info-circle"></i>
-                        Todos los videos se controlan sincronizadamente desde esta timeline
-                    </small>
-                </div>
-            </div>
-        </div>
+    {{-- Master Video (Left 70%) --}}
+    <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
+        <video id="multiMasterVideo" controls style="width: 100%; height: auto; max-height: 550px; display: block;"
+               preload="metadata"
+               crossorigin="anonymous"
+               x-webkit-airplay="allow">
+            <source src="{{ route('videos.stream', $video) }}" type="video/mp4">
+            Tu navegador no soporta la reproducción de video.
+        </video>
     </div>
 </div>
 
-{{-- Template for Slave Video Thumbnail --}}
+{{-- Slave Videos Container (Right 30%) --}}
+<div id="slaveVideosContainer" style="display: none;">
+    {{-- Will be populated by JavaScript --}}
+</div>
+
+{{-- Template for Slave Video --}}
 <template id="slaveVideoTemplate">
-    <div class="col-md-4 mb-2 slave-video-item" data-video-id="">
-        <div class="card h-100" style="background: #2a2a2a; border-color: #444;">
-            <div class="card-body p-2">
-                <div class="position-relative">
-                    <video class="slave-video" controls style="width: 100%; max-height: 200px; background: #000;">
-                        {{-- Source will be set by JavaScript --}}
-                    </video>
-                    <div class="position-absolute" style="top: 5px; left: 5px;">
-                        <span class="badge badge-info badge-sm slave-angle-name"></span>
-                    </div>
-                    <div class="position-absolute" style="top: 5px; right: 5px;">
-                        <span class="badge badge-success badge-sm slave-sync-badge" style="display: none;">
-                            <i class="fas fa-check"></i> <span class="slave-offset-text"></span>
-                        </span>
-                        <span class="badge badge-warning badge-sm slave-unsync-badge" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i> No Sync
-                        </span>
-                    </div>
-                </div>
-                <div class="mt-1 text-center">
-                    <button class="btn btn-xs btn-rugby slave-swap-btn" title="Intercambiar con Master">
-                        <i class="fas fa-exchange-alt"></i> Hacer Master
-                    </button>
-                </div>
+    <div class="slave-video-card mb-3" data-video-id="" style="background: #1a1a1a; border-radius: 8px; overflow: hidden;">
+        {{-- Video Title Header --}}
+        <div style="padding: 8px 12px; background: #2a2a2a; border-bottom: 1px solid #444;">
+            <h6 class="mb-0 slave-angle-name" style="color: #00B7B5; font-size: 14px; font-weight: 600;">
+                <i class="fas fa-video"></i> <span></span>
+            </h6>
+            <small class="text-muted slave-video-title" style="font-size: 11px;"></small>
+        </div>
+
+        {{-- Video Player --}}
+        <div style="position: relative; background: #000;">
+            <video class="slave-video" controls style="width: 100%; height: auto; max-height: 250px; display: block;"
+                   preload="metadata"
+                   crossorigin="anonymous">
+                {{-- Source will be set by JavaScript --}}
+            </video>
+
+            {{-- Sync Status Badge --}}
+            <div style="position: absolute; top: 8px; right: 8px;">
+                <span class="slave-sync-badge badge badge-success" style="display: none; font-size: 10px;">
+                    <i class="fas fa-check"></i> <span class="slave-offset-text"></span>
+                </span>
+                <span class="slave-unsync-badge badge badge-warning" style="display: none; font-size: 10px;">
+                    <i class="fas fa-exclamation-triangle"></i> No Sync
+                </span>
+            </div>
+        </div>
+
+        {{-- Control Buttons --}}
+        <div style="padding: 10px 12px; background: #2a2a2a; border-top: 1px solid #444;">
+            <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-sm btn-info slave-sync-btn" title="Sincronizar con Master">
+                    <i class="fas fa-sync-alt"></i> Sincronizar
+                </button>
+                <button class="btn btn-sm btn-danger slave-remove-btn" title="Eliminar ángulo">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-// Multi-Camera Player JavaScript
+// Multi-Camera Player JavaScript - Side by Side
 (function() {
     function init() {
         const $ = window.jQuery;
@@ -115,273 +71,202 @@
             return;
         }
 
-        let multiCameraActive = false;
-    let masterVideo = null;
-    let slaveVideos = [];
-    let isPlaying = false;
-    let isSeeking = false;
+        const videoId = {{ $video->id }};
+        let masterVideo = document.getElementById('rugbyVideo');
+        let multiMasterVideo = document.getElementById('multiMasterVideo');
+        let slaveVideos = [];
+        let isMultiCameraActive = false;
 
-    // Public function to activate multi-camera view
-    window.viewMultiCamera = function(angleId) {
-        if (!angleId) {
-            // Load all angles for the current video
-            loadMultiCameraView();
-        } else {
-            // Load specific angle
-            loadMultiCameraView(angleId);
-        }
-    };
-
-    function loadMultiCameraView(specificAngleId = null) {
-        $.ajax({
-            url: `/videos/{{ $video->id }}/multi-camera/angles`,
-            method: 'GET',
-            success: function(response) {
-                if (response.success && response.angles.length > 0) {
-                    initMultiCameraPlayer(response.angles);
-                } else {
-                    if (typeof showToast === 'function') {
-                        showToast('No hay ángulos disponibles para vista multi-cámara', 'warning');
-                    }
-                }
-            },
-            error: function() {
-                if (typeof showToast === 'function') {
-                    showToast('Error al cargar ángulos', 'error');
-                }
+        // Public function to activate multi-camera view
+        window.activateMultiCamera = function(angles) {
+            if (!angles || angles.length === 0) {
+                console.log('No angles to display');
+                return;
             }
-        });
-    }
 
-    function initMultiCameraPlayer(angles) {
-        // Hide single video player
-        $('#videoSection .card').first().fadeOut();
+            isMultiCameraActive = true;
 
-        // Show multi-camera player
-        $('#multiCameraPlayer').fadeIn();
+            // Show multi-camera layout
+            activateSideBySideLayout();
 
-        multiCameraActive = true;
-        masterVideo = document.getElementById('multiMasterVideo');
-        slaveVideos = [];
+            // Render slave videos
+            renderSlaveVideos(angles);
 
-        // Render slave videos
-        renderSlaveVideos(angles);
+            console.log('Multi-camera activated with', angles.length, 'angle(s)');
+        };
 
-        // Setup controls
-        setupMultiCameraControls();
+        window.deactivateMultiCamera = function() {
+            isMultiCameraActive = false;
+            deactivateSideBySideLayout();
+            slaveVideos = [];
+        };
 
-        // Check for unsynced videos
-        checkUnsyncedVideos(angles);
-    }
+        function activateSideBySideLayout() {
+            const mainContainer = $('.video-container').first();
+            const slaveContainer = $('#slaveVideosContainer');
 
-    function renderSlaveVideos(angles) {
-        const container = $('#slaveVideosContainer');
-        container.empty();
+            // Create flex container
+            if (!mainContainer.parent().hasClass('multi-camera-layout')) {
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row"></div>');
+                mainContainer.wrap('<div class="col-md-8"></div>');
+                slaveContainer.wrap('<div class="col-md-4"></div>');
+            }
 
-        angles.forEach(angle => {
-            const template = document.getElementById('slaveVideoTemplate').content.cloneNode(true);
-            const item = $(template).find('.slave-video-item');
+            slaveContainer.show();
+        }
 
-            item.attr('data-video-id', angle.id);
-            item.find('.slave-angle-name').text(angle.camera_angle);
+        function deactivateSideBySideLayout() {
+            $('#slaveVideosContainer').hide().empty();
 
-            // Get stream URL
-            $.ajax({
-                url: `/videos/${angle.id}/multi-camera/stream-url`,
-                method: 'GET',
-                async: false,
-                success: function(response) {
-                    if (response.success) {
-                        const video = item.find('.slave-video')[0];
-                        video.src = response.stream_url;
+            // Unwrap if needed
+            const layout = $('.multi-camera-layout');
+            if (layout.length) {
+                $('.video-container').first().unwrap().unwrap();
+                $('#slaveVideosContainer').unwrap();
+            }
+        }
 
-                        // Store video element and metadata
-                        slaveVideos.push({
-                            element: video,
-                            id: angle.id,
-                            angle: angle.camera_angle,
-                            offset: angle.sync_offset || 0,
-                            synced: angle.is_synced
-                        });
+        function renderSlaveVideos(angles) {
+            const container = $('#slaveVideosContainer');
+            container.empty();
 
-                        // Show sync badge
-                        if (angle.is_synced) {
-                            item.find('.slave-sync-badge').show();
-                            item.find('.slave-offset-text').text(`${angle.sync_offset > 0 ? '+' : ''}${angle.sync_offset}s`);
-                        } else {
-                            item.find('.slave-unsync-badge').show();
+            angles.forEach(angle => {
+                const template = document.getElementById('slaveVideoTemplate').content.cloneNode(true);
+                const card = $(template).find('.slave-video-card');
+
+                card.attr('data-video-id', angle.id);
+                card.find('.slave-angle-name span').text(angle.camera_angle);
+                card.find('.slave-video-title').text(angle.title);
+
+                // Get stream URL
+                $.ajax({
+                    url: `/videos/${angle.id}/multi-camera/stream-url`,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            const video = card.find('.slave-video')[0];
+                            video.src = response.stream_url;
+
+                            // Store video element and metadata
+                            slaveVideos.push({
+                                element: video,
+                                id: angle.id,
+                                angle: angle.camera_angle,
+                                offset: angle.sync_offset || 0,
+                                synced: angle.is_synced
+                            });
+
+                            // Show sync badge
+                            if (angle.is_synced) {
+                                card.find('.slave-sync-badge').show();
+                                card.find('.slave-offset-text').text(`${angle.sync_offset > 0 ? '+' : ''}${angle.sync_offset}s`);
+                            } else {
+                                card.find('.slave-unsync-badge').show();
+                            }
+
+                            // Sync playback with master
+                            syncWithMaster(video, angle.sync_offset || 0);
                         }
                     }
-                }
+                });
+
+                // Sync button
+                card.find('.slave-sync-btn').on('click', function() {
+                    if (typeof window.openSyncModal === 'function') {
+                        window.openSyncModal(angle.id);
+                    } else {
+                        alert('Función de sincronización no disponible');
+                    }
+                });
+
+                // Remove button
+                card.find('.slave-remove-btn').on('click', function() {
+                    removeAngle(angle.id, card);
+                });
+
+                container.append(card);
+            });
+        }
+
+        function syncWithMaster(slaveVideo, offset) {
+            // Sync play/pause
+            masterVideo.addEventListener('play', () => {
+                slaveVideo.currentTime = masterVideo.currentTime + offset;
+                slaveVideo.play();
             });
 
-            // Swap button
-            item.find('.slave-swap-btn').on('click', function() {
-                swapWithMaster(angle.id);
+            masterVideo.addEventListener('pause', () => {
+                slaveVideo.pause();
             });
 
-            container.append(item);
-        });
-    }
+            // Sync seeking
+            masterVideo.addEventListener('seeked', () => {
+                slaveVideo.currentTime = masterVideo.currentTime + offset;
+            });
 
-    function setupMultiCameraControls() {
-        // Play/Pause button
-        $('#multiPlayPauseBtn').off('click').on('click', function() {
-            if (isPlaying) {
-                pauseAll();
-            } else {
-                playAll();
-            }
-        });
+            // Sync time periodically to prevent drift
+            masterVideo.addEventListener('timeupdate', () => {
+                if (!masterVideo.paused && !slaveVideo.paused) {
+                    const expectedTime = masterVideo.currentTime + offset;
+                    const drift = Math.abs(slaveVideo.currentTime - expectedTime);
 
-        // Seek backward/forward
-        $('#multiBackward10Btn').off('click').on('click', () => {
-            const newTime = Math.max(0, masterVideo.currentTime - 10);
-            seekAll(newTime);
-        });
-
-        $('#multiForward10Btn').off('click').on('click', () => {
-            const newTime = Math.min(masterVideo.duration, masterVideo.currentTime + 10);
-            seekAll(newTime);
-        });
-
-        // Seek bar
-        $('#multiSeekBar').off('input change').on('input', function() {
-            const time = ($(this).val() / 100) * masterVideo.duration;
-            seekAll(time);
-        }).on('mousedown touchstart', function() {
-            isSeeking = true;
-            pauseAll();
-        }).on('mouseup touchend', function() {
-            isSeeking = false;
-        });
-
-        // Master video events
-        masterVideo.addEventListener('loadedmetadata', function() {
-            $('#multiDuration').text(formatTime(this.duration));
-            $('#multiSeekBar').attr('max', this.duration);
-        });
-
-        masterVideo.addEventListener('timeupdate', function() {
-            if (!isSeeking) {
-                const current = this.currentTime;
-                const duration = this.duration;
-                $('#multiCurrentTime').text(formatTime(current));
-                $('#multiSeekBar').val((current / duration) * 100);
-
-                // Verify slave sync (every second)
-                verifySyncDrift();
-            }
-        });
-
-        // Exit multi-camera
-        $('#exitMultiCameraBtn').off('click').on('click', function() {
-            exitMultiCamera();
-        });
-
-        // Sync all button
-        $('#syncAllBtn').off('click').on('click', function() {
-            const firstUnsynced = slaveVideos.find(v => !v.synced);
-            if (firstUnsynced) {
-                window.openSyncModal(firstUnsynced.id);
-            }
-        });
-    }
-
-    function playAll() {
-        masterVideo.play();
-
-        slaveVideos.forEach(slave => {
-            if (slave.synced) {
-                slave.element.currentTime = masterVideo.currentTime + slave.offset;
-            } else {
-                slave.element.currentTime = masterVideo.currentTime;
-            }
-            slave.element.play();
-        });
-
-        isPlaying = true;
-        $('#multiPlayPauseBtn').html('<i class="fas fa-pause"></i> Pause');
-    }
-
-    function pauseAll() {
-        masterVideo.pause();
-        slaveVideos.forEach(slave => slave.element.pause());
-
-        isPlaying = false;
-        $('#multiPlayPauseBtn').html('<i class="fas fa-play"></i> Play');
-    }
-
-    function seekAll(time) {
-        masterVideo.currentTime = time;
-
-        slaveVideos.forEach(slave => {
-            if (slave.synced) {
-                slave.element.currentTime = time + slave.offset;
-            } else {
-                slave.element.currentTime = time;
-            }
-        });
-    }
-
-    function verifySyncDrift() {
-        const masterTime = masterVideo.currentTime;
-
-        slaveVideos.forEach(slave => {
-            if (slave.synced && !slave.element.paused) {
-                const expectedTime = masterTime + slave.offset;
-                const actualTime = slave.element.currentTime;
-                const drift = Math.abs(actualTime - expectedTime);
-
-                // If drift > 0.5s, re-sync
-                if (drift > 0.5) {
-                    console.log(`Re-syncing ${slave.angle}, drift: ${drift.toFixed(2)}s`);
-                    slave.element.currentTime = expectedTime;
+                    if (drift > 0.5) {
+                        console.log(`Re-syncing slave video, drift: ${drift.toFixed(2)}s`);
+                        slaveVideo.currentTime = expectedTime;
+                    }
                 }
+            });
+        }
+
+        function removeAngle(angleId, cardElement) {
+            if (!confirm('¿Eliminar este ángulo del grupo?')) {
+                return;
             }
-        });
-    }
 
-    function checkUnsyncedVideos(angles) {
-        const hasUnsynced = angles.some(a => !a.is_synced);
-        if (hasUnsynced) {
-            $('#unsyncedWarning').show();
-        } else {
-            $('#unsyncedWarning').hide();
-        }
-    }
+            $.ajax({
+                url: `/videos/${angleId}/multi-camera/remove`,
+                method: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        if (typeof showToast === 'function') {
+                            showToast('Ángulo eliminado', 'success');
+                        }
 
-    function swapWithMaster(slaveId) {
-        // TODO: Implement swap functionality
-        // This would require changing the video sources
-        if (typeof showToast === 'function') {
-            showToast('Funcionalidad de intercambio próximamente...', 'info');
-        }
-    }
+                        // Remove from DOM
+                        cardElement.fadeOut(300, function() {
+                            $(this).remove();
 
-    function exitMultiCamera() {
-        // Pause all videos
-        pauseAll();
+                            // If no more angles, deactivate multi-camera
+                            if ($('#slaveVideosContainer .slave-video-card').length === 0) {
+                                deactivateMultiCamera();
+                            }
+                        });
 
-        // Hide multi-camera player
-        $('#multiCameraPlayer').fadeOut();
-
-        // Show single video player
-        $('#videoSection .card').first().fadeIn();
-
-        multiCameraActive = false;
-        slaveVideos = [];
-    }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return '00:00';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        // Remove from slaveVideos array
+                        slaveVideos = slaveVideos.filter(v => v.id !== angleId);
+                    }
+                },
+                error: function() {
+                    if (typeof showToast === 'function') {
+                        showToast('Error al eliminar ángulo', 'error');
+                    }
+                }
+            });
         }
 
-        // Update viewMultiCamera function in multi-camera-section.blade.php
-        // to call this window.viewMultiCamera
+        // Load angles on page load if video is part of a group
+        @if($video->isPartOfGroup())
+            $.ajax({
+                url: `/videos/${videoId}/multi-camera/angles`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.angles.length > 0) {
+                        window.activateMultiCamera(response.angles);
+                    }
+                }
+            });
+        @endif
     }
 
     // Initialize when DOM and jQuery are ready

@@ -1,7 +1,66 @@
-{{-- Multi-Camera Section - Hidden (functionality moved to header button) --}}
-<div style="display: none;"></div>
 
-{{-- Modal: Associate Angle --}}
+<?php if(in_array(auth()->user()->role, ['analista', 'entrenador'])): ?>
+<div class="card card-outline card-rugby mt-3" id="multiCameraSection">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-video"></i> Ángulos de Cámara
+        </h3>
+        <div class="card-tools">
+            <?php if($video->isPartOfGroup()): ?>
+                <span class="badge badge-rugby">
+                    <i class="fas fa-check-circle"></i> Grupo Multi-Cámara
+                </span>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="card-body">
+        
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle"></i>
+            <strong>Video Actual:</strong>
+            <?php echo e($video->camera_angle ?? ($video->is_master ? 'Master / Tribuna Central' : 'Video Individual')); ?>
+
+            <?php if($video->is_master): ?>
+                <span class="badge badge-primary ml-2">MASTER</span>
+            <?php endif; ?>
+        </div>
+
+        <?php if($video->isPartOfGroup()): ?>
+            
+            <h5 class="mb-3">
+                <i class="fas fa-camera"></i> Ángulos Asociados
+            </h5>
+
+            <div id="anglesContainer">
+                
+                <div class="text-center py-3">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando ángulos...
+                </div>
+            </div>
+
+            
+            <?php if($video->is_master): ?>
+                <button type="button" class="btn btn-rugby-outline btn-block mt-3" data-toggle="modal" data-target="#associateAngleModal">
+                    <i class="fas fa-plus-circle"></i> Asociar Nuevo Ángulo
+                </button>
+            <?php endif; ?>
+        <?php else: ?>
+            
+            <div class="text-center py-4">
+                <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Este video no forma parte de un grupo multi-cámara.</p>
+                <p class="text-muted mb-3">
+                    Puedes asociar otros videos del mismo partido para ver múltiples ángulos simultáneamente.
+                </p>
+                <button type="button" class="btn btn-rugby" data-toggle="modal" data-target="#associateAngleModal">
+                    <i class="fas fa-plus-circle"></i> Crear Grupo Multi-Cámara
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+
 <div class="modal fade" id="associateAngleModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -14,7 +73,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                {{-- Search Videos --}}
+                
                 <div class="form-group">
                     <label>Buscar Video</label>
                     <div class="input-group">
@@ -30,15 +89,15 @@
                     </small>
                 </div>
 
-                {{-- Search Results --}}
+                
                 <div id="searchResults">
                     <div class="text-center text-muted py-4">
-                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
-                        <p>Cargando videos recientes...</p>
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p>Usa el buscador para encontrar videos</p>
                     </div>
                 </div>
 
-                {{-- Camera Angle Input --}}
+                
                 <div id="angleInputSection" style="display: none;">
                     <hr>
                     <h6>Selecciona el Nombre del Ángulo:</h6>
@@ -68,7 +127,7 @@
     </div>
 </div>
 
-{{-- Template for Angle Card --}}
+
 <template id="angleCardTemplate">
     <div class="angle-card card mb-2" data-video-id="">
         <div class="card-body p-3">
@@ -82,7 +141,7 @@
                 </div>
                 <div class="col-md-3 text-center">
                     <span class="sync-status">
-                        {{-- Will be populated by JS --}}
+                        
                     </span>
                 </div>
                 <div class="col-md-3 text-right">
@@ -101,7 +160,7 @@
     </div>
 </template>
 
-{{-- Template for Search Result --}}
+
 <template id="searchResultTemplate">
     <div class="search-result-item card mb-2" data-video-id="">
         <div class="card-body p-3">
@@ -123,26 +182,13 @@
 <script>
 // Multi-Camera Management JavaScript
 (function() {
-    function init() {
-        const $ = window.jQuery;
-        if (!$) {
-            console.error('jQuery not loaded yet for multi-camera');
-            return;
-        }
-
-        const videoId = {{ $video->id }};
-        const isPartOfGroup = {{ $video->isPartOfGroup() ? 'true' : 'false' }};
+    const videoId = <?php echo e($video->id); ?>;
+    const isPartOfGroup = <?php echo e($video->isPartOfGroup() ? 'true' : 'false'); ?>;
 
     // Load angles on page load
     if (isPartOfGroup) {
         loadAngles();
     }
-
-    // Load recent videos when modal opens
-    $('#associateAngleModal').on('shown.bs.modal', function() {
-        // Load recent videos automatically
-        searchVideos('');
-    });
 
     // Search videos
     $('#searchVideoBtn, #searchVideoInput').on('click keypress', function(e) {
@@ -234,27 +280,20 @@
         });
     }
 
-    function searchVideos(customQuery = null) {
-        const query = customQuery !== null ? customQuery : $('#searchVideoInput').val();
+    function searchVideos() {
+        const query = $('#searchVideoInput').val();
 
         $.ajax({
             url: '/videos/search-for-angles',
             method: 'GET',
             data: {
                 query: query,
-                exclude_group_id: {!! json_encode($video->video_group_id) !!}
+                exclude_group_id: <?php echo e($video->video_group_id ? "'".$video->video_group_id."'" : 'null'); ?>
+
             },
             success: function(response) {
                 if (response.success) {
-                    if (response.videos.length > 0) {
-                        renderSearchResults(response.videos);
-                    } else {
-                        $('#searchResults').html(`
-                            <div class="text-center text-muted py-3">
-                                <i class="fas fa-search"></i> No se encontraron videos
-                            </div>
-                        `);
-                    }
+                    renderSearchResults(response.videos);
                 }
             },
             error: function() {
@@ -322,10 +361,10 @@
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Asociando...');
 
         $.ajax({
-            url: `/videos/{{ $video->id }}/multi-camera/associate`,
+            url: `/videos/<?php echo e($video->id); ?>/multi-camera/associate`,
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: '<?php echo e(csrf_token()); ?>',
                 slave_video_id: videoId,
                 camera_angle: cameraAngle
             },
@@ -333,22 +372,7 @@
                 if (response.success) {
                     showSuccess('Ángulo asociado correctamente');
                     $('#associateAngleModal').modal('hide');
-
-                    // Instead of reloading, fetch angles and activate multi-camera
-                    $.ajax({
-                        url: `/videos/{{ $video->id }}/multi-camera/angles`,
-                        method: 'GET',
-                        success: function(anglesResponse) {
-                            if (anglesResponse.success && anglesResponse.angles.length > 0) {
-                                // Activate multi-camera with the angles
-                                if (typeof window.activateMultiCamera === 'function') {
-                                    window.activateMultiCamera(anglesResponse.angles);
-                                } else {
-                                    console.error('activateMultiCamera function not found');
-                                }
-                            }
-                        }
-                    });
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showError(response.message);
                 }
@@ -370,7 +394,7 @@
         $.ajax({
             url: `/videos/${angleId}/multi-camera/remove`,
             method: 'DELETE',
-            data: { _token: '{{ csrf_token() }}' },
+            data: { _token: '<?php echo e(csrf_token()); ?>' },
             success: function(response) {
                 if (response.success) {
                     showSuccess('Ángulo eliminado');
@@ -412,24 +436,13 @@
     }
 
     function showSuccess(message) {
-        if (typeof showToast === 'function') {
-            showToast(message, 'success');
-        }
+        toastr.success(message);
     }
 
-        function showError(message) {
-            if (typeof showToast === 'function') {
-                showToast(message, 'error');
-            }
-        }
-    }
-
-    // Initialize when DOM and jQuery are ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    function showError(message) {
+        toastr.error(message);
     }
 })();
 </script>
-@endif
+<?php endif; ?>
+<?php /**PATH C:\xampp\htdocs\rugbyhub\resources\views/videos/partials/multi-camera-section.blade.php ENDPATH**/ ?>

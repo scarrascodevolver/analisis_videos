@@ -44,7 +44,8 @@
       "Bash(/mnt/c/xampp/php/php artisan route:list --path=xml)",
       "Bash(git fetch:*)",
       "Bash(chmod:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(tac:*)"
     ],
     "deny": [],
     "ask": []

@@ -29,9 +29,16 @@
                                 <i class="fas fa-eye"></i> Visualizaciones
                             </button>
                         @endif
-                        <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
-                            <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
-                        </button>
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                            <button id="addAngleBtn" class="btn btn-sm btn-rugby mr-2" data-toggle="modal" data-target="#associateAngleModal">
+                                <i class="fas fa-video"></i> Agregar Ángulo
+                            </button>
+                        @endif
+                        @if(auth()->user()->role === 'jugador')
+                            <button id="toggleCommentsBtn" class="btn btn-sm btn-rugby-outline mr-2" title="Ocultar/Mostrar comentarios">
+                                <i class="fas fa-eye-slash"></i> <span id="toggleCommentsText">Ocultar Comentarios</span>
+                            </button>
+                        @endif
                         @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by)
                             <a href="{{ route('videos.edit', $video) }}" class="btn btn-sm btn-rugby-light">
                                 <i class="fas fa-edit"></i> Editar
