@@ -128,6 +128,14 @@ class CompressVideoJob implements ShouldQueue
 
             Log::info("CompressVideoJob: Compression completed, output: {$this->tempCompressedPath}");
 
+            // Re-check if video still exists after compression (user might have deleted it during processing)
+            $video->refresh();
+            if (!Video::find($this->videoId)) {
+                Log::warning("CompressVideoJob: Video {$this->videoId} was deleted during compression. Discarding compressed file.");
+                $this->delete(); // Remove job from queue
+                return;
+            }
+
             // Upload compressed video to storage
             $newPath = $this->uploadCompressedVideo($video, $this->tempCompressedPath);
 

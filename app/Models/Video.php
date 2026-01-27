@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Video extends Model
 {
     use BelongsToOrganization;
+
     protected $fillable = [
         'title',
         'description',
@@ -45,6 +48,25 @@ class Video extends Model
             'processing_started_at' => 'datetime',
             'processing_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Boot method to cancel compression jobs when video is deleted
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($video) {
+            // Cancel any pending compression jobs for this video
+            // Jobs are stored with video ID in the payload as JSON
+            $deletedCount = DB::table('jobs')
+                ->where('payload', 'like', '%CompressVideoJob%')
+                ->where('payload', 'like', "%\"videoId\":{$video->id}%")
+                ->delete();
+
+            if ($deletedCount > 0) {
+                Log::info("Video {$video->id} deleting: Cancelled {$deletedCount} pending compression job(s)");
+            }
+        });
     }
 
     public function uploader()
