@@ -406,8 +406,13 @@
     }
 
     function openSyncModal(angleId) {
-        // Will be implemented in Phase 4
-        alert('Herramienta de sincronización próximamente...');
+        // Call global openSyncModal function defined in sync-modal.blade.php
+        if (typeof window.openSyncModal === 'function') {
+            window.openSyncModal(angleId);
+        } else {
+            console.error('Sync modal not loaded');
+            alert('Error: Modal de sincronización no disponible');
+        }
     }
 
     function viewMultiCamera(angleId) {

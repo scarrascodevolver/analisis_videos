@@ -2508,4 +2508,7 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+{{-- Multi-Camera Sync Modal --}}
+@include('videos.partials.sync-modal')
+
 @endsection
