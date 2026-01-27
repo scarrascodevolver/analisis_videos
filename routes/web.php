@@ -15,6 +15,7 @@ use App\Http\Controllers\DirectUploadController;
 use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\JugadasController;
+use App\Http\Controllers\MultiCameraController;
 
 // Landing Page (público)
 Route::view('/', 'landing')->name('landing');
