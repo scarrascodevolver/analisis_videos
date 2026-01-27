@@ -82,13 +82,15 @@ class MultiCameraController extends Controller
     /**
      * Associate a video as an angle to a master video
      */
-    public function associateAngle(Request $request, Video $masterVideo)
+    public function associateAngle(Request $request, Video $video)
     {
         $request->validate([
             'slave_video_id' => 'required|exists:videos,id',
             'camera_angle' => 'required|string|max:100',
         ]);
 
+        // The route parameter {video} is injected as $video via route model binding
+        $masterVideo = $video;
         $slaveVideo = Video::findOrFail($request->slave_video_id);
 
         Log::info("=== ASSOCIATE DEBUG START ===");
