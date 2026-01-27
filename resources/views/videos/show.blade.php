@@ -463,6 +463,9 @@
 
             {{-- Multi-Camera Section --}}
             @include('videos.partials.multi-camera-section')
+
+            {{-- Multi-Camera Player --}}
+            @include('videos.partials.multi-camera-player')
         </div>
 
         <!-- Sidebar Section -->

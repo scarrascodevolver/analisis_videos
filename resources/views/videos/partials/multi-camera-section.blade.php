@@ -416,8 +416,13 @@
     }
 
     function viewMultiCamera(angleId) {
-        // Will be implemented in Phase 5
-        alert('Vista multi-cámara próximamente...');
+        // Call global viewMultiCamera function defined in multi-camera-player.blade.php
+        if (typeof window.viewMultiCamera === 'function') {
+            window.viewMultiCamera(angleId);
+        } else {
+            console.error('Multi-camera player not loaded');
+            alert('Error: Vista multi-cámara no disponible');
+        }
     }
 
     function formatFileSize(bytes) {
