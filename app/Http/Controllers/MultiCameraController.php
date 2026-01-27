@@ -100,6 +100,9 @@ class MultiCameraController extends Controller
                 'is_master' => true,
                 'camera_angle' => $request->input('master_angle', 'Master / Tribuna Central'),
             ]);
+
+            // Reload the model to reflect the changes
+            $masterVideo->refresh();
         }
 
         // Verify slave is not already in a group
