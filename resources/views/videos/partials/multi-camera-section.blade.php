@@ -180,7 +180,7 @@
 
 <script>
 // Multi-Camera Management JavaScript
-(function() {
+jQuery(function($) {
     const videoId = {{ $video->id }};
     const isPartOfGroup = {{ $video->isPartOfGroup() ? 'true' : 'false' }};
 
@@ -454,6 +454,6 @@
     function showError(message) {
         toastr.error(message);
     }
-})();
+});
 </script>
 @endif

@@ -107,7 +107,7 @@
 
 <script>
 // Multi-Camera Player JavaScript
-(function() {
+jQuery(function($) {
     let multiCameraActive = false;
     let masterVideo = null;
     let slaveVideos = [];
@@ -369,5 +369,5 @@
 
     // Update viewMultiCamera function in multi-camera-section.blade.php
     // to call this window.viewMultiCamera
-})();
+});
 </script>

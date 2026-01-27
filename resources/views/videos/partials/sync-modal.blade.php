@@ -208,7 +208,7 @@
 
 <script>
 // Sync Tool JavaScript
-(function() {
+jQuery(function($) {
     let currentSlaveVideoId = null;
     let currentOffset = 0;
     let masterVideo = null;
@@ -428,5 +428,5 @@
         const secs = Math.floor(seconds % 60);
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
-})();
+});
 </script>
