@@ -10,6 +10,7 @@ use App\Models\VideoComment;
 use App\Models\RugbySituation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class VideoController extends Controller
 {
@@ -90,12 +91,19 @@ class VideoController extends Controller
     public function store(Request $request)
     {
         try {
+            $currentOrg = auth()->user()->currentOrganization();
+
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
                 'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
-                'category_id' => 'required|exists:categories,id',
+                'category_id' => [
+                    'required',
+                    Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
+                        $query->where('organization_id', $currentOrg->id);
+                    })
+                ],
                 'division' => 'nullable|in:primera,intermedia,unica',
                 'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
                 'match_date' => 'required|date',
@@ -106,6 +114,7 @@ class VideoController extends Controller
             ], [
                 'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
+                'category_id.exists' => 'La categoría seleccionada no es válida para tu organización.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax()) {

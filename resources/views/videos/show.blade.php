@@ -431,7 +431,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Categoría:</strong></td>
-                                    <td><span class="badge badge-rugby">{{ $video->category->name }}</span></td>
+                                    <td><span class="badge badge-rugby">{{ $video->category?->name ?? 'Sin categoría' }}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Fecha:</strong></td>
