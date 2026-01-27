@@ -300,7 +300,7 @@
             method: 'GET',
             data: {
                 query: query,
-                exclude_group_id: {{ $video->video_group_id ? "'".$video->video_group_id."'" : 'null' }}
+                exclude_group_id: {!! json_encode($video->video_group_id) !!}
             },
             success: function(response) {
                 if (response.success) {
