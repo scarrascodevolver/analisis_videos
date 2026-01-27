@@ -408,7 +408,9 @@
             },
             success: function(response) {
                 if (response.success) {
-                    toastr.success('Video sincronizado correctamente');
+                    if (typeof showToast === 'function') {
+                        showToast('Video sincronizado correctamente', 'success');
+                    }
                     $('#syncToolModal').modal('hide');
 
                     // Reload angles in main page
@@ -418,11 +420,15 @@
                         setTimeout(() => location.reload(), 1000);
                     }
                 } else {
-                    toastr.error(response.message);
+                    if (typeof showToast === 'function') {
+                        showToast(response.message, 'error');
+                    }
                 }
             },
             error: function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Error al sincronizar');
+                if (typeof showToast === 'function') {
+                    showToast(xhr.responseJSON?.message || 'Error al sincronizar', 'error');
+                }
             },
             complete: function() {
                 btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar Sincronización');

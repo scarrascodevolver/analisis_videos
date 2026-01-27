@@ -140,11 +140,15 @@
                 if (response.success && response.angles.length > 0) {
                     initMultiCameraPlayer(response.angles);
                 } else {
-                    toastr.warning('No hay ángulos disponibles para vista multi-cámara');
+                    if (typeof showToast === 'function') {
+                        showToast('No hay ángulos disponibles para vista multi-cámara', 'warning');
+                    }
                 }
             },
             error: function() {
-                toastr.error('Error al cargar ángulos');
+                if (typeof showToast === 'function') {
+                    showToast('Error al cargar ángulos', 'error');
+                }
             }
         });
     }
@@ -350,7 +354,9 @@
     function swapWithMaster(slaveId) {
         // TODO: Implement swap functionality
         // This would require changing the video sources
-        toastr.info('Funcionalidad de intercambio próximamente...');
+        if (typeof showToast === 'function') {
+            showToast('Funcionalidad de intercambio próximamente...', 'info');
+        }
     }
 
     function exitMultiCamera() {

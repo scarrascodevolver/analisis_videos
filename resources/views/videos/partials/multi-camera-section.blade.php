@@ -455,11 +455,15 @@
     }
 
     function showSuccess(message) {
-        toastr.success(message);
+        if (typeof showToast === 'function') {
+            showToast(message, 'success');
+        }
     }
 
         function showError(message) {
-            toastr.error(message);
+            if (typeof showToast === 'function') {
+                showToast(message, 'error');
+            }
         }
     }
 
