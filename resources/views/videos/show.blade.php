@@ -460,6 +460,9 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Multi-Camera Section --}}
+            @include('videos.partials.multi-camera-section')
         </div>
 
         <!-- Sidebar Section -->
