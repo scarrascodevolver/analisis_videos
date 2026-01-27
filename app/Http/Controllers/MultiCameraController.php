@@ -91,8 +91,18 @@ class MultiCameraController extends Controller
 
         $slaveVideo = Video::findOrFail($request->slave_video_id);
 
+        Log::info("=== ASSOCIATE DEBUG START ===");
+        Log::info("Master Video ID: {$masterVideo->id}");
+        Log::info("Master is_master: " . var_export($masterVideo->is_master, true));
+        Log::info("Master isMaster(): " . var_export($masterVideo->isMaster(), true));
+        Log::info("Master video_group_id: {$masterVideo->video_group_id}");
+        Log::info("Slave Video ID: {$slaveVideo->id}");
+        Log::info("Slave video_group_id: {$slaveVideo->video_group_id}");
+        Log::info("Slave isPartOfGroup(): " . var_export($slaveVideo->isPartOfGroup(), true));
+
         // Verify master video can be a master
         if (!$masterVideo->isMaster() && !$masterVideo->isPartOfGroup()) {
+            Log::info("Converting video to master...");
             // Make it a master and create a group
             $groupId = Video::generateGroupId();
             $masterVideo->update([
@@ -103,10 +113,14 @@ class MultiCameraController extends Controller
 
             // Reload the model to reflect the changes
             $masterVideo->refresh();
+            Log::info("After conversion - is_master: " . var_export($masterVideo->is_master, true));
+        } else {
+            Log::info("Master is already a master or part of group, skipping conversion");
         }
 
         // Verify slave is not already in a group
         if ($slaveVideo->isPartOfGroup()) {
+            Log::warning("Slave video {$slaveVideo->id} is already in group {$slaveVideo->video_group_id}");
             return response()->json([
                 'success' => false,
                 'message' => 'This video is already part of another group. Remove it first.'
@@ -114,7 +128,10 @@ class MultiCameraController extends Controller
         }
 
         // Associate slave to master
+        Log::info("Calling associateToMaster with camera_angle: {$request->camera_angle}");
         $success = $slaveVideo->associateToMaster($masterVideo, $request->camera_angle);
+        Log::info("associateToMaster returned: " . var_export($success, true));
+        Log::info("=== ASSOCIATE DEBUG END ===");
 
         if ($success) {
             Log::info("Video {$slaveVideo->id} associated to master {$masterVideo->id} as angle: {$request->camera_angle}");

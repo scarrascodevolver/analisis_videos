@@ -437,9 +437,14 @@ class Video extends Model
      */
     public function associateToMaster(Video $masterVideo, string $cameraAngle): bool
     {
+        \Log::info("associateToMaster() - Master ID: {$masterVideo->id}, is_master: " . var_export($masterVideo->is_master, true) . ", isMaster(): " . var_export($masterVideo->isMaster(), true));
+
         if (!$masterVideo->isMaster()) {
+            \Log::error("associateToMaster() FAILED - master video isMaster() returned false");
             return false;
         }
+
+        \Log::info("associateToMaster() - Updating slave video {$this->id} with group_id: {$masterVideo->video_group_id}, camera_angle: {$cameraAngle}");
 
         $this->update([
             'video_group_id' => $masterVideo->video_group_id,
@@ -449,6 +454,7 @@ class Video extends Model
             'sync_offset' => null,
         ]);
 
+        \Log::info("associateToMaster() SUCCESS - Slave video {$this->id} associated to group {$this->video_group_id}");
         return true;
     }
 
