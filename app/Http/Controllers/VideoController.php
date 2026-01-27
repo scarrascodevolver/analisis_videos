@@ -270,7 +270,7 @@ class VideoController extends Controller
     {
         $videoTitle = $video->title;
 
-        // Delete file from storage - try Spaces first, then local
+        // Delete video file from storage - try Spaces first, then local
         try {
             if (Storage::disk('spaces')->exists($video->file_path)) {
                 Storage::disk('spaces')->delete($video->file_path);
@@ -284,6 +284,40 @@ class VideoController extends Controller
             Storage::disk('public')->delete($video->file_path);
         } catch (Exception $e) {
             \Log::warning('Local storage delete failed: ' . $e->getMessage());
+        }
+
+        // Delete thumbnail if exists
+        if ($video->thumbnail_path) {
+            try {
+                if (Storage::disk('spaces')->exists($video->thumbnail_path)) {
+                    Storage::disk('spaces')->delete($video->thumbnail_path);
+                }
+            } catch (Exception $e) {
+                \Log::warning('Thumbnail delete from Spaces failed: ' . $e->getMessage());
+            }
+
+            try {
+                Storage::disk('public')->delete($video->thumbnail_path);
+            } catch (Exception $e) {
+                \Log::warning('Thumbnail delete from local storage failed: ' . $e->getMessage());
+            }
+        }
+
+        // Delete original file if exists (uncompressed video)
+        if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
+            try {
+                if (Storage::disk('spaces')->exists($video->original_file_path)) {
+                    Storage::disk('spaces')->delete($video->original_file_path);
+                }
+            } catch (Exception $e) {
+                \Log::warning('Original file delete from Spaces failed: ' . $e->getMessage());
+            }
+
+            try {
+                Storage::disk('public')->delete($video->original_file_path);
+            } catch (Exception $e) {
+                \Log::warning('Original file delete from local storage failed: ' . $e->getMessage());
+            }
         }
 
         $video->delete();
