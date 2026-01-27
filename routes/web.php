@@ -76,6 +76,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
 
+    // Multi-Camera / Multi-Angle Routes
+    Route::prefix('videos/{video}/multi-camera')->name('videos.multi-camera.')->group(function () {
+        Route::get('angles', [MultiCameraController::class, 'getGroupAngles'])->name('angles');
+        Route::post('associate', [MultiCameraController::class, 'associateAngle'])->name('associate');
+        Route::delete('remove', [MultiCameraController::class, 'removeAngle'])->name('remove');
+        Route::post('sync', [MultiCameraController::class, 'syncAngle'])->name('sync');
+        Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
+    });
+    Route::get('videos/search-for-angles', [MultiCameraController::class, 'searchVideos'])->name('videos.search-angles');
+
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
     Route::post('api/upload/confirm', [DirectUploadController::class, 'confirmUpload'])->name('api.upload.confirm');
