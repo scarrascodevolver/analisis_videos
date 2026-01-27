@@ -91,6 +91,9 @@ class MultiCameraController extends Controller
 
         $slaveVideo = Video::findOrFail($request->slave_video_id);
 
+        Log::info("Associating angle - Master ID: {$masterVideo->id}, Slave ID: {$slaveVideo->id}");
+        Log::info("Master before: is_master={$masterVideo->is_master}, group_id={$masterVideo->video_group_id}");
+
         // Verify master video can be a master
         if (!$masterVideo->isMaster() && !$masterVideo->isPartOfGroup()) {
             // Make it a master and create a group
@@ -103,10 +106,14 @@ class MultiCameraController extends Controller
 
             // Reload the model to reflect the changes
             $masterVideo->refresh();
+            Log::info("Master after update: is_master={$masterVideo->is_master}, group_id={$masterVideo->video_group_id}");
         }
+
+        Log::info("Master isMaster() check: " . ($masterVideo->isMaster() ? 'true' : 'false'));
 
         // Verify slave is not already in a group
         if ($slaveVideo->isPartOfGroup()) {
+            Log::warning("Slave video {$slaveVideo->id} is already in group {$slaveVideo->video_group_id}");
             return response()->json([
                 'success' => false,
                 'message' => 'This video is already part of another group. Remove it first.'
@@ -114,7 +121,9 @@ class MultiCameraController extends Controller
         }
 
         // Associate slave to master
+        Log::info("Calling associateToMaster...");
         $success = $slaveVideo->associateToMaster($masterVideo, $request->camera_angle);
+        Log::info("associateToMaster returned: " . ($success ? 'true' : 'false'));
 
         if ($success) {
             Log::info("Video {$slaveVideo->id} associated to master {$masterVideo->id} as angle: {$request->camera_angle}");
