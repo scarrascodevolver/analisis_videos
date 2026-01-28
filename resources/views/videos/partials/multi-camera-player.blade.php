@@ -1,4 +1,4 @@
-{{-- Multi-Camera Player Component - Side by Side Layout --}}
+{{-- Multi-Camera Player Component - Side by Side Layout (OPTIMIZED) --}}
 <div id="multiCameraPlayer" style="display: none;">
     {{-- Master Video (Left 70%) --}}
     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
@@ -14,6 +14,11 @@
 
 {{-- Slave Videos Container (Right 30%) --}}
 <div id="slaveVideosContainer" style="display: none;">
+    {{-- Loading Spinner --}}
+    <div id="slaveLoadingSpinner" style="display: none; text-align: center; padding: 40px; color: #00B7B5;">
+        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+        <p>Cargando ángulos de cámara...</p>
+    </div>
     {{-- Will be populated by JavaScript --}}
 </div>
 
@@ -31,7 +36,7 @@
         {{-- Video Player --}}
         <div style="position: relative; background: #000;">
             <video class="slave-video" controls style="width: 100%; height: auto; max-height: 250px; display: block;"
-                   preload="metadata"
+                   preload="none"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
             </video>
@@ -62,7 +67,7 @@
 </template>
 
 <script>
-// Multi-Camera Player JavaScript - Side by Side
+// Multi-Camera Player JavaScript - Side by Side (OPTIMIZED)
 (function() {
     function init() {
         const $ = window.jQuery;
@@ -77,6 +82,92 @@
         let slaveVideos = [];
         let isMultiCameraActive = false;
 
+        // ═══════════════════════════════════════════════════════════
+        // OPTIMIZATION 1 & 2: Single Master Listener with AbortController
+        // ═══════════════════════════════════════════════════════════
+        let masterSyncController = null;
+        let lastSyncTime = 0;
+        const SYNC_THROTTLE_MS = 250; // 4 times per second
+
+        function setupMasterSync() {
+            // Cleanup previous listeners if exist
+            if (masterSyncController) {
+                masterSyncController.abort();
+            }
+
+            // Create new AbortController for cleanup
+            masterSyncController = new AbortController();
+            const signal = masterSyncController.signal;
+
+            // Single play event - syncs ALL slaves
+            masterVideo.addEventListener('play', () => {
+                slaveVideos.forEach(slave => {
+                    const expectedTime = masterVideo.currentTime + slave.offset;
+                    slave.element.currentTime = expectedTime;
+                    slave.element.play().catch(err => console.warn('Play failed:', err));
+                });
+            }, { signal });
+
+            // Single pause event - syncs ALL slaves
+            masterVideo.addEventListener('pause', () => {
+                slaveVideos.forEach(slave => {
+                    slave.element.pause();
+                });
+            }, { signal });
+
+            // Single seeked event - syncs ALL slaves
+            masterVideo.addEventListener('seeked', () => {
+                slaveVideos.forEach(slave => {
+                    const expectedTime = masterVideo.currentTime + slave.offset;
+                    slave.element.currentTime = expectedTime;
+                });
+            }, { signal });
+
+            // ═══════════════════════════════════════════════════════════
+            // OPTIMIZATION 3: Throttled timeupdate (250ms = 4 times/sec)
+            // ═══════════════════════════════════════════════════════════
+            masterVideo.addEventListener('timeupdate', () => {
+                const now = Date.now();
+
+                // Throttle: only check every 250ms
+                if (now - lastSyncTime < SYNC_THROTTLE_MS) {
+                    return;
+                }
+                lastSyncTime = now;
+
+                // Only sync if master is playing
+                if (masterVideo.paused) {
+                    return;
+                }
+
+                // Check drift for ALL slaves in a single pass
+                slaveVideos.forEach(slave => {
+                    if (slave.element.paused) {
+                        return;
+                    }
+
+                    const expectedTime = masterVideo.currentTime + slave.offset;
+                    const drift = Math.abs(slave.element.currentTime - expectedTime);
+
+                    // Only correct if drift > 0.5 seconds
+                    if (drift > 0.5) {
+                        console.log(`Re-syncing ${slave.angle}, drift: ${drift.toFixed(2)}s`);
+                        slave.element.currentTime = expectedTime;
+                    }
+                });
+            }, { signal });
+
+            console.log('✅ Master sync listeners initialized with throttling');
+        }
+
+        function cleanupMasterSync() {
+            if (masterSyncController) {
+                masterSyncController.abort();
+                masterSyncController = null;
+                console.log('🧹 Master sync listeners cleaned up');
+            }
+        }
+
         // Public function to activate multi-camera view
         window.activateMultiCamera = function(angles) {
             if (!angles || angles.length === 0) {
@@ -89,6 +180,9 @@
             // Show multi-camera layout
             activateSideBySideLayout();
 
+            // Show loading spinner
+            $('#slaveLoadingSpinner').show();
+
             // Render slave videos
             renderSlaveVideos(angles);
 
@@ -97,6 +191,10 @@
 
         window.deactivateMultiCamera = function() {
             isMultiCameraActive = false;
+
+            // Cleanup all listeners
+            cleanupMasterSync();
+
             deactivateSideBySideLayout();
             slaveVideos = [];
         };
@@ -128,7 +226,13 @@
 
         function renderSlaveVideos(angles) {
             const container = $('#slaveVideosContainer');
-            container.empty();
+            const loadingSpinner = $('#slaveLoadingSpinner');
+
+            // Clear previous content (keep spinner)
+            container.find('.slave-video-card').remove();
+
+            let loadedCount = 0;
+            const totalAngles = angles.length;
 
             angles.forEach(angle => {
                 const template = document.getElementById('slaveVideoTemplate').content.cloneNode(true);
@@ -138,14 +242,20 @@
                 card.find('.slave-angle-name span').text(angle.camera_angle);
                 card.find('.slave-video-title').text(angle.title);
 
-                // Get stream URL
+                // ═══════════════════════════════════════════════════════════
+                // OPTIMIZATION 4: Lazy loading - metadata loads on demand
+                // ═══════════════════════════════════════════════════════════
                 $.ajax({
                     url: `/videos/${angle.id}/multi-camera/stream-url`,
                     method: 'GET',
+                    timeout: 10000, // 10 second timeout
                     success: function(response) {
                         if (response.success) {
                             const video = card.find('.slave-video')[0];
                             video.src = response.stream_url;
+
+                            // Load metadata explicitly when ready
+                            video.load();
 
                             // Store video element and metadata
                             slaveVideos.push({
@@ -164,8 +274,32 @@
                                 card.find('.slave-unsync-badge').show();
                             }
 
-                            // Sync playback with master
-                            syncWithMaster(video, angle.sync_offset || 0);
+                            // Hide spinner when all angles loaded
+                            loadedCount++;
+                            if (loadedCount === totalAngles) {
+                                loadingSpinner.fadeOut(300);
+
+                                // Setup master sync ONCE after all slaves loaded
+                                setupMasterSync();
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(`Failed to load angle ${angle.id}:`, error);
+
+                        // Still count as "loaded" to hide spinner
+                        loadedCount++;
+                        if (loadedCount === totalAngles) {
+                            loadingSpinner.fadeOut(300);
+
+                            // Setup sync even if some failed
+                            if (slaveVideos.length > 0) {
+                                setupMasterSync();
+                            }
+                        }
+
+                        if (typeof showToast === 'function') {
+                            showToast(`Error cargando ${angle.camera_angle}`, 'error');
                         }
                     }
                 });
@@ -185,36 +319,6 @@
                 });
 
                 container.append(card);
-            });
-        }
-
-        function syncWithMaster(slaveVideo, offset) {
-            // Sync play/pause
-            masterVideo.addEventListener('play', () => {
-                slaveVideo.currentTime = masterVideo.currentTime + offset;
-                slaveVideo.play();
-            });
-
-            masterVideo.addEventListener('pause', () => {
-                slaveVideo.pause();
-            });
-
-            // Sync seeking
-            masterVideo.addEventListener('seeked', () => {
-                slaveVideo.currentTime = masterVideo.currentTime + offset;
-            });
-
-            // Sync time periodically to prevent drift
-            masterVideo.addEventListener('timeupdate', () => {
-                if (!masterVideo.paused && !slaveVideo.paused) {
-                    const expectedTime = masterVideo.currentTime + offset;
-                    const drift = Math.abs(slaveVideo.currentTime - expectedTime);
-
-                    if (drift > 0.5) {
-                        console.log(`Re-syncing slave video, drift: ${drift.toFixed(2)}s`);
-                        slaveVideo.currentTime = expectedTime;
-                    }
-                }
             });
         }
 
@@ -245,6 +349,11 @@
 
                         // Remove from slaveVideos array
                         slaveVideos = slaveVideos.filter(v => v.id !== angleId);
+
+                        // Re-setup sync with remaining slaves
+                        if (slaveVideos.length > 0) {
+                            setupMasterSync();
+                        }
                     }
                 },
                 error: function() {
