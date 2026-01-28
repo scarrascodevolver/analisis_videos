@@ -1410,6 +1410,19 @@ document.addEventListener('DOMContentLoaded', function() {
     scrollbar-width: thin;
     scrollbar-color: #00B7B5 #1a1a1a;
 }
+
+/* Mejoras de usabilidad para clips en timeline */
+.clip-block {
+    min-width: 8px !important;
+    margin-right: 2px;
+}
+
+.clip-block:hover {
+    transform: scaleY(1.3);
+    z-index: 100 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
+    filter: brightness(1.2);
+}
 </style>
 
 <!-- Modal de Confirmación para Eliminar Video -->
@@ -2228,7 +2241,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-end="${clipEnd}"
                      data-category-id="${clip.clip_category_id}"
                      title="${clip.title || ''}\n${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)} (${duration}s)"
-                     style="position: absolute; top: 3px; bottom: 3px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
+                     style="position: absolute; top: 2px; bottom: 2px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
                 </div>
             `;
         });
