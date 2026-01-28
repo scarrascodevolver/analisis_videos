@@ -203,15 +203,13 @@ async function loadClips() {
 }
 
 /**
- * Render clips list (in sidebar)
+ * Render clips list (in sidebar) - Grouped by category with accordion
  */
 function renderClipsList(clipsToShow = null) {
-    // Usar sidebarClipsList que es el que existe en la vista
     const container = document.getElementById('sidebarClipsList') || document.getElementById('clipsList');
     if (!container) return;
 
-    // Ordenar por timestamp cronológico (orden de aparición en video)
-    const displayClips = [...(clipsToShow || clips)].sort((a, b) => a.start_time - b.start_time);
+    const displayClips = clipsToShow || clips;
 
     if (displayClips.length === 0) {
         container.innerHTML = `
@@ -222,14 +220,143 @@ function renderClipsList(clipsToShow = null) {
         return;
     }
 
-    // Performance: Use virtual scrolling for large lists (>50 clips)
-    if (displayClips.length > VIRTUAL_SCROLL_THRESHOLD) {
-        console.log(`🚀 Using Virtual Scroll for ${displayClips.length} clips`);
-        renderClipsListVirtual(container, displayClips);
-    } else {
-        console.log(`📋 Using Standard Render for ${displayClips.length} clips`);
-        renderClipsListStandard(container, displayClips);
+    // Always use grouped view
+    renderClipsListGrouped(container, displayClips);
+}
+
+/**
+ * Render clips list grouped by category with accordion
+ */
+function renderClipsListGrouped(container, displayClips) {
+    // Group clips by category
+    const groupedClips = {};
+    const categoryOrder = [];
+
+    displayClips.forEach(clip => {
+        const categoryId = clip.clip_category_id || 0;
+        const categoryName = clip.category?.name || 'Sin categoría';
+        const categoryColor = clip.category?.color || '#666';
+
+        if (!groupedClips[categoryId]) {
+            groupedClips[categoryId] = {
+                id: categoryId,
+                name: categoryName,
+                color: categoryColor,
+                clips: []
+            };
+            categoryOrder.push(categoryId);
+        }
+
+        groupedClips[categoryId].clips.push(clip);
+    });
+
+    // Sort clips within each category by start_time
+    Object.values(groupedClips).forEach(group => {
+        group.clips.sort((a, b) => a.start_time - b.start_time);
+    });
+
+    // Build search input
+    const searchHTML = `
+        <div style="padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 10;">
+            <input type="text"
+                   id="clipCategorySearch"
+                   placeholder="Buscar categoría..."
+                   style="width: 100%; padding: 8px 12px; background: #0f0f0f; border: 1px solid #333; border-radius: 4px; color: #fff; font-size: 12px;"
+                   autocomplete="off">
+        </div>
+    `;
+
+    // Build accordion HTML
+    const accordionHTML = categoryOrder.map(categoryId => {
+        const group = groupedClips[categoryId];
+        const clipCount = group.clips.length;
+        const totalDuration = group.clips.reduce((sum, clip) => sum + (clip.end_time - clip.start_time), 0);
+
+        return `
+            <div class="clip-category-group" data-category-id="${group.id}" data-category-name="${group.name.toLowerCase()}">
+                <div class="clip-category-header" style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span style="width: 6px; height: 24px; background: ${group.color}; border-radius: 2px; margin-right: 10px;"></span>
+                        <span style="font-weight: 600; font-size: 13px; color: #fff;">${group.name}</span>
+                        <span style="margin-left: 8px; background: rgba(0, 183, 181, 0.2); color: #00B7B5; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                            ${clipCount}
+                        </span>
+                    </div>
+                    <div style="color: #888; font-size: 11px; margin-right: 5px;">
+                        ${formatTime(Math.floor(totalDuration))}
+                    </div>
+                    <i class="fas fa-chevron-down" style="color: #666; font-size: 12px; transition: transform 0.2s;"></i>
+                </div>
+                <div class="clip-category-content" style="display: none; background: #0f0f0f;">
+                    ${group.clips.length > VIRTUAL_SCROLL_THRESHOLD
+                        ? '<div class="clip-category-clips-container" style="max-height: 400px; overflow-y: auto;"></div>'
+                        : group.clips.map(clip => createClipItemHTML(clip)).join('')
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = searchHTML + accordionHTML;
+
+    // Setup search functionality
+    const searchInput = container.querySelector('#clipCategorySearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const groups = container.querySelectorAll('.clip-category-group');
+
+            groups.forEach(group => {
+                const categoryName = group.dataset.categoryName;
+                if (categoryName.includes(searchTerm)) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        });
     }
+
+    // Setup accordion toggle
+    container.querySelectorAll('.clip-category-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const chevron = header.querySelector('.fa-chevron-down');
+            const isOpen = content.style.display !== 'none';
+
+            if (isOpen) {
+                content.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'block';
+                chevron.style.transform = 'rotate(180deg)';
+
+                // If category has >50 clips and hasn't been rendered with virtual scroll yet
+                const categoryId = header.parentElement.dataset.categoryId;
+                const group = groupedClips[categoryId];
+                const clipsContainer = content.querySelector('.clip-category-clips-container');
+
+                if (clipsContainer && clipsContainer.children.length === 0) {
+                    renderCategoryClipsVirtual(clipsContainer, group.clips);
+                }
+            }
+        });
+    });
+
+    // Setup event delegation
+    setupClipListEventDelegation(container);
+}
+
+/**
+ * Render clips for a category using virtual scroll
+ */
+function renderCategoryClipsVirtual(container, categoryClips) {
+    const virtualScrollManager = new VirtualScrollManager(
+        container,
+        categoryClips,
+        (clip) => createClipItemElement(clip),
+        60
+    );
 }
 
 /**
@@ -294,11 +421,6 @@ function createClipItemHTML(clip) {
                                     title="Editar clip">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
-                                    style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                    title="Exportar GIF">
-                                <i class="fas fa-file-image"></i>
-                            </button>
                             <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
                                     style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                     title="Eliminar clip">
@@ -347,11 +469,6 @@ function createClipItemElement(clip) {
                                 style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                 title="Editar clip">
                             <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
-                                style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                title="Exportar GIF">
-                            <i class="fas fa-file-image"></i>
                         </button>
                         <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
                                 style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
@@ -407,17 +524,6 @@ function handleClipListClick(e) {
         if (typeof window.openEditClipModal === 'function') {
             window.openEditClipModal(editBtn);
         }
-        return;
-    }
-
-    // Handle GIF export button clicks
-    const exportBtn = e.target.closest('.sidebar-export-gif-btn');
-    if (exportBtn) {
-        e.stopPropagation();
-        const startTime = parseFloat(exportBtn.dataset.start);
-        const endTime = parseFloat(exportBtn.dataset.end);
-        const title = exportBtn.dataset.title;
-        exportClipAsGif(startTime, endTime, title, exportBtn);
         return;
     }
 
@@ -1142,150 +1248,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-/**
- * Export a clip as GIF
- * Uses gif.js library to capture video frames and generate GIF
- */
-async function exportClipAsGif(startTime, endTime, title, buttonEl) {
-    const video = getVideo();
-    if (!video) {
-        showNotification('No se encontró el video', 'error');
-        return;
-    }
-
-    // Check if GIF library is loaded
-    if (typeof GIF === 'undefined') {
-        showNotification('Librería GIF no disponible', 'error');
-        return;
-    }
-
-    // Show loading state
-    const originalContent = buttonEl.innerHTML;
-    buttonEl.disabled = true;
-    buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    showNotification('Generando GIF... esto puede tardar unos segundos', 'info');
-
-    // Save current video state
-    const wasPlaying = !video.paused;
-    const originalTime = video.currentTime;
-    video.pause();
-
-    // Calculate dimensions (maintain aspect ratio, max 480px width)
-    const maxWidth = 480;
-    const scale = Math.min(1, maxWidth / video.videoWidth);
-    const width = Math.floor(video.videoWidth * scale);
-    const height = Math.floor(video.videoHeight * scale);
-
-    // Create canvas for frame capture
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    // GIF settings
-    const fps = 10; // frames per second
-    const frameInterval = 1 / fps;
-    const duration = endTime - startTime;
-    const totalFrames = Math.min(Math.floor(duration * fps), 100); // Max 100 frames
-
-    // Initialize GIF encoder
-    const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        width: width,
-        height: height,
-        workerScript: '/js/gif.worker.js'
-    });
-
-    // Capture frames
-    let framesAdded = 0;
-
-    try {
-        for (let i = 0; i < totalFrames; i++) {
-            const frameTime = startTime + (i * frameInterval);
-
-            // Seek to frame time
-            await seekToTime(video, frameTime);
-
-            // Draw frame to canvas
-            ctx.drawImage(video, 0, 0, width, height);
-
-            // Add frame to GIF
-            gif.addFrame(ctx, { copy: true, delay: Math.floor(1000 / fps) });
-            framesAdded++;
-
-            // Update progress
-            if (i % 10 === 0) {
-                buttonEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${Math.floor((i / totalFrames) * 100)}%`;
-            }
-        }
-
-        // Render GIF
-        buttonEl.innerHTML = '<i class="fas fa-cog fa-spin"></i>';
-
-        gif.on('finished', function(blob) {
-            // Create download link
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${sanitizeFilename(title)}_${formatTime(Math.floor(startTime))}-${formatTime(Math.floor(endTime))}.gif`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            // Restore button
-            buttonEl.disabled = false;
-            buttonEl.innerHTML = originalContent;
-            showNotification(`GIF exportado correctamente (${framesAdded} frames)`, 'success');
-
-            // Restore video state
-            video.currentTime = originalTime;
-            if (wasPlaying) video.play();
-        });
-
-        gif.on('progress', function(p) {
-            buttonEl.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${Math.floor(p * 100)}%`;
-        });
-
-        gif.render();
-
-    } catch (error) {
-        console.error('Error exporting GIF:', error);
-        buttonEl.disabled = false;
-        buttonEl.innerHTML = originalContent;
-        showNotification('Error al exportar GIF', 'error');
-
-        // Restore video state
-        video.currentTime = originalTime;
-        if (wasPlaying) video.play();
-    }
-}
-
-/**
- * Promise-based video seek
- */
-function seekToTime(video, time) {
-    return new Promise((resolve) => {
-        const onSeeked = () => {
-            video.removeEventListener('seeked', onSeeked);
-            // Small delay to ensure frame is rendered
-            setTimeout(resolve, 50);
-        };
-        video.addEventListener('seeked', onSeeked);
-        video.currentTime = time;
-    });
-}
-
-/**
- * Sanitize filename for download
- */
-function sanitizeFilename(name) {
-    return name
-        .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-_]/g, '')
-        .replace(/\s+/g, '_')
-        .substring(0, 50) || 'clip';
-}
 
 // Expose functions globally for external access
 window.loadCategories = loadCategories;
