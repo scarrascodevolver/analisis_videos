@@ -271,31 +271,47 @@ function renderClipsListVirtual(container, displayClips) {
  * Create clip item HTML string (for standard render)
  */
 function createClipItemHTML(clip) {
+    const duration = (clip.end_time - clip.start_time).toFixed(1);
     return `
-        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 clip-item"
+        <div class="sidebar-clip-item"
              data-clip-id="${clip.id}"
              data-start="${clip.start_time}"
              data-end="${clip.end_time}"
-             style="cursor: pointer; background: #252525; border: none; border-bottom: 1px solid #333; color: #ccc;"
-             title="Clic para reproducir clip (${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))})">
-            <div class="d-flex align-items-center clip-play-area">
-                <i class="fas fa-play-circle mr-2" style="color: #00B7B5;"></i>
-                <span class="badge mr-2" style="background-color: ${clip.category?.color || '#6c757d'}; color: white;">
-                    ${clip.category?.name || 'Sin categoría'}
-                </span>
-                <span class="clip-time" style="color: #00B7B5;">
-                    ${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))}
-                </span>
-                ${clip.title ? `<span class="ml-2 small" style="color: #888;">${clip.title}</span>` : ''}
-            </div>
-            <div class="clip-actions">
-                ${clip.is_highlight ? '<i class="fas fa-star text-warning mr-2" title="Destacado"></i>' : ''}
-                <button class="btn btn-sm btn-outline-info export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}" title="Exportar GIF">
-                    <i class="fas fa-file-image"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger delete-clip-btn" data-clip-id="${clip.id}" title="Eliminar">
-                    <i class="fas fa-trash"></i>
-                </button>
+             style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background 0.2s; background: transparent;"
+             onmouseover="this.style.background='#252525'"
+             onmouseout="this.style.background='transparent'">
+            <div class="d-flex align-items-center">
+                <span style="width: 8px; height: 30px; background: ${clip.category?.color || '#666'}; border-radius: 3px; margin-right: 10px;"></span>
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="font-weight: 600; font-size: 12px; color: #fff;">
+                            ${clip.category?.name || 'Sin categoría'}
+                        </span>
+                        <div>
+                            ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                            <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
+                                    style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                    title="Editar clip">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
+                                    style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                    title="Exportar GIF">
+                                <i class="fas fa-file-image"></i>
+                            </button>
+                            <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
+                                    style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                    title="Eliminar clip">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #888;">
+                        ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
+                        <span style="color: #666; margin-left: 5px;">(${duration}s)</span>
+                    </div>
+                    ${clip.title ? `<div style="font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clip.title}</div>` : ''}
+                </div>
             </div>
         </div>
     `;
@@ -305,33 +321,51 @@ function createClipItemHTML(clip) {
  * Create clip item DOM element (for virtual scroll render)
  */
 function createClipItemElement(clip) {
+    const duration = (clip.end_time - clip.start_time).toFixed(1);
     const div = document.createElement('div');
-    div.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 clip-item';
+    div.className = 'sidebar-clip-item';
     div.dataset.clipId = clip.id;
     div.dataset.start = clip.start_time;
     div.dataset.end = clip.end_time;
-    div.style.cssText = 'cursor: pointer; background: #252525; border: none; border-bottom: 1px solid #333; color: #ccc;';
-    div.title = `Clic para reproducir clip (${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))})`;
+    div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background 0.2s; background: transparent;';
+
+    // Add hover effects
+    div.onmouseover = function() { this.style.background = '#252525'; };
+    div.onmouseout = function() { this.style.background = 'transparent'; };
 
     div.innerHTML = `
-        <div class="d-flex align-items-center clip-play-area">
-            <i class="fas fa-play-circle mr-2" style="color: #00B7B5;"></i>
-            <span class="badge mr-2" style="background-color: ${clip.category?.color || '#6c757d'}; color: white;">
-                ${clip.category?.name || 'Sin categoría'}
-            </span>
-            <span class="clip-time" style="color: #00B7B5;">
-                ${formatTime(Math.floor(clip.start_time))} - ${formatTime(Math.floor(clip.end_time))}
-            </span>
-            ${clip.title ? `<span class="ml-2 small" style="color: #888;">${clip.title}</span>` : ''}
-        </div>
-        <div class="clip-actions">
-            ${clip.is_highlight ? '<i class="fas fa-star text-warning mr-2" title="Destacado"></i>' : ''}
-            <button class="btn btn-sm btn-outline-info export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}" title="Exportar GIF">
-                <i class="fas fa-file-image"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger delete-clip-btn" data-clip-id="${clip.id}" title="Eliminar">
-                <i class="fas fa-trash"></i>
-            </button>
+        <div class="d-flex align-items-center">
+            <span style="width: 8px; height: 30px; background: ${clip.category?.color || '#666'}; border-radius: 3px; margin-right: 10px;"></span>
+            <div class="flex-grow-1" style="min-width: 0;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-weight: 600; font-size: 12px; color: #fff;">
+                        ${clip.category?.name || 'Sin categoría'}
+                    </span>
+                    <div>
+                        ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                        <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
+                                style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                title="Editar clip">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
+                                style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                title="Exportar GIF">
+                            <i class="fas fa-file-image"></i>
+                        </button>
+                        <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
+                                style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                title="Eliminar clip">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #888;">
+                    ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
+                    <span style="color: #666; margin-left: 5px;">(${duration}s)</span>
+                </div>
+                ${clip.title ? `<div style="font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clip.title}</div>` : ''}
+            </div>
         </div>
     `;
 
@@ -355,7 +389,7 @@ function setupClipListEventDelegation(container) {
  */
 function handleClipListClick(e) {
     // Handle delete button clicks
-    const deleteBtn = e.target.closest('.delete-clip-btn');
+    const deleteBtn = e.target.closest('.sidebar-delete-clip-btn');
     if (deleteBtn) {
         e.stopPropagation();
         const clipId = parseInt(deleteBtn.dataset.clipId);
@@ -365,8 +399,19 @@ function handleClipListClick(e) {
         return;
     }
 
+    // Handle edit button clicks
+    const editBtn = e.target.closest('.sidebar-edit-clip-btn');
+    if (editBtn) {
+        e.stopPropagation();
+        // Trigger edit modal (handled by show.blade.php)
+        if (typeof window.openEditClipModal === 'function') {
+            window.openEditClipModal(editBtn);
+        }
+        return;
+    }
+
     // Handle GIF export button clicks
-    const exportBtn = e.target.closest('.export-gif-btn');
+    const exportBtn = e.target.closest('.sidebar-export-gif-btn');
     if (exportBtn) {
         e.stopPropagation();
         const startTime = parseFloat(exportBtn.dataset.start);
@@ -377,7 +422,7 @@ function handleClipListClick(e) {
     }
 
     // Handle clip item clicks (play clip)
-    const clipItem = e.target.closest('.clip-item');
+    const clipItem = e.target.closest('.sidebar-clip-item');
     if (clipItem) {
         const startTime = parseFloat(clipItem.dataset.start);
         const endTime = parseFloat(clipItem.dataset.end);
