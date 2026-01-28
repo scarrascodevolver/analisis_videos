@@ -2228,7 +2228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-end="${clipEnd}"
                      data-category-id="${clip.clip_category_id}"
                      title="${clip.title || ''}\n${formatTimeShort(adjustedStart)} - ${formatTimeShort(adjustedEnd)} (${duration}s)"
-                     style="position: absolute; top: 2px; bottom: 2px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; border-radius: 3px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
+                     style="position: absolute; top: 2px; bottom: 2px; left: ${Math.max(0, Math.min(startPercent, 100))}%; width: ${Math.max(widthPercent, 0.5)}%; background: ${categoryColor}; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 5; transition: all 0.15s ease;">
                 </div>
             `;
         });
