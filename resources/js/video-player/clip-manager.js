@@ -58,12 +58,6 @@ export function initClipManager() {
     // Setup keyboard shortcuts
     setupHotkeys();
 
-    // Setup filter
-    const filterSelect = document.getElementById('clipFilterCategory');
-    if (filterSelect) {
-        filterSelect.addEventListener('change', filterClips);
-    }
-
     // Setup play all clips button
     const playAllBtn = document.getElementById('playAllClipsBtn');
     if (playAllBtn) {
@@ -109,7 +103,6 @@ async function loadCategories() {
         categories = await response.json();
 
         renderCategoryButtons();
-        populateFilterDropdown();
     } catch (error) {
         console.error('Error loading clip categories:', error);
         showCategoriesError();
@@ -157,17 +150,6 @@ function renderCategoryButtons() {
             }
         });
     });
-}
-
-/**
- * Populate filter dropdown with categories
- */
-function populateFilterDropdown() {
-    const select = document.getElementById('clipFilterCategory');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Todas las categorías</option>' +
-        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
 }
 
 /**
@@ -997,30 +979,10 @@ async function deleteClip(clipId) {
 }
 
 /**
- * Filter clips by category
- */
-function filterClips() {
-    const select = document.getElementById('clipFilterCategory');
-    const categoryId = select ? parseInt(select.value) : null;
-
-    if (!categoryId) {
-        renderClipsList(clips);
-    } else {
-        const filtered = clips.filter(c => c.clip_category_id === categoryId);
-        renderClipsList(filtered);
-    }
-}
-
-/**
- * Play all clips (or filtered clips) sequentially
+ * Play all clips sequentially
  */
 function playAllClips() {
-    const select = document.getElementById('clipFilterCategory');
-    const categoryId = select ? parseInt(select.value) : null;
-
-    filteredClips = categoryId
-        ? clips.filter(c => c.clip_category_id === categoryId)
-        : [...clips];
+    filteredClips = [...clips];
 
     if (filteredClips.length === 0) {
         showNotification('No hay clips para reproducir', 'warning');
