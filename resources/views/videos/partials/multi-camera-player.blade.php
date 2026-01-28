@@ -24,10 +24,10 @@
 
 {{-- Template for Slave Video --}}
 <template id="slaveVideoTemplate">
-    <div class="slave-video-card mb-2" data-video-id="" style="background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #222;">
+    <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 1;">
         {{-- Video Player --}}
-        <div style="position: relative; background: #000;">
-            <video class="slave-video" controls style="width: 100%; height: auto; display: block;"
+        <div style="position: relative; background: #000; height: 100%;">
+            <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
                    preload="none"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
@@ -198,11 +198,11 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master 75%, slaves 25%
+            // Create flex container - master 75%, slaves 25% - NO GAPS
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row" style="align-items: stretch; min-height: 85vh;"></div>');
-                mainContainer.wrap('<div class="col-lg-9 col-md-8" style="display: flex; align-items: center; justify-content: center; padding: 20px 0;"></div>');
-                slaveContainer.wrap('<div class="col-lg-3 col-md-4" style="overflow-y: auto; max-height: 90vh;"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0" style="align-items: center; min-height: 90vh;"></div>');
+                mainContainer.wrap('<div class="col-lg-9 col-md-8" style="display: flex; align-items: center; justify-content: center;"></div>');
+                slaveContainer.wrap('<div class="col-lg-3 col-md-4" style="overflow-y: auto; max-height: 90vh; display: flex; flex-direction: column;"></div>');
             }
 
             slaveContainer.show();
