@@ -96,14 +96,22 @@ Deberías ver la línea que agregaste.
           Multi-cámara fluido  Compresión
 ```
 
-### Cambiar Horario
+### 🌍 Configuración Recomendada para Argentina
 
-Edita `queue-control.sh` líneas 12-13:
+**Para horario nocturno 2 AM - 8 AM:**
+
+Edita `queue-control.sh` líneas 15-16:
 
 ```bash
-WORK_START_HOUR=8   # Cambiar a tu hora de inicio
-WORK_END_HOUR=22    # Cambiar a tu hora de fin
+WORK_START_HOUR=8   # 8 AM - Inicia trabajo
+WORK_END_HOUR=2     # 2 AM - Termina trabajo (próximo día)
 ```
+
+**Resultado:**
+- **2 AM - 8 AM**: Queue ACTIVO (compresión)
+- **8 AM - 2 AM**: Queue PAUSADO (multi-cámara libre)
+
+**NOTA:** El END_HOUR puede ser menor que START_HOUR (cruza medianoche).
 
 ---
 

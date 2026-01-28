@@ -12,8 +12,10 @@
 ###############################################################################
 
 WORKER_NAME="rugby-queue-worker:*"
-WORK_START_HOUR=8   # 8 AM
-WORK_END_HOUR=22    # 10 PM
+WORK_START_HOUR=8   # Hora de inicio de jornada (pausa compresión)
+WORK_END_HOUR=2     # Hora de fin de jornada (activa compresión)
+                    # Si END_HOUR < START_HOUR, cruza medianoche
+                    # Ejemplo: 8-2 = Pausado de 8 AM a 2 AM, Activo de 2 AM a 8 AM
 
 # Colors for output
 RED='\033[0;31m'
@@ -72,8 +74,25 @@ auto_control() {
     CURRENT_HOUR=$(date +%H)
     CURRENT_HOUR=$((10#$CURRENT_HOUR))  # Convert to decimal
 
-    # Check if we're in work hours (8 AM - 10 PM)
-    if [ $CURRENT_HOUR -ge $WORK_START_HOUR ] && [ $CURRENT_HOUR -lt $WORK_END_HOUR ]; then
+    # Determine if we're in work hours (when to PAUSE compression)
+    IN_WORK_HOURS=false
+
+    if [ $WORK_END_HOUR -lt $WORK_START_HOUR ]; then
+        # Schedule crosses midnight (e.g., 8 AM - 2 AM)
+        # Work hours: START to 23:59 AND 00:00 to END
+        if [ $CURRENT_HOUR -ge $WORK_START_HOUR ] || [ $CURRENT_HOUR -lt $WORK_END_HOUR ]; then
+            IN_WORK_HOURS=true
+        fi
+    else
+        # Normal schedule (e.g., 8 AM - 10 PM)
+        # Work hours: START to END
+        if [ $CURRENT_HOUR -ge $WORK_START_HOUR ] && [ $CURRENT_HOUR -lt $WORK_END_HOUR ]; then
+            IN_WORK_HOURS=true
+        fi
+    fi
+
+    # Act based on work hours status
+    if [ "$IN_WORK_HOURS" = true ]; then
         echo -e "${YELLOW}[AUTO]${NC} Work hours detected (${CURRENT_HOUR}:00). Ensuring worker is STOPPED..."
         stop_worker
     else
