@@ -24,39 +24,39 @@
 
 {{-- Template for Slave Video --}}
 <template id="slaveVideoTemplate">
-    <div class="slave-video-card mb-2" data-video-id="" style="background: #1a1a1a; border-radius: 6px; overflow: hidden; border: 1px solid #333;">
-        {{-- Compact Header: Angle name + Controls inline --}}
-        <div class="d-flex justify-content-between align-items-center" style="padding: 5px 8px; background: #252525; border-bottom: 1px solid #333;">
-            <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
-                <h6 class="mb-0 slave-angle-name" style="color: #00B7B5; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <i class="fas fa-video" style="font-size: 10px;"></i> <span></span>
-                </h6>
-                {{-- Sync Badge Inline --}}
-                <span class="slave-sync-badge badge badge-success ml-2" style="display: none; font-size: 9px; padding: 2px 6px;">
-                    <i class="fas fa-check"></i> <span class="slave-offset-text"></span>
-                </span>
-                <span class="slave-unsync-badge badge badge-warning ml-2" style="display: none; font-size: 9px; padding: 2px 6px;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </span>
-            </div>
-            {{-- Compact Icon Buttons --}}
-            <div class="ml-2" style="white-space: nowrap;">
-                <button class="btn btn-sm btn-info slave-sync-btn" style="padding: 3px 8px; font-size: 11px;" title="Sincronizar">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <button class="btn btn-sm btn-danger slave-remove-btn ml-1" style="padding: 3px 8px; font-size: 11px;" title="Eliminar">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-
+    <div class="slave-video-card mb-2" data-video-id="" style="background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #222;">
         {{-- Video Player --}}
         <div style="position: relative; background: #000;">
-            <video class="slave-video" controls style="width: 100%; height: auto; max-height: 200px; display: block;"
+            <video class="slave-video" controls style="width: 100%; height: auto; display: block;"
                    preload="none"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
             </video>
+
+            {{-- Floating Header (over video) --}}
+            <div class="d-flex justify-content-between align-items-center" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 6px 10px; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+                <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                    <h6 class="mb-0 slave-angle-name" style="color: #00B7B5; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                        <i class="fas fa-video" style="font-size: 9px;"></i> <span></span>
+                    </h6>
+                    {{-- Sync Badge Inline --}}
+                    <span class="slave-sync-badge badge badge-success ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(40, 167, 69, 0.9);">
+                        <i class="fas fa-check"></i> <span class="slave-offset-text"></span>
+                    </span>
+                    <span class="slave-unsync-badge badge badge-warning ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(255, 193, 7, 0.9);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </span>
+                </div>
+                {{-- Compact Icon Buttons --}}
+                <div class="ml-2" style="white-space: nowrap;">
+                    <button class="btn btn-sm btn-info slave-sync-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(23, 162, 184, 0.9); border: none;" title="Sincronizar">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger slave-remove-btn ml-1" style="padding: 2px 6px; font-size: 10px; background: rgba(220, 53, 69, 0.9); border: none;" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -198,11 +198,11 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container with better proportions
+            // Create flex container - master takes 80%, slaves 20%
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row" style="align-items: flex-start;"></div>');
-                mainContainer.wrap('<div class="col-lg-9 col-md-8"></div>');
-                slaveContainer.wrap('<div class="col-lg-3 col-md-4"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row" style="align-items: stretch;"></div>');
+                mainContainer.wrap('<div class="col-lg-10 col-md-9" style="display: flex; align-items: center;"></div>');
+                slaveContainer.wrap('<div class="col-lg-2 col-md-3" style="overflow-y: auto; max-height: 90vh;"></div>');
             }
 
             slaveContainer.show();
