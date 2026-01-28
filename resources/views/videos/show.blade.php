@@ -1064,6 +1064,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load clips for sidebar
     async function loadSidebarClips() {
         try {
+            // Load categories (needed for visual timeline)
+            if (window.sidebarCategoriesData.length === 0) {
+                const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
+                window.sidebarCategoriesData = await catResponse.json();
+            }
+
             // Load clips
             const response = await fetch('{{ route("api.clips.index", $video) }}');
             window.sidebarClipsData = await response.json();
