@@ -198,11 +198,11 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master 75%, slaves 25% - NO GAPS, NO PADDING
+            // Create flex container - master 70%, slaves 30% - NO GAPS, NO PADDING
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
                 mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: flex-start; min-height: 90vh;"></div>');
-                mainContainer.wrap('<div class="col-lg-9 col-md-8 p-0" style="display: flex; align-items: flex-start;"></div>');
-                slaveContainer.wrap('<div class="col-lg-3 col-md-4 p-0" style="overflow-y: auto; max-height: 90vh; display: flex; flex-direction: column;"></div>');
+                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: flex-start;"></div>');
+                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; max-height: 90vh; display: flex; flex-direction: column;"></div>');
 
                 // Remove border-radius from video container when in multi-camera
                 mainContainer.css('border-radius', '0');
