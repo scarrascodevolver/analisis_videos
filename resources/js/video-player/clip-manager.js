@@ -1244,6 +1244,7 @@ function sanitizeFilename(name) {
 
 // Expose functions globally for external access
 window.loadCategories = loadCategories;
+window.renderClipsList = renderClipsList; // Exposes virtual scroll functionality
 window.removeClipFromLocalArray = function(clipId) {
     clips = clips.filter(c => c.id !== clipId);
 };

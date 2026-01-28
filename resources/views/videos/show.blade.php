@@ -1097,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Render clips in sidebar
+    // Render clips in sidebar - USES VIRTUAL SCROLL for large lists
     function renderSidebarClips(filterCategoryId = null) {
         let clips = [...window.sidebarClipsData].sort((a, b) => a.start_time - b.start_time); // Chronological order
 
@@ -1110,83 +1110,92 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebarTotalClips.textContent = window.sidebarClipsData.length;
         sidebarHighlights.textContent = window.sidebarClipsData.filter(c => c.is_highlight).length;
 
-        if (clips.length === 0) {
-            sidebarClipsList.innerHTML = `
-                <div class="text-center py-4" style="color: #666;">
-                    <i class="fas fa-film fa-2x mb-2"></i>
-                    <p class="mb-0">Sin clips</p>
-                    <small>${filterCategoryId ? 'Prueba otro filtro' : 'Usa la botonera para crear clips'}</small>
-                </div>`;
-            return;
-        }
+        // Use clip-manager's renderClipsList() which has virtual scrolling
+        if (typeof window.renderClipsList === 'function') {
+            console.log('✅ Using clip-manager renderClipsList() with virtual scroll');
+            window.renderClipsList(clips);
+        } else {
+            console.warn('⚠️ clip-manager not loaded, falling back to standard render');
 
-        sidebarClipsList.innerHTML = clips.map(clip => `
-            <div class="sidebar-clip-item"
-                 data-clip-id="${clip.id}"
-                 data-start="${clip.start_time}"
-                 data-end="${clip.end_time}"
-                 style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background 0.2s;"
-                 onmouseover="this.style.background='#252525'"
-                 onmouseout="this.style.background='transparent'">
-                <div class="d-flex align-items-center">
-                    <span style="width: 8px; height: 30px; background: ${clip.category?.color || '#666'}; border-radius: 3px; margin-right: 10px;"></span>
-                    <div class="flex-grow-1" style="min-width: 0;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span style="font-weight: 600; font-size: 12px; color: #fff;">
-                                ${clip.category?.name || 'Sin categoría'}
-                            </span>
-                            <div>
-                                ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
-                                <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
-                                        style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                        title="Editar clip">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
-                                        style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                        title="Exportar GIF">
-                                    <i class="fas fa-file-image"></i>
-                                </button>
-                                <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
-                                        style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                        title="Eliminar clip">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+            // Fallback: Standard render (only if clip-manager not loaded)
+            if (clips.length === 0) {
+                sidebarClipsList.innerHTML = `
+                    <div class="text-center py-4" style="color: #666;">
+                        <i class="fas fa-film fa-2x mb-2"></i>
+                        <p class="mb-0">Sin clips</p>
+                        <small>${filterCategoryId ? 'Prueba otro filtro' : 'Usa la botonera para crear clips'}</small>
+                    </div>`;
+                return;
+            }
+
+            sidebarClipsList.innerHTML = clips.map(clip => `
+                <div class="sidebar-clip-item"
+                     data-clip-id="${clip.id}"
+                     data-start="${clip.start_time}"
+                     data-end="${clip.end_time}"
+                     style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background 0.2s;"
+                     onmouseover="this.style.background='#252525'"
+                     onmouseout="this.style.background='transparent'">
+                    <div class="d-flex align-items-center">
+                        <span style="width: 8px; height: 30px; background: ${clip.category?.color || '#666'}; border-radius: 3px; margin-right: 10px;"></span>
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-weight: 600; font-size: 12px; color: #fff;">
+                                    ${clip.category?.name || 'Sin categoría'}
+                                </span>
+                                <div>
+                                    ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
+                                    <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
+                                            style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                            title="Editar clip">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
+                                            style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                            title="Exportar GIF">
+                                        <i class="fas fa-file-image"></i>
+                                    </button>
+                                    <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
+                                            style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                            title="Eliminar clip">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
+                            <div style="font-size: 11px; color: #888;">
+                                ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
+                                <span style="color: #666; margin-left: 5px;">(${(clip.end_time - clip.start_time).toFixed(1)}s)</span>
+                            </div>
+                            ${clip.title ? `<div style="font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clip.title}</div>` : ''}
                         </div>
-                        <div style="font-size: 11px; color: #888;">
-                            ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
-                            <span style="color: #666; margin-left: 5px;">(${(clip.end_time - clip.start_time).toFixed(1)}s)</span>
-                        </div>
-                        ${clip.title ? `<div style="font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clip.title}</div>` : ''}
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
 
-        // Add click handlers to play clips
-        document.querySelectorAll('.sidebar-clip-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                // Ignore if clicking delete button
-                if (e.target.closest('.sidebar-delete-clip-btn')) return;
+            // Add click handlers to play clips (fallback only)
+            document.querySelectorAll('.sidebar-clip-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Ignore if clicking delete button
+                    if (e.target.closest('.sidebar-delete-clip-btn')) return;
 
-                const start = parseFloat(this.dataset.start);
-                const video = document.getElementById('rugbyVideo');
-                if (video) {
-                    video.currentTime = start;
+                    const start = parseFloat(this.dataset.start);
+                    const video = document.getElementById('rugbyVideo');
+                    if (video) {
+                        video.currentTime = start;
 
-                    // Small delay to ensure seek completes before playing
-                    setTimeout(() => {
-                        const playPromise = video.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(error => {
-                                console.warn('Play was prevented:', error);
-                            });
-                        }
-                    }, 50);
-                }
+                        // Small delay to ensure seek completes before playing
+                        setTimeout(() => {
+                            const playPromise = video.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(error => {
+                                    console.warn('Play was prevented:', error);
+                                });
+                            }
+                        }, 50);
+                    }
+                });
             });
-        });
+        }
 
         // Add click handlers for delete buttons
         document.querySelectorAll('.sidebar-delete-clip-btn').forEach(btn => {
