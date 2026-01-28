@@ -102,22 +102,28 @@ class MultiCameraController extends Controller
         Log::info("Slave video_group_id: {$slaveVideo->video_group_id}");
         Log::info("Slave isPartOfGroup(): " . var_export($slaveVideo->isPartOfGroup(), true));
 
-        // Verify master video can be a master
-        if (!$masterVideo->isMaster() && !$masterVideo->isPartOfGroup()) {
-            Log::info("Converting video to master...");
-            // Make it a master and create a group
+        // Verify master video has a group_id (create one if needed)
+        if (!$masterVideo->video_group_id) {
+            Log::info("Master video {$masterVideo->id} is missing group_id, creating one...");
             $groupId = Video::generateGroupId();
             $masterVideo->update([
                 'video_group_id' => $groupId,
                 'is_master' => true,
                 'camera_angle' => $request->input('master_angle', 'Master / Tribuna Central'),
             ]);
-
-            // Reload the model to reflect the changes
+            $masterVideo->refresh();
+            Log::info("Master video updated - video_group_id: {$masterVideo->video_group_id}");
+        } elseif (!$masterVideo->isMaster()) {
+            Log::info("Converting video {$masterVideo->id} to master...");
+            // Make it a master (keep existing group_id if has one)
+            $masterVideo->update([
+                'is_master' => true,
+                'camera_angle' => $request->input('master_angle', 'Master / Tribuna Central'),
+            ]);
             $masterVideo->refresh();
             Log::info("After conversion - is_master: " . var_export($masterVideo->is_master, true));
         } else {
-            Log::info("Master is already a master or part of group, skipping conversion");
+            Log::info("Master video {$masterVideo->id} already configured (is_master: true, group_id: {$masterVideo->video_group_id})");
         }
 
         // Verify slave is not already in a group
