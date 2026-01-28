@@ -198,11 +198,14 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master 75%, slaves 25% - NO GAPS
+            // Create flex container - master 75%, slaves 25% - NO GAPS, NO PADDING
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0" style="align-items: center; min-height: 90vh;"></div>');
-                mainContainer.wrap('<div class="col-lg-9 col-md-8" style="display: flex; align-items: center; justify-content: center;"></div>');
-                slaveContainer.wrap('<div class="col-lg-3 col-md-4" style="overflow-y: auto; max-height: 90vh; display: flex; flex-direction: column;"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: flex-start; min-height: 90vh;"></div>');
+                mainContainer.wrap('<div class="col-lg-9 col-md-8 p-0" style="display: flex; align-items: flex-start;"></div>');
+                slaveContainer.wrap('<div class="col-lg-3 col-md-4 p-0" style="overflow-y: auto; max-height: 90vh; display: flex; flex-direction: column;"></div>');
+
+                // Remove border-radius from video container when in multi-camera
+                mainContainer.css('border-radius', '0');
             }
 
             slaveContainer.show();
@@ -214,8 +217,12 @@
             // Unwrap if needed
             const layout = $('.multi-camera-layout');
             if (layout.length) {
-                $('.video-container').first().unwrap().unwrap();
+                const videoContainer = $('.video-container').first();
+                videoContainer.unwrap().unwrap();
                 $('#slaveVideosContainer').unwrap();
+
+                // Restore border-radius when exiting multi-camera
+                videoContainer.css('border-radius', '8px');
             }
         }
 
