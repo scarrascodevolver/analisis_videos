@@ -133,10 +133,30 @@ class MultiCameraController extends Controller
         Log::info("Calling associateToMaster with camera_angle: {$request->camera_angle}");
         $success = $slaveVideo->associateToMaster($masterVideo, $request->camera_angle);
         Log::info("associateToMaster returned: " . var_export($success, true));
-        Log::info("=== ASSOCIATE DEBUG END ===");
 
         if ($success) {
+            // Refresh master to get updated relationships
+            $masterVideo->refresh();
+            Log::info("Master video refreshed after association");
+
+            // Get all angles to return in response (avoids second request)
+            $slaves = $masterVideo->getSlaveVideos();
+            $angles = $slaves->map(function ($slave) {
+                return [
+                    'id' => $slave->id,
+                    'title' => $slave->title,
+                    'camera_angle' => $slave->camera_angle,
+                    'is_synced' => $slave->is_synced,
+                    'sync_offset' => $slave->sync_offset,
+                    'sync_reference_event' => $slave->sync_reference_event,
+                    'file_size' => $slave->file_size,
+                    'duration' => $slave->duration,
+                ];
+            });
+
             Log::info("Video {$slaveVideo->id} associated to master {$masterVideo->id} as angle: {$request->camera_angle}");
+            Log::info("Returning " . $angles->count() . " angles in response");
+            Log::info("=== ASSOCIATE DEBUG END ===");
 
             return response()->json([
                 'success' => true,
@@ -146,10 +166,12 @@ class MultiCameraController extends Controller
                     'title' => $slaveVideo->title,
                     'camera_angle' => $slaveVideo->camera_angle,
                     'is_synced' => false,
-                ]
+                ],
+                'angles' => $angles, // Include all angles in response
             ]);
         }
 
+        Log::info("=== ASSOCIATE DEBUG END ===");
         return response()->json([
             'success' => false,
             'message' => 'Failed to associate angle'

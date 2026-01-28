@@ -334,21 +334,33 @@
                     showSuccess('Ángulo asociado correctamente');
                     $('#associateAngleModal').modal('hide');
 
-                    // Instead of reloading, fetch angles and activate multi-camera
-                    $.ajax({
-                        url: `/videos/{{ $video->id }}/multi-camera/angles`,
-                        method: 'GET',
-                        success: function(anglesResponse) {
-                            if (anglesResponse.success && anglesResponse.angles.length > 0) {
-                                // Activate multi-camera with the angles
-                                if (typeof window.activateMultiCamera === 'function') {
-                                    window.activateMultiCamera(anglesResponse.angles);
-                                } else {
-                                    console.error('activateMultiCamera function not found');
-                                }
-                            }
+                    // Angles are included in response, no need for second request
+                    if (response.angles && response.angles.length > 0) {
+                        console.log('✅ Angles returned in associate response:', response.angles.length);
+
+                        // Activate multi-camera with the angles
+                        if (typeof window.activateMultiCamera === 'function') {
+                            window.activateMultiCamera(response.angles);
+                        } else {
+                            console.error('⚠️ activateMultiCamera function not found');
                         }
-                    });
+                    } else {
+                        console.warn('⚠️ No angles returned in response, trying fallback GET request...');
+
+                        // Fallback: fetch angles if not included in response (shouldn't happen)
+                        $.ajax({
+                            url: `/videos/{{ $video->id }}/multi-camera/angles`,
+                            method: 'GET',
+                            success: function(anglesResponse) {
+                                if (anglesResponse.success && anglesResponse.angles.length > 0) {
+                                    window.activateMultiCamera(anglesResponse.angles);
+                                }
+                            },
+                            error: function() {
+                                console.error('❌ Failed to fetch angles after association');
+                            }
+                        });
+                    }
                 } else {
                     showError(response.message);
                 }
