@@ -198,11 +198,11 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master takes 80%, slaves 20%
+            // Create flex container - master 75%, slaves 25%
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row" style="align-items: stretch;"></div>');
-                mainContainer.wrap('<div class="col-lg-10 col-md-9" style="display: flex; align-items: center;"></div>');
-                slaveContainer.wrap('<div class="col-lg-2 col-md-3" style="overflow-y: auto; max-height: 90vh;"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row" style="align-items: stretch; min-height: 85vh;"></div>');
+                mainContainer.wrap('<div class="col-lg-9 col-md-8" style="display: flex; align-items: center; justify-content: center; padding: 20px 0;"></div>');
+                slaveContainer.wrap('<div class="col-lg-3 col-md-4" style="overflow-y: auto; max-height: 90vh;"></div>');
             }
 
             slaveContainer.show();
