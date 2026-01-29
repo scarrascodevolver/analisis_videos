@@ -251,42 +251,49 @@ class CompressVideoJob implements ShouldQueue
         // Get file size in MB
         $fileSizeMB = filesize($inputPath) / 1024 / 1024;
 
-        // Adaptive preset and CRF based on file size
+        // Adaptive preset, CRF, and GOP based on file size
         // Optimized for 2 CPU / 4GB RAM VPS
+        // GOP (-g): Keyframe interval for fast seeking (lower = faster seeks but larger file)
         // Smaller files: better quality, slower preset
         // Larger files: good quality, faster preset, more aggressive compression
         if ($fileSizeMB < 500) {
             $preset = 'medium';
             $crf = 23;
-            $reason = 'Small file (<500MB): using best quality preset';
+            $gopSize = 50; // Keyframe every 2s at 25fps
+            $reason = 'Small file (<500MB): best quality preset with fast seeking';
         } elseif ($fileSizeMB < 2000) {
             $preset = 'fast';
             $crf = 23;
-            $reason = 'Medium file (500MB-2GB): using balanced preset';
+            $gopSize = 50;
+            $reason = 'Medium file (500MB-2GB): balanced preset with fast seeking';
         } elseif ($fileSizeMB < 4000) {
             $preset = 'veryfast';
-            $crf = 22; // Lower CRF for large files to maintain quality
-            $reason = 'Large file (2GB-4GB): using speed-optimized preset with enhanced quality (CRF 22)';
+            $crf = 25; // Balanced quality/size
+            $gopSize = 50;
+            $reason = 'Large file (2GB-4GB): speed-optimized with fast seeking (GOP 50)';
         } else {
             $preset = 'veryfast';
-            $crf = 24; // More aggressive CRF for very large files (faster processing)
-            $reason = 'Very large file (>4GB): using speed-optimized preset with aggressive compression (CRF 24) to reduce processing time';
+            $crf = 26; // More aggressive for 4GB+ files
+            $gopSize = 50;
+            $reason = 'Very large file (>4GB): aggressive compression with fast seeking (GOP 50, CRF 26)';
         }
 
         Log::info("CompressVideoJob: File size: {$fileSizeMB} MB. {$reason}");
 
         // FFmpeg command optimized for rugby videos with adaptive settings
+        // -g: GOP size (keyframe interval) - lower = faster seeking but ~10-15% larger file
         $command = sprintf(
-            'ffmpeg -i %s -c:v libx264 -preset %s -crf %d ' .
+            'ffmpeg -i %s -c:v libx264 -preset %s -crf %d -g %d ' .
             '-vf "scale=1920:1080:force_original_aspect_ratio=decrease" ' .
             '-c:a aac -b:a 128k -movflags +faststart -threads 0 -y %s 2>&1',
             escapeshellarg($inputPath),
             $preset,
             $crf,
+            $gopSize,
             escapeshellarg($outputPath)
         );
 
-        Log::info("CompressVideoJob: Executing FFmpeg with preset '{$preset}', CRF {$crf}");
+        Log::info("CompressVideoJob: Executing FFmpeg with preset '{$preset}', CRF {$crf}, GOP {$gopSize}");
 
         $startTime = microtime(true);
 
@@ -307,7 +314,7 @@ class CompressVideoJob implements ShouldQueue
         }
 
         $outputSizeMB = round(filesize($outputPath) / 1024 / 1024, 2);
-        Log::info("CompressVideoJob: FFmpeg completed in {$duration}s. Output: {$outputSizeMB}MB (preset: {$preset}, CRF: {$crf})");
+        Log::info("CompressVideoJob: FFmpeg completed in {$duration}s. Output: {$outputSizeMB}MB (preset: {$preset}, CRF: {$crf}, GOP: {$gopSize})");
     }
 
     /**
