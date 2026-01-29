@@ -96,10 +96,30 @@
 
             // Single play event - syncs ALL slaves
             masterVideo.addEventListener('play', () => {
+                // ✅ Validar que master esté listo
+                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                    return;
+                }
+
                 slaveVideos.forEach(slave => {
+                    // ✅ Validar que slave esté listo
+                    if (isNaN(slave.element.duration)) {
+                        return;
+                    }
+
                     const expectedTime = masterVideo.currentTime + slave.offset;
+
+                    // ✅ Validar que expectedTime sea finito y válido
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        return;
+                    }
+
                     slave.element.currentTime = expectedTime;
-                    slave.element.play().catch(err => console.warn('Play failed:', err));
+                    slave.element.play().catch(err => {
+                        // ✅ Ignorar AbortError (esperado cuando usuario pausa)
+                        if (err?.name === 'AbortError') return;
+                        console.warn('Play failed:', err);
+                    });
                 });
             }, { signal });
 
@@ -112,8 +132,24 @@
 
             // Single seeked event - syncs ALL slaves
             masterVideo.addEventListener('seeked', () => {
+                // ✅ Validar que master esté listo
+                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                    return;
+                }
+
                 slaveVideos.forEach(slave => {
+                    // ✅ Validar que slave esté listo
+                    if (isNaN(slave.element.duration)) {
+                        return;
+                    }
+
                     const expectedTime = masterVideo.currentTime + slave.offset;
+
+                    // ✅ Validar que expectedTime sea finito y válido
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        return;
+                    }
+
                     slave.element.currentTime = expectedTime;
                 });
             }, { signal });
@@ -135,13 +171,29 @@
                     return;
                 }
 
+                // ✅ Validar que master esté listo
+                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                    return;
+                }
+
                 // Check drift for ALL slaves in a single pass
                 slaveVideos.forEach(slave => {
                     if (slave.element.paused) {
                         return;
                     }
 
+                    // ✅ Validar que slave esté listo
+                    if (isNaN(slave.element.duration) || !isFinite(slave.element.currentTime)) {
+                        return;
+                    }
+
                     const expectedTime = masterVideo.currentTime + slave.offset;
+
+                    // ✅ Validar que expectedTime sea finito
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        return;
+                    }
+
                     const drift = Math.abs(slave.element.currentTime - expectedTime);
 
                     // Only correct if drift > 0.5 seconds
