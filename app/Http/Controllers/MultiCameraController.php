@@ -251,6 +251,38 @@ class MultiCameraController extends Controller
     }
 
     /**
+     * Reset sync for a slave video
+     */
+    public function resetSync(Video $video)
+    {
+        if (!$video->isSlave()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only slave videos can be reset'
+            ], 400);
+        }
+
+        $video->sync_offset = null;
+        $video->is_synced = false;
+        $video->sync_reference_event = null;
+        $video->save();
+
+        Log::info("Video {$video->id} sync reset");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Synchronization reset successfully',
+            'video' => [
+                'id' => $video->id,
+                'camera_angle' => $video->camera_angle,
+                'is_synced' => false,
+                'sync_offset' => null,
+                'sync_reference_event' => null,
+            ]
+        ]);
+    }
+
+    /**
      * Get video stream URL for multi-camera player
      */
     public function getStreamUrl(Video $video)
