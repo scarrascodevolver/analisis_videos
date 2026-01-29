@@ -44,6 +44,7 @@ Schedule::call(function () {
         \Illuminate\Support\Facades\Log::info("Nocturnal compression: No pending videos in queue");
     }
 })
+    ->name('nocturnal-video-compression')
     ->hourly()
     ->between('03:00', '07:00')
     ->withoutOverlapping()
