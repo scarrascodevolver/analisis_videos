@@ -17,7 +17,8 @@
     {{-- Loading Spinner --}}
     <div id="slaveLoadingSpinner" style="display: none; text-align: center; padding: 40px; color: #00B7B5;">
         <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
-        <p>Cargando ángulos de cámara...</p>
+        <p id="slaveLoadingText">Preparando ángulos...</p>
+        <small id="slaveLoadingProgress" class="text-muted" style="display: none;"></small>
     </div>
     {{-- Will be populated by JavaScript --}}
 </div>
@@ -28,7 +29,7 @@
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
             <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
-                   preload="none"
+                   preload="metadata"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
             </video>
@@ -315,7 +316,7 @@
                 card.find('.slave-angle-name span').text(angle.camera_angle);
 
                 // ═══════════════════════════════════════════════════════════
-                // OPTIMIZATION 4: Lazy loading - metadata loads on demand
+                // OPTIMIZATION 4: Preload metadata + buffer for instant seeks
                 // ═══════════════════════════════════════════════════════════
                 $.ajax({
                     url: `/videos/${angle.id}/multi-camera/stream-url`,
@@ -330,13 +331,14 @@
                             video.load();
 
                             // Store video element and metadata
-                            slaveVideos.push({
+                            const slaveData = {
                                 element: video,
                                 id: angle.id,
                                 angle: angle.camera_angle,
                                 offset: angle.sync_offset || 0,
                                 synced: angle.is_synced
-                            });
+                            };
+                            slaveVideos.push(slaveData);
 
                             // Show sync badge
                             if (angle.is_synced) {
@@ -346,14 +348,40 @@
                                 card.find('.slave-unsync-badge').show();
                             }
 
-                            // Hide spinner when all angles loaded
-                            loadedCount++;
-                            if (loadedCount === totalAngles) {
-                                loadingSpinner.fadeOut(300);
+                            // ✅ PRELOAD BUFFER: Force download of initial buffer for instant seeks
+                            video.addEventListener('loadedmetadata', function onMetadata() {
+                                const masterVideo = document.getElementById('rugbyVideo');
+                                if (masterVideo && !isNaN(masterVideo.duration)) {
+                                    const masterTime = masterVideo.currentTime || 0;
+                                    const expectedTime = masterTime + slaveData.offset;
 
-                                // Setup master sync ONCE after all slaves loaded
-                                setupMasterSync();
-                            }
+                                    // Set currentTime to preload buffer at expected position
+                                    if (isFinite(expectedTime) && expectedTime >= 0 && expectedTime <= video.duration) {
+                                        video.currentTime = expectedTime;
+                                    }
+                                }
+
+                                // Wait for buffer to be ready
+                                video.addEventListener('canplay', function onCanPlay() {
+                                    // Increment counter when buffer is ready
+                                    loadedCount++;
+
+                                    // Update progress
+                                    const progressText = document.getElementById('slaveLoadingProgress');
+                                    if (progressText) {
+                                        progressText.style.display = 'block';
+                                        progressText.textContent = `${loadedCount} de ${totalAngles} ángulos listos`;
+                                    }
+
+                                    // Hide spinner when all angles have buffer loaded
+                                    if (loadedCount === totalAngles) {
+                                        loadingSpinner.fadeOut(300);
+
+                                        // Setup master sync ONCE after all slaves loaded
+                                        setupMasterSync();
+                                    }
+                                }, { once: true });
+                            }, { once: true });
                         }
                     },
                     error: function(xhr, status, error) {
