@@ -308,6 +308,11 @@
             let loadedCount = 0;
             const totalAngles = angles.length;
 
+            // ✅ FIX: Capture master position ONCE at start (prevents timing bugs)
+            // All slaves will use THIS fixed position, even if user moves seekbar while loading
+            const masterVideo = document.getElementById('rugbyVideo');
+            const initialMasterTime = masterVideo ? (masterVideo.currentTime || 0) : 0;
+
             angles.forEach(angle => {
                 const template = document.getElementById('slaveVideoTemplate').content.cloneNode(true);
                 const card = $(template).find('.slave-video-card');
@@ -349,16 +354,13 @@
                             }
 
                             // ✅ PRELOAD BUFFER: Force download of initial buffer for instant seeks
+                            // Uses FIXED initialMasterTime captured at start (prevents desync if user moves seekbar)
                             video.addEventListener('loadedmetadata', function onMetadata() {
-                                const masterVideo = document.getElementById('rugbyVideo');
-                                if (masterVideo && !isNaN(masterVideo.duration)) {
-                                    const masterTime = masterVideo.currentTime || 0;
-                                    const expectedTime = masterTime + slaveData.offset;
+                                const expectedTime = initialMasterTime + slaveData.offset;
 
-                                    // Set currentTime to preload buffer at expected position
-                                    if (isFinite(expectedTime) && expectedTime >= 0 && expectedTime <= video.duration) {
-                                        video.currentTime = expectedTime;
-                                    }
+                                // Set currentTime to preload buffer at expected position
+                                if (isFinite(expectedTime) && expectedTime >= 0 && expectedTime <= video.duration) {
+                                    video.currentTime = expectedTime;
                                 }
 
                                 // Wait for buffer to be ready
