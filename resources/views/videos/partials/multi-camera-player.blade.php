@@ -104,13 +104,8 @@
                 }
 
                 slaveVideos.forEach(slave => {
-                    // ✅ Validar que slave esté listo (metadata + not seeking)
-                    if (isNaN(slave.element.duration) || slave.element.seeking) {
-                        return;
-                    }
-
-                    // ✅ Check readyState (3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA)
-                    if (slave.element.readyState < 3) {
+                    // ✅ Validar que slave tenga metadata básica
+                    if (isNaN(slave.element.duration)) {
                         return;
                     }
 
@@ -118,10 +113,17 @@
 
                     // ✅ Validar que expectedTime sea finito y válido
                     if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        // Si el expectedTime es inválido, skip este slave completamente
                         return;
                     }
 
-                    slave.element.currentTime = expectedTime;
+                    // ✅ SYNC: Solo ajustar currentTime si NO está seeking y tiene data
+                    const canSync = !slave.element.seeking && slave.element.readyState >= 3;
+                    if (canSync) {
+                        slave.element.currentTime = expectedTime;
+                    }
+
+                    // ✅ PLAY: SIEMPRE reproducir (aunque esté seeking o buffering)
                     slave.element.play().catch(err => {
                         // ✅ Ignorar AbortError (esperado cuando usuario pausa)
                         if (err?.name === 'AbortError') return;
