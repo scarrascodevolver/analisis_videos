@@ -83,6 +83,8 @@
         let masterSyncController = null;
         let lastSyncTime = 0;
         const SYNC_THROTTLE_MS = 250; // 4 times per second
+        const SYNC_DRIFT_THRESHOLD = 1.0; // 1 second tolerance (before: 0.5s)
+        let seekDebounceTimer = null;
 
         function setupMasterSync() {
             // Cleanup previous listeners if exist
@@ -102,8 +104,13 @@
                 }
 
                 slaveVideos.forEach(slave => {
-                    // ✅ Validar que slave esté listo
-                    if (isNaN(slave.element.duration)) {
+                    // ✅ Validar que slave esté listo (metadata + not seeking)
+                    if (isNaN(slave.element.duration) || slave.element.seeking) {
+                        return;
+                    }
+
+                    // ✅ Check readyState (3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA)
+                    if (slave.element.readyState < 3) {
                         return;
                     }
 
@@ -130,28 +137,35 @@
                 });
             }, { signal });
 
-            // Single seeked event - syncs ALL slaves
+            // Single seeked event - syncs ALL slaves (with debounce)
             masterVideo.addEventListener('seeked', () => {
-                // ✅ Validar que master esté listo
-                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
-                    return;
+                // ✅ Debounce: esperar 100ms para evitar seeks múltiples
+                if (seekDebounceTimer) {
+                    clearTimeout(seekDebounceTimer);
                 }
 
-                slaveVideos.forEach(slave => {
-                    // ✅ Validar que slave esté listo
-                    if (isNaN(slave.element.duration)) {
+                seekDebounceTimer = setTimeout(() => {
+                    // ✅ Validar que master esté listo
+                    if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
                         return;
                     }
 
-                    const expectedTime = masterVideo.currentTime + slave.offset;
+                    slaveVideos.forEach(slave => {
+                        // ✅ Validar que slave esté listo (metadata + not seeking)
+                        if (isNaN(slave.element.duration) || slave.element.seeking) {
+                            return;
+                        }
 
-                    // ✅ Validar que expectedTime sea finito y válido
-                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
-                        return;
-                    }
+                        const expectedTime = masterVideo.currentTime + slave.offset;
 
-                    slave.element.currentTime = expectedTime;
-                });
+                        // ✅ Validar que expectedTime sea finito y válido
+                        if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                            return;
+                        }
+
+                        slave.element.currentTime = expectedTime;
+                    });
+                }, 100); // 100ms debounce
             }, { signal });
 
             // ═══════════════════════════════════════════════════════════
@@ -182,8 +196,11 @@
                         return;
                     }
 
-                    // ✅ Validar que slave esté listo
-                    if (isNaN(slave.element.duration) || !isFinite(slave.element.currentTime)) {
+                    // ✅ Validar que slave esté listo (metadata + not seeking + has data)
+                    if (isNaN(slave.element.duration) ||
+                        !isFinite(slave.element.currentTime) ||
+                        slave.element.seeking ||
+                        slave.element.readyState < 3) {
                         return;
                     }
 
@@ -196,8 +213,8 @@
 
                     const drift = Math.abs(slave.element.currentTime - expectedTime);
 
-                    // Only correct if drift > 0.5 seconds
-                    if (drift > 0.5) {
+                    // ✅ Only correct if drift > THRESHOLD (1.0s, más tolerante)
+                    if (drift > SYNC_DRIFT_THRESHOLD) {
                         console.log(`Re-syncing ${slave.angle}, drift: ${drift.toFixed(2)}s`);
                         slave.element.currentTime = expectedTime;
                     }
