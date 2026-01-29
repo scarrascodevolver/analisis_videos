@@ -17,7 +17,8 @@
     {{-- Loading Spinner --}}
     <div id="slaveLoadingSpinner" style="display: none; text-align: center; padding: 40px; color: #00B7B5;">
         <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
-        <p>Cargando ángulos de cámara...</p>
+        <p id="slaveLoadingText">Preparando ángulos...</p>
+        <small id="slaveLoadingProgress" class="text-muted" style="display: none;"></small>
     </div>
     {{-- Will be populated by JavaScript --}}
 </div>
@@ -28,7 +29,7 @@
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
             <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
-                   preload="none"
+                   preload="metadata"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
             </video>
@@ -83,6 +84,8 @@
         let masterSyncController = null;
         let lastSyncTime = 0;
         const SYNC_THROTTLE_MS = 250; // 4 times per second
+        const SYNC_DRIFT_THRESHOLD = 1.0; // 1 second tolerance (before: 0.5s)
+        let seekDebounceTimer = null;
 
         function setupMasterSync() {
             // Cleanup previous listeners if exist
@@ -96,10 +99,37 @@
 
             // Single play event - syncs ALL slaves
             masterVideo.addEventListener('play', () => {
+                // ✅ Validar que master esté listo
+                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                    return;
+                }
+
                 slaveVideos.forEach(slave => {
+                    // ✅ Validar que slave tenga metadata básica
+                    if (isNaN(slave.element.duration)) {
+                        return;
+                    }
+
                     const expectedTime = masterVideo.currentTime + slave.offset;
-                    slave.element.currentTime = expectedTime;
-                    slave.element.play().catch(err => console.warn('Play failed:', err));
+
+                    // ✅ Validar que expectedTime sea finito y válido
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        // Si el expectedTime es inválido, skip este slave completamente
+                        return;
+                    }
+
+                    // ✅ SYNC: Solo ajustar currentTime si NO está seeking y tiene data
+                    const canSync = !slave.element.seeking && slave.element.readyState >= 3;
+                    if (canSync) {
+                        slave.element.currentTime = expectedTime;
+                    }
+
+                    // ✅ PLAY: SIEMPRE reproducir (aunque esté seeking o buffering)
+                    slave.element.play().catch(err => {
+                        // ✅ Ignorar AbortError (esperado cuando usuario pausa)
+                        if (err?.name === 'AbortError') return;
+                        console.warn('Play failed:', err);
+                    });
                 });
             }, { signal });
 
@@ -110,12 +140,35 @@
                 });
             }, { signal });
 
-            // Single seeked event - syncs ALL slaves
+            // Single seeked event - syncs ALL slaves (with debounce)
             masterVideo.addEventListener('seeked', () => {
-                slaveVideos.forEach(slave => {
-                    const expectedTime = masterVideo.currentTime + slave.offset;
-                    slave.element.currentTime = expectedTime;
-                });
+                // ✅ Debounce: esperar 100ms para evitar seeks múltiples
+                if (seekDebounceTimer) {
+                    clearTimeout(seekDebounceTimer);
+                }
+
+                seekDebounceTimer = setTimeout(() => {
+                    // ✅ Validar que master esté listo
+                    if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                        return;
+                    }
+
+                    slaveVideos.forEach(slave => {
+                        // ✅ Validar que slave esté listo (metadata + not seeking)
+                        if (isNaN(slave.element.duration) || slave.element.seeking) {
+                            return;
+                        }
+
+                        const expectedTime = masterVideo.currentTime + slave.offset;
+
+                        // ✅ Validar que expectedTime sea finito y válido
+                        if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                            return;
+                        }
+
+                        slave.element.currentTime = expectedTime;
+                    });
+                }, 100); // 100ms debounce
             }, { signal });
 
             // ═══════════════════════════════════════════════════════════
@@ -135,17 +188,36 @@
                     return;
                 }
 
+                // ✅ Validar que master esté listo
+                if (isNaN(masterVideo.duration) || !isFinite(masterVideo.currentTime)) {
+                    return;
+                }
+
                 // Check drift for ALL slaves in a single pass
                 slaveVideos.forEach(slave => {
                     if (slave.element.paused) {
                         return;
                     }
 
+                    // ✅ Validar que slave esté listo (metadata + not seeking + has data)
+                    if (isNaN(slave.element.duration) ||
+                        !isFinite(slave.element.currentTime) ||
+                        slave.element.seeking ||
+                        slave.element.readyState < 3) {
+                        return;
+                    }
+
                     const expectedTime = masterVideo.currentTime + slave.offset;
+
+                    // ✅ Validar que expectedTime sea finito
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.element.duration) {
+                        return;
+                    }
+
                     const drift = Math.abs(slave.element.currentTime - expectedTime);
 
-                    // Only correct if drift > 0.5 seconds
-                    if (drift > 0.5) {
+                    // ✅ Only correct if drift > THRESHOLD (1.0s, más tolerante)
+                    if (drift > SYNC_DRIFT_THRESHOLD) {
                         console.log(`Re-syncing ${slave.angle}, drift: ${drift.toFixed(2)}s`);
                         slave.element.currentTime = expectedTime;
                     }
@@ -244,7 +316,7 @@
                 card.find('.slave-angle-name span').text(angle.camera_angle);
 
                 // ═══════════════════════════════════════════════════════════
-                // OPTIMIZATION 4: Lazy loading - metadata loads on demand
+                // OPTIMIZATION 4: Preload metadata + buffer for instant seeks
                 // ═══════════════════════════════════════════════════════════
                 $.ajax({
                     url: `/videos/${angle.id}/multi-camera/stream-url`,
@@ -259,13 +331,14 @@
                             video.load();
 
                             // Store video element and metadata
-                            slaveVideos.push({
+                            const slaveData = {
                                 element: video,
                                 id: angle.id,
                                 angle: angle.camera_angle,
                                 offset: angle.sync_offset || 0,
                                 synced: angle.is_synced
-                            });
+                            };
+                            slaveVideos.push(slaveData);
 
                             // Show sync badge
                             if (angle.is_synced) {
@@ -275,14 +348,40 @@
                                 card.find('.slave-unsync-badge').show();
                             }
 
-                            // Hide spinner when all angles loaded
-                            loadedCount++;
-                            if (loadedCount === totalAngles) {
-                                loadingSpinner.fadeOut(300);
+                            // ✅ PRELOAD BUFFER: Force download of initial buffer for instant seeks
+                            video.addEventListener('loadedmetadata', function onMetadata() {
+                                const masterVideo = document.getElementById('rugbyVideo');
+                                if (masterVideo && !isNaN(masterVideo.duration)) {
+                                    const masterTime = masterVideo.currentTime || 0;
+                                    const expectedTime = masterTime + slaveData.offset;
 
-                                // Setup master sync ONCE after all slaves loaded
-                                setupMasterSync();
-                            }
+                                    // Set currentTime to preload buffer at expected position
+                                    if (isFinite(expectedTime) && expectedTime >= 0 && expectedTime <= video.duration) {
+                                        video.currentTime = expectedTime;
+                                    }
+                                }
+
+                                // Wait for buffer to be ready
+                                video.addEventListener('canplay', function onCanPlay() {
+                                    // Increment counter when buffer is ready
+                                    loadedCount++;
+
+                                    // Update progress
+                                    const progressText = document.getElementById('slaveLoadingProgress');
+                                    if (progressText) {
+                                        progressText.style.display = 'block';
+                                        progressText.textContent = `${loadedCount} de ${totalAngles} ángulos listos`;
+                                    }
+
+                                    // Hide spinner when all angles have buffer loaded
+                                    if (loadedCount === totalAngles) {
+                                        loadingSpinner.fadeOut(300);
+
+                                        // Setup master sync ONCE after all slaves loaded
+                                        setupMasterSync();
+                                    }
+                                }, { once: true });
+                            }, { once: true });
                         }
                     },
                     error: function(xhr, status, error) {

@@ -195,6 +195,9 @@
             </div>
 
             <div class="modal-footer">
+                <button type="button" class="btn btn-danger mr-auto" id="resetSyncBtn" title="Eliminar sincronización guardada">
+                    <i class="fas fa-undo"></i> Resetear Sincronización
+                </button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
@@ -337,6 +340,9 @@
 
         // Save sync
         $('#saveSyncBtn').off('click').on('click', saveSync);
+
+        // Reset sync
+        $('#resetSyncBtn').off('click').on('click', resetSync);
     }
 
     function updateOffsetFromSlider() {
@@ -432,6 +438,54 @@
             },
             complete: function() {
                 btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar Sincronización');
+            }
+        });
+    }
+
+    function resetSync() {
+        if (!confirm('¿Resetear la sincronización de este video? Se perderá el offset actual.')) {
+            return;
+        }
+
+        const btn = $('#resetSyncBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Reseteando...');
+
+        $.ajax({
+            url: `/videos/${currentSlaveVideoId}/multi-camera/reset-sync`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof showToast === 'function') {
+                        showToast('Sincronización reseteada', 'success');
+                    }
+
+                    // Reset UI
+                    currentOffset = 0;
+                    $('#syncOffsetSlider').val(0);
+                    $('#offsetPositive').prop('checked', true);
+                    $('#referenceEventInput').val('');
+                    updateOffsetDisplay();
+
+                    // Reload angles in main page
+                    if (typeof loadAngles === 'function') {
+                        loadAngles();
+                    }
+                } else {
+                    if (typeof showToast === 'function') {
+                        showToast(response.message, 'error');
+                    }
+                }
+            },
+            error: function(xhr) {
+                if (typeof showToast === 'function') {
+                    showToast(xhr.responseJSON?.message || 'Error al resetear', 'error');
+                }
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-undo"></i> Resetear Sincronización');
             }
         });
     }

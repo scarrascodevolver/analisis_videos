@@ -695,14 +695,9 @@
             <div id="tabClips" class="tab-content-sidebar" style="display: block;">
                 <div class="card" style="background: #1a1a1a; border: 1px solid #333;">
                     <div class="card-header py-2" style="background: #252525; border-bottom: 1px solid #333;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0" style="color: #fff;">
-                                <i class="fas fa-film" style="color: #00B7B5;"></i> Clips del Video
-                            </h6>
-                            <select id="sidebarClipFilter" class="form-control form-control-sm" style="width: auto; background: #333; color: #fff; border: none; font-size: 11px;">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
+                        <h6 class="mb-0" style="color: #fff;">
+                            <i class="fas fa-film" style="color: #00B7B5;"></i> Clips del Video
+                        </h6>
                     </div>
                     <div class="card-body p-0" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                         <div id="sidebarClipsList" style="color: #ccc;">
@@ -1031,7 +1026,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabComments = document.getElementById('tabComments');
     const tabClips = document.getElementById('tabClips');
     const sidebarClipsList = document.getElementById('sidebarClipsList');
-    const sidebarClipFilter = document.getElementById('sidebarClipFilter');
     const sidebarClipCount = document.getElementById('sidebarClipCount');
     const sidebarTotalClips = document.getElementById('sidebarTotalClips');
     const sidebarHighlights = document.getElementById('sidebarHighlights');
@@ -1070,16 +1064,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load clips for sidebar
     async function loadSidebarClips() {
         try {
-            // Load categories for filter
+            // Load categories (needed for visual timeline)
             if (window.sidebarCategoriesData.length === 0) {
                 const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
                 window.sidebarCategoriesData = await catResponse.json();
-
-                // Populate filter dropdown
-                sidebarClipFilter.innerHTML = '<option value="">Todos</option>' +
-                    window.sidebarCategoriesData.map(cat =>
-                        `<option value="${cat.id}" style="color: ${cat.color};">${cat.name}</option>`
-                    ).join('');
             }
 
             // Load clips
@@ -1098,12 +1086,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Render clips in sidebar - USES VIRTUAL SCROLL for large lists
-    function renderSidebarClips(filterCategoryId = null) {
+    function renderSidebarClips() {
         let clips = [...window.sidebarClipsData].sort((a, b) => a.start_time - b.start_time); // Chronological order
-
-        if (filterCategoryId) {
-            clips = clips.filter(c => c.clip_category_id == filterCategoryId);
-        }
 
         // Update counts
         sidebarClipCount.textContent = window.sidebarClipsData.length;
@@ -1123,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="text-center py-4" style="color: #666;">
                         <i class="fas fa-film fa-2x mb-2"></i>
                         <p class="mb-0">Sin clips</p>
-                        <small>${filterCategoryId ? 'Prueba otro filtro' : 'Usa la botonera para crear clips'}</small>
+                        <small>Usa la botonera para crear clips</small>
                     </div>`;
                 return;
             }
@@ -1149,11 +1133,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                             style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                             title="Editar clip">
                                         <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="sidebar-export-gif-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || 'clip'}"
-                                            style="background: none; border: none; color: #17a2b8; padding: 2px 5px; cursor: pointer; font-size: 11px;"
-                                            title="Exportar GIF">
-                                        <i class="fas fa-file-image"></i>
                                     </button>
                                     <button class="sidebar-delete-clip-btn" data-clip-id="${clip.id}"
                                             style="background: none; border: none; color: #666; padding: 2px 5px; cursor: pointer; font-size: 11px;"
@@ -1215,7 +1194,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await response.json();
                     if (data.success) {
                         window.sidebarClipsData = window.sidebarClipsData.filter(c => c.id != clipId);
-                        renderSidebarClips(sidebarClipFilter.value || null);
+                        renderSidebarClips();
                         // Sync with clip-manager local array
                         if (typeof window.removeClipFromLocalArray === 'function') {
                             window.removeClipFromLocalArray(parseInt(clipId));
@@ -1251,13 +1230,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.dataset.categoryId
                 );
             });
-        });
-    }
-
-    // Filter change
-    if (sidebarClipFilter) {
-        sidebarClipFilter.addEventListener('change', function() {
-            renderSidebarClips(this.value || null);
         });
     }
 
@@ -1960,7 +1932,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.sidebarClipsData[clipIndex].notes = notes;
                     }
                     if (typeof renderSidebarClips === 'function') {
-                        renderSidebarClips(document.getElementById('sidebarClipFilter')?.value || null);
+                        renderSidebarClips();
                     }
                 }
 
