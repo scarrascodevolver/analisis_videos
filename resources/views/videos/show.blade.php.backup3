@@ -457,6 +457,68 @@ window.VideoPlayer = {
 <!-- Video Player Scripts (Vite bundled) -->
 @vite('resources/js/video-player/index.js')
 
+<script>
+// Picture-in-Picture and Download Controls
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('rugbyVideo');
+    const pipBtn = document.getElementById('pipBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    if (!video) return;
+
+    // ========== Picture-in-Picture ==========
+    if (pipBtn) {
+        // Check if PiP is supported
+        if (!document.pictureInPictureEnabled) {
+            pipBtn.disabled = true;
+            pipBtn.title = 'Picture-in-Picture no soportado en este navegador';
+        } else {
+            pipBtn.addEventListener('click', async function() {
+                try {
+                    if (document.pictureInPictureElement) {
+                        // Si ya está en PiP, salir
+                        await document.exitPictureInPicture();
+                    } else {
+                        // Entrar en PiP
+                        await video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error('Error con Picture-in-Picture:', error);
+                    alert('No se pudo activar Picture-in-Picture. Asegúrate de que el video esté reproduciendo.');
+                }
+            });
+
+            // Update button icon when entering/exiting PiP
+            video.addEventListener('enterpictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                pipBtn.title = 'Salir de Picture-in-Picture';
+            });
+
+            video.addEventListener('leavepictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+                pipBtn.title = 'Picture-in-Picture (Mini ventana)';
+            });
+        }
+    }
+
+    // ========== Download Video ==========
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            const videoSrc = video.querySelector('source').src;
+            const videoTitle = '{{ $video->title }}';
+
+            // Create download link
+            const a = document.createElement('a');
+            a.href = videoSrc;
+            a.download = videoTitle.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_') + '.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
+});
+</script>
+
 @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
 <script>
 // Sidebar Tabs para Comentarios/Clips

@@ -13,6 +13,8 @@ export function initUIHelpers() {
     initTimelineToggle();
     initAutoHideSidebar();
     initSpeedControl();
+    initPictureInPicture();
+    initDownloadVideo();
 
     console.log('UI helpers initialized');
 }
@@ -164,3 +166,69 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Picture-in-Picture - Mini floating video window
+ */
+function initPictureInPicture() {
+    const video = getVideo();
+    const pipBtn = document.getElementById('pipBtn');
+
+    if (!video || !pipBtn) return;
+
+    // Check if PiP is supported
+    if (!document.pictureInPictureEnabled) {
+        pipBtn.disabled = true;
+        pipBtn.title = 'Picture-in-Picture no soportado en este navegador';
+        return;
+    }
+
+    pipBtn.addEventListener('click', async function() {
+        try {
+            if (document.pictureInPictureElement) {
+                // Already in PiP, exit
+                await document.exitPictureInPicture();
+            } else {
+                // Enter PiP
+                await video.requestPictureInPicture();
+            }
+        } catch (error) {
+            console.error('Error with Picture-in-Picture:', error);
+            alert('No se pudo activar Picture-in-Picture. Asegúrate de que el video esté reproduciendo.');
+        }
+    });
+
+    // Update button icon when entering/exiting PiP
+    video.addEventListener('enterpictureinpicture', function() {
+        pipBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        pipBtn.title = 'Salir de Picture-in-Picture';
+    });
+
+    video.addEventListener('leavepictureinpicture', function() {
+        pipBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+        pipBtn.title = 'Picture-in-Picture (Mini ventana)';
+    });
+}
+
+/**
+ * Download Video - Download video file
+ */
+function initDownloadVideo() {
+    const video = getVideo();
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    if (!video || !downloadBtn) return;
+
+    downloadBtn.addEventListener('click', function() {
+        const videoSrc = video.querySelector('source').src;
+        const videoTitle = video.dataset.videoTitle || 'video'; // Read from data-attribute
+
+        // Create download link
+        const a = document.createElement('a');
+        a.href = videoSrc;
+        a.download = videoTitle.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_') + '.mp4';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+}
