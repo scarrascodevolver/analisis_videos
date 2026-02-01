@@ -520,7 +520,7 @@ class DirectUploadController extends Controller
             }
 
             // CRITICAL VALIDATION: Ensure ALL expected parts are present
-            $expectedPartsCount = $uploadInfo['parts_count'];
+            $expectedPartsCount = (int) $uploadInfo['parts_count'];
             $receivedPartsCount = count($parts);
 
             if ($receivedPartsCount !== $expectedPartsCount) {

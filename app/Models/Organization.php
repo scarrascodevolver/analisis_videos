@@ -204,9 +204,9 @@ class Organization extends Model
         return [
             'timezone' => 'required|string|timezone',
             'compression_strategy' => 'required|in:immediate,nocturnal,hybrid',
-            'compression_start_hour' => 'required|integer|min:0|max:23',
-            'compression_end_hour' => 'required|integer|min:0|max:23|gt:compression_start_hour',
-            'compression_hybrid_threshold' => 'required|integer|min:100|max:10000',
+            'compression_start_hour' => 'required_unless:compression_strategy,immediate|nullable|integer|min:0|max:23',
+            'compression_end_hour' => 'required_unless:compression_strategy,immediate|nullable|integer|min:0|max:23|gt:compression_start_hour',
+            'compression_hybrid_threshold' => 'required_if:compression_strategy,hybrid|nullable|integer|min:100|max:10000',
         ];
     }
 }

@@ -441,6 +441,18 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate(Organization::compressionSettingsValidationRules());
 
+        // Set default values for immediate strategy
+        if ($validated['compression_strategy'] === 'immediate') {
+            $validated['compression_start_hour'] = $validated['compression_start_hour'] ?? 3;
+            $validated['compression_end_hour'] = $validated['compression_end_hour'] ?? 7;
+            $validated['compression_hybrid_threshold'] = $validated['compression_hybrid_threshold'] ?? 500;
+        }
+
+        // Set default threshold for nocturnal strategy
+        if ($validated['compression_strategy'] === 'nocturnal') {
+            $validated['compression_hybrid_threshold'] = $validated['compression_hybrid_threshold'] ?? 500;
+        }
+
         $organization->update($validated);
 
         return redirect()->route('super-admin.organizations.settings', $organization)
