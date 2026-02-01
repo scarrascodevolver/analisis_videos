@@ -282,10 +282,11 @@ class CompressVideoJob implements ShouldQueue
 
         // FFmpeg command optimized for rugby videos with adaptive settings
         // -g: GOP size (keyframe interval) - lower = faster seeking but ~10-15% larger file
+        // -threads 1: Limit to 1 core to prevent CPU saturation on 2-core VPS (reduces 95% → 50-60% CPU)
         $command = sprintf(
             'ffmpeg -i %s -c:v libx264 -preset %s -crf %d -g %d ' .
             '-vf "scale=1920:1080:force_original_aspect_ratio=decrease" ' .
-            '-c:a aac -b:a 128k -movflags +faststart -threads 0 -y %s 2>&1',
+            '-c:a aac -b:a 128k -movflags +faststart -threads 1 -y %s 2>&1',
             escapeshellarg($inputPath),
             $preset,
             $crf,
@@ -299,7 +300,8 @@ class CompressVideoJob implements ShouldQueue
 
         $output = [];
         $returnVar = 0;
-        exec($command, $output, $returnVar);
+        // Use 'nice' to give FFmpeg lower priority (15 = low priority, allows web/mysql to breathe)
+        exec('nice -n 15 ' . $command, $output, $returnVar);
 
         $duration = round(microtime(true) - $startTime, 2);
 
