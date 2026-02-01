@@ -113,7 +113,7 @@
             return;
         }
 
-        const videoId = {{ $video->id }};
+        let videoId = {{ $video->id }}; // Changed to 'let' to allow swap reassignment
         let masterVideo = document.getElementById('rugbyVideo');
         let multiMasterVideo = document.getElementById('multiMasterVideo');
         let slaveVideos = [];
