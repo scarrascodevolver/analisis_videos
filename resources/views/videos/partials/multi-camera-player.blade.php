@@ -69,7 +69,7 @@
     <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 0 0 auto; height: 18vh; max-height: 18vh;">
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
-            <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
+            <video class="slave-video" style="width: 100%; height: 100%; display: block; object-fit: cover;"
                    preload="auto"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
@@ -113,7 +113,7 @@
             return;
         }
 
-        const videoId = {{ $video->id }};
+        let videoId = {{ $video->id }}; // Changed to 'let' to allow swap reassignment
         let masterVideo = document.getElementById('rugbyVideo');
         let multiMasterVideo = document.getElementById('multiMasterVideo');
         let slaveVideos = [];
@@ -647,6 +647,149 @@
                 }
             });
         @endif
+
+        // ═══════════════════════════════════════════════════════════
+        // SWAP MASTER/SLAVE: Click en slave para intercambiar con master
+        // ═══════════════════════════════════════════════════════════
+
+        function swapMasterWithSlave(slaveVideoId) {
+            if (!isMultiCameraActive) {
+                console.warn('Multi-camera not active, swap cancelled');
+                return;
+            }
+
+            const currentMasterVideo = masterVideo; // #rugbyVideo o #multiMasterVideo
+            const currentMasterId = videoId; // Variable global del video actual
+
+            // Buscar el slave clickeado
+            const slaveCard = $(`.slave-video-card[data-video-id="${slaveVideoId}"]`);
+            if (!slaveCard.length) {
+                console.error('Slave video not found:', slaveVideoId);
+                return;
+            }
+
+            const slaveVideoElement = slaveCard.find('.slave-video')[0];
+            if (!slaveVideoElement) {
+                console.error('Slave video element not found');
+                return;
+            }
+
+            // Guardar estado actual del master
+            const masterState = {
+                currentTime: currentMasterVideo.currentTime,
+                paused: currentMasterVideo.paused,
+                volume: currentMasterVideo.volume,
+                playbackRate: currentMasterVideo.playbackRate
+            };
+
+            // Guardar estado actual del slave
+            const slaveState = {
+                currentTime: slaveVideoElement.currentTime,
+                paused: slaveVideoElement.paused,
+                volume: slaveVideoElement.volume,
+                playbackRate: slaveVideoElement.playbackRate
+            };
+
+            // Obtener URLs (master usa <source>, slaves usan src directo)
+            const masterSource = currentMasterVideo.querySelector('source');
+            const masterUrl = masterSource ? masterSource.src : currentMasterVideo.src;
+            const slaveUrl = slaveVideoElement.src; // Slaves usan src directo
+
+            if (!masterUrl || !slaveUrl) {
+                console.error('Video URLs not found', {masterUrl, slaveUrl});
+                return;
+            }
+
+            // Intercambiar sources
+            if (masterSource) {
+                // Master tiene <source>, intercambiamos via <source>
+                masterSource.src = slaveUrl;
+            } else {
+                // Master usa src directo
+                currentMasterVideo.src = slaveUrl;
+            }
+
+            // Slave siempre usa src directo
+            slaveVideoElement.src = masterUrl;
+
+            // Recargar videos
+            currentMasterVideo.load();
+            slaveVideoElement.load();
+
+            // Sincronizar timestamps y estado cuando estén listos
+            const onMasterLoaded = function() {
+                // Aplicar estado del slave al nuevo master
+                currentMasterVideo.currentTime = slaveState.currentTime;
+                currentMasterVideo.volume = slaveState.volume;
+                currentMasterVideo.playbackRate = slaveState.playbackRate;
+
+                if (!slaveState.paused) {
+                    currentMasterVideo.play().catch(e => console.warn('Master play failed:', e));
+                }
+
+                currentMasterVideo.removeEventListener('loadedmetadata', onMasterLoaded);
+            };
+
+            const onSlaveLoaded = function() {
+                // Aplicar estado del master al nuevo slave
+                slaveVideoElement.currentTime = masterState.currentTime;
+                slaveVideoElement.volume = masterState.volume;
+                slaveVideoElement.playbackRate = masterState.playbackRate;
+
+                if (!masterState.paused) {
+                    slaveVideoElement.play().catch(e => console.warn('Slave play failed:', e));
+                }
+
+                slaveVideoElement.removeEventListener('loadedmetadata', onSlaveLoaded);
+            };
+
+            currentMasterVideo.addEventListener('loadedmetadata', onMasterLoaded);
+            slaveVideoElement.addEventListener('loadedmetadata', onSlaveLoaded);
+
+            // Actualizar data-video-id del slave para reflejar el cambio
+            slaveCard.attr('data-video-id', currentMasterId);
+
+            // Actualizar variable global videoId al nuevo master
+            videoId = slaveVideoId;
+
+            // Mostrar notificación de feedback
+            showSwapNotification('Ángulo intercambiado');
+
+            console.log(`Swapped master (${currentMasterId}) ↔ slave (${slaveVideoId})`);
+        }
+
+        function showSwapNotification(message) {
+            const notification = $(`
+                <div class="swap-notification">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>${message}</span>
+                </div>
+            `);
+
+            $('body').append(notification);
+
+            setTimeout(() => {
+                notification.fadeOut(400, function() {
+                    $(this).remove();
+                });
+            }, 2500);
+        }
+
+        // Event listener: Click en slave card para swap
+        $(document).on('click', '.slave-video-card', function(e) {
+            // Evitar swap si se clickeó en botones de acción
+            if ($(e.target).closest('.slave-sync-btn, .slave-remove-btn').length) {
+                return;
+            }
+
+            const slaveVideoId = parseInt($(this).attr('data-video-id'));
+            if (!slaveVideoId || isNaN(slaveVideoId)) {
+                console.warn('Invalid slave video ID');
+                return;
+            }
+
+            swapMasterWithSlave(slaveVideoId);
+        });
     }
 
     // Initialize when DOM and jQuery are ready
