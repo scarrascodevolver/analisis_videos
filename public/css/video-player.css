@@ -34,7 +34,7 @@
 .multi-camera-layout .video-container > video {
     width: 100% !important;      /* Fuerza ancho completo */
     height: auto !important;     /* Alto calculado por aspect-ratio */
-    max-height: 60vh !important; /* Límite estricto para no exceder contenedor */
+    max-height: 57vh !important; /* Deja espacio para controles nativos del video (~3vh = 30-50px) */
 }
 
 @keyframes fadeIn {
