@@ -18,6 +18,9 @@ import { initAnnotations, checkAndShowAnnotations } from './annotations.js';
 import { initStatsModal } from './stats-modal.js';
 import { initMentions } from './mentions.js';
 import { initClipManager } from './clip-manager.js';
+import { initSidebarTabs } from './sidebar-tabs.js';
+import { initModalManager } from './modal-manager.js';
+import { initUIHelpers } from './ui-helpers.js';
 
 /**
  * Initialize Video Player when DOM is ready
@@ -72,6 +75,9 @@ $(document).ready(function () {
     initStatsModal();
     initMentions();
     initClipManager();
+    initSidebarTabs();
+    initModalManager();
+    initUIHelpers();
 
     console.log('Video Player initialized successfully');
 });

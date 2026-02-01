@@ -57,8 +57,7 @@
                         <video id="rugbyVideo" controls style="width: 100%; height: auto; display: block;"
                                preload="metadata"
                                crossorigin="anonymous"
-                               x-webkit-airplay="allow"
-                               data-video-title="{{ $video->title }}">
+                               x-webkit-airplay="allow">
                             <source src="{{ route('videos.stream', $video) }}" type="video/mp4">
                             Tu navegador no soporta la reproducción de video.
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
@@ -456,6 +455,189 @@ window.VideoPlayer = {
 
 <!-- Video Player Scripts (Vite bundled) -->
 @vite('resources/js/video-player/index.js')
+
+@if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+<script>
+// Toggle Timeline para analistas/entrenadores
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleTimeline');
+    const content = document.getElementById('timelineContent');
+    const arrow = document.getElementById('timelineArrow');
+
+    if (toggleBtn && content) {
+        toggleBtn.addEventListener('click', function() {
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+            if (arrow) {
+                arrow.classList.toggle('fa-chevron-up', !isVisible);
+                arrow.classList.toggle('fa-chevron-down', isVisible);
+            }
+        });
+    }
+});
+</script>
+@endif
+
+<script>
+// Auto-hide sidebar on video play (mejor experiencia de visualización)
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('rugbyVideo');
+    if (video) {
+        video.addEventListener('play', function() {
+            document.body.classList.add('sidebar-collapse');
+        });
+    }
+});
+</script>
+
+<script>
+// Speed Control
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('rugbyVideo');
+    const speedBtn = document.getElementById('speedControlBtn');
+    const speedMenu = document.getElementById('speedMenu');
+    const utilityControls = document.querySelector('.video-utility-controls');
+    const currentSpeedDisplay = document.getElementById('currentSpeed');
+    const speedOptions = document.querySelectorAll('.speed-option');
+
+    if (!video || !speedBtn) return;
+
+    // Toggle menu on button click
+    speedBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        speedMenu.classList.toggle('show');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!utilityControls.contains(e.target)) {
+            speedMenu.classList.remove('show');
+        }
+    });
+
+    // Handle speed option clicks
+    speedOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const speed = parseFloat(this.dataset.speed);
+            video.playbackRate = speed;
+
+            // Update display
+            currentSpeedDisplay.textContent = speed === 1 ? '1x' : speed + 'x';
+
+            // Update active state
+            speedOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+
+            // Highlight button if not normal speed
+            if (speed !== 1) {
+                speedBtn.classList.add('speed-modified');
+            } else {
+                speedBtn.classList.remove('speed-modified');
+            }
+
+            // Close menu after selection
+            speedMenu.classList.remove('show');
+        });
+    });
+
+    // Keyboard shortcuts for speed
+    document.addEventListener('keydown', function(e) {
+        // Only when not typing in inputs
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        // Shift + > (faster)
+        if (e.key === '>' || (e.shiftKey && e.key === '.')) {
+            e.preventDefault();
+            changeSpeed(0.25);
+        }
+        // Shift + < (slower)
+        if (e.key === '<' || (e.shiftKey && e.key === ',')) {
+            e.preventDefault();
+            changeSpeed(-0.25);
+        }
+    });
+
+    function changeSpeed(delta) {
+        let newSpeed = video.playbackRate + delta;
+        newSpeed = Math.max(0.25, Math.min(2, newSpeed)); // Clamp between 0.25 and 2
+        video.playbackRate = newSpeed;
+
+        // Update display
+        currentSpeedDisplay.textContent = newSpeed === 1 ? '1x' : newSpeed + 'x';
+
+        // Update active state in menu
+        speedOptions.forEach(opt => {
+            opt.classList.toggle('active', parseFloat(opt.dataset.speed) === newSpeed);
+        });
+
+        // Highlight button
+        speedBtn.classList.toggle('speed-modified', newSpeed !== 1);
+    }
+});
+</script>
+
+<script>
+// Picture-in-Picture and Download Controls
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('rugbyVideo');
+    const pipBtn = document.getElementById('pipBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    if (!video) return;
+
+    // ========== Picture-in-Picture ==========
+    if (pipBtn) {
+        // Check if PiP is supported
+        if (!document.pictureInPictureEnabled) {
+            pipBtn.disabled = true;
+            pipBtn.title = 'Picture-in-Picture no soportado en este navegador';
+        } else {
+            pipBtn.addEventListener('click', async function() {
+                try {
+                    if (document.pictureInPictureElement) {
+                        // Si ya está en PiP, salir
+                        await document.exitPictureInPicture();
+                    } else {
+                        // Entrar en PiP
+                        await video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error('Error con Picture-in-Picture:', error);
+                    alert('No se pudo activar Picture-in-Picture. Asegúrate de que el video esté reproduciendo.');
+                }
+            });
+
+            // Update button icon when entering/exiting PiP
+            video.addEventListener('enterpictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                pipBtn.title = 'Salir de Picture-in-Picture';
+            });
+
+            video.addEventListener('leavepictureinpicture', function() {
+                pipBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+                pipBtn.title = 'Picture-in-Picture (Mini ventana)';
+            });
+        }
+    }
+
+    // ========== Download Video ==========
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            const videoSrc = video.querySelector('source').src;
+            const videoTitle = '{{ $video->title }}';
+
+            // Create download link
+            const a = document.createElement('a');
+            a.href = videoSrc;
+            a.download = videoTitle.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_') + '.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
+});
+</script>
 
 @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
 <script>
@@ -1513,7 +1695,246 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /*
+     * ══════════════════════════════════════════════════════════════════════
+     * DRAG & DROP DESHABILITADO POR DECISIÓN DEL ANALISTA
+     * ══════════════════════════════════════════════════════════════════════
+     *
+     * Los clips importados de XML de LongoMatch NO deben poder editarse
+     * individualmente en el timeline. Solo el offset global puede ajustarse.
+     *
+     * Si en el futuro se necesita habilitar drag & drop, descomentar este
+     * bloque y agregar la llamada initDragHandlers() en renderTimelineLanes().
+     *
+     * Código comentado: 2024-01-24
+     * ══════════════════════════════════════════════════════════════════════
+     */
 
+    /*
+    // Drag & Drop handlers for clips in lanes
+    let isDragging = false;
+    let dragType = null; // 'move', 'resize-left', 'resize-right'
+    let draggedBlock = null;
+    let dragStartX = 0;
+    let originalStart = 0;
+    let originalEnd = 0;
+    let parentLane = null;
+
+    function initDragHandlers() {
+        document.querySelectorAll('.clip-block').forEach(block => {
+            // Resize left handle
+            block.querySelector('.resize-left')?.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                startDrag(e, block, 'resize-left');
+            });
+
+            // Resize right handle
+            block.querySelector('.resize-right')?.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                startDrag(e, block, 'resize-right');
+            });
+
+            // Move entire block
+            block.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.resize-handle')) return;
+                e.stopPropagation(); // Prevent lane click
+                startDrag(e, block, 'move');
+            });
+        });
+    }
+
+    function startDrag(e, block, type) {
+        e.preventDefault();
+        isDragging = true;
+        dragType = type;
+        draggedBlock = block;
+        dragStartX = e.clientX;
+        originalStart = parseFloat(block.dataset.start);
+        originalEnd = parseFloat(block.dataset.end);
+        parentLane = block.closest('.lane-bar');
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', endDrag);
+
+        block.style.opacity = '0.7';
+        block.style.boxShadow = '0 4px 16px rgba(255, 255, 255, 0.3)';
+        block.style.zIndex = '20';
+    }
+
+    function onDrag(e) {
+        if (!isDragging || !draggedBlock || !parentLane) return;
+
+        const rect = parentLane.getBoundingClientRect();
+        const deltaX = e.clientX - dragStartX;
+        const deltaSeconds = (deltaX / rect.width) * videoDuration;
+
+        let newStart = originalStart;
+        let newEnd = originalEnd;
+
+        if (dragType === 'move') {
+            const duration = originalEnd - originalStart;
+            // Account for offset when calculating bounds
+            const minStart = -currentOffset;
+            const maxStart = videoDuration - duration - currentOffset;
+            newStart = Math.max(minStart, Math.min(originalStart + deltaSeconds, maxStart));
+            newEnd = newStart + duration;
+        } else if (dragType === 'resize-left') {
+            const minStart = -currentOffset;
+            newStart = Math.max(minStart, Math.min(originalStart + deltaSeconds, originalEnd - 0.5));
+        } else if (dragType === 'resize-right') {
+            const maxEnd = videoDuration - currentOffset;
+            newEnd = Math.max(originalStart + 0.5, Math.min(originalEnd + deltaSeconds, maxEnd));
+        }
+
+        // Calculate visual position with offset
+        const adjustedStart = Math.max(0, newStart + currentOffset);
+        const adjustedEnd = newEnd + currentOffset;
+        const startPercent = (adjustedStart / videoDuration) * 100;
+        const widthPercent = ((adjustedEnd - adjustedStart) / videoDuration) * 100;
+
+        draggedBlock.style.left = `${Math.max(0, Math.min(startPercent, 100))}%`;
+        draggedBlock.style.width = `${Math.max(widthPercent, 0.5)}%`;
+
+        // Update displayed duration
+        const duration = (newEnd - newStart).toFixed(1);
+        const timeSpan = draggedBlock.querySelector('span');
+        if (timeSpan) {
+            timeSpan.textContent = `${duration}s`;
+        }
+
+        // Store temp values (original time, not adjusted)
+        draggedBlock.dataset.tempStart = newStart;
+        draggedBlock.dataset.tempEnd = newEnd;
+    }
+
+    function endDrag(e) {
+        if (!isDragging || !draggedBlock) return;
+
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', endDrag);
+
+        const newStart = parseFloat(draggedBlock.dataset.tempStart || draggedBlock.dataset.start);
+        const newEnd = parseFloat(draggedBlock.dataset.tempEnd || draggedBlock.dataset.end);
+        const clipId = draggedBlock.dataset.clipId;
+
+        // Only save if changed significantly (> 0.05s)
+        if (Math.abs(newStart - originalStart) > 0.05 || Math.abs(newEnd - originalEnd) > 0.05) {
+            saveClipChanges(clipId, newStart, newEnd);
+        } else {
+            // Revert visual state
+            const adjustedStart = Math.max(0, originalStart + currentOffset);
+            const adjustedEnd = originalEnd + currentOffset;
+            const startPercent = (adjustedStart / videoDuration) * 100;
+            const widthPercent = ((adjustedEnd - adjustedStart) / videoDuration) * 100;
+
+            draggedBlock.style.left = `${startPercent}%`;
+            draggedBlock.style.width = `${widthPercent}%`;
+
+            const duration = (originalEnd - originalStart).toFixed(1);
+            const timeSpan = draggedBlock.querySelector('span');
+            if (timeSpan) {
+                timeSpan.textContent = `${duration}s`;
+            }
+        }
+
+        draggedBlock.style.opacity = '1';
+        draggedBlock.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
+        draggedBlock.style.zIndex = '5';
+
+        delete draggedBlock.dataset.tempStart;
+        delete draggedBlock.dataset.tempEnd;
+
+        isDragging = false;
+        dragType = null;
+        draggedBlock = null;
+        parentLane = null;
+    }
+
+    // Save clip changes (stores original time without offset)
+    async function saveClipChanges(clipId, newStart, newEnd) {
+        try {
+            const response = await fetch(`/videos/{{ $video->id }}/clips/${clipId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_time: parseFloat(newStart.toFixed(2)),
+                    end_time: parseFloat(newEnd.toFixed(2))
+                })
+            });
+
+            if (response.ok) {
+                // Update local data
+                const clipIndex = window.sidebarClipsData.findIndex(c => c.id == clipId);
+                if (clipIndex !== -1) {
+                    window.sidebarClipsData[clipIndex].start_time = newStart;
+                    window.sidebarClipsData[clipIndex].end_time = newEnd;
+                }
+
+                // Update clip block data attributes
+                const clipBlock = document.querySelector(`.clip-block[data-clip-id="${clipId}"]`);
+                if (clipBlock) {
+                    clipBlock.dataset.start = newStart;
+                    clipBlock.dataset.end = newEnd;
+
+                    // Update visual position with offset
+                    const adjustedStart = Math.max(0, newStart + currentOffset);
+                    const adjustedEnd = newEnd + currentOffset;
+                    const startPercent = (adjustedStart / videoDuration) * 100;
+                    const widthPercent = ((adjustedEnd - adjustedStart) / videoDuration) * 100;
+
+                    clipBlock.style.left = `${Math.max(0, Math.min(startPercent, 100))}%`;
+                    clipBlock.style.width = `${Math.max(widthPercent, 0.5)}%`;
+
+                    const duration = (adjustedEnd - adjustedStart).toFixed(1);
+                    const contentSpan = clipBlock.querySelector('span');
+                    if (contentSpan) {
+                        contentSpan.textContent = `${duration}s`;
+                    }
+                }
+
+                // Update sidebar if exists
+                const sidebarItem = document.querySelector(`.sidebar-clip-item[data-clip-id="${clipId}"]`);
+                if (sidebarItem) {
+                    sidebarItem.dataset.start = newStart;
+                    sidebarItem.dataset.end = newEnd;
+
+                    const duration = (newEnd - newStart).toFixed(1);
+                    const flexGrow = sidebarItem.querySelector('.flex-grow-1');
+                    if (flexGrow && flexGrow.children.length >= 2) {
+                        const timeDiv = flexGrow.children[1];
+                        timeDiv.innerHTML = `${formatTimeShort(newStart)} - ${formatTimeShort(newEnd)} <span style="color: #666; margin-left: 5px;">(${duration}s)</span>`;
+                    }
+
+                    const editBtn = sidebarItem.querySelector('.sidebar-edit-clip-btn');
+                    if (editBtn) {
+                        editBtn.dataset.start = newStart;
+                        editBtn.dataset.end = newEnd;
+                    }
+
+                    const exportBtn = sidebarItem.querySelector('.sidebar-export-gif-btn');
+                    if (exportBtn) {
+                        exportBtn.dataset.start = newStart;
+                        exportBtn.dataset.end = newEnd;
+                    }
+                }
+
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('Clip actualizado');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving clip:', error);
+            renderTimelineLanes(); // Re-render on error
+        }
+    }
+    */
+    // ══════════════════════════════════════════════════════════════════════
+    // FIN DEL BLOQUE DE DRAG & DROP COMENTADO
+    // ══════════════════════════════════════════════════════════════════════
 })();
 </script>
 
