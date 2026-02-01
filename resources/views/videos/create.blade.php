@@ -498,6 +498,7 @@ $(document).ready(function() {
         $.ajax({
             url: '{{ route("api.upload.presigned") }}',
             method: 'POST',
+            timeout: 30000, // 30 seconds timeout
             data: {
                 _token: '{{ csrf_token() }}',
                 filename: file.name,
@@ -521,7 +522,7 @@ $(document).ready(function() {
     }
 
     function uploadMultipart(file, formData) {
-        var chunkSize = 50 * 1024 * 1024; // 50MB chunks
+        var chunkSize = 100 * 1024 * 1024; // 100MB chunks (optimized for stability and speed)
         var totalParts = Math.ceil(file.size / chunkSize);
 
         $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida multipart (' + totalParts + ' partes)...');
@@ -530,6 +531,7 @@ $(document).ready(function() {
         $.ajax({
             url: '{{ route("api.upload.multipart.initiate") }}',
             method: 'POST',
+            timeout: 30000, // 30 seconds timeout
             data: {
                 _token: '{{ csrf_token() }}',
                 filename: file.name,
@@ -555,9 +557,11 @@ $(document).ready(function() {
     function uploadPartsInParallel(file, formData, uploadId, s3UploadId, chunkSize, totalParts) {
         var completedParts = [];
         var uploadedBytes = 0;
-        var maxConcurrent = 4; // Upload 4 parts at a time
+        var maxConcurrent = 2; // Upload 2 parts at a time (optimized for multiple simultaneous uploads)
         var currentPart = 1;
         var hasError = false;
+        var maxRetries = 3; // Retry failed parts up to 3 times
+        var retryCount = {}; // Track retries per part
 
         function uploadNextPart() {
             if (hasError || currentPart > totalParts) {
@@ -573,6 +577,7 @@ $(document).ready(function() {
             $.ajax({
                 url: '{{ route("api.upload.multipart.part-urls") }}',
                 method: 'POST',
+                timeout: 30000, // 30 seconds timeout
                 data: {
                     _token: '{{ csrf_token() }}',
                     upload_id: uploadId,
@@ -582,19 +587,41 @@ $(document).ready(function() {
                     if (response.success) {
                         uploadPart(chunk, partNumber, response.urls[partNumber]);
                     } else {
-                        hasError = true;
-                        showError('Error obteniendo URL de parte ' + partNumber);
+                        retryOrFail(partNumber, chunk, 'Error obteniendo URL de parte ' + partNumber);
                     }
                 },
-                error: function() {
-                    hasError = true;
-                    showError('Error preparando parte ' + partNumber);
+                error: function(xhr, status) {
+                    var errorMsg = status === 'timeout' ? 'Timeout obteniendo URL de parte ' + partNumber : 'Error preparando parte ' + partNumber;
+                    retryOrFail(partNumber, chunk, errorMsg);
                 }
             });
         }
 
+        function retryOrFail(partNumber, chunk, errorMsg) {
+            if (!retryCount[partNumber]) {
+                retryCount[partNumber] = 0;
+            }
+
+            retryCount[partNumber]++;
+
+            if (retryCount[partNumber] <= maxRetries) {
+                console.log('Retrying part', partNumber, '(attempt', retryCount[partNumber], 'of', maxRetries + ')');
+                $('#uploadStatus').html('<i class="fas fa-redo text-warning"></i> Reintentando parte ' + partNumber + ' (intento ' + retryCount[partNumber] + ')...');
+
+                // Wait 2 seconds before retrying
+                setTimeout(function() {
+                    currentPart--; // Reset counter to retry this part
+                    uploadNextPart();
+                }, 2000);
+            } else {
+                hasError = true;
+                showError(errorMsg + ' (máximo de reintentos alcanzado)');
+            }
+        }
+
         function uploadPart(chunk, partNumber, presignedUrl) {
             var xhr = new XMLHttpRequest();
+            xhr.timeout = 300000; // 5 minutes timeout for upload
 
             xhr.upload.addEventListener('progress', function(e) {
                 if (e.lengthComputable) {
@@ -632,9 +659,8 @@ $(document).ready(function() {
 
                     // This code is reached when ETag is available from header
                 } else {
-                    hasError = true;
                     console.error('Part', partNumber, 'upload failed:', xhr.status);
-                    showError('Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
+                    retryOrFail(partNumber, chunk, 'Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
                 }
             });
 
@@ -655,9 +681,13 @@ $(document).ready(function() {
             }
 
             xhr.addEventListener('error', function() {
-                hasError = true;
                 console.error('Part', partNumber, 'network error');
-                showError('Error de conexión subiendo parte ' + partNumber);
+                retryOrFail(partNumber, chunk, 'Error de conexión subiendo parte ' + partNumber);
+            });
+
+            xhr.addEventListener('timeout', function() {
+                console.error('Part', partNumber, 'timeout');
+                retryOrFail(partNumber, chunk, 'Timeout subiendo parte ' + partNumber);
             });
 
             xhr.open('PUT', presignedUrl);
@@ -709,6 +739,7 @@ $(document).ready(function() {
         $.ajax({
             url: '{{ route("api.upload.multipart.complete") }}',
             method: 'POST',
+            timeout: 60000, // 60 seconds timeout for completion
             data: confirmData,
             success: function(response) {
                 if (response.success) {
@@ -823,6 +854,7 @@ $(document).ready(function() {
         $.ajax({
             url: '{{ route("api.upload.confirm") }}',
             method: 'POST',
+            timeout: 60000, // 60 seconds timeout
             data: confirmData,
             success: function(response) {
                 if (response.success) {
