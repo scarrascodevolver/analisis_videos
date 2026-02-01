@@ -63,6 +63,21 @@
                             <p>Video no disponible. Archivo: {{ $video->file_path }}</p>
                         </video>
 
+                        <!-- Loading Overlay for Slave Videos -->
+                        <div id="slaveLoadingOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 80%; max-width: 400px;">
+                                <div style="background: rgba(0, 91, 97, 0.9); border-radius: 12px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                                    <i class="fas fa-video fa-3x mb-3" style="color: #00B7B5;"></i>
+                                    <h5 class="text-white mb-3" id="loadingOverlayTitle">🎬 Preparando ángulos de cámara</h5>
+                                    <div class="progress mb-3" style="height: 8px; background: rgba(255,255,255,0.1);">
+                                        <div id="loadingProgressBar" class="progress-bar" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #00B7B5 0%, #005461 100%); transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <p class="text-white mb-0" id="loadingOverlayText">Iniciando...</p>
+                                    <small class="text-muted" id="loadingOverlayCount" style="display: block; margin-top: 8px;">0 de 0 listos</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Canvas overlay para anotaciones -->
                         <canvas id="annotationCanvas"
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">

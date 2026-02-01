@@ -23,7 +23,7 @@
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
             <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
-                   preload="metadata"
+                   preload="auto"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
             </video>
@@ -230,6 +230,82 @@
             }
         }
 
+        // ═══════════════════════════════════════════════════════════
+        // LOADING OVERLAY FUNCTIONS (Prevents play before slaves ready)
+        // ═══════════════════════════════════════════════════════════
+
+        function showLoadingOverlay(totalSlaves) {
+            const overlay = document.getElementById('slaveLoadingOverlay');
+            const masterVideo = document.getElementById('rugbyVideo');
+            const title = document.getElementById('loadingOverlayTitle');
+            const text = document.getElementById('loadingOverlayText');
+            const count = document.getElementById('loadingOverlayCount');
+
+            if (overlay && masterVideo) {
+                // Update text
+                title.textContent = `🎬 Preparando ${totalSlaves} ángulo${totalSlaves > 1 ? 's' : ''} de cámara`;
+                text.textContent = 'Cargando metadatos...';
+                count.textContent = `0 de ${totalSlaves} listos`;
+
+                // Show overlay
+                overlay.style.display = 'block';
+
+                // Disable master controls
+                masterVideo.removeAttribute('controls');
+                masterVideo.style.pointerEvents = 'none';
+
+                console.log(`🔒 Master bloqueado - esperando ${totalSlaves} slaves`);
+            }
+        }
+
+        function updateLoadingProgress(loaded, total) {
+            const progressBar = document.getElementById('loadingProgressBar');
+            const text = document.getElementById('loadingOverlayText');
+            const count = document.getElementById('loadingOverlayCount');
+
+            if (progressBar) {
+                const percentage = (loaded / total) * 100;
+                progressBar.style.width = percentage + '%';
+
+                if (loaded < total) {
+                    text.textContent = `Cargando ángulo ${loaded + 1} de ${total}...`;
+                } else {
+                    text.textContent = '✅ Todos los ángulos listos';
+                }
+
+                count.textContent = `${loaded} de ${total} listos`;
+
+                console.log(`📊 Progress: ${loaded}/${total} (${percentage.toFixed(0)}%)`);
+            }
+        }
+
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('slaveLoadingOverlay');
+            const masterVideo = document.getElementById('rugbyVideo');
+
+            if (overlay && masterVideo) {
+                // Fade out overlay
+                overlay.style.transition = 'opacity 0.5s ease';
+                overlay.style.opacity = '0';
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    overlay.style.opacity = '1';
+
+                    // Enable master controls
+                    masterVideo.setAttribute('controls', '');
+                    masterVideo.style.pointerEvents = 'auto';
+
+                    console.log('🔓 Master desbloqueado - todos los slaves listos');
+
+                    // Show toast notification
+                    if (typeof showToast === 'function') {
+                        showToast('✅ Listo para reproducir', 'success');
+                    }
+                }, 500);
+            }
+        }
+
         // Public function to activate multi-camera view (UPDATED: Multi-Group Support)
         window.activateMultiCamera = function(angles, groupId = null) {
             if (!angles || angles.length === 0) {
@@ -325,6 +401,13 @@
             let loadedCount = existingSlaveIds.length;
             const totalAngles = angles.length;
 
+            // Show loading overlay if we're loading new slaves (not just updating existing ones)
+            const newSlavesCount = angles.filter(a => !existingSlaveIds.includes(a.id)).length;
+            if (newSlavesCount > 0 && loadedCount === 0) {
+                // Only show overlay on initial load (not when adding more slaves)
+                showLoadingOverlay(totalAngles);
+            }
+
             // Only add new angles that don't exist yet
             angles.forEach(angle => {
                 // Skip if this slave already exists
@@ -392,8 +475,15 @@
                                     // Increment counter when buffer is ready
                                     loadedCount++;
 
+                                    // Update loading progress overlay
+                                    updateLoadingProgress(loadedCount, totalAngles);
+
                                     // Setup master sync when all angles have buffer loaded
                                     if (loadedCount === totalAngles) {
+                                        // Hide loading overlay and enable master controls
+                                        hideLoadingOverlay();
+
+                                        // Setup sync listeners
                                         setupMasterSync();
                                     }
                                 }, { once: true });
