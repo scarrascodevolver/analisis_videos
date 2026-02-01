@@ -54,7 +54,7 @@
                 <div class="card-body p-0">
                     <!-- Video Player -->
                     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-                        <video id="rugbyVideo" controls style="width: 100%; height: auto; max-height: 550px; display: block;"
+                        <video id="rugbyVideo" controls style="width: 100%; height: auto; display: block;"
                                preload="metadata"
                                crossorigin="anonymous"
                                x-webkit-airplay="allow">

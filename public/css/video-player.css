@@ -8,29 +8,33 @@
     min-height: 300px; /* Mínimo para móviles */
 }
 
+/* Video player - responsive con aspect ratio 16:9 */
 .video-container > video,
 #rugbyVideo,
 #multiMasterVideo {
-    object-fit: contain; /* Mantiene aspect ratio sin cortar */
+    object-fit: contain;
     background: #000;
     aspect-ratio: 16 / 9;
     height: auto !important;
-    max-height: min(70vh, 550px) !important; /* Limita altura en pantallas bajas y respeta tope actual */
+    max-height: min(70vh, 550px) !important;
 }
 
-/* Limita el alto del master cuando está en layout multi-cámara (contenedor de 60vh) */
-.multi-camera-layout .video-container > video {
-    max-height: 60vh !important;
-    width: auto !important;      /* evita que el ancho fuerce un alto mayor al permitido */
-    max-width: 100%;
+/* Multi-camera layout: limita desbordamiento y ajusta video master */
+.multi-camera-layout {
+    overflow: hidden !important; /* Previene desbordamiento visual */
 }
 
-/* Centra y ajusta el master dentro del contenedor multi-cámara */
 .multi-camera-layout .video-container {
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.multi-camera-layout .video-container > video {
+    width: 100% !important;      /* Fuerza ancho completo */
+    height: auto !important;     /* Alto calculado por aspect-ratio */
+    max-height: 60vh !important; /* Límite estricto para no exceder contenedor */
 }
 
 @keyframes fadeIn {
