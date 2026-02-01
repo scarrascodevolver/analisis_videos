@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Video;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class RegenerateThumbnails extends Command
 {
@@ -57,6 +57,7 @@ class RegenerateThumbnails extends Command
 
         if ($videos->isEmpty()) {
             $this->warn('No videos found matching criteria.');
+
             return 0;
         }
 
@@ -73,15 +74,17 @@ class RegenerateThumbnails extends Command
             $disk = $this->getDiskForVideo($video);
 
             // Check if video file exists
-            if (!Storage::disk($disk)->exists($video->file_path)) {
+            if (! Storage::disk($disk)->exists($video->file_path)) {
                 $this->error("  ❌ Video file not found on disk '{$disk}': {$video->file_path}");
                 $errorCount++;
+
                 continue;
             }
 
             if ($dryRun) {
                 $this->info("  ✓ Would generate thumbnail for video {$video->id}");
                 $successCount++;
+
                 continue;
             }
 
@@ -89,9 +92,10 @@ class RegenerateThumbnails extends Command
                 // Download video to temp
                 $tempPath = $this->downloadVideoToTemp($video, $disk);
 
-                if (!$tempPath) {
-                    $this->error("  ❌ Failed to download video to temp");
+                if (! $tempPath) {
+                    $this->error('  ❌ Failed to download video to temp');
                     $errorCount++;
+
                     continue;
                 }
 
@@ -107,13 +111,13 @@ class RegenerateThumbnails extends Command
                     $this->info("  ✅ Thumbnail generated: {$thumbnailPath}");
                     $successCount++;
                 } else {
-                    $this->warn("  ⚠️  Failed to generate thumbnail");
+                    $this->warn('  ⚠️  Failed to generate thumbnail');
                     $errorCount++;
                 }
 
             } catch (\Exception $e) {
-                $this->error("  ❌ Error: " . $e->getMessage());
-                Log::error("RegenerateThumbnails failed for video {$video->id}: " . $e->getMessage());
+                $this->error('  ❌ Error: '.$e->getMessage());
+                Log::error("RegenerateThumbnails failed for video {$video->id}: ".$e->getMessage());
                 $errorCount++;
             }
 
@@ -123,7 +127,7 @@ class RegenerateThumbnails extends Command
         // Summary
         $this->newLine();
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        $this->info("Summary:");
+        $this->info('Summary:');
         $this->info("  ✅ Success: {$successCount}");
         if ($skipCount > 0) {
             $this->info("  ⏭️  Skipped: {$skipCount}");
@@ -159,17 +163,17 @@ class RegenerateThumbnails extends Command
     {
         try {
             $tempDir = storage_path('app/temp');
-            if (!is_dir($tempDir)) {
+            if (! is_dir($tempDir)) {
                 mkdir($tempDir, 0755, true);
             }
 
-            $tempPath = $tempDir . '/thumb_' . time() . '_' . basename($video->file_path);
+            $tempPath = $tempDir.'/thumb_'.time().'_'.basename($video->file_path);
 
-            $this->line("  📥 Downloading video...");
+            $this->line('  📥 Downloading video...');
 
             $fileContents = Storage::disk($disk)->get($video->file_path);
 
-            if (!$fileContents) {
+            if (! $fileContents) {
                 return null;
             }
 
@@ -178,7 +182,8 @@ class RegenerateThumbnails extends Command
             return $tempPath;
 
         } catch (\Exception $e) {
-            Log::error("Failed to download video {$video->id}: " . $e->getMessage());
+            Log::error("Failed to download video {$video->id}: ".$e->getMessage());
+
             return null;
         }
     }
@@ -190,10 +195,10 @@ class RegenerateThumbnails extends Command
     {
         try {
             $tempDir = storage_path('app/temp');
-            $thumbnailFilename = pathinfo($video->file_name, PATHINFO_FILENAME) . '_thumb.jpg';
-            $tempThumbnailPath = $tempDir . '/' . $thumbnailFilename;
+            $thumbnailFilename = pathinfo($video->file_name, PATHINFO_FILENAME).'_thumb.jpg';
+            $tempThumbnailPath = $tempDir.'/'.$thumbnailFilename;
 
-            $this->line("  🎨 Generating thumbnail...");
+            $this->line('  🎨 Generating thumbnail...');
 
             // Extract frame at 2 seconds
             $command = sprintf(
@@ -206,7 +211,7 @@ class RegenerateThumbnails extends Command
             $returnVar = 0;
             exec($command, $output, $returnVar);
 
-            if ($returnVar !== 0 || !file_exists($tempThumbnailPath)) {
+            if ($returnVar !== 0 || ! file_exists($tempThumbnailPath)) {
                 // Try at 1 second if 2 seconds failed
                 $command = sprintf(
                     'ffmpeg -i %s -ss 00:00:01 -vframes 1 -vf "scale=640:-1" -q:v 2 -y %s 2>&1',
@@ -216,7 +221,7 @@ class RegenerateThumbnails extends Command
                 exec($command, $output, $returnVar);
             }
 
-            if (!file_exists($tempThumbnailPath)) {
+            if (! file_exists($tempThumbnailPath)) {
                 return null;
             }
 
@@ -224,7 +229,7 @@ class RegenerateThumbnails extends Command
             $orgSlug = $video->organization ? $video->organization->slug : 'default';
             $storagePath = "thumbnails/{$orgSlug}/{$thumbnailFilename}";
 
-            $this->line("  📤 Uploading thumbnail...");
+            $this->line('  📤 Uploading thumbnail...');
 
             // Upload to storage
             try {
@@ -240,7 +245,8 @@ class RegenerateThumbnails extends Command
             return $storagePath;
 
         } catch (\Exception $e) {
-            Log::warning("Thumbnail generation failed for video {$video->id}: " . $e->getMessage());
+            Log::warning("Thumbnail generation failed for video {$video->id}: ".$e->getMessage());
+
             return null;
         }
     }

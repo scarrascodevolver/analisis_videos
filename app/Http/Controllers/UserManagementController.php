@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Category;
+use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -40,7 +40,7 @@ class UserManagementController extends Controller
         $currentOrg = $this->getCurrentOrganization();
 
         // Usuario sin organización asignada
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             return redirect()->route('home')
                 ->with('error', 'No tienes una organización asignada. Contacta al administrador.');
         }
@@ -68,7 +68,7 @@ class UserManagementController extends Controller
 
         // Filtrar por organización actual (si el usuario tiene una)
         if ($currentOrg) {
-            $query->whereHas('organizations', function($q) use ($currentOrg) {
+            $query->whereHas('organizations', function ($q) use ($currentOrg) {
                 $q->where('organizations.id', $currentOrg->id);
             });
         }
@@ -83,56 +83,60 @@ class UserManagementController extends Controller
 
         // Filtro por categoría
         if ($request->filled('category_id')) {
-            $query->whereHas('profile', function($q) use ($request) {
+            $query->whereHas('profile', function ($q) use ($request) {
                 $q->where('user_category_id', $request->category_id);
             });
         }
 
         return DataTables::of($query)
-            ->addColumn('avatar', function($user) {
+            ->addColumn('avatar', function ($user) {
                 if ($user->profile && $user->profile->avatar) {
-                    return '<img src="' . asset('storage/' . $user->profile->avatar) . '"
+                    return '<img src="'.asset('storage/'.$user->profile->avatar).'"
                             class="img-circle"
                             style="width: 25px; height: 25px; object-fit: cover;"
                             alt="Avatar">';
                 }
+
                 return '';
             })
-            ->editColumn('name', function($user) {
-                return '<strong>' . e($user->name) . '</strong>';
+            ->editColumn('name', function ($user) {
+                return '<strong>'.e($user->name).'</strong>';
             })
-            ->addColumn('role_badge', function($user) {
+            ->addColumn('role_badge', function ($user) {
                 $roleColors = [
                     'jugador' => 'primary',
                     'entrenador' => 'success',
                     'analista' => 'warning',
                     'staff' => 'info',
                     'director_club' => 'danger',
-                    'director_tecnico' => 'secondary'
+                    'director_tecnico' => 'secondary',
                 ];
                 $color = $roleColors[$user->role] ?? 'dark';
-                return '<span class="badge badge-' . $color . '">' . ucfirst($user->role) . '</span>';
+
+                return '<span class="badge badge-'.$color.'">'.ucfirst($user->role).'</span>';
             })
-            ->addColumn('category_badge', function($user) {
+            ->addColumn('category_badge', function ($user) {
                 if ($user->profile && $user->profile->category) {
-                    return '<span class="badge badge-info">' . e($user->profile->category->name) . '</span>';
+                    return '<span class="badge badge-info">'.e($user->profile->category->name).'</span>';
                 }
+
                 return '<span class="text-muted">-</span>';
             })
-            ->editColumn('created_at', function($user) {
-                return '<small class="text-muted">' . $user->created_at->format('d/m/Y') . '</small>';
+            ->editColumn('created_at', function ($user) {
+                return '<small class="text-muted">'.$user->created_at->format('d/m/Y').'</small>';
             })
-            ->addColumn('actions', function($user) {
+            ->addColumn('actions', function ($user) {
                 $canDelete = $user->id !== auth()->id();
+
                 return view('admin.users._actions', compact('user', 'canDelete'))->render();
             })
             ->filter(function ($query) use ($request) {
                 // Búsqueda global en nombre y email
                 if ($request->has('search') && $request->search['value'] != null) {
                     $search = $request->search['value'];
-                    $query->where(function($q) use ($search) {
+                    $query->where(function ($q) use ($search) {
                         $q->where('name', 'LIKE', "%{$search}%")
-                          ->orWhere('email', 'LIKE', "%{$search}%");
+                            ->orWhere('email', 'LIKE', "%{$search}%");
                     });
                 }
             })
@@ -146,6 +150,7 @@ class UserManagementController extends Controller
     public function create()
     {
         $categories = Category::all();
+
         return view('admin.users.create', compact('categories'));
     }
 
@@ -196,12 +201,12 @@ class UserManagementController extends Controller
     private function authorizeUserAccess(User $user)
     {
         $currentOrg = $this->getCurrentOrganization();
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             abort(403, 'No tienes una organización asignada.');
         }
 
         $belongsToOrg = $user->organizations()->where('organizations.id', $currentOrg->id)->exists();
-        if (!$belongsToOrg) {
+        if (! $belongsToOrg) {
             abort(403, 'No tienes permiso para acceder a este usuario.');
         }
     }
@@ -219,8 +224,9 @@ class UserManagementController extends Controller
             'assignedVideos.video.category',
             'videoComments',
             'videoAnnotations',
-            'assignedByMe'
+            'assignedByMe',
         ]);
+
         return view('admin.users.show', compact('user'));
     }
 
@@ -233,6 +239,7 @@ class UserManagementController extends Controller
 
         $categories = Category::all();
         $user->load('profile');
+
         return view('admin.users.edit', compact('user', 'categories'));
     }
 
@@ -250,7 +257,7 @@ class UserManagementController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role' => ['required', 'in:jugador,entrenador,analista,staff,director_club,director_tecnico'],
             'user_category_id' => ['nullable', 'exists:categories,id'],
             'password' => ['nullable', 'confirmed', 'min:8'],
@@ -264,7 +271,7 @@ class UserManagementController extends Controller
         ]);
 
         // Update password if provided
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->update(['password' => Hash::make($validated['password'])]);
         }
 

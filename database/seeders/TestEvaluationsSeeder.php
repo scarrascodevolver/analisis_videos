@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\PlayerEvaluation;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class TestEvaluationsSeeder extends Seeder
 {
@@ -17,8 +17,9 @@ class TestEvaluationsSeeder extends Seeder
         // Verificar que hay un período activo
         $activePeriod = \App\Models\EvaluationPeriod::getActive();
 
-        if (!$activePeriod) {
+        if (! $activePeriod) {
             $this->command->error('No hay un período de evaluación activo. Crea uno primero desde el dashboard.');
+
             return;
         }
 
@@ -27,14 +28,15 @@ class TestEvaluationsSeeder extends Seeder
         // Buscar ID de categoría "Adulta Primera"
         $categoriaAdultaPrimera = \App\Models\Category::where('name', 'Adulta Primera')->first();
 
-        if (!$categoriaAdultaPrimera) {
+        if (! $categoriaAdultaPrimera) {
             $this->command->error('No se encontró la categoría "Adulta Primera".');
+
             return;
         }
 
         // Obtener solo jugadores de categoría Adulta Primera
         $jugadores = User::where('role', 'jugador')
-            ->whereHas('profile', function($q) use ($categoriaAdultaPrimera) {
+            ->whereHas('profile', function ($q) use ($categoriaAdultaPrimera) {
                 $q->where('user_category_id', $categoriaAdultaPrimera->id);
             })
             ->with('profile')
@@ -42,6 +44,7 @@ class TestEvaluationsSeeder extends Seeder
 
         if ($jugadores->count() < 2) {
             $this->command->error('Se necesitan al menos 2 jugadores en categoría Adulta Primera para generar evaluaciones.');
+
             return;
         }
 
@@ -65,7 +68,7 @@ class TestEvaluationsSeeder extends Seeder
                     'Pilar Derecho',
                     'Segunda Línea',
                     'Ala',
-                    'Número 8'
+                    'Número 8',
                 ]);
 
                 // Generar valores base con algo de variación
@@ -154,7 +157,7 @@ class TestEvaluationsSeeder extends Seeder
      */
     private function getScore($nivel): int
     {
-        return match($nivel) {
+        return match ($nivel) {
             1 => rand(4, 6),  // Bajo
             2 => rand(6, 8),  // Medio
             3 => rand(7, 10), // Alto
@@ -167,7 +170,7 @@ class TestEvaluationsSeeder extends Seeder
      */
     private function getNivelTexto($nivel): string
     {
-        return match($nivel) {
+        return match ($nivel) {
             1 => 'Bajo',
             2 => 'Medio',
             3 => 'Alto',

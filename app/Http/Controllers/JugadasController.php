@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jugada;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class JugadasController extends Controller
 {
@@ -57,7 +57,7 @@ class JugadasController extends Controller
     public function apiStore(Request $request): JsonResponse
     {
         // Solo analistas y entrenadores pueden crear jugadas
-        if (!in_array(auth()->user()->role, ['analista', 'entrenador'])) {
+        if (! in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permisos para crear jugadas.',
@@ -74,7 +74,7 @@ class JugadasController extends Controller
         $user = auth()->user();
         $organization = $user->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes una organización asignada.',
@@ -131,7 +131,7 @@ class JugadasController extends Controller
     public function apiDestroy(Jugada $jugada): JsonResponse
     {
         // Solo analistas y entrenadores pueden eliminar jugadas
-        if (!in_array(auth()->user()->role, ['analista', 'entrenador'])) {
+        if (! in_array(auth()->user()->role, ['analista', 'entrenador'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permisos para eliminar jugadas.',
@@ -170,12 +170,12 @@ class JugadasController extends Controller
 
         // Crear directorios temporales
         $tempDir = storage_path('app/temp');
-        if (!file_exists($tempDir)) {
+        if (! file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
 
-        $webmPath = $tempDir . '/' . uniqid() . '.webm';
-        $mp4Path = $tempDir . '/' . $filename . '_' . date('Y-m-d') . '.mp4';
+        $webmPath = $tempDir.'/'.uniqid().'.webm';
+        $mp4Path = $tempDir.'/'.$filename.'_'.date('Y-m-d').'.mp4';
 
         try {
             // Guardar archivo WebM
@@ -196,15 +196,16 @@ class JugadasController extends Controller
                 unlink($webmPath);
             }
 
-            if ($returnCode !== 0 || !file_exists($mp4Path)) {
+            if ($returnCode !== 0 || ! file_exists($mp4Path)) {
                 \Log::error('FFmpeg conversion failed', [
                     'returnCode' => $returnCode,
                     'output' => $output,
                     'command' => $command,
                 ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al convertir el video. FFmpeg code: ' . $returnCode,
+                    'message' => 'Error al convertir el video. FFmpeg code: '.$returnCode,
                     'debug' => implode("\n", array_slice($output, -10)), // últimas 10 líneas
                 ], 500);
             }
@@ -235,7 +236,7 @@ class JugadasController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ], 500);
         }
     }

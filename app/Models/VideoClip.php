@@ -63,6 +63,7 @@ class VideoClip extends Model
         $seconds = (int) $this->start_time;
         $minutes = floor($seconds / 60);
         $secs = $seconds % 60;
+
         return sprintf('%02d:%02d', $minutes, $secs);
     }
 
@@ -71,12 +72,14 @@ class VideoClip extends Model
         $seconds = (int) $this->end_time;
         $minutes = floor($seconds / 60);
         $secs = $seconds % 60;
+
         return sprintf('%02d:%02d', $minutes, $secs);
     }
 
     public function getFormattedDurationAttribute()
     {
         $seconds = (int) $this->duration;
+
         return sprintf('%02d:%02d', floor($seconds / 60), $seconds % 60);
     }
 

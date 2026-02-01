@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Video;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Seeder;
 
 class MigrateVideosToNewCategoriesSeeder extends Seeder
 {
@@ -47,7 +46,7 @@ class MigrateVideosToNewCategoriesSeeder extends Seeder
             1 => 'Adulta Primera',
             2 => 'Adulta Intermedia',
             3 => 'Juveniles',
-            4 => 'Femenino'
+            4 => 'Femenino',
         ];
 
         return $names[$id] ?? "ID: {$id}";
@@ -58,7 +57,7 @@ class MigrateVideosToNewCategoriesSeeder extends Seeder
         $names = [
             1 => 'Juveniles',
             2 => 'Adultas',
-            3 => 'Femenino'
+            3 => 'Femenino',
         ];
 
         return $names[$id] ?? "ID: {$id}";

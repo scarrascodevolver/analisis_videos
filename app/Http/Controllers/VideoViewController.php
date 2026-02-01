@@ -21,7 +21,7 @@ class VideoViewController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'View within cooldown period',
-                'cooldown' => true
+                'cooldown' => true,
             ]);
         }
 
@@ -38,7 +38,7 @@ class VideoViewController extends Controller
             'cooldown' => false,
             'view_id' => $view->id,
             'total_views' => $video->view_count,
-            'unique_viewers' => $video->unique_viewers
+            'unique_viewers' => $video->unique_viewers,
         ]);
     }
 
@@ -60,12 +60,12 @@ class VideoViewController extends Controller
         }
 
         $view->update([
-            'watch_duration' => $validated['duration']
+            'watch_duration' => $validated['duration'],
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Duration updated'
+            'message' => 'Duration updated',
         ]);
     }
 
@@ -86,12 +86,12 @@ class VideoViewController extends Controller
         }
 
         $view->update([
-            'completed' => true
+            'completed' => true,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Video marked as completed'
+            'message' => 'Video marked as completed',
         ]);
     }
 
@@ -101,7 +101,7 @@ class VideoViewController extends Controller
     public function getStats(Video $video)
     {
         // Check permissions
-        if (!in_array(Auth::user()->role, ['analista', 'entrenador', 'jugador'])) {
+        if (! in_array(Auth::user()->role, ['analista', 'entrenador', 'jugador'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -111,7 +111,7 @@ class VideoViewController extends Controller
             'success' => true,
             'total_views' => $video->view_count,
             'unique_viewers' => $video->unique_viewers,
-            'stats' => $stats
+            'stats' => $stats,
         ]);
     }
 }

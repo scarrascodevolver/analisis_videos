@@ -61,7 +61,7 @@ class PartnerOAuthController extends Controller
         $partnerId = session('mp_oauth_partner_id');
         $partner = Partner::find($partnerId);
 
-        if (!$partner) {
+        if (! $partner) {
             return redirect()->route('owner.partners.oauth.index')
                 ->with('error', 'Socio no encontrado.');
         }
@@ -81,7 +81,7 @@ class PartnerOAuthController extends Controller
         $redirectUri = route('owner.partners.oauth.callback');
         $tokenData = $this->mercadopago->exchangeCodeForToken($code, $redirectUri);
 
-        if (!$tokenData) {
+        if (! $tokenData) {
             return redirect()->route('owner.partners.oauth.index')
                 ->with('error', 'Error al obtener credenciales. Intenta de nuevo.');
         }
@@ -129,15 +129,16 @@ class PartnerOAuthController extends Controller
      */
     public function refresh(Partner $partner)
     {
-        if (!$partner->mp_refresh_token) {
+        if (! $partner->mp_refresh_token) {
             return redirect()->route('owner.partners.oauth.index')
                 ->with('error', 'No hay token de refresco disponible. Reconecta la cuenta.');
         }
 
         $tokenData = $this->mercadopago->refreshToken($partner->mp_refresh_token);
 
-        if (!$tokenData) {
+        if (! $tokenData) {
             $partner->disconnectMercadoPago();
+
             return redirect()->route('owner.partners.oauth.index')
                 ->with('error', 'Error al refrescar token. La cuenta fue desconectada.');
         }

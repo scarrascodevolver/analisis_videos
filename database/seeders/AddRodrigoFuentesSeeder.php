@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Category;
 use App\Models\User;
 use App\Models\UserProfile;
-use App\Models\Category;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class AddRodrigoFuentesSeeder extends Seeder
@@ -18,8 +18,9 @@ class AddRodrigoFuentesSeeder extends Seeder
         // Obtener categoría Juveniles
         $juvenilesCategory = Category::where('name', 'Juveniles')->first();
 
-        if (!$juvenilesCategory) {
+        if (! $juvenilesCategory) {
             $this->command->error('Categoría Juveniles no encontrada. Ejecutar CategorySeeder primero.');
+
             return;
         }
 

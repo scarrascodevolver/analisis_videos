@@ -32,17 +32,17 @@ class SendGridApiTransport extends AbstractTransport
         $data = [
             'personalizations' => [
                 [
-                    'to' => array_map(fn($addr) => ['email' => $addr->getAddress()], $email->getTo())
-                ]
+                    'to' => array_map(fn ($addr) => ['email' => $addr->getAddress()], $email->getTo()),
+                ],
             ],
             'from' => ['email' => $email->getFrom()[0]->getAddress()],
             'subject' => $email->getSubject(),
             'content' => [
                 [
                     'type' => $contentType,
-                    'value' => $content
-                ]
-            ]
+                    'value' => $content,
+                ],
+            ],
         ];
 
         $curl = curl_init();
@@ -52,9 +52,9 @@ class SendGridApiTransport extends AbstractTransport
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($data),
             CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->apiKey,
-                'Content-Type: application/json'
-            ]
+                'Authorization: Bearer '.$this->apiKey,
+                'Content-Type: application/json',
+            ],
         ]);
 
         $response = curl_exec($curl);
@@ -62,7 +62,7 @@ class SendGridApiTransport extends AbstractTransport
         curl_close($curl);
 
         if ($httpCode !== 202) {
-            throw new \Exception('SendGrid API error: ' . $response);
+            throw new \Exception('SendGrid API error: '.$response);
         }
     }
 

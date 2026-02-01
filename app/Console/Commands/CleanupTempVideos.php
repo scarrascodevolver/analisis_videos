@@ -35,8 +35,9 @@ class CleanupTempVideos extends Command
 
         $tempDir = storage_path('app/temp');
 
-        if (!is_dir($tempDir)) {
+        if (! is_dir($tempDir)) {
             $this->info('Temp directory does not exist. Nothing to clean.');
+
             return 0;
         }
 
@@ -53,14 +54,15 @@ class CleanupTempVideos extends Command
         $this->info("Looking for files older than {$maxHours} hours...");
         $this->newLine();
 
-        $files = glob($tempDir . '/*');
+        $files = glob($tempDir.'/*');
 
         if (empty($files)) {
             $this->info('No files found in temp directory.');
+
             return 0;
         }
 
-        $this->info("Found " . count($files) . " files in temp directory");
+        $this->info('Found '.count($files).' files in temp directory');
 
         $cutoffTime = $forceAll ? PHP_INT_MAX : time() - ($maxHours * 3600);
         $deletedCount = 0;
@@ -70,7 +72,7 @@ class CleanupTempVideos extends Command
         $errors = [];
 
         foreach ($files as $file) {
-            if (!is_file($file)) {
+            if (! is_file($file)) {
                 continue;
             }
 
@@ -81,15 +83,16 @@ class CleanupTempVideos extends Command
             $fileAge = round((time() - $fileModTime) / 3600, 1);
 
             // Check if file is old enough to delete
-            if ($fileModTime > $cutoffTime && !$forceAll) {
+            if ($fileModTime > $cutoffTime && ! $forceAll) {
                 $this->line("  SKIP: {$filename} ({$this->formatBytes($fileSize)}) - {$fileAge}h old");
                 $skippedCount++;
+
                 continue;
             }
 
             // File is old enough, delete it
             try {
-                if (!$isDryRun) {
+                if (! $isDryRun) {
                     unlink($file);
                 }
 
@@ -105,7 +108,7 @@ class CleanupTempVideos extends Command
         }
 
         $this->newLine();
-        $this->info('=' . str_repeat('=', 50));
+        $this->info('='.str_repeat('=', 50));
 
         if ($isDryRun) {
             $this->info('DRY RUN SUMMARY:');
@@ -123,7 +126,7 @@ class CleanupTempVideos extends Command
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $this->newLine();
             $this->error('Errors encountered with files:');
             foreach ($errors as $error) {
@@ -147,6 +150,6 @@ class CleanupTempVideos extends Command
 
         $bytes /= pow(1024, $pow);
 
-        return round($bytes, 2) . ' ' . $units[$pow];
+        return round($bytes, 2).' '.$units[$pow];
     }
 }

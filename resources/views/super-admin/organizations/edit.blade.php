@@ -146,6 +146,25 @@
                 </div>
             </div>
 
+            <!-- Quick Actions Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-tools mr-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ route('super-admin.organizations.settings', $organization) }}"
+                       class="btn btn-outline-primary btn-block mb-2">
+                        <i class="fas fa-cog mr-2"></i> Organization Settings
+                    </a>
+                    <a href="{{ route('super-admin.organizations.assign-admin', $organization) }}"
+                       class="btn btn-outline-success btn-block">
+                        <i class="fas fa-user-shield mr-2"></i> Manage Users
+                    </a>
+                </div>
+            </div>
+
             <!-- Admins Card -->
             <div class="card shadow">
                 <div class="card-header py-3 bg-success text-white d-flex justify-content-between align-items-center">

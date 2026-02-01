@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Debug script para verificar el estado de las anotaciones
  * Ejecutar: php debug-annotations.php
@@ -15,7 +16,7 @@ echo "=== DEBUG: Video Annotations ===\n\n";
 
 // 1. Verificar estructura de tabla
 echo "1. Estructura de la tabla video_annotations:\n";
-$columns = DB::select("DESCRIBE video_annotations");
+$columns = DB::select('DESCRIBE video_annotations');
 foreach ($columns as $column) {
     echo "   - {$column->Field}: {$column->Type} (Default: {$column->Default}, Null: {$column->Null})\n";
 }
@@ -63,9 +64,9 @@ $testAnnotation = \App\Models\VideoAnnotation::orderBy('created_at', 'desc')->fi
 if ($testAnnotation) {
     $json = $testAnnotation->toArray();
     echo "   Annotation ID: {$testAnnotation->id}\n";
-    echo "   is_permanent (raw from DB): " . var_export($testAnnotation->getAttributes()['is_permanent'] ?? 'NOT SET', true) . "\n";
-    echo "   is_permanent (after cast): " . var_export($testAnnotation->is_permanent, true) . "\n";
-    echo "   is_permanent (in JSON): " . var_export($json['is_permanent'], true) . " (type: " . gettype($json['is_permanent']) . ")\n";
+    echo '   is_permanent (raw from DB): '.var_export($testAnnotation->getAttributes()['is_permanent'] ?? 'NOT SET', true)."\n";
+    echo '   is_permanent (after cast): '.var_export($testAnnotation->is_permanent, true)."\n";
+    echo '   is_permanent (in JSON): '.var_export($json['is_permanent'], true).' (type: '.gettype($json['is_permanent']).")\n";
     echo "   duration_seconds: {$json['duration_seconds']}\n";
 } else {
     echo "   No annotations found to test.\n";

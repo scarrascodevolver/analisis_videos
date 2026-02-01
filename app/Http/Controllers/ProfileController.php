@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -41,7 +41,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'position' => 'nullable|string',
             'secondary_position' => 'nullable|string',
@@ -50,7 +50,7 @@ class ProfileController extends Controller
             'height' => 'nullable|integer|min:150|max:220',
             'date_of_birth' => 'nullable|date',
             'user_category_id' => 'required|exists:categories,id',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,heic|max:25600'
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,heic|max:25600',
         ]);
 
         // Update user basic info

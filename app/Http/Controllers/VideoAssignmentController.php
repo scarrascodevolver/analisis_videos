@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VideoAssignment;
-use App\Models\Video;
 use App\Models\User;
+use App\Models\Video;
+use App\Models\VideoAssignment;
+use App\Notifications\VideoAssigned;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\VideoAssigned;
 
 class VideoAssignmentController extends Controller
 {
     public function index()
     {
         $assignments = VideoAssignment::with(['video.category', 'assignedTo', 'assignedBy'])
-                                    ->latest()
-                                    ->paginate(15);
+            ->latest()
+            ->paginate(15);
 
         return view('assignments.index', compact('assignments'));
     }
@@ -23,15 +23,15 @@ class VideoAssignmentController extends Controller
     public function create()
     {
         $videos = Video::with(['category'])
-                      ->latest()
-                      ->get();
+            ->latest()
+            ->get();
 
-        $players = User::where(function($query) {
-                $query->where('role', 'jugador')
-                      ->orWhereHas('profile', function($q) {
-                          $q->where('can_receive_assignments', true);
-                      });
-            })
+        $players = User::where(function ($query) {
+            $query->where('role', 'jugador')
+                ->orWhereHas('profile', function ($q) {
+                    $q->where('can_receive_assignments', true);
+                });
+        })
             ->with('profile')
             ->orderBy('name')
             ->get();
@@ -48,13 +48,13 @@ class VideoAssignmentController extends Controller
             'due_date' => 'required|date|after:today',
             'instructions' => 'nullable|string',
             'focus_areas' => 'nullable|array',
-            'focus_areas.*' => 'in:tecnico,tactico,fisico,mental,liderazgo'
+            'focus_areas.*' => 'in:tecnico,tactico,fisico,mental,liderazgo',
         ]);
 
         // Check if assignment already exists
         $existingAssignment = VideoAssignment::where('video_id', $request->video_id)
-                                           ->where('assigned_to', $request->player_id)
-                                           ->first();
+            ->where('assigned_to', $request->player_id)
+            ->first();
 
         if ($existingAssignment) {
             return back()->withErrors(['video_id' => 'Este video ya está asignado a este jugador']);
@@ -69,7 +69,7 @@ class VideoAssignmentController extends Controller
             'instructions' => $request->instructions,
             'focus_areas' => $request->focus_areas ? json_encode($request->focus_areas) : null,
             'status' => 'asignado',
-            'assigned_at' => now()
+            'assigned_at' => now(),
         ]);
 
         // Send notification to player
@@ -77,7 +77,7 @@ class VideoAssignmentController extends Controller
         Notification::send($player, new VideoAssigned($assignment));
 
         return redirect()->route('analyst.assignments.index')
-                         ->with('success', 'Video asignado exitosamente al jugador ' . $player->name);
+            ->with('success', 'Video asignado exitosamente al jugador '.$player->name);
     }
 
     public function show(VideoAssignment $assignment)
@@ -86,7 +86,7 @@ class VideoAssignmentController extends Controller
             'video.category',
             'video.comments.user',
             'player',
-            'analyst'
+            'analyst',
         ]);
 
         return view('assignments.show', compact('assignment'));
@@ -95,12 +95,12 @@ class VideoAssignmentController extends Controller
     public function edit(VideoAssignment $assignment)
     {
         $videos = Video::with(['category'])->get();
-        $players = User::where(function($query) {
-                $query->where('role', 'jugador')
-                      ->orWhereHas('profile', function($q) {
-                          $q->where('can_receive_assignments', true);
-                      });
-            })
+        $players = User::where(function ($query) {
+            $query->where('role', 'jugador')
+                ->orWhereHas('profile', function ($q) {
+                    $q->where('can_receive_assignments', true);
+                });
+        })
             ->with('profile')
             ->orderBy('name')
             ->get();
@@ -116,7 +116,7 @@ class VideoAssignmentController extends Controller
             'instructions' => 'nullable|string',
             'focus_areas' => 'nullable|array',
             'focus_areas.*' => 'in:tecnico,tactico,fisico,mental,liderazgo',
-            'status' => 'required|in:asignado,en_progreso,completado,cancelado'
+            'status' => 'required|in:asignado,en_progreso,completado,cancelado',
         ]);
 
         $assignment->update([
@@ -124,11 +124,11 @@ class VideoAssignmentController extends Controller
             'due_date' => $request->due_date,
             'instructions' => $request->instructions,
             'focus_areas' => $request->focus_areas ? json_encode($request->focus_areas) : null,
-            'status' => $request->status
+            'status' => $request->status,
         ]);
 
         return redirect()->route('analyst.assignments.show', $assignment)
-                         ->with('success', 'Asignación actualizada exitosamente');
+            ->with('success', 'Asignación actualizada exitosamente');
     }
 
     public function destroy(VideoAssignment $assignment)
@@ -136,20 +136,20 @@ class VideoAssignmentController extends Controller
         $assignment->delete();
 
         return redirect()->route('analyst.assignments.index')
-                         ->with('success', 'Asignación eliminada exitosamente');
+            ->with('success', 'Asignación eliminada exitosamente');
     }
 
     public function markCompleted(VideoAssignment $assignment)
     {
         $assignment->update([
             'status' => 'completado',
-            'completed_at' => now()
+            'completed_at' => now(),
         ]);
 
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Asignación marcada como completada'
+                'message' => 'Asignación marcada como completada',
             ]);
         }
 
@@ -164,11 +164,11 @@ class VideoAssignmentController extends Controller
 
         $assignment->update([
             'status' => 'en_progreso',
-            'accepted_at' => now()
+            'accepted_at' => now(),
         ]);
 
         return redirect()->route('player.videos')
-                         ->with('success', 'Asignación aceptada. Puedes comenzar el análisis.');
+            ->with('success', 'Asignación aceptada. Puedes comenzar el análisis.');
     }
 
     public function playerSubmit(Request $request, VideoAssignment $assignment)
@@ -181,7 +181,7 @@ class VideoAssignmentController extends Controller
             'player_notes' => 'required|string|min:50',
             'self_evaluation' => 'required|integer|min:1|max:10',
             'areas_identified' => 'required|array|min:1',
-            'areas_identified.*' => 'in:tecnico,tactico,fisico,mental,liderazgo'
+            'areas_identified.*' => 'in:tecnico,tactico,fisico,mental,liderazgo',
         ]);
 
         $assignment->update([
@@ -189,14 +189,14 @@ class VideoAssignmentController extends Controller
             'completed_at' => now(),
             'player_notes' => $request->player_notes,
             'self_evaluation' => $request->self_evaluation,
-            'areas_identified' => json_encode($request->areas_identified)
+            'areas_identified' => json_encode($request->areas_identified),
         ]);
 
         // Notify analyst of completion
         Notification::send($assignment->analyst, new \App\Notifications\AssignmentCompleted($assignment));
 
         return redirect()->route('player.videos')
-                         ->with('success', 'Análisis completado y enviado al analista');
+            ->with('success', 'Análisis completado y enviado al analista');
     }
 
     public function bulk(Request $request)
@@ -204,7 +204,7 @@ class VideoAssignmentController extends Controller
         $request->validate([
             'action' => 'required|in:assign,complete,cancel',
             'assignments' => 'required|array',
-            'assignments.*' => 'exists:video_assignments,id'
+            'assignments.*' => 'exists:video_assignments,id',
         ]);
 
         $assignments = VideoAssignment::whereIn('id', $request->assignments)->get();
@@ -220,6 +220,6 @@ class VideoAssignmentController extends Controller
             }
         }
 
-        return back()->with('success', 'Acción aplicada a ' . count($assignments) . ' asignaciones');
+        return back()->with('success', 'Acción aplicada a '.count($assignments).' asignaciones');
     }
 }

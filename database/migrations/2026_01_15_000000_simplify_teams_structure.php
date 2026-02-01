@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,7 +16,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Agregar columna analyzed_team_name a videos (si no existe)
-        if (!Schema::hasColumn('videos', 'analyzed_team_name')) {
+        if (! Schema::hasColumn('videos', 'analyzed_team_name')) {
             Schema::table('videos', function (Blueprint $table) {
                 $table->string('analyzed_team_name')->nullable()->after('rival_team_name');
             });
@@ -55,9 +55,9 @@ return new class extends Migration
         // 4. Migrar rival_team_id a rival_team_name si existe
         $videosWithRivalId = DB::table('videos')
             ->whereNotNull('rival_team_id')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('rival_team_name')
-                  ->orWhere('rival_team_name', '');
+                    ->orWhere('rival_team_name', '');
             })
             ->get();
 

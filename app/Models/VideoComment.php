@@ -51,8 +51,8 @@ class VideoComment extends Model
     public function mentionedUsers()
     {
         return $this->belongsToMany(User::class, 'comment_mentions', 'comment_id', 'mentioned_user_id')
-                    ->withPivot('is_read')
-                    ->withTimestamps();
+            ->withPivot('is_read')
+            ->withTimestamps();
     }
 
     /**
@@ -83,6 +83,7 @@ class VideoComment extends Model
     {
         $minutes = floor($this->timestamp_seconds / 60);
         $seconds = $this->timestamp_seconds % 60;
+
         return sprintf('%02d:%02d', $minutes, $seconds);
     }
 

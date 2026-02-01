@@ -23,8 +23,8 @@ return new class extends Migration
     {
         Schema::table('user_profiles', function (Blueprint $table) {
             $table->enum('experience_level', ['principiante', 'intermedio', 'avanzado', 'profesional'])
-                  ->default('principiante')
-                  ->after('position');
+                ->default('principiante')
+                ->after('position');
         });
     }
 };

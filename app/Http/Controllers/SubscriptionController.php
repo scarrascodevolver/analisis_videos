@@ -6,15 +6,15 @@ use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
-use App\Services\PayPalService;
 use App\Services\MercadoPagoService;
+use App\Services\PayPalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class SubscriptionController extends Controller
 {
     protected PayPalService $paypal;
+
     protected MercadoPagoService $mercadopago;
 
     public function __construct(PayPalService $paypal, MercadoPagoService $mercadopago)
@@ -46,7 +46,7 @@ class SubscriptionController extends Controller
         $user = auth()->user();
         $organization = $user->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->back()->with('error', 'Debes pertenecer a una organización para suscribirte.');
         }
 
@@ -57,7 +57,7 @@ class SubscriptionController extends Controller
             ->first();
 
         if ($activeSubscription) {
-            return redirect()->back()->with('error', 'Ya tienes una suscripción activa hasta ' . $activeSubscription->ends_at->format('d/m/Y'));
+            return redirect()->back()->with('error', 'Ya tienes una suscripción activa hasta '.$activeSubscription->ends_at->format('d/m/Y'));
         }
 
         // Determinar moneda y precio
@@ -78,7 +78,7 @@ class SubscriptionController extends Controller
         $user = auth()->user();
         $organization = $user->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return response()->json(['error' => 'Organización no encontrada'], 400);
         }
 
@@ -86,7 +86,7 @@ class SubscriptionController extends Controller
         $price = $plan->getPriceForCurrency($currency);
 
         // Crear referencia única
-        $referenceId = 'SUB-' . $organization->id . '-' . $plan->id . '-' . time();
+        $referenceId = 'SUB-'.$organization->id.'-'.$plan->id.'-'.time();
 
         $orderData = [
             'reference_id' => $referenceId,
@@ -99,7 +99,7 @@ class SubscriptionController extends Controller
 
         $order = $this->paypal->createOrder($orderData);
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['error' => 'Error al crear orden de pago'], 500);
         }
 
@@ -132,7 +132,7 @@ class SubscriptionController extends Controller
         $orderId = $request->input('token'); // PayPal envía el order ID como 'token'
         $sessionOrder = session('paypal_order');
 
-        if (!$orderId || !$sessionOrder || $sessionOrder['order_id'] !== $orderId) {
+        if (! $orderId || ! $sessionOrder || $sessionOrder['order_id'] !== $orderId) {
             return redirect()->route('subscription.pricing')
                 ->with('error', 'Orden de pago inválida.');
         }
@@ -140,8 +140,9 @@ class SubscriptionController extends Controller
         // Capturar el pago
         $capture = $this->paypal->captureOrder($orderId);
 
-        if (!$capture || $capture['status'] !== 'COMPLETED') {
+        if (! $capture || $capture['status'] !== 'COMPLETED') {
             Log::error('PayPal: Captura fallida', ['order_id' => $orderId, 'response' => $capture]);
+
             return redirect()->route('subscription.checkout', $plan)
                 ->with('error', 'Error al procesar el pago. Por favor intenta de nuevo.');
         }
@@ -203,8 +204,9 @@ class SubscriptionController extends Controller
             $headerArray[strtoupper(str_replace('-', '_', $key))] = is_array($value) ? $value[0] : $value;
         }
 
-        if (!$this->paypal->verifyWebhookSignature($headerArray, $body)) {
+        if (! $this->paypal->verifyWebhookSignature($headerArray, $body)) {
             Log::warning('PayPal Webhook: Firma inválida');
+
             return response('Invalid signature', 400);
         }
 
@@ -242,7 +244,7 @@ class SubscriptionController extends Controller
         $user = auth()->user();
         $organization = $user->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return response()->json(['error' => 'Organización no encontrada'], 400);
         }
 
@@ -250,7 +252,7 @@ class SubscriptionController extends Controller
         $price = $plan->getPriceForCurrency($currency);
 
         // Crear referencia única
-        $referenceId = 'SUB-' . $organization->id . '-' . $plan->id . '-' . time();
+        $referenceId = 'SUB-'.$organization->id.'-'.$plan->id.'-'.time();
 
         $preferenceData = [
             'reference_id' => $referenceId,
@@ -266,7 +268,7 @@ class SubscriptionController extends Controller
 
         $preference = $this->mercadopago->createPreference($preferenceData);
 
-        if (!$preference) {
+        if (! $preference) {
             return response()->json(['error' => 'Error al crear preferencia de pago'], 500);
         }
 
@@ -309,7 +311,7 @@ class SubscriptionController extends Controller
         }
 
         // Status approved
-        if (!$paymentId || !$sessionOrder) {
+        if (! $paymentId || ! $sessionOrder) {
             return redirect()->route('subscription.pricing')
                 ->with('error', 'Error al procesar el pago.');
         }
@@ -317,8 +319,9 @@ class SubscriptionController extends Controller
         // Verificar el pago con Mercado Pago
         $paymentDetails = $this->mercadopago->getPayment($paymentId);
 
-        if (!$paymentDetails || $paymentDetails['status'] !== 'approved') {
+        if (! $paymentDetails || $paymentDetails['status'] !== 'approved') {
             Log::error('MercadoPago: Pago no aprobado', ['payment_id' => $paymentId, 'details' => $paymentDetails]);
+
             return redirect()->route('subscription.checkout', $plan)
                 ->with('error', 'Error al verificar el pago.');
         }
@@ -373,7 +376,7 @@ class SubscriptionController extends Controller
         $dataId = $request->input('data.id', '');
 
         // Verificar firma (opcional, según configuración)
-        if (!$this->mercadopago->verifyWebhookSignature($xSignature, $xRequestId, $dataId)) {
+        if (! $this->mercadopago->verifyWebhookSignature($xSignature, $xRequestId, $dataId)) {
             Log::warning('MercadoPago Webhook: Firma inválida');
             // No rechazar, MercadoPago puede no enviar firma en algunos casos
         }

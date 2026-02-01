@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\PaymentSplit;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class PaymentReportController extends Controller
 {
@@ -35,7 +35,7 @@ class PaymentReportController extends Controller
                 ->whereBetween('paid_at', [$startDate, $endDate])
                 ->count(),
             'pending_splits' => PaymentSplit::pending()
-                ->whereHas('payment', fn($q) => $q->where('status', 'completed'))
+                ->whereHas('payment', fn ($q) => $q->where('status', 'completed'))
                 ->sum('amount'),
         ];
 
@@ -68,14 +68,14 @@ class PaymentReportController extends Controller
      */
     public function splits(Request $request)
     {
-        $partners = Partner::with(['paymentSplits' => function($q) {
-            $q->whereHas('payment', fn($p) => $p->where('status', 'completed'))
-              ->with('payment')
-              ->orderBy('created_at', 'desc');
+        $partners = Partner::with(['paymentSplits' => function ($q) {
+            $q->whereHas('payment', fn ($p) => $p->where('status', 'completed'))
+                ->with('payment')
+                ->orderBy('created_at', 'desc');
         }])->get();
 
         // Resumen por socio
-        $partnerSummary = $partners->map(function($partner) {
+        $partnerSummary = $partners->map(function ($partner) {
             return [
                 'partner' => $partner,
                 'total_earned' => $partner->getTotalEarnings(),
@@ -91,7 +91,7 @@ class PaymentReportController extends Controller
         $partnerId = $request->input('partner_id');
 
         $splitsQuery = PaymentSplit::with(['payment.organization', 'partner'])
-            ->whereHas('payment', fn($q) => $q->where('status', 'completed'))
+            ->whereHas('payment', fn ($q) => $q->where('status', 'completed'))
             ->orderBy('created_at', 'desc');
 
         if ($status !== 'all') {
@@ -135,7 +135,7 @@ class PaymentReportController extends Controller
                 'notes' => $validated['notes'],
             ]);
 
-        return back()->with('success', count($validated['split_ids']) . ' splits marcados como transferidos.');
+        return back()->with('success', count($validated['split_ids']).' splits marcados como transferidos.');
     }
 
     /**
@@ -147,7 +147,7 @@ class PaymentReportController extends Controller
         $partnerId = $request->input('partner_id');
 
         $splitsQuery = PaymentSplit::with(['payment.organization', 'partner'])
-            ->whereHas('payment', fn($q) => $q->where('status', 'completed'))
+            ->whereHas('payment', fn ($q) => $q->where('status', 'completed'))
             ->orderBy('created_at', 'desc');
 
         if ($status !== 'all') {
@@ -160,14 +160,14 @@ class PaymentReportController extends Controller
 
         $splits = $splitsQuery->get();
 
-        $filename = 'splits_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'splits_'.now()->format('Y-m-d').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function() use ($splits) {
+        $callback = function () use ($splits) {
             $file = fopen('php://output', 'w');
 
             // Headers
@@ -187,7 +187,7 @@ class PaymentReportController extends Controller
                 fputcsv($file, [
                     $split->payment->paid_at?->format('Y-m-d H:i'),
                     $split->partner->name,
-                    $split->percentage_applied . '%',
+                    $split->percentage_applied.'%',
                     $split->amount,
                     $split->currency,
                     $split->status,

@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\Video;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class CleanupOrphanedThumbnails extends Command
 {
@@ -43,7 +42,7 @@ class CleanupOrphanedThumbnails extends Command
             ->pluck('thumbnail_path')
             ->toArray();
 
-        $this->info("Found " . count($dbThumbnails) . " thumbnails in database");
+        $this->info('Found '.count($dbThumbnails).' thumbnails in database');
 
         $deletedCount = 0;
         $totalSize = 0;
@@ -58,10 +57,11 @@ class CleanupOrphanedThumbnails extends Command
 
                 if (empty($thumbnailFiles)) {
                     $this->line("No thumbnails found on disk: {$diskName}");
+
                     continue;
                 }
 
-                $this->info("Checking {$diskName} disk (" . count($thumbnailFiles) . " files)...");
+                $this->info("Checking {$diskName} disk (".count($thumbnailFiles).' files)...');
 
                 foreach ($thumbnailFiles as $filePath) {
                     // Skip if file is in database
@@ -75,21 +75,21 @@ class CleanupOrphanedThumbnails extends Command
                         $totalSize += $fileSize;
 
                         if ($dryRun) {
-                            $this->line("  Would delete: {$filePath} (" . $this->formatBytes($fileSize) . ")");
+                            $this->line("  Would delete: {$filePath} (".$this->formatBytes($fileSize).')');
                         } else {
                             $disk->delete($filePath);
-                            $this->line("  ✓ Deleted: {$filePath} (" . $this->formatBytes($fileSize) . ")");
+                            $this->line("  ✓ Deleted: {$filePath} (".$this->formatBytes($fileSize).')');
                         }
 
                         $deletedCount++;
 
                     } catch (\Exception $e) {
-                        $this->warn("  ⚠️  Error with {$filePath}: " . $e->getMessage());
+                        $this->warn("  ⚠️  Error with {$filePath}: ".$e->getMessage());
                     }
                 }
 
             } catch (\Exception $e) {
-                $this->error("Error scanning {$diskName} disk: " . $e->getMessage());
+                $this->error("Error scanning {$diskName} disk: ".$e->getMessage());
             }
         }
 
@@ -103,9 +103,9 @@ class CleanupOrphanedThumbnails extends Command
             } else {
                 $this->info("Deleted {$deletedCount} orphaned thumbnail(s)");
             }
-            $this->info("Total space freed: " . $this->formatBytes($totalSize));
+            $this->info('Total space freed: '.$this->formatBytes($totalSize));
         } else {
-            $this->info("No orphaned thumbnails found. Storage is clean! ✨");
+            $this->info('No orphaned thumbnails found. Storage is clean! ✨');
         }
 
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -124,6 +124,6 @@ class CleanupOrphanedThumbnails extends Command
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

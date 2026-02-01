@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('height')->nullable()->after('weight'); // in cm
             $table->date('date_of_birth')->nullable()->after('height');
             $table->text('goals')->nullable()->after('date_of_birth');
-            
+
             // Coach fields that are currently missing
             $table->integer('coaching_experience')->nullable()->after('goals'); // years
             $table->text('certifications')->nullable()->after('coaching_experience');
@@ -36,13 +36,13 @@ return new class extends Migration
             $table->dropColumn([
                 'secondary_position',
                 'player_number',
-                'weight', 
+                'weight',
                 'height',
                 'date_of_birth',
                 'goals',
                 'coaching_experience',
                 'certifications',
-                'specializations'
+                'specializations',
             ]);
         });
     }

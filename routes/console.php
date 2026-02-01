@@ -29,23 +29,34 @@ Schedule::command('videos:cleanup-orphaned --hours=6')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cleanup-orphaned.log'));
 
-// Compresión automática de videos (horario nocturno)
-// Se ejecuta cada hora entre 3:00 AM y 7:00 AM
-// Procesa 1 video pendiente por ejecución para no saturar el servidor
+// Compresión automática de videos (horario nocturno por organización)
+// Se ejecuta cada hora y respeta el timezone y horario de cada organización
+// Procesa 1 video pendiente por organización que esté en su ventana de compresión
 Schedule::call(function () {
-    $video = \App\Models\Video::where('processing_status', 'pending')
-        ->orderBy('created_at', 'asc') // FIFO: primero en entrar, primero en salir
-        ->first();
+    $orgs = \App\Models\Organization::whereIn('compression_strategy', ['nocturnal', 'hybrid'])->get();
 
-    if ($video) {
-        \Illuminate\Support\Facades\Log::info("Nocturnal compression: Processing video {$video->id} - {$video->title}");
-        \App\Jobs\CompressVideoJob::dispatch($video->id);
-    } else {
-        \Illuminate\Support\Facades\Log::info("Nocturnal compression: No pending videos in queue");
+    foreach ($orgs as $org) {
+        $now = \Carbon\Carbon::now($org->timezone);
+        $currentHour = $now->hour;
+
+        if ($currentHour >= $org->compression_start_hour &&
+            $currentHour < $org->compression_end_hour) {
+
+            $video = \App\Models\Video::where('organization_id', $org->id)
+                ->where('processing_status', 'pending')
+                ->orderBy('created_at', 'asc')
+                ->first();
+
+            if ($video) {
+                \Illuminate\Support\Facades\Log::info("Nocturnal compression for {$org->name}: Processing video {$video->id} - {$video->title} (timezone: {$org->timezone}, hour: {$currentHour})");
+                \App\Jobs\CompressVideoJob::dispatch($video->id);
+            } else {
+                \Illuminate\Support\Facades\Log::info("Nocturnal compression for {$org->name}: No pending videos in queue (timezone: {$org->timezone}, hour: {$currentHour})");
+            }
+        }
     }
 })
-    ->name('nocturnal-video-compression')
+    ->name('nocturnal-video-compression-multi-org')
     ->hourly()
-    ->between('03:00', '07:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nocturnal-compression.log'));

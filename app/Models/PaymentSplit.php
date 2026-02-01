@@ -108,9 +108,9 @@ class PaymentSplit extends Model
         $symbol = $symbols[$this->currency] ?? '$';
 
         if ($this->currency === 'CLP') {
-            return $symbol . number_format($this->amount, 0, ',', '.');
+            return $symbol.number_format($this->amount, 0, ',', '.');
         }
 
-        return $symbol . number_format($this->amount, 2, ',', '.');
+        return $symbol.number_format($this->amount, 2, ',', '.');
     }
 }

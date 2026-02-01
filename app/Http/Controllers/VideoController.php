@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\CompressVideoJob;
+use App\Models\Category;
+use App\Models\RugbySituation;
 use App\Models\User;
 use App\Models\Video;
-use App\Models\Category;
-use App\Models\VideoComment;
-use App\Models\RugbySituation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -17,7 +15,7 @@ class VideoController extends Controller
     public function index(Request $request)
     {
         $query = Video::with(['category', 'uploader', 'rugbySituation'])
-                      ->teamVisible(auth()->user());
+            ->teamVisible(auth()->user());
 
         // Filter by rugby situation
         if ($request->filled('rugby_situation')) {
@@ -36,7 +34,7 @@ class VideoController extends Controller
 
         // Search by title
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%'.$request->search.'%');
         }
 
         $videos = $query->latest()->paginate(9);
@@ -74,13 +72,13 @@ class VideoController extends Controller
         $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
         // Obtener jugadores y entrenadores para asignación (incluye staff que puede recibir asignaciones)
-        $players = User::where(function($query) {
-                $query->where('role', 'jugador')
-                      ->orWhere('role', 'entrenador')
-                      ->orWhereHas('profile', function($q) {
-                          $q->where('can_receive_assignments', true);
-                      });
-            })
+        $players = User::where(function ($query) {
+            $query->where('role', 'jugador')
+                ->orWhere('role', 'entrenador')
+                ->orWhereHas('profile', function ($q) {
+                    $q->where('can_receive_assignments', true);
+                });
+        })
             ->with('profile')
             ->orderBy('name')
             ->get();
@@ -102,7 +100,7 @@ class VideoController extends Controller
                     'required',
                     Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
                         $query->where('organization_id', $currentOrg->id);
-                    })
+                    }),
                 ],
                 'division' => 'nullable|in:primera,intermedia,unica',
                 'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -121,7 +119,7 @@ class VideoController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
-                    'errors' => $e->errors()
+                    'errors' => $e->errors(),
                 ], 422);
             }
             throw $e;
@@ -134,7 +132,7 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
-        $filename = time() . '_' . $sanitizedName;
+        $filename = time().'_'.$sanitizedName;
 
         // Obtener el slug de la organización actual para el path
         $currentOrg = auth()->user()->currentOrganization();
@@ -148,7 +146,7 @@ class VideoController extends Controller
                 $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
                 Storage::disk('spaces')->setVisibility($path, 'public');
             } catch (Exception $e) {
-                \Log::warning('DigitalOcean Spaces upload failed, using local storage: ' . $e->getMessage());
+                \Log::warning('DigitalOcean Spaces upload failed, using local storage: '.$e->getMessage());
                 $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
             }
         } else {
@@ -176,13 +174,13 @@ class VideoController extends Controller
             'match_date' => $request->match_date,
             'status' => 'pending',
             'visibility_type' => $request->visibility_type,
-            'processing_status' => 'pending'
+            'processing_status' => 'pending',
         ]);
 
-        // Dispatch compression job to queue
-        CompressVideoJob::dispatch($video->id);
+        // Dispatch compression job based on organization strategy
+        $this->dispatchCompressionJob($video);
 
-        \Log::info("Video {$video->id} uploaded successfully, compression job dispatched to queue");
+        \Log::info("Video {$video->id} uploaded successfully, compression decision applied");
 
         // Crear asignaciones si el tipo de visibilidad es 'specific'
         if ($request->visibility_type === 'specific' && $request->filled('assigned_players') && is_array($request->assigned_players)) {
@@ -202,7 +200,7 @@ class VideoController extends Controller
                 'public' => 'Video subido exitosamente y visible para todo el equipo. Se está comprimiendo en segundo plano.',
                 'forwards' => 'Video subido exitosamente y visible para delanteros. Se está comprimiendo en segundo plano.',
                 'backs' => 'Video subido exitosamente y visible para backs. Se está comprimiendo en segundo plano.',
-                'specific' => 'Video subido exitosamente. Se está comprimiendo en segundo plano.'
+                'specific' => 'Video subido exitosamente. Se está comprimiendo en segundo plano.',
             ];
             $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente. Se está comprimiendo en segundo plano.';
         }
@@ -213,7 +211,7 @@ class VideoController extends Controller
                 'success' => true,
                 'message' => $successMessage,
                 'video_id' => $video->id,
-                'redirect' => route('videos.show', $video)
+                'redirect' => route('videos.show', $video),
             ]);
         }
 
@@ -228,10 +226,10 @@ class VideoController extends Controller
         // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
             ->whereNull('parent_id')
-            ->with(['user', 'mentionedUsers', 'replies' => function($query) {
+            ->with(['user', 'mentionedUsers', 'replies' => function ($query) {
                 // Cargar respuestas recursivamente con todos sus niveles + menciones
-                $query->with(['user', 'mentionedUsers', 'replies' => function($q) {
-                    $q->with(['user', 'mentionedUsers', 'replies' => function($q2) {
+                $query->with(['user', 'mentionedUsers', 'replies' => function ($q) {
+                    $q->with(['user', 'mentionedUsers', 'replies' => function ($q2) {
                         $q2->with(['user', 'mentionedUsers', 'replies.user', 'replies.mentionedUsers']); // Nivel 4+
                     }]);
                 }]);
@@ -268,7 +266,7 @@ class VideoController extends Controller
             'description',
             'rival_team_name',
             'category_id',
-            'match_date'
+            'match_date',
         ]));
 
         return redirect()->route('videos.show', $video)
@@ -285,14 +283,14 @@ class VideoController extends Controller
                 Storage::disk('spaces')->delete($video->file_path);
             }
         } catch (Exception $e) {
-            \Log::warning('DigitalOcean Spaces delete failed: ' . $e->getMessage());
+            \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
         }
 
         // Also try deleting from local storage (for old files or fallback)
         try {
             Storage::disk('public')->delete($video->file_path);
         } catch (Exception $e) {
-            \Log::warning('Local storage delete failed: ' . $e->getMessage());
+            \Log::warning('Local storage delete failed: '.$e->getMessage());
         }
 
         // Delete thumbnail if exists
@@ -302,13 +300,13 @@ class VideoController extends Controller
                     Storage::disk('spaces')->delete($video->thumbnail_path);
                 }
             } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from Spaces failed: ' . $e->getMessage());
+                \Log::warning('Thumbnail delete from Spaces failed: '.$e->getMessage());
             }
 
             try {
                 Storage::disk('public')->delete($video->thumbnail_path);
             } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from local storage failed: ' . $e->getMessage());
+                \Log::warning('Thumbnail delete from local storage failed: '.$e->getMessage());
             }
         }
 
@@ -319,13 +317,13 @@ class VideoController extends Controller
                     Storage::disk('spaces')->delete($video->original_file_path);
                 }
             } catch (Exception $e) {
-                \Log::warning('Original file delete from Spaces failed: ' . $e->getMessage());
+                \Log::warning('Original file delete from Spaces failed: '.$e->getMessage());
             }
 
             try {
                 Storage::disk('public')->delete($video->original_file_path);
             } catch (Exception $e) {
-                \Log::warning('Original file delete from local storage failed: ' . $e->getMessage());
+                \Log::warning('Original file delete from local storage failed: '.$e->getMessage());
             }
         }
 
@@ -335,14 +333,13 @@ class VideoController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Video '{$videoTitle}' eliminado exitosamente"
+                'message' => "Video '{$videoTitle}' eliminado exitosamente",
             ]);
         }
 
         return redirect()->route('videos.index')
             ->with('success', 'Video eliminado exitosamente');
     }
-
 
     public function playerUpload()
     {
@@ -362,7 +359,7 @@ class VideoController extends Controller
             'description' => 'required|string',
             'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
             'category_id' => 'required|exists:categories,id',
-            'analysis_request' => 'required|string'
+            'analysis_request' => 'required|string',
         ], [
             'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
             'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
@@ -375,7 +372,7 @@ class VideoController extends Controller
         $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
 
-        $filename = time() . '_player_' . $sanitizedName;
+        $filename = time().'_player_'.$sanitizedName;
 
         // Obtener el slug de la organización actual para el path
         $currentOrg = auth()->user()->currentOrganization();
@@ -389,7 +386,7 @@ class VideoController extends Controller
                 $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'spaces');
                 Storage::disk('spaces')->setVisibility($path, 'public');
             } catch (Exception $e) {
-                \Log::warning('DigitalOcean Spaces player upload failed, using local storage: ' . $e->getMessage());
+                \Log::warning('DigitalOcean Spaces player upload failed, using local storage: '.$e->getMessage());
                 $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
             }
         } else {
@@ -401,8 +398,8 @@ class VideoController extends Controller
         $thumbnailPath = $this->generateVideoThumbnail($filename);
 
         $video = Video::create([
-            'title' => $request->title . ' (Solicitud de Análisis)',
-            'description' => $request->description . "\n\nSolicitud específica: " . $request->analysis_request,
+            'title' => $request->title.' (Solicitud de Análisis)',
+            'description' => $request->description."\n\nSolicitud específica: ".$request->analysis_request,
             'file_path' => $path,
             'thumbnail_path' => $thumbnailPath,
             'file_name' => $filename,
@@ -415,13 +412,13 @@ class VideoController extends Controller
             'division' => 'unica', // Jugadores no especifican división, se asigna automáticamente
             'match_date' => now()->toDateString(),
             'status' => 'pending',
-            'processing_status' => 'pending'
+            'processing_status' => 'pending',
         ]);
 
-        // Dispatch compression job to queue
-        CompressVideoJob::dispatch($video->id);
+        // Dispatch compression job based on organization strategy
+        $this->dispatchCompressionJob($video);
 
-        \Log::info("Player video {$video->id} uploaded successfully, compression job dispatched to queue");
+        \Log::info("Player video {$video->id} uploaded successfully, compression decision applied");
 
         return redirect()->route('player.videos')
             ->with('success', 'Video subido exitosamente. Se está comprimiendo en segundo plano. Un analista lo revisará pronto.');
@@ -435,5 +432,34 @@ class VideoController extends Controller
     {
         // Sin GD, retornamos null y usaremos placeholders CSS
         return null;
+    }
+
+    /**
+     * Dispatch compression job based on organization compression strategy
+     */
+    private function dispatchCompressionJob(\App\Models\Video $video): void
+    {
+        $org = auth()->user()->currentOrganization();
+        $fileSizeMB = $video->file_size / 1024 / 1024;
+
+        switch ($org->compression_strategy) {
+            case 'immediate':
+                \App\Jobs\CompressVideoJob::dispatch($video->id);
+                \Log::info("Video {$video->id} queued for immediate compression (strategy: immediate)");
+                break;
+
+            case 'nocturnal':
+                \Log::info("Video {$video->id} queued for nocturnal compression (strategy: nocturnal, size: {$fileSizeMB}MB)");
+                break;
+
+            case 'hybrid':
+                if ($fileSizeMB < $org->compression_hybrid_threshold) {
+                    \App\Jobs\CompressVideoJob::dispatch($video->id);
+                    \Log::info("Video {$video->id} queued for immediate compression (strategy: hybrid, size: {$fileSizeMB}MB < {$org->compression_hybrid_threshold}MB threshold)");
+                } else {
+                    \Log::info("Video {$video->id} queued for nocturnal compression (strategy: hybrid, size: {$fileSizeMB}MB >= {$org->compression_hybrid_threshold}MB threshold)");
+                }
+                break;
+        }
     }
 }

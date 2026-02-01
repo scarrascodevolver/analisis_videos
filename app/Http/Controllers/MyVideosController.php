@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Video;
 use App\Models\VideoAssignment;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class MyVideosController extends Controller
@@ -12,7 +11,7 @@ class MyVideosController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        
+
         // Obtener videos asignados al usuario
         $assignedVideos = VideoAssignment::where('assigned_to', $user->id)
             ->whereHas('video')
@@ -51,12 +50,12 @@ class MyVideosController extends Controller
         }
 
         $video = $assignment->video->load(['category', 'rugbySituation', 'uploader', 'comments.user', 'comments.replies.user']);
-        
+
         $comments = $video->comments()
-                         ->whereNull('parent_id')
-                         ->with(['user', 'replies.user'])
-                         ->orderBy('timestamp_seconds')
-                         ->get();
+            ->whereNull('parent_id')
+            ->with(['user', 'replies.user'])
+            ->orderBy('timestamp_seconds')
+            ->get();
 
         return view('videos.show', compact('video', 'comments', 'assignment'));
     }

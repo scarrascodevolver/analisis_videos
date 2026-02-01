@@ -18,7 +18,7 @@ class OwnerOnly
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -27,7 +27,7 @@ class OwnerOnly
             ->where('is_active', true)
             ->first();
 
-        if (!$partner) {
+        if (! $partner) {
             abort(403, 'No tienes permisos para acceder a esta sección.');
         }
 

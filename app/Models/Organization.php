@@ -15,12 +15,20 @@ class Organization extends Model
         'logo_path',
         'is_active',
         'invitation_code',
+        'timezone',
+        'compression_strategy',
+        'compression_start_hour',
+        'compression_end_hour',
+        'compression_hybrid_threshold',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'compression_start_hour' => 'integer',
+            'compression_end_hour' => 'integer',
+            'compression_hybrid_threshold' => 'integer',
         ];
     }
 
@@ -60,6 +68,7 @@ class Organization extends Model
     {
         $this->invitation_code = self::generateUniqueInvitationCode();
         $this->save();
+
         return $this->invitation_code;
     }
 
@@ -85,8 +94,8 @@ class Organization extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-                    ->withPivot(['role', 'is_current', 'is_org_admin'])
-                    ->withTimestamps();
+            ->withPivot(['role', 'is_current', 'is_org_admin'])
+            ->withTimestamps();
     }
 
     /**
@@ -181,8 +190,23 @@ class Organization extends Model
     public function getLogoUrlAttribute(): string
     {
         if ($this->logo_path) {
-            return asset('storage/' . $this->logo_path);
+            return asset('storage/'.$this->logo_path);
         }
+
         return asset('img/default-org-logo.png');
+    }
+
+    /**
+     * Reglas de validacion para configuraciones de compresion
+     */
+    public static function compressionSettingsValidationRules(): array
+    {
+        return [
+            'timezone' => 'required|string|timezone',
+            'compression_strategy' => 'required|in:immediate,nocturnal,hybrid',
+            'compression_start_hour' => 'required|integer|min:0|max:23',
+            'compression_end_hour' => 'required|integer|min:0|max:23|gt:compression_start_hour',
+            'compression_hybrid_threshold' => 'required|integer|min:100|max:10000',
+        ];
     }
 }

@@ -38,7 +38,7 @@ class ClipCategoryController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $validator->errors()->first()
+                    'message' => $validator->errors()->first(),
                 ], 422);
             }
         } else {
@@ -57,9 +57,10 @@ class ClipCategoryController extends Controller
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Esta tecla ya está asignada a otra categoría'
+                        'message' => 'Esta tecla ya está asignada a otra categoría',
                     ], 422);
                 }
+
                 return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
             }
         }
@@ -83,7 +84,7 @@ class ClipCategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'category' => $category,
-                'message' => 'Categoría creada exitosamente'
+                'message' => 'Categoría creada exitosamente',
             ]);
         }
 
@@ -113,7 +114,7 @@ class ClipCategoryController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $validator->errors()->first()
+                    'message' => $validator->errors()->first(),
                 ], 422);
             }
         } else {
@@ -133,9 +134,10 @@ class ClipCategoryController extends Controller
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Esta tecla ya está asignada a otra categoría'
+                        'message' => 'Esta tecla ya está asignada a otra categoría',
                     ], 422);
                 }
+
                 return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
             }
         }
@@ -155,7 +157,7 @@ class ClipCategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'category' => $clipCategory->fresh(),
-                'message' => 'Categoría actualizada exitosamente'
+                'message' => 'Categoría actualizada exitosamente',
             ]);
         }
 
@@ -170,9 +172,10 @@ class ClipCategoryController extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se puede eliminar: tiene clips asociados'
+                    'message' => 'No se puede eliminar: tiene clips asociados',
                 ], 422);
             }
+
             return back()->withErrors(['error' => 'No se puede eliminar: tiene clips asociados']);
         }
 
@@ -182,7 +185,7 @@ class ClipCategoryController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Categoría eliminada exitosamente'
+                'message' => 'Categoría eliminada exitosamente',
             ]);
         }
 

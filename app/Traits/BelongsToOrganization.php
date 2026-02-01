@@ -18,7 +18,7 @@ trait BelongsToOrganization
             if (auth()->check()) {
                 $currentOrg = auth()->user()->currentOrganization();
                 if ($currentOrg) {
-                    $builder->where($builder->getModel()->getTable() . '.organization_id', $currentOrg->id);
+                    $builder->where($builder->getModel()->getTable().'.organization_id', $currentOrg->id);
                 }
             }
         });
@@ -47,7 +47,7 @@ trait BelongsToOrganization
      */
     public function scopeForOrganization(Builder $query, $organizationId): Builder
     {
-        return $query->where($this->getTable() . '.organization_id', $organizationId);
+        return $query->where($this->getTable().'.organization_id', $organizationId);
     }
 
     /**

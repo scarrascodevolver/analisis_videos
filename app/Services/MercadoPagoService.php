@@ -9,9 +9,13 @@ use Illuminate\Support\Facades\Log;
 class MercadoPagoService
 {
     protected ?string $accessToken;
+
     protected ?string $appId;
+
     protected ?string $clientSecret;
+
     protected string $baseUrl = 'https://api.mercadopago.com';
+
     protected string $authUrl = 'https://auth.mercadopago.cl';
 
     public function __construct()
@@ -26,7 +30,7 @@ class MercadoPagoService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->accessToken);
+        return ! empty($this->accessToken);
     }
 
     /**
@@ -114,7 +118,7 @@ class MercadoPagoService
      */
     public function createPreference(array $data): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -186,7 +190,7 @@ class MercadoPagoService
     {
         $secret = config('payments.mercadopago.webhook_secret');
 
-        if (!$secret) {
+        if (! $secret) {
             // Si no hay secreto configurado, aceptar (modo desarrollo)
             return true;
         }
@@ -232,12 +236,12 @@ class MercadoPagoService
     /**
      * Crear preferencia con split de pagos automático
      *
-     * @param array $data Datos del pago
-     * @param array $splits Array de splits [['partner' => Partner, 'amount' => float], ...]
+     * @param  array  $data  Datos del pago
+     * @param  array  $splits  Array de splits [['partner' => Partner, 'amount' => float], ...]
      */
     public function createPreferenceWithSplit(array $data, array $splits): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -276,14 +280,14 @@ class MercadoPagoService
                 $disbursements[] = [
                     'collector_id' => (int) $partner->mp_user_id,
                     'amount' => (float) $split['amount'],
-                    'external_reference' => $data['reference_id'] . '-' . $partner->id,
+                    'external_reference' => $data['reference_id'].'-'.$partner->id,
                     'application_fee' => 0,
                 ];
             }
         }
 
         // Si hay disbursements, usar el endpoint de marketplace
-        if (!empty($disbursements)) {
+        if (! empty($disbursements)) {
             $preferenceData['marketplace'] = config('payments.mercadopago.app_id');
 
             // Crear pago con split usando Advanced Payments
@@ -325,6 +329,7 @@ class MercadoPagoService
         if ($response->successful()) {
             $result = $response->json();
             $result['_disbursements'] = $disbursements;
+
             return $result;
         }
 
@@ -341,8 +346,9 @@ class MercadoPagoService
      */
     public function executeDisbursement(string $paymentId, Partner $partner, float $amount): ?array
     {
-        if (!$partner->hasMercadoPagoConnected()) {
+        if (! $partner->hasMercadoPagoConnected()) {
             Log::warning('MercadoPago: Partner sin cuenta conectada', ['partner_id' => $partner->id]);
+
             return null;
         }
 
@@ -361,6 +367,7 @@ class MercadoPagoService
                 'partner_id' => $partner->id,
                 'amount' => $amount,
             ]);
+
             return $response->json();
         }
 
@@ -382,7 +389,7 @@ class MercadoPagoService
         $partners = Partner::where('is_active', true)->get();
 
         foreach ($partners as $partner) {
-            if (!$partner->hasMercadoPagoConnected()) {
+            if (! $partner->hasMercadoPagoConnected()) {
                 return false;
             }
         }
@@ -398,7 +405,7 @@ class MercadoPagoService
         return Partner::where('is_active', true)
             ->where(function ($q) {
                 $q->where('mp_connected', false)
-                  ->orWhereNull('mp_user_id');
+                    ->orWhereNull('mp_user_id');
             })
             ->get();
     }

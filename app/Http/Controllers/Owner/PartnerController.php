@@ -13,9 +13,10 @@ class PartnerController extends Controller
         // Verificar can_edit_settings para acciones de modificación
         $this->middleware(function ($request, $next) {
             $partner = view()->shared('currentPartner');
-            if (!$partner || !$partner->can_edit_settings) {
+            if (! $partner || ! $partner->can_edit_settings) {
                 abort(403, 'Solo el propietario puede modificar socios.');
             }
+
             return $next($request);
         })->except(['index']);
     }
@@ -64,7 +65,7 @@ class PartnerController extends Controller
 
         if ($newTotal > 100) {
             return back()->withErrors([
-                'split_percentage' => "El porcentaje excede el 100%. Disponible: " . (100 - $currentTotal) . "%"
+                'split_percentage' => 'El porcentaje excede el 100%. Disponible: '.(100 - $currentTotal).'%',
             ])->withInput();
         }
 
@@ -95,7 +96,7 @@ class PartnerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:partners,email,' . $partner->id,
+            'email' => 'required|email|unique:partners,email,'.$partner->id,
             'role' => 'required|in:owner,partner',
             'paypal_email' => 'nullable|email',
             'mercadopago_email' => 'nullable|email',
@@ -114,7 +115,7 @@ class PartnerController extends Controller
             $newTotal = $currentTotal + $validated['split_percentage'];
             if ($newTotal > 100) {
                 return back()->withErrors([
-                    'split_percentage' => "El porcentaje excede el 100%. Disponible: " . (100 - $currentTotal) . "%"
+                    'split_percentage' => 'El porcentaje excede el 100%. Disponible: '.(100 - $currentTotal).'%',
                 ])->withInput();
             }
         }

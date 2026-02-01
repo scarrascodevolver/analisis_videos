@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -30,7 +28,7 @@ return new class extends Migration
             'centro_interno' => 'Centro',
             'centro_externo' => 'Centro',
             'ala_derecho_back' => 'Wing',
-            'fullback' => 'Fullback'
+            'fullback' => 'Fullback',
         ];
 
         // Actualizar position
@@ -50,7 +48,7 @@ return new class extends Migration
         // Log de la operación
         \Log::info('Position values updated to readable format', [
             'mappings_applied' => count($positionMap),
-            'timestamp' => now()
+            'timestamp' => now(),
         ]);
     }
 
@@ -71,7 +69,7 @@ return new class extends Migration
             'Apertura' => 'apertura',
             'Wing' => 'ala_izquierdo_back', // Nota: se pierde diferencia izq/der
             'Centro' => 'centro_interno', // Nota: se pierde diferencia int/ext
-            'Fullback' => 'fullback'
+            'Fullback' => 'fullback',
         ];
 
         // Revertir position

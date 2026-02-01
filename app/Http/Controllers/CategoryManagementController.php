@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Video;
-use App\Models\UserProfile;
 use Illuminate\Http\Request;
 
 class CategoryManagementController extends Controller
@@ -15,6 +13,7 @@ class CategoryManagementController extends Controller
     public function index()
     {
         $categories = Category::withCount(['videos', 'userProfiles'])->get();
+
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -59,7 +58,7 @@ class CategoryManagementController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'name' => 'required|string|max:255|unique:categories,name,'.$category->id,
             'description' => 'nullable|string|max:500',
         ]);
 

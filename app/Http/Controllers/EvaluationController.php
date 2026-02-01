@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\EvaluationPeriod;
 use App\Models\PlayerEvaluation;
 use App\Models\Setting;
-use App\Models\EvaluationPeriod;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class EvaluationController extends Controller
 {
@@ -19,28 +19,28 @@ class EvaluationController extends Controller
         $currentOrg = $currentUser->currentOrganization();
         $categoryId = $currentUser->profile->user_category_id ?? null;
 
-        if (!$categoryId) {
+        if (! $categoryId) {
             return redirect()->route('dashboard')->with('error', 'No tienes una categoría asignada.');
         }
 
         // Verificar si hay un período activo
         $activePeriod = EvaluationPeriod::getActive();
 
-        if (!$activePeriod || !$activePeriod->isOpen()) {
+        if (! $activePeriod || ! $activePeriod->isOpen()) {
             return redirect()->route('dashboard')->with('warning', 'No hay un período de evaluación activo actualmente. Consulta con tu entrenador.');
         }
 
         // Obtener jugadores de la misma categoría y organización (excepto el usuario actual)
-        $playersQuery = User::whereHas('profile', function($q) use ($categoryId) {
+        $playersQuery = User::whereHas('profile', function ($q) use ($categoryId) {
             $q->where('user_category_id', $categoryId);
         })
-        ->where('id', '!=', $currentUser->id)
-        ->where('role', 'jugador')
-        ->with('profile');
+            ->where('id', '!=', $currentUser->id)
+            ->where('role', 'jugador')
+            ->with('profile');
 
         // Filtrar por organización actual
         if ($currentOrg) {
-            $playersQuery->whereHas('organizations', function($q) use ($currentOrg) {
+            $playersQuery->whereHas('organizations', function ($q) use ($currentOrg) {
                 $q->where('organizations.id', $currentOrg->id);
             });
         }
@@ -54,7 +54,7 @@ class EvaluationController extends Controller
             'Pilar Derecho',
             'Segunda Línea',
             'Ala',
-            'Número 8'
+            'Número 8',
         ];
 
         // Posiciones de Backs
@@ -63,7 +63,7 @@ class EvaluationController extends Controller
             'Apertura',
             'Centro',
             'Wing',
-            'Fullback'
+            'Fullback',
         ];
 
         // Obtener evaluaciones ya realizadas EN EL PERÍODO ACTIVO
@@ -73,19 +73,23 @@ class EvaluationController extends Controller
             ->toArray();
 
         // Separar en forwards y backs
-        $forwards = $players->filter(function($player) use ($forwardsPositions) {
+        $forwards = $players->filter(function ($player) use ($forwardsPositions) {
             $position = $player->profile->position ?? '';
+
             return in_array($position, $forwardsPositions);
-        })->values()->map(function($player) use ($evaluatedPlayerIds) {
+        })->values()->map(function ($player) use ($evaluatedPlayerIds) {
             $player->evaluated = in_array($player->id, $evaluatedPlayerIds);
+
             return $player;
         });
 
-        $backs = $players->filter(function($player) use ($backsPositions) {
+        $backs = $players->filter(function ($player) use ($backsPositions) {
             $position = $player->profile->position ?? '';
+
             return in_array($position, $backsPositions);
-        })->values()->map(function($player) use ($evaluatedPlayerIds) {
+        })->values()->map(function ($player) use ($evaluatedPlayerIds) {
             $player->evaluated = in_array($player->id, $evaluatedPlayerIds);
+
             return $player;
         });
 
@@ -106,7 +110,7 @@ class EvaluationController extends Controller
         $categoryId = $currentUser->profile->user_category_id ?? null;
 
         // Verificar si las evaluaciones están habilitadas (solo para jugadores)
-        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
+        if ($currentUser->role === 'jugador' && ! Setting::areEvaluationsEnabled()) {
             return redirect()->route('evaluations.index')->with('error', 'Las evaluaciones están deshabilitadas actualmente.');
         }
 
@@ -125,7 +129,7 @@ class EvaluationController extends Controller
         // Validar que el jugador pertenece a la misma organización
         if ($currentOrg) {
             $playerInOrg = $player->organizations()->where('organizations.id', $currentOrg->id)->exists();
-            if (!$playerInOrg) {
+            if (! $playerInOrg) {
                 return redirect()->route('evaluations.index')->with('error', 'Solo puedes evaluar jugadores de tu misma organización.');
             }
         }
@@ -137,7 +141,7 @@ class EvaluationController extends Controller
             'Pilar Derecho',
             'Segunda Línea',
             'Ala',
-            'Número 8'
+            'Número 8',
         ];
 
         $playerPosition = $player->profile->position ?? '';
@@ -155,10 +159,10 @@ class EvaluationController extends Controller
         $currentOrg = $currentUser->currentOrganization();
 
         // Verificar si las evaluaciones están habilitadas (solo para jugadores)
-        if ($currentUser->role === 'jugador' && !Setting::areEvaluationsEnabled()) {
+        if ($currentUser->role === 'jugador' && ! Setting::areEvaluationsEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Las evaluaciones están deshabilitadas actualmente.'
+                'message' => 'Las evaluaciones están deshabilitadas actualmente.',
             ], 403);
         }
 
@@ -209,7 +213,7 @@ class EvaluationController extends Controller
         if ($validated['evaluated_player_id'] == $currentUser->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'No puedes evaluarte a ti mismo.'
+                'message' => 'No puedes evaluarte a ti mismo.',
             ], 403);
         }
 
@@ -220,17 +224,17 @@ class EvaluationController extends Controller
         if ($evaluatedPlayer->profile->user_category_id !== $categoryId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Solo puedes evaluar jugadores de tu misma categoría.'
+                'message' => 'Solo puedes evaluar jugadores de tu misma categoría.',
             ], 403);
         }
 
         // Validar que sea de la misma organización
         if ($currentOrg) {
             $playerInOrg = $evaluatedPlayer->organizations()->where('organizations.id', $currentOrg->id)->exists();
-            if (!$playerInOrg) {
+            if (! $playerInOrg) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Solo puedes evaluar jugadores de tu misma organización.'
+                    'message' => 'Solo puedes evaluar jugadores de tu misma organización.',
                 ], 403);
             }
         }
@@ -238,10 +242,10 @@ class EvaluationController extends Controller
         // Obtener período activo
         $activePeriod = EvaluationPeriod::getActive();
 
-        if (!$activePeriod) {
+        if (! $activePeriod) {
             return response()->json([
                 'success' => false,
-                'message' => 'No hay un período de evaluación activo.'
+                'message' => 'No hay un período de evaluación activo.',
             ], 403);
         }
 
@@ -254,7 +258,7 @@ class EvaluationController extends Controller
         if ($existingEvaluation) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ya evaluaste a este jugador en el período actual.'
+                'message' => 'Ya evaluaste a este jugador en el período actual.',
             ], 409);
         }
 
@@ -267,7 +271,7 @@ class EvaluationController extends Controller
             'success' => true,
             'message' => 'Evaluación guardada exitosamente.',
             'evaluation_id' => $evaluation->id,
-            'total_score' => $evaluation->total_score
+            'total_score' => $evaluation->total_score,
         ]);
     }
 
@@ -308,7 +312,7 @@ class EvaluationController extends Controller
             $categoryId = $currentUser->profile->user_category_id ?? null;
             $totalInCategoryQuery = User::where('role', 'jugador')
                 ->where('id', '!=', $currentUser->id)
-                ->whereHas('profile', function($q) use ($categoryId) {
+                ->whereHas('profile', function ($q) use ($categoryId) {
                     if ($categoryId) {
                         $q->where('user_category_id', $categoryId);
                     }
@@ -316,7 +320,7 @@ class EvaluationController extends Controller
 
             // Filtrar por organización actual
             if ($currentOrg) {
-                $totalInCategoryQuery->whereHas('organizations', function($q) use ($currentOrg) {
+                $totalInCategoryQuery->whereHas('organizations', function ($q) use ($currentOrg) {
                     $q->where('organizations.id', $currentOrg->id);
                 });
             }
@@ -324,7 +328,7 @@ class EvaluationController extends Controller
             $totalInCategory = $totalInCategoryQuery->count();
 
             // Calcular estadísticas del jugador actual con filtro de período
-            $playersStats = $players->map(function($player) use ($totalInCategory, $periodId) {
+            $playersStats = $players->map(function ($player) use ($totalInCategory, $periodId) {
                 // Filtrar evaluaciones por período
                 $evaluationsQuery = $player->receivedEvaluations();
 
@@ -378,7 +382,7 @@ class EvaluationController extends Controller
 
         // Obtener jugadores de la categoría y organización actual
         $playersQuery = User::where('role', 'jugador')
-            ->whereHas('profile', function($q) use ($categoryId) {
+            ->whereHas('profile', function ($q) use ($categoryId) {
                 if ($categoryId) {
                     $q->where('user_category_id', $categoryId);
                 }
@@ -387,7 +391,7 @@ class EvaluationController extends Controller
 
         // Filtrar por organización actual
         if ($currentOrg) {
-            $playersQuery->whereHas('organizations', function($q) use ($currentOrg) {
+            $playersQuery->whereHas('organizations', function ($q) use ($currentOrg) {
                 $q->where('organizations.id', $currentOrg->id);
             });
         }
@@ -395,7 +399,7 @@ class EvaluationController extends Controller
         $players = $playersQuery->get();
 
         // Calcular estadísticas para cada jugador con filtro de período
-        $playersStats = $players->map(function($player) use ($players, $periodId) {
+        $playersStats = $players->map(function ($player) use ($players, $periodId) {
             // Filtrar evaluaciones por período
             $evaluationsQuery = $player->receivedEvaluations();
 
@@ -436,9 +440,9 @@ class EvaluationController extends Controller
         });
 
         // Ordenar: Primero los evaluados (por puntaje total desc), luego los sin evaluar
-        $withEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] > 0)
+        $withEvaluations = $playersStats->filter(fn ($stat) => $stat['evaluations_count'] > 0)
             ->sortByDesc('total_points_avg');
-        $withoutEvaluations = $playersStats->filter(fn($stat) => $stat['evaluations_count'] == 0);
+        $withoutEvaluations = $playersStats->filter(fn ($stat) => $stat['evaluations_count'] == 0);
 
         $playersStats = $withEvaluations->merge($withoutEvaluations)->values();
 
@@ -458,7 +462,7 @@ class EvaluationController extends Controller
         }
 
         // Staff (entrenadores/analistas) pueden ver cualquier detalle
-        if (!in_array($currentUser->role, ['entrenador', 'analista', 'jugador'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista', 'jugador'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para ver esta página.');
         }
 
@@ -512,7 +516,7 @@ class EvaluationController extends Controller
         // Determinar si es Forward o Back y agregar habilidades específicas
         $forwardsPositions = [
             'Pilar Izquierdo', 'Hooker', 'Pilar Derecho',
-            'Segunda Línea', 'Ala', 'Número 8'
+            'Segunda Línea', 'Ala', 'Número 8',
         ];
         $playerPosition = $player->profile->position ?? '';
         $isForward = in_array($playerPosition, $forwardsPositions);
@@ -551,10 +555,10 @@ class EvaluationController extends Controller
         $currentUser = auth()->user();
 
         // Solo entrenadores y analistas pueden toggle
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para realizar esta acción.'
+                'message' => 'No tienes permisos para realizar esta acción.',
             ], 403);
         }
 
@@ -569,8 +573,8 @@ class EvaluationController extends Controller
                 'period' => $activePeriod ? [
                     'id' => $activePeriod->id,
                     'name' => $activePeriod->name,
-                    'started_at' => $activePeriod->started_at->format('d/m/Y H:i')
-                ] : null
+                    'started_at' => $activePeriod->started_at->format('d/m/Y H:i'),
+                ] : null,
             ]);
         }
 
@@ -589,8 +593,8 @@ class EvaluationController extends Controller
                 return response()->json([
                     'success' => true,
                     'enabled' => false,
-                    'message' => 'Período "' . $periodName . '" eliminado (sin evaluaciones). Las evaluaciones han sido deshabilitadas.',
-                    'period' => null
+                    'message' => 'Período "'.$periodName.'" eliminado (sin evaluaciones). Las evaluaciones han sido deshabilitadas.',
+                    'period' => null,
                 ]);
             } else {
                 // Si tiene evaluaciones, cerrar normalmente
@@ -599,29 +603,29 @@ class EvaluationController extends Controller
                 return response()->json([
                     'success' => true,
                     'enabled' => false,
-                    'message' => 'Período "' . $activePeriod->name . '" cerrado con ' . $evaluationsCount . ' evaluaciones. Las evaluaciones han sido deshabilitadas.',
-                    'period' => null
+                    'message' => 'Período "'.$activePeriod->name.'" cerrado con '.$evaluationsCount.' evaluaciones. Las evaluaciones han sido deshabilitadas.',
+                    'period' => null,
                 ]);
             }
         } else {
             // HABILITAR: Crear y activar nuevo período
             $newPeriod = EvaluationPeriod::create([
-                'name' => 'Evaluación ' . now()->format('d M Y'),
-                'description' => 'Período creado automáticamente el ' . now()->format('d/m/Y \a \l\a\s H:i'),
+                'name' => 'Evaluación '.now()->format('d M Y'),
+                'description' => 'Período creado automáticamente el '.now()->format('d/m/Y \a \l\a\s H:i'),
                 'started_at' => now(),
                 'ended_at' => null,
-                'is_active' => true
+                'is_active' => true,
             ]);
 
             return response()->json([
                 'success' => true,
                 'enabled' => true,
-                'message' => 'Nuevo período "' . $newPeriod->name . '" creado. Los jugadores pueden evaluar ahora.',
+                'message' => 'Nuevo período "'.$newPeriod->name.'" creado. Los jugadores pueden evaluar ahora.',
                 'period' => [
                     'id' => $newPeriod->id,
                     'name' => $newPeriod->name,
-                    'started_at' => $newPeriod->started_at->format('d/m/Y H:i')
-                ]
+                    'started_at' => $newPeriod->started_at->format('d/m/Y H:i'),
+                ],
             ]);
         }
     }
@@ -633,16 +637,16 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para realizar esta acción.'
+                'message' => 'No tienes permisos para realizar esta acción.',
             ], 403);
         }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
         ]);
 
         // Crear nuevo período
@@ -651,13 +655,13 @@ class EvaluationController extends Controller
             'description' => $validated['description'] ?? null,
             'started_at' => now(),
             'ended_at' => null,
-            'is_active' => false
+            'is_active' => false,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Período creado exitosamente.',
-            'period' => $period
+            'period' => $period,
         ]);
     }
 
@@ -668,10 +672,10 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para realizar esta acción.'
+                'message' => 'No tienes permisos para realizar esta acción.',
             ], 403);
         }
 
@@ -681,7 +685,7 @@ class EvaluationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Período activado correctamente. Los jugadores pueden evaluar ahora.',
-            'period' => $period->fresh()
+            'period' => $period->fresh(),
         ]);
     }
 
@@ -692,10 +696,10 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para realizar esta acción.'
+                'message' => 'No tienes permisos para realizar esta acción.',
             ], 403);
         }
 
@@ -705,7 +709,7 @@ class EvaluationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Período cerrado correctamente.',
-            'period' => $period->fresh()
+            'period' => $period->fresh(),
         ]);
     }
 
@@ -716,10 +720,10 @@ class EvaluationController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!in_array($currentUser->role, ['entrenador', 'analista'])) {
+        if (! in_array($currentUser->role, ['entrenador', 'analista'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para realizar esta acción.'
+                'message' => 'No tienes permisos para realizar esta acción.',
             ], 403);
         }
 
@@ -727,7 +731,7 @@ class EvaluationController extends Controller
 
         return response()->json([
             'success' => true,
-            'periods' => $periods
+            'periods' => $periods,
         ]);
     }
 }

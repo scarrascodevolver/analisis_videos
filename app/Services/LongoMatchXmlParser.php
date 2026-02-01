@@ -15,8 +15,8 @@ class LongoMatchXmlParser
     /**
      * Parse LongoMatch XML content
      *
-     * @param string $xmlContent
      * @return array ['categories' => [...], 'clips' => [...], 'session_info' => [...]]
+     *
      * @throws \Exception
      */
     public function parse(string $xmlContent): array
@@ -32,8 +32,8 @@ class LongoMatchXmlParser
         if ($xml === false) {
             $errors = libxml_get_errors();
             libxml_clear_errors();
-            $errorMsg = !empty($errors) ? $errors[0]->message : 'Unknown XML error';
-            throw new \Exception("Error parsing XML: " . trim($errorMsg));
+            $errorMsg = ! empty($errors) ? $errors[0]->message : 'Unknown XML error';
+            throw new \Exception('Error parsing XML: '.trim($errorMsg));
         }
 
         $result = [
@@ -78,7 +78,7 @@ class LongoMatchXmlParser
     {
         $categories = [];
 
-        if (!isset($xml->ROWS->row)) {
+        if (! isset($xml->ROWS->row)) {
             return $categories;
         }
 
@@ -109,13 +109,13 @@ class LongoMatchXmlParser
     {
         $clips = [];
 
-        if (!isset($xml->ALL_INSTANCES->instance)) {
+        if (! isset($xml->ALL_INSTANCES->instance)) {
             return $clips;
         }
 
         foreach ($xml->ALL_INSTANCES->instance as $instance) {
             // Skip empty instances
-            if (!isset($instance->ID) || !isset($instance->code)) {
+            if (! isset($instance->ID) || ! isset($instance->code)) {
                 continue;
             }
 
@@ -123,7 +123,7 @@ class LongoMatchXmlParser
             $end = isset($instance->end) ? (float) $instance->end : 0;
 
             // Skip invalid clips (start >= end or both 0)
-            if ($start >= $end && !($start == 0 && $end == 0)) {
+            if ($start >= $end && ! ($start == 0 && $end == 0)) {
                 continue;
             }
 
@@ -154,7 +154,7 @@ class LongoMatchXmlParser
         }
 
         // Sort by start time
-        usort($clips, fn($a, $b) => $a['start'] <=> $b['start']);
+        usort($clips, fn ($a, $b) => $a['start'] <=> $b['start']);
 
         return $clips;
     }
@@ -162,9 +162,9 @@ class LongoMatchXmlParser
     /**
      * Convert 16-bit RGB to HEX color
      *
-     * @param int $r Red (0-65535)
-     * @param int $g Green (0-65535)
-     * @param int $b Blue (0-65535)
+     * @param  int  $r  Red (0-65535)
+     * @param  int  $g  Green (0-65535)
+     * @param  int  $b  Blue (0-65535)
      * @return string HEX color (#RRGGBB)
      */
     private function convertColor(int $r, int $g, int $b): string
@@ -185,9 +185,7 @@ class LongoMatchXmlParser
     /**
      * Import parsed data to a video
      *
-     * @param Video $video
-     * @param array $parsedData
-     * @param bool $replaceExisting Whether to replace existing clips
+     * @param  bool  $replaceExisting  Whether to replace existing clips
      * @return array ['categories_created' => int, 'clips_created' => int]
      */
     public function importToVideo(Video $video, array $parsedData, bool $replaceExisting = true): array
@@ -259,7 +257,7 @@ class LongoMatchXmlParser
             foreach ($parsedData['clips'] as $clipData) {
                 $categoryId = $categoryMap[$clipData['code']] ?? null;
 
-                if (!$categoryId) {
+                if (! $categoryId) {
                     continue;
                 }
 
@@ -267,11 +265,11 @@ class LongoMatchXmlParser
                 $tags = [];
                 $notes = '';
 
-                if (!empty($clipData['labels'])) {
+                if (! empty($clipData['labels'])) {
                     foreach ($clipData['labels'] as $label) {
-                        if (!empty($label['text'])) {
-                            $tags[] = $label['group'] . ':' . $label['text'];
-                            $notes .= ($notes ? ', ' : '') . $label['text'];
+                        if (! empty($label['text'])) {
+                            $tags[] = $label['group'].':'.$label['text'];
+                            $notes .= ($notes ? ', ' : '').$label['text'];
                         }
                     }
                 }
@@ -283,7 +281,7 @@ class LongoMatchXmlParser
                     'created_by' => $userId,
                     'start_time' => $clipData['start'],
                     'end_time' => $clipData['end'],
-                    'title' => $clipData['code'] . ($notes ? " - $notes" : ''),
+                    'title' => $clipData['code'].($notes ? " - $notes" : ''),
                     'notes' => $notes ?: null,
                     'players' => [],
                     'tags' => $tags,
@@ -353,7 +351,6 @@ class LongoMatchXmlParser
     /**
      * Validate XML content before parsing
      *
-     * @param string $xmlContent
      * @return array ['valid' => bool, 'error' => string|null, 'preview' => array|null]
      */
     public function validate(string $xmlContent): array

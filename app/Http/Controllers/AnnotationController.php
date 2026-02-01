@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Video;
 use App\Models\VideoAnnotation;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,10 +22,10 @@ class AnnotationController extends Controller
     public function store(Request $request): JsonResponse
     {
         // Verificar que el usuario sea analista o entrenador
-        if (!in_array(Auth::user()->role, ['analista', 'entrenador'])) {
+        if (! in_array(Auth::user()->role, ['analista', 'entrenador'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para crear anotaciones. Solo analistas y entrenadores pueden anotar videos.'
+                'message' => 'No tienes permisos para crear anotaciones. Solo analistas y entrenadores pueden anotar videos.',
             ], 403);
         }
 
@@ -42,7 +42,7 @@ class AnnotationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Datos inválidos',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -71,13 +71,13 @@ class AnnotationController extends Controller
                     'annotation_data' => $annotation->annotation_data,
                     'user_name' => $annotation->user->name,
                     'created_at' => $annotation->created_at->format('Y-m-d H:i:s'),
-                ]
+                ],
             ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al guardar la anotación: ' . $e->getMessage()
+                'message' => 'Error al guardar la anotación: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -114,13 +114,13 @@ class AnnotationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'annotations' => $annotations
+                'annotations' => $annotations,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cargar las anotaciones: ' . $e->getMessage()
+                'message' => 'Error al cargar las anotaciones: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -132,13 +132,13 @@ class AnnotationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'timestamp' => 'required|numeric|min:0',
-            'tolerance' => 'nullable|numeric|min:0|max:5'
+            'tolerance' => 'nullable|numeric|min:0|max:5',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -170,13 +170,13 @@ class AnnotationController extends Controller
                 'success' => true,
                 'annotations' => $annotations,
                 'timestamp_searched' => $timestamp,
-                'tolerance_used' => $tolerance
+                'tolerance_used' => $tolerance,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al buscar anotaciones: ' . $e->getMessage()
+                'message' => 'Error al buscar anotaciones: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -190,21 +190,21 @@ class AnnotationController extends Controller
             $annotation = VideoAnnotation::find($id);
 
             // Si la anotación no existe, asumir que ya fue eliminada
-            if (!$annotation) {
+            if (! $annotation) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Anotación ya fue eliminada previamente',
-                    'already_deleted' => true
+                    'already_deleted' => true,
                 ]);
             }
 
             $user = Auth::user();
 
             // Solo el creador o staff pueden eliminar
-            if ($annotation->user_id !== $user->id && !in_array($user->role, ['analista', 'entrenador', 'staff'])) {
+            if ($annotation->user_id !== $user->id && ! in_array($user->role, ['analista', 'entrenador', 'staff'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No tienes permisos para eliminar esta anotación'
+                    'message' => 'No tienes permisos para eliminar esta anotación',
                 ], 403);
             }
 
@@ -212,13 +212,13 @@ class AnnotationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Anotación eliminada exitosamente'
+                'message' => 'Anotación eliminada exitosamente',
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al eliminar la anotación: ' . $e->getMessage()
+                'message' => 'Error al eliminar la anotación: '.$e->getMessage(),
             ], 500);
         }
     }

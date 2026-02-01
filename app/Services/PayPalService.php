@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class PayPalService
 {
     protected string $baseUrl;
+
     protected ?string $clientId;
+
     protected ?string $clientSecret;
 
     public function __construct()
@@ -24,7 +26,7 @@ class PayPalService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->clientId) && !empty($this->clientSecret);
+        return ! empty($this->clientId) && ! empty($this->clientSecret);
     }
 
     /**
@@ -32,7 +34,7 @@ class PayPalService
      */
     public function getAccessToken(): ?string
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -63,7 +65,7 @@ class PayPalService
     {
         $token = $this->getAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 
@@ -111,7 +113,7 @@ class PayPalService
     {
         $token = $this->getAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 
@@ -138,7 +140,7 @@ class PayPalService
     {
         $token = $this->getAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 
@@ -160,7 +162,7 @@ class PayPalService
         $token = $this->getAccessToken();
         $webhookId = config('payments.paypal.webhook_id');
 
-        if (!$token || !$webhookId) {
+        if (! $token || ! $webhookId) {
             return false;
         }
 

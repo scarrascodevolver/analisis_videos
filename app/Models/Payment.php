@@ -126,10 +126,10 @@ class Payment extends Model
         $symbol = $symbols[$this->currency] ?? '$';
 
         if ($this->currency === 'CLP') {
-            return $symbol . number_format($this->amount, 0, ',', '.');
+            return $symbol.number_format($this->amount, 0, ',', '.');
         }
 
-        return $symbol . number_format($this->amount, 2, ',', '.');
+        return $symbol.number_format($this->amount, 2, ',', '.');
     }
 
     /**
@@ -137,7 +137,7 @@ class Payment extends Model
      */
     public function getProviderName(): string
     {
-        return match($this->payment_provider) {
+        return match ($this->payment_provider) {
             'paypal' => 'PayPal',
             'mercadopago' => 'Mercado Pago',
             default => ucfirst($this->payment_provider),

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -20,12 +20,12 @@ return new class extends Migration
 
         Schema::table('video_assignments', function (Blueprint $table) {
             $table->foreign('assigned_by')
-                  ->references('id')->on('users')
-                  ->onDelete('cascade');
+                ->references('id')->on('users')
+                ->onDelete('cascade');
 
             $table->foreign('assigned_to')
-                  ->references('id')->on('users')
-                  ->onDelete('cascade');
+                ->references('id')->on('users')
+                ->onDelete('cascade');
         });
 
         // 2. videos - SET NULL
@@ -38,8 +38,8 @@ return new class extends Migration
 
         Schema::table('videos', function (Blueprint $table) {
             $table->foreign('uploaded_by')
-                  ->references('id')->on('users')
-                  ->onDelete('set null');
+                ->references('id')->on('users')
+                ->onDelete('set null');
         });
 
         // 3. video_comments - CASCADE
@@ -49,8 +49,8 @@ return new class extends Migration
 
         Schema::table('video_comments', function (Blueprint $table) {
             $table->foreign('user_id')
-                  ->references('id')->on('users')
-                  ->onDelete('cascade');
+                ->references('id')->on('users')
+                ->onDelete('cascade');
         });
     }
 

@@ -48,7 +48,7 @@ class Jugada extends Model
      */
     public function getCategoryIconAttribute(): string
     {
-        return match($this->category) {
+        return match ($this->category) {
             'forwards' => '🟣',
             'backs' => '🟢',
             'full_team' => '⚪',

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::table('videos', function (Blueprint $table) {
             $table->enum('visibility_type', ['public', 'forwards', 'backs', 'specific'])
-                  ->default('public')
-                  ->after('status')
-                  ->comment('Visibility level: public=all team, forwards=positions 1-8, backs=positions 9-15, specific=assigned players only');
+                ->default('public')
+                ->after('status')
+                ->comment('Visibility level: public=all team, forwards=positions 1-8, backs=positions 9-15, specific=assigned players only');
         });
     }
 

@@ -14,20 +14,20 @@ return new class extends Migration
         // 1. VIDEOS - Agregar organization_id
         Schema::table('videos', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 
         // 2. TEAMS - Agregar organization_id y actualizar unique constraint
         Schema::table('teams', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 
@@ -40,10 +40,10 @@ return new class extends Migration
         // 3. CATEGORIES - Agregar organization_id y actualizar unique constraint
         Schema::table('categories', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 
@@ -56,30 +56,30 @@ return new class extends Migration
         // 4. PLAYER_EVALUATIONS - Agregar organization_id
         Schema::table('player_evaluations', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 
         // 5. EVALUATION_PERIODS - Agregar organization_id
         Schema::table('evaluation_periods', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 
         // 6. SETTINGS - Agregar organization_id y actualizar unique constraint
         Schema::table('settings', function (Blueprint $table) {
             $table->foreignId('organization_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('organizations')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('id')
+                ->constrained('organizations')
+                ->onDelete('cascade');
             $table->index('organization_id');
         });
 

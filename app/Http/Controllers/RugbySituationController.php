@@ -13,6 +13,7 @@ class RugbySituationController extends Controller
     public function index()
     {
         $situations = RugbySituation::withCount('videos')->ordered()->get();
+
         return view('admin.situations.index', compact('situations'));
     }
 
@@ -42,7 +43,7 @@ class RugbySituationController extends Controller
         $validated['active'] = $request->has('active') ? true : false;
 
         // Auto-assign sort_order if not provided
-        if (!isset($validated['sort_order'])) {
+        if (! isset($validated['sort_order'])) {
             $maxOrder = RugbySituation::max('sort_order') ?? 0;
             $validated['sort_order'] = $maxOrder + 1;
         }
@@ -59,6 +60,7 @@ class RugbySituationController extends Controller
     public function edit(RugbySituation $situation)
     {
         $videosCount = $situation->videos()->count();
+
         return view('admin.situations.edit', compact('situation', 'videosCount'));
     }
 
@@ -111,7 +113,7 @@ class RugbySituationController extends Controller
     {
         $validated = $request->validate([
             'order' => 'required|array',
-            'order.*' => 'exists:rugby_situations,id'
+            'order.*' => 'exists:rugby_situations,id',
         ]);
 
         foreach ($validated['order'] as $index => $id) {

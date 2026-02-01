@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use App\Mail\SendGridApiTransport;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\ServiceProvider;
 
 class SendGridApiServiceProvider extends ServiceProvider
 {

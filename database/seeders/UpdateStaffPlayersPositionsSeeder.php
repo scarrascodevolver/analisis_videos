@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class UpdateStaffPlayersPositionsSeeder extends Seeder
 {
@@ -20,7 +19,7 @@ class UpdateStaffPlayersPositionsSeeder extends Seeder
         if ($victor && $victor->profile) {
             $victor->profile->update([
                 'position' => 'Segunda Línea',
-                'secondary_position' => 'Pilar'
+                'secondary_position' => 'Pilar',
             ]);
             echo "✅ Víctor Escobar → Segunda Línea (principal) / Pilar (secundaria)\n";
         } else {
@@ -32,7 +31,7 @@ class UpdateStaffPlayersPositionsSeeder extends Seeder
         if ($valentin && $valentin->profile) {
             $valentin->profile->update([
                 'position' => 'Apertura',
-                'secondary_position' => 'Wing'
+                'secondary_position' => 'Wing',
             ]);
             echo "✅ Valentín Dapena → Apertura (principal) / Wing (secundaria)\n";
         } else {

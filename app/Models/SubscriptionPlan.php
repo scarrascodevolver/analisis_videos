@@ -45,7 +45,7 @@ class SubscriptionPlan extends Model
      */
     public function getPriceForCurrency(string $currency): float
     {
-        $field = 'price_' . strtolower($currency);
+        $field = 'price_'.strtolower($currency);
 
         if (isset($this->$field)) {
             return (float) $this->$field;
@@ -80,9 +80,9 @@ class SubscriptionPlan extends Model
         $symbol = $symbols[strtolower($currency)] ?? '$';
 
         if (strtolower($currency) === 'clp') {
-            return $symbol . number_format($price, 0, ',', '.');
+            return $symbol.number_format($price, 0, ',', '.');
         }
 
-        return $symbol . number_format($price, 2, ',', '.');
+        return $symbol.number_format($price, 2, ',', '.');
     }
 }

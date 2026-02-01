@@ -36,7 +36,7 @@ class RestructureToRealisticCategoriesSeeder extends Seeder
             echo "     (incluyendo lo que antes era Primera + Intermedia)\n\n";
 
         } catch (\Exception $e) {
-            echo "❌ ERROR durante la reestructuración: " . $e->getMessage() . "\n";
+            echo '❌ ERROR durante la reestructuración: '.$e->getMessage()."\n";
             throw $e;
         } finally {
             // Reactivar foreign key checks

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Category;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class UpdateCategoriesRealisticSeeder extends Seeder
@@ -58,7 +58,7 @@ class UpdateCategoriesRealisticSeeder extends Seeder
 
         // Buscar jugadores con categorías adultas (1 y 2) y cambiarlos a "Adultas" (2)
         $adultPlayers = User::where('role', 'jugador')
-            ->whereHas('profile', function($q) {
+            ->whereHas('profile', function ($q) {
                 $q->whereIn('user_category_id', [1, 2]); // Antigua Adulta Primera/Intermedia
             })->get();
 
@@ -72,7 +72,7 @@ class UpdateCategoriesRealisticSeeder extends Seeder
 
         // Jugadores juveniles mantienen su categoría pero cambia el ID (de 3 a 1)
         $juvenilePlayers = User::where('role', 'jugador')
-            ->whereHas('profile', function($q) {
+            ->whereHas('profile', function ($q) {
                 $q->where('user_category_id', 3); // Antigua Juveniles
             })->get();
 

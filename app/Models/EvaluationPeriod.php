@@ -9,18 +9,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class EvaluationPeriod extends Model
 {
     use BelongsToOrganization;
+
     protected $fillable = [
         'name',
         'description',
         'started_at',
         'ended_at',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     /**

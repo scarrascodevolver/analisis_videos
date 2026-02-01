@@ -30,7 +30,9 @@ class ClipCategorySeeder extends Seeder
         foreach ($organizations as $org) {
             // Obtener el primer usuario de la org como creador
             $firstUser = $org->users()->first();
-            if (!$firstUser) continue;
+            if (! $firstUser) {
+                continue;
+            }
 
             foreach ($categories as $cat) {
                 ClipCategory::firstOrCreate(

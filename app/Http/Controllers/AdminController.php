@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\ClipCategory;
-use App\Models\Organization;
 use App\Models\RugbySituation;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -37,13 +35,13 @@ class AdminController extends Controller
     {
         $organization = auth()->user()->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('admin.index')
                 ->with('error', 'No tienes una organización asignada.');
         }
 
         // URL base para el registro con código
-        $registerUrl = url('/register?code=' . $organization->invitation_code);
+        $registerUrl = url('/register?code='.$organization->invitation_code);
 
         return view('admin.organization', compact('organization', 'registerUrl'));
     }
@@ -55,7 +53,7 @@ class AdminController extends Controller
     {
         $organization = auth()->user()->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return back()->with('error', 'No tienes una organización asignada.');
         }
 
@@ -66,7 +64,7 @@ class AdminController extends Controller
                 'min:4',
                 'max:20',
                 'alpha_num',
-                'unique:organizations,invitation_code,' . $organization->id,
+                'unique:organizations,invitation_code,'.$organization->id,
             ],
         ], [
             'invitation_code.unique' => 'Este código ya está en uso por otra organización.',
@@ -88,7 +86,7 @@ class AdminController extends Controller
     {
         $organization = auth()->user()->currentOrganization();
 
-        if (!$organization) {
+        if (! $organization) {
             return back()->with('error', 'No tienes una organización asignada.');
         }
 

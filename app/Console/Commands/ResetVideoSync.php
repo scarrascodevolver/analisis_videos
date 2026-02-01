@@ -59,6 +59,7 @@ class ResetVideoSync extends Command
 
         if ($videos->isEmpty()) {
             $this->info('No hay videos con multi-cámara configurados');
+
             return Command::SUCCESS;
         }
 
@@ -78,7 +79,7 @@ class ResetVideoSync extends Command
             $offset = $video->sync_offset ?? '0.00';
 
             $this->line(sprintf(
-                "  [%s] ID: %d | %s | %s | Offset: %ss | %s",
+                '  [%s] ID: %d | %s | %s | Offset: %ss | %s',
                 $synced,
                 $video->id,
                 $role,
@@ -95,17 +96,19 @@ class ResetVideoSync extends Command
     {
         $video = Video::find($videoId);
 
-        if (!$video) {
+        if (! $video) {
             $this->error("Video ID {$videoId} no encontrado");
+
             return Command::FAILURE;
         }
 
         $this->info("Video: {$video->title}");
-        $this->info("Offset actual: " . ($video->sync_offset ?? '0') . " segundos");
-        $this->info("Is synced: " . ($video->is_synced ? 'Sí' : 'No'));
+        $this->info('Offset actual: '.($video->sync_offset ?? '0').' segundos');
+        $this->info('Is synced: '.($video->is_synced ? 'Sí' : 'No'));
 
-        if (!$this->confirm('¿Resetear sincronización?', true)) {
+        if (! $this->confirm('¿Resetear sincronización?', true)) {
             $this->info('Operación cancelada');
+
             return Command::SUCCESS;
         }
 
@@ -127,6 +130,7 @@ class ResetVideoSync extends Command
 
         if ($videos->isEmpty()) {
             $this->error("No se encontraron videos slave en el grupo: {$groupId}");
+
             return Command::FAILURE;
         }
 
@@ -135,8 +139,9 @@ class ResetVideoSync extends Command
             $this->line("  - ID: {$video->id} | {$video->camera_angle} | Offset: {$video->sync_offset}s");
         }
 
-        if (!$this->confirm('¿Continuar?', true)) {
+        if (! $this->confirm('¿Continuar?', true)) {
             $this->info('Operación cancelada');
+
             return Command::SUCCESS;
         }
 

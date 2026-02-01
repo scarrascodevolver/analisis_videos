@@ -101,7 +101,7 @@ class Partner extends Model
      */
     public function hasMercadoPagoConnected(): bool
     {
-        return $this->mp_connected && !empty($this->mp_user_id);
+        return $this->mp_connected && ! empty($this->mp_user_id);
     }
 
     /**
@@ -109,9 +109,10 @@ class Partner extends Model
      */
     public function isMpTokenValid(): bool
     {
-        if (!$this->mp_access_token || !$this->mp_token_expires_at) {
+        if (! $this->mp_access_token || ! $this->mp_token_expires_at) {
             return false;
         }
+
         return $this->mp_token_expires_at->isFuture();
     }
 

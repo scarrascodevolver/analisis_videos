@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Video;
-use App\Models\VideoComment;
-use App\Models\User;
-use App\Models\VideoAssignment;
 use App\Models\CommentMention;
+use App\Models\User;
+use App\Models\Video;
+use App\Models\VideoAssignment;
+use App\Models\VideoComment;
 use App\Notifications\VideoCommentMention as VideoCommentMentionNotification;
 use Illuminate\Http\Request;
 
@@ -20,7 +19,7 @@ class VideoCommentController extends Controller
             'timestamp_seconds' => 'required|integer|min:0',
             'category' => 'required|in:tecnico,tactico,fisico,mental,general',
             'priority' => 'required|in:baja,media,alta,critica',
-            'parent_id' => 'nullable|exists:video_comments,id'
+            'parent_id' => 'nullable|exists:video_comments,id',
         ]);
 
         // If it's a reply, ensure the parent belongs to the same video
@@ -39,7 +38,7 @@ class VideoCommentController extends Controller
             'timestamp_seconds' => $request->timestamp_seconds,
             'category' => $request->category,
             'priority' => $request->priority,
-            'status' => 'pendiente'
+            'status' => 'pendiente',
         ]);
 
         // 🎯 DETECTAR MENCIONES con @
@@ -50,7 +49,7 @@ class VideoCommentController extends Controller
                 'success' => true,
                 'comment' => $comment->load('user', 'mentionedUsers'),
                 'formatted_timestamp' => $comment->formatted_timestamp,
-                'mentioned_users' => $comment->mentionedUsers->pluck('name')
+                'mentioned_users' => $comment->mentionedUsers->pluck('name'),
             ]);
         }
 
@@ -63,7 +62,7 @@ class VideoCommentController extends Controller
             'comment' => 'required|string',
             'category' => 'required|in:tecnico,tactico,fisico,mental,general',
             'priority' => 'required|in:baja,media,alta,critica',
-            'status' => 'required|in:pendiente,en_revision,completado'
+            'status' => 'required|in:pendiente,en_revision,completado',
         ]);
 
         $comment->update($request->only(['comment', 'category', 'priority', 'status']));
@@ -71,7 +70,7 @@ class VideoCommentController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'comment' => $comment->fresh()->load('user')
+                'comment' => $comment->fresh()->load('user'),
             ]);
         }
 
@@ -85,7 +84,7 @@ class VideoCommentController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'No tienes permisos para eliminar este comentario'
+                    'error' => 'No tienes permisos para eliminar este comentario',
                 ], 403);
             }
 
@@ -108,7 +107,7 @@ class VideoCommentController extends Controller
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'comment' => $comment->fresh()->load('user')
+                'comment' => $comment->fresh()->load('user'),
             ]);
         }
 
@@ -137,12 +136,12 @@ class VideoCommentController extends Controller
         // Buscar usuarios mencionados por nombre, solo de la misma organización
         $currentOrg = auth()->user()->currentOrganization();
 
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             return; // No hay organización actual
         }
 
         $mentionedUsers = User::whereIn('name', $mentionedNames)
-            ->whereHas('organizations', function($query) use ($currentOrg) {
+            ->whereHas('organizations', function ($query) use ($currentOrg) {
                 $query->where('organizations.id', $currentOrg->id);
             })
             ->get();
@@ -178,7 +177,7 @@ class VideoCommentController extends Controller
                     [
                         'assigned_by' => auth()->id(),
                         'comment_id' => $comment->id,
-                        'notes' => "Mencionado en comentario por " . auth()->user()->name,
+                        'notes' => 'Mencionado en comentario por '.auth()->user()->name,
                     ]
                 );
             }

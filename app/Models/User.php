@@ -3,10 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -133,8 +133,8 @@ class User extends Authenticatable
     public function organizations()
     {
         return $this->belongsToMany(Organization::class)
-                    ->withPivot(['role', 'is_current', 'is_org_admin'])
-                    ->withTimestamps();
+            ->withPivot(['role', 'is_current', 'is_org_admin'])
+            ->withTimestamps();
     }
 
     /**
@@ -143,6 +143,7 @@ class User extends Authenticatable
     public function isOrgAdmin(): bool
     {
         $org = $this->currentOrganization();
+
         return $org ? (bool) $org->pivot->is_org_admin : false;
     }
 
@@ -152,8 +153,8 @@ class User extends Authenticatable
     public function currentOrganization()
     {
         return $this->organizations()
-                    ->wherePivot('is_current', true)
-                    ->first();
+            ->wherePivot('is_current', true)
+            ->first();
     }
 
     /**
@@ -164,7 +165,7 @@ class User extends Authenticatable
         $belongsToOrg = $this->organizations()->where('organizations.id', $organization->id)->exists();
 
         // Verificar que el usuario pertenece a esta organización (excepto super admins)
-        if (!$belongsToOrg && !$isSuperAdmin) {
+        if (! $belongsToOrg && ! $isSuperAdmin) {
             return false;
         }
 
@@ -175,7 +176,7 @@ class User extends Authenticatable
         );
 
         // Si es super admin y no pertenece a la org, agregarlo temporalmente
-        if ($isSuperAdmin && !$belongsToOrg) {
+        if ($isSuperAdmin && ! $belongsToOrg) {
             $this->organizations()->attach($organization->id, [
                 'role' => $this->role ?? 'analista',
                 'is_current' => true,
@@ -195,6 +196,7 @@ class User extends Authenticatable
     public function currentOrganizationRole(): ?string
     {
         $org = $this->currentOrganization();
+
         return $org ? $org->pivot->role : null;
     }
 

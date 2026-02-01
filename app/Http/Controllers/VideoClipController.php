@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClipCategory;
 use App\Models\Video;
 use App\Models\VideoClip;
-use App\Models\ClipCategory;
 use Illuminate\Http\Request;
 
 class VideoClipController extends Controller
@@ -110,7 +110,7 @@ class VideoClipController extends Controller
 
         $clip->update($request->only([
             'clip_category_id', 'start_time', 'end_time',
-            'title', 'notes', 'rating', 'is_highlight'
+            'title', 'notes', 'rating', 'is_highlight',
         ]));
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -138,7 +138,7 @@ class VideoClipController extends Controller
     // Marcar/desmarcar como destacado
     public function toggleHighlight(Request $request, VideoClip $clip)
     {
-        $clip->update(['is_highlight' => !$clip->is_highlight]);
+        $clip->update(['is_highlight' => ! $clip->is_highlight]);
 
         return response()->json([
             'success' => true,
@@ -166,7 +166,7 @@ class VideoClipController extends Controller
         ]);
 
         $video->update([
-            'timeline_offset' => $request->timeline_offset
+            'timeline_offset' => $request->timeline_offset,
         ]);
 
         return response()->json([

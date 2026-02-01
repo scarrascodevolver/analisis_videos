@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\UserProfile;
 use App\Models\Category;
 use App\Models\Organization;
+use App\Models\User;
+use App\Models\UserProfile;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,7 +46,7 @@ class RegisterController extends Controller
         $invitationCode = $request->query('code', '');
 
         // Si viene código en la URL, validarlo y cargar datos
-        if (!empty($invitationCode)) {
+        if (! empty($invitationCode)) {
             $organization = Organization::findByInvitationCode($invitationCode);
 
             if ($organization) {
@@ -74,7 +74,6 @@ class RegisterController extends Controller
     /**
      * Handle a registration request for the application.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function register(Request $request)
@@ -101,7 +100,6 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -116,7 +114,7 @@ class RegisterController extends Controller
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'invitation_code' => ['required', 'string', function ($attribute, $value, $fail) {
                 $org = Organization::findByInvitationCode($value);
-                if (!$org) {
+                if (! $org) {
                     $fail('El código de invitación no es válido o la organización no está activa.');
                 }
             }],
@@ -139,7 +137,6 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
      * @return \App\Models\User
      */
     protected function create(array $data)
@@ -149,9 +146,9 @@ class RegisterController extends Controller
 
         // Combinar código de país con teléfono
         $phone = null;
-        if (!empty($data['phone'])) {
+        if (! empty($data['phone'])) {
             $countryCode = $data['country_code'] ?? '+56';
-            $phone = $countryCode . $data['phone'];
+            $phone = $countryCode.$data['phone'];
         }
 
         // Create the user

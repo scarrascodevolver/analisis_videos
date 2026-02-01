@@ -30,7 +30,7 @@ class SetCurrentOrganization
     public function handle(Request $request, Closure $next): Response
     {
         // Si el usuario no está autenticado, continuar
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return $next($request);
         }
 
@@ -50,12 +50,13 @@ class SetCurrentOrganization
         $currentOrg = $user->currentOrganization();
 
         // Si el usuario no tiene organización seleccionada
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             $organizations = $user->organizations;
 
             // Si tiene exactamente una organización, seleccionarla automáticamente
             if ($organizations->count() === 1) {
                 $user->switchOrganization($organizations->first());
+
                 return $next($request);
             }
 
@@ -68,13 +69,14 @@ class SetCurrentOrganization
             // Si no tiene ninguna organización, error
             if ($organizations->count() === 0) {
                 auth()->logout();
+
                 return redirect()->route('login')
                     ->with('error', 'Tu cuenta no está asociada a ninguna organización. Contacta al administrador.');
             }
         }
 
         // Verificar que la organización esté activa
-        if (!$currentOrg->is_active) {
+        if (! $currentOrg->is_active) {
             // Intentar cambiar a otra organización activa
             $activeOrg = $user->organizations()->where('is_active', true)->first();
 
@@ -82,6 +84,7 @@ class SetCurrentOrganization
                 $user->switchOrganization($activeOrg);
             } else {
                 auth()->logout();
+
                 return redirect()->route('login')
                     ->with('error', 'Tu organización está desactivada. Contacta al administrador.');
             }

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 class NotificationController extends Controller
 {
     /**
@@ -18,13 +16,13 @@ class NotificationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Notificación marcada como leída'
+                'message' => 'Notificación marcada como leída',
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Notificación no encontrada'
+            'message' => 'Notificación no encontrada',
         ], 404);
     }
 
@@ -37,7 +35,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Todas las notificaciones marcadas como leídas'
+            'message' => 'Todas las notificaciones marcadas como leídas',
         ]);
     }
 

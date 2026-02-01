@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Video;
+use Illuminate\Http\Request;
 
 class PlayerApiController extends Controller
 {
@@ -16,24 +15,24 @@ class PlayerApiController extends Controller
         // Obtener la organización actual del usuario autenticado
         $currentOrg = auth()->user()->currentOrganization();
 
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             return response()->json([
                 'players' => [],
-                'error' => 'No hay organización seleccionada'
+                'error' => 'No hay organización seleccionada',
             ]);
         }
 
         // Get all players, coaches and staff (users with role 'jugador', 'entrenador' or staff that can receive assignments)
         // Filtrados por organización actual
-        $players = User::whereHas('organizations', function($q) use ($currentOrg) {
-                $q->where('organizations.id', $currentOrg->id);
-            })
-            ->where(function($query) {
+        $players = User::whereHas('organizations', function ($q) use ($currentOrg) {
+            $q->where('organizations.id', $currentOrg->id);
+        })
+            ->where(function ($query) {
                 $query->where('role', 'jugador')
-                      ->orWhere('role', 'entrenador')
-                      ->orWhereHas('profile', function($q) {
-                          $q->where('can_receive_assignments', true);
-                      });
+                    ->orWhere('role', 'entrenador')
+                    ->orWhereHas('profile', function ($q) {
+                        $q->where('can_receive_assignments', true);
+                    });
             })
             ->with(['profile.category'])
             ->withCount(['assignedVideos as video_count'])
@@ -41,7 +40,7 @@ class PlayerApiController extends Controller
             ->get();
 
         // Format the response
-        $formattedPlayers = $players->map(function($player) {
+        $formattedPlayers = $players->map(function ($player) {
             return [
                 'id' => $player->id,
                 'name' => $player->name,
@@ -52,17 +51,18 @@ class PlayerApiController extends Controller
                     'avatar' => $player->profile?->avatar ?? null,
                     'category' => $player->profile?->category ? [
                         'id' => $player->profile->category->id,
-                        'name' => $player->profile->category->name
-                    ] : null
+                        'name' => $player->profile->category->name,
+                    ] : null,
                 ],
-                'video_count' => $player->video_count
+                'video_count' => $player->video_count,
             ];
         });
 
         return response()->json([
-            'players' => $formattedPlayers
+            'players' => $formattedPlayers,
         ]);
     }
+
     /**
      * Search players by name, position, or category
      */
@@ -72,41 +72,41 @@ class PlayerApiController extends Controller
 
         if (empty($query) || strlen($query) < 2) {
             return response()->json([
-                'players' => []
+                'players' => [],
             ]);
         }
 
         // Obtener la organización actual del usuario autenticado
         $currentOrg = auth()->user()->currentOrganization();
 
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             return response()->json([
                 'players' => [],
-                'error' => 'No hay organización seleccionada'
+                'error' => 'No hay organización seleccionada',
             ]);
         }
 
         // Get players, coaches and staff filtrados por organización actual
-        $players = User::whereHas('organizations', function($orgQuery) use ($currentOrg) {
-                $orgQuery->where('organizations.id', $currentOrg->id);
-            })
-            ->where(function($mainQuery) {
+        $players = User::whereHas('organizations', function ($orgQuery) use ($currentOrg) {
+            $orgQuery->where('organizations.id', $currentOrg->id);
+        })
+            ->where(function ($mainQuery) {
                 $mainQuery->where('role', 'jugador')
-                          ->orWhere('role', 'entrenador')
-                          ->orWhereHas('profile', function($q) {
-                              $q->where('can_receive_assignments', true);
-                          });
+                    ->orWhere('role', 'entrenador')
+                    ->orWhereHas('profile', function ($q) {
+                        $q->where('can_receive_assignments', true);
+                    });
             })
-            ->where(function($searchQuery) use ($query) {
+            ->where(function ($searchQuery) use ($query) {
                 $searchQuery->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%")
-                  ->orWhereHas('profile', function($q) use ($query) {
-                      $q->where('position', 'LIKE', "%{$query}%")
-                        ->orWhere('secondary_position', 'LIKE', "%{$query}%");
-                  })
-                  ->orWhereHas('profile.category', function($q) use ($query) {
-                      $q->where('name', 'LIKE', "%{$query}%");
-                  });
+                    ->orWhere('email', 'LIKE', "%{$query}%")
+                    ->orWhereHas('profile', function ($q) use ($query) {
+                        $q->where('position', 'LIKE', "%{$query}%")
+                            ->orWhere('secondary_position', 'LIKE', "%{$query}%");
+                    })
+                    ->orWhereHas('profile.category', function ($q) use ($query) {
+                        $q->where('name', 'LIKE', "%{$query}%");
+                    });
             })
             ->with(['profile.category'])
             ->withCount(['assignedVideos as video_count'])
@@ -115,7 +115,7 @@ class PlayerApiController extends Controller
             ->get();
 
         // Format the response
-        $formattedPlayers = $players->map(function($player) {
+        $formattedPlayers = $players->map(function ($player) {
             return [
                 'id' => $player->id,
                 'name' => $player->name,
@@ -126,15 +126,15 @@ class PlayerApiController extends Controller
                     'avatar' => $player->profile?->avatar ?? null,
                     'category' => $player->profile?->category ? [
                         'id' => $player->profile->category->id,
-                        'name' => $player->profile->category->name
-                    ] : null
+                        'name' => $player->profile->category->name,
+                    ] : null,
                 ],
-                'video_count' => $player->video_count
+                'video_count' => $player->video_count,
             ];
         });
 
         return response()->json([
-            'players' => $formattedPlayers
+            'players' => $formattedPlayers,
         ]);
     }
 
@@ -146,25 +146,25 @@ class PlayerApiController extends Controller
         // Verificar que el jugador pertenece a la organización actual
         $currentOrg = auth()->user()->currentOrganization();
 
-        if (!$currentOrg) {
+        if (! $currentOrg) {
             return response()->json([
-                'error' => 'No hay organización seleccionada'
+                'error' => 'No hay organización seleccionada',
             ], 400);
         }
 
         // Verificar que el jugador pertenece a la misma organización
         $playerBelongsToOrg = $player->organizations()->where('organizations.id', $currentOrg->id)->exists();
 
-        if (!$playerBelongsToOrg) {
+        if (! $playerBelongsToOrg) {
             return response()->json([
-                'error' => 'Jugador no encontrado'
+                'error' => 'Jugador no encontrado',
             ], 404);
         }
 
         // Verify the user is actually a player, coach or staff that can receive assignments
-        if (!in_array($player->role, ['jugador', 'entrenador']) && !($player->profile && $player->profile->can_receive_assignments)) {
+        if (! in_array($player->role, ['jugador', 'entrenador']) && ! ($player->profile && $player->profile->can_receive_assignments)) {
             return response()->json([
-                'error' => 'Usuario no puede recibir asignaciones de videos'
+                'error' => 'Usuario no puede recibir asignaciones de videos',
             ], 404);
         }
 
@@ -172,8 +172,8 @@ class PlayerApiController extends Controller
         $assignments = $player->assignedVideos()->with(['video'])->get();
 
         // Format videos with assignment status
-        $formattedVideos = $assignments->map(function($assignment) {
-            if (!$assignment->video) {
+        $formattedVideos = $assignments->map(function ($assignment) {
+            if (! $assignment->video) {
                 return null;
             }
 
@@ -188,8 +188,8 @@ class PlayerApiController extends Controller
                 'rival_team' => $video->rival_team_name,
                 'pivot' => [
                     'status' => 'assigned', // All assignments are simply 'assigned' since status was removed
-                    'assigned_at' => $assignment->created_at ?? null
-                ]
+                    'assigned_at' => $assignment->created_at ?? null,
+                ],
             ];
         })->filter()->sortByDesc('match_date')->values();
 
@@ -204,7 +204,7 @@ class PlayerApiController extends Controller
 
         return response()->json([
             'videos' => $formattedVideos,
-            'stats' => $stats
+            'stats' => $stats,
         ]);
     }
 }

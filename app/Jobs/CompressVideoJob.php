@@ -3,17 +3,17 @@
 namespace App\Jobs;
 
 use App\Models\Video;
+use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use Illuminate\Support\Facades\Storage;
 
-class CompressVideoJob implements ShouldQueue, ShouldBeUnique
+class CompressVideoJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -44,7 +44,9 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
      * @var string|null
      */
     protected $tempOriginalPath = null;
+
     protected $tempCompressedPath = null;
+
     protected $tempThumbnailPath = null;
 
     /**
@@ -58,12 +60,10 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
     /**
      * The unique ID of the job.
      * Prevents duplicate compression jobs for the same video from being queued.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return 'compress-video-' . $this->videoId;
+        return 'compress-video-'.$this->videoId;
     }
 
     /**
@@ -73,19 +73,21 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
     {
         $video = Video::find($this->videoId);
 
-        if (!$video) {
+        if (! $video) {
             Log::warning("CompressVideoJob: Video {$this->videoId} not found (probably deleted). Skipping job.");
 
             // Delete this job from queue to prevent retries
             $this->delete();
+
             return;
         }
 
         // CRITICAL: Skip if video is already compressed or currently being processed
         // Prevents duplicate jobs from re-compressing the same video multiple times
         if ($video->processing_status === 'completed' || $video->original_file_path) {
-            Log::warning("CompressVideoJob: Video {$video->id} already compressed (status: {$video->processing_status}, has original_file_path: " . ($video->original_file_path ? 'YES' : 'NO') . "). Skipping duplicate job.");
+            Log::warning("CompressVideoJob: Video {$video->id} already compressed (status: {$video->processing_status}, has original_file_path: ".($video->original_file_path ? 'YES' : 'NO').'). Skipping duplicate job.');
             $this->delete();
+
             return;
         }
 
@@ -93,11 +95,12 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
         if ($video->processing_status === 'processing') {
             Log::warning("CompressVideoJob: Video {$video->id} is currently being processed by another job. Skipping duplicate.");
             $this->delete();
+
             return;
         }
 
         // Skip compression in local/development environment
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             Log::info("CompressVideoJob: Skipping compression in local environment for video {$video->id}");
 
             $video->update([
@@ -108,6 +111,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
 
             // Delete job from queue
             $this->delete();
+
             return;
         }
 
@@ -118,7 +122,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             $disk = $this->getDiskForVideo($video);
 
             // Verify file exists before processing
-            if (!Storage::disk($disk)->exists($video->file_path)) {
+            if (! Storage::disk($disk)->exists($video->file_path)) {
                 Log::warning("CompressVideoJob: Video file not found on disk '{$disk}': {$video->file_path}. Video may have been deleted. Skipping job.");
 
                 // Mark as failed instead of retrying
@@ -129,6 +133,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
 
                 // Delete this job from queue
                 $this->delete();
+
                 return;
             }
 
@@ -141,14 +146,14 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             // Download video to temporary location for processing
             $this->tempOriginalPath = $this->downloadVideoToTemp($video, $disk);
 
-            if (!$this->tempOriginalPath) {
-                throw new Exception("Failed to download video for processing");
+            if (! $this->tempOriginalPath) {
+                throw new Exception('Failed to download video for processing');
             }
 
             Log::info("CompressVideoJob: Downloaded video to {$this->tempOriginalPath}");
 
             // Create temporary output path
-            $this->tempCompressedPath = storage_path('app/temp/compressed_' . basename($this->tempOriginalPath));
+            $this->tempCompressedPath = storage_path('app/temp/compressed_'.basename($this->tempOriginalPath));
 
             // Compress the video using FFmpeg
             $this->compressVideo($this->tempOriginalPath, $this->tempCompressedPath);
@@ -157,9 +162,10 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
 
             // Re-check if video still exists after compression (user might have deleted it during processing)
             $video->refresh();
-            if (!Video::find($this->videoId)) {
+            if (! Video::find($this->videoId)) {
                 Log::warning("CompressVideoJob: Video {$this->videoId} was deleted during compression. Discarding compressed file.");
                 $this->delete(); // Remove job from queue
+
                 return;
             }
 
@@ -195,16 +201,16 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             if ($video->original_file_path && $video->original_file_path !== $newPath) {
                 try {
                     Storage::disk($disk)->delete($video->original_file_path);
-                    Log::info("CompressVideoJob: Deleted original file from storage");
+                    Log::info('CompressVideoJob: Deleted original file from storage');
                 } catch (Exception $e) {
-                    Log::warning("CompressVideoJob: Failed to delete original file: " . $e->getMessage());
+                    Log::warning('CompressVideoJob: Failed to delete original file: '.$e->getMessage());
                 }
             }
 
             Log::info("CompressVideoJob: Completed successfully for video {$video->id}. Compression: {$compressionRatio}%");
 
         } catch (Exception $e) {
-            Log::error("CompressVideoJob: Failed for video {$video->id}: " . $e->getMessage());
+            Log::error("CompressVideoJob: Failed for video {$video->id}: ".$e->getMessage());
             Log::error($e->getTraceAsString());
 
             $video->update([
@@ -246,16 +252,16 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
         try {
             // Create temp directory if it doesn't exist
             $tempDir = storage_path('app/temp');
-            if (!is_dir($tempDir)) {
+            if (! is_dir($tempDir)) {
                 mkdir($tempDir, 0755, true);
             }
 
-            $tempPath = $tempDir . '/' . time() . '_' . basename($video->file_path);
+            $tempPath = $tempDir.'/'.time().'_'.basename($video->file_path);
 
             // Get file contents from storage
             $fileContents = Storage::disk($disk)->get($video->file_path);
 
-            if (!$fileContents) {
+            if (! $fileContents) {
                 return null;
             }
 
@@ -265,7 +271,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             return $tempPath;
 
         } catch (Exception $e) {
-            Log::error("CompressVideoJob: Failed to download video: " . $e->getMessage());
+            Log::error('CompressVideoJob: Failed to download video: '.$e->getMessage());
+
             return null;
         }
     }
@@ -311,8 +318,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
         // -g: GOP size (keyframe interval) - lower = faster seeking but ~10-15% larger file
         // -threads 1: Limit to 1 core to prevent CPU saturation on 2-core VPS (reduces 95% → 50-60% CPU)
         $command = sprintf(
-            'ffmpeg -i %s -c:v libx264 -preset %s -crf %d -g %d ' .
-            '-vf "scale=1920:1080:force_original_aspect_ratio=decrease" ' .
+            'ffmpeg -i %s -c:v libx264 -preset %s -crf %d -g %d '.
+            '-vf "scale=1920:1080:force_original_aspect_ratio=decrease" '.
             '-c:a aac -b:a 128k -movflags +faststart -threads 1 -y %s 2>&1',
             escapeshellarg($inputPath),
             $preset,
@@ -328,7 +335,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
         $output = [];
         $returnVar = 0;
         // Use 'nice' to give FFmpeg lower priority (15 = low priority, allows web/mysql to breathe)
-        exec('nice -n 15 ' . $command, $output, $returnVar);
+        exec('nice -n 15 '.$command, $output, $returnVar);
 
         $duration = round(microtime(true) - $startTime, 2);
 
@@ -338,8 +345,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             throw new Exception("FFmpeg compression failed: {$errorOutput}");
         }
 
-        if (!file_exists($outputPath)) {
-            throw new Exception("FFmpeg did not produce output file");
+        if (! file_exists($outputPath)) {
+            throw new Exception('FFmpeg did not produce output file');
         }
 
         $outputSizeMB = round(filesize($outputPath) / 1024 / 1024, 2);
@@ -351,7 +358,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
      */
     protected function uploadCompressedVideo(Video $video, string $compressedPath): string
     {
-        $filename = 'compressed_' . time() . '_' . $video->file_name;
+        $filename = 'compressed_'.time().'_'.$video->file_name;
 
         // Get organization slug for folder structure
         $orgSlug = $video->organization ? $video->organization->slug : 'default';
@@ -368,11 +375,12 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
                     'public'
                 );
 
-                Log::info("CompressVideoJob: Uploaded to DigitalOcean Spaces");
+                Log::info('CompressVideoJob: Uploaded to DigitalOcean Spaces');
+
                 return $path;
 
             } catch (Exception $e) {
-                Log::warning("CompressVideoJob: Failed to upload to Spaces, using local storage: " . $e->getMessage());
+                Log::warning('CompressVideoJob: Failed to upload to Spaces, using local storage: '.$e->getMessage());
 
                 $path = Storage::disk('public')->putFileAs(
                     $uploadPath,
@@ -390,7 +398,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
                 $filename
             );
 
-            Log::info("CompressVideoJob: Uploaded to local storage (development environment)");
+            Log::info('CompressVideoJob: Uploaded to local storage (development environment)');
+
             return $path;
         }
     }
@@ -402,8 +411,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
     {
         try {
             $tempDir = storage_path('app/temp');
-            $thumbnailFilename = pathinfo($video->file_name, PATHINFO_FILENAME) . '_thumb.jpg';
-            $this->tempThumbnailPath = $tempDir . '/' . $thumbnailFilename;
+            $thumbnailFilename = pathinfo($video->file_name, PATHINFO_FILENAME).'_thumb.jpg';
+            $this->tempThumbnailPath = $tempDir.'/'.$thumbnailFilename;
 
             // Extract frame at 2 seconds (or 1 second for short videos)
             $command = sprintf(
@@ -416,7 +425,7 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             $returnVar = 0;
             exec($command, $output, $returnVar);
 
-            if ($returnVar !== 0 || !file_exists($this->tempThumbnailPath)) {
+            if ($returnVar !== 0 || ! file_exists($this->tempThumbnailPath)) {
                 // Try at 1 second if 2 seconds failed (video might be shorter)
                 $command = sprintf(
                     'ffmpeg -i %s -ss 00:00:01 -vframes 1 -vf "scale=640:-1" -q:v 2 -y %s 2>&1',
@@ -426,8 +435,9 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
                 exec($command, $output, $returnVar);
             }
 
-            if (!file_exists($this->tempThumbnailPath)) {
-                Log::warning("CompressVideoJob: Failed to generate thumbnail");
+            if (! file_exists($this->tempThumbnailPath)) {
+                Log::warning('CompressVideoJob: Failed to generate thumbnail');
+
                 return null;
             }
 
@@ -438,11 +448,11 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             // Upload to storage
             try {
                 Storage::disk('spaces')->put($storagePath, file_get_contents($this->tempThumbnailPath), 'public');
-                Log::info("CompressVideoJob: Thumbnail uploaded to Spaces");
+                Log::info('CompressVideoJob: Thumbnail uploaded to Spaces');
             } catch (Exception $e) {
                 // Fallback to local storage
                 Storage::disk('public')->put($storagePath, file_get_contents($this->tempThumbnailPath));
-                Log::info("CompressVideoJob: Thumbnail uploaded to local storage");
+                Log::info('CompressVideoJob: Thumbnail uploaded to local storage');
             }
 
             // Cleanup temp file (also tracked for finally block)
@@ -451,7 +461,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             return $storagePath;
 
         } catch (Exception $e) {
-            Log::warning("CompressVideoJob: Thumbnail generation failed: " . $e->getMessage());
+            Log::warning('CompressVideoJob: Thumbnail generation failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -479,8 +490,8 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             $cleaned[] = basename($this->tempThumbnailPath);
         }
 
-        if (!empty($cleaned)) {
-            Log::info("CompressVideoJob: Cleaned up temp files: " . implode(', ', $cleaned));
+        if (! empty($cleaned)) {
+            Log::info('CompressVideoJob: Cleaned up temp files: '.implode(', ', $cleaned));
         }
     }
 
@@ -501,6 +512,6 @@ class CompressVideoJob implements ShouldQueue, ShouldBeUnique
             ]);
         }
 
-        Log::error("CompressVideoJob: Job failed permanently for video {$this->videoId}: " . $exception->getMessage());
+        Log::error("CompressVideoJob: Job failed permanently for video {$this->videoId}: ".$exception->getMessage());
     }
 }

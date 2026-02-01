@@ -1,21 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\VideoController;
-use App\Http\Controllers\VideoCommentController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\VideoStreamController;
-use App\Http\Controllers\PlayerApiController;
-use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\VideoViewController;
-use App\Http\Controllers\OrganizationController;
-use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\ClipCategoryController;
-use App\Http\Controllers\VideoClipController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JugadasController;
 use App\Http\Controllers\MultiCameraController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\PlayerApiController;
+use App\Http\Controllers\VideoClipController;
+use App\Http\Controllers\VideoCommentController;
+use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoStreamController;
+use App\Http\Controllers\VideoViewController;
+use Illuminate\Support\Facades\Route;
 
 // Landing Page (público)
 Route::view('/', 'landing')->name('landing');
@@ -33,7 +33,7 @@ Route::post('/api/validate-invitation-code', function (Illuminate\Http\Request $
 
     $organization = App\Models\Organization::active()->byInvitationCode($code)->first();
 
-    if (!$organization) {
+    if (! $organization) {
         return response()->json(['valid' => false, 'message' => 'Código inválido o inactivo']);
     }
 
@@ -48,7 +48,7 @@ Route::post('/api/validate-invitation-code', function (Illuminate\Http\Request $
         'organization' => [
             'id' => $organization->id,
             'name' => $organization->name,
-            'logo_url' => $organization->logo_path ? asset('storage/' . $organization->logo_path) : null,
+            'logo_url' => $organization->logo_path ? asset('storage/'.$organization->logo_path) : null,
         ],
         'categories' => $categories,
     ]);
@@ -236,45 +236,47 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // DEBUG: Test route to verify routing works
-Route::get('/test-video-route', function() {
+Route::get('/test-video-route', function () {
     return 'Video route works!';
 });
 
 // DEBUG: Test route that mimics video structure
-Route::get('/test-video/{id}', function($id) {
+Route::get('/test-video/{id}', function ($id) {
     return "Test video route works for ID: $id";
 });
 
 // DEBUG: Test video route without model binding
-Route::get('/debug-video/{id}', function($id) {
-    return 'Video ID: ' . $id;
+Route::get('/debug-video/{id}', function ($id) {
+    return 'Video ID: '.$id;
 });
 
 // DEBUG: Test video route with manual model lookup
-Route::get('/debug-video-model/{id}', function($id) {
+Route::get('/debug-video-model/{id}', function ($id) {
     try {
         $video = App\Models\Video::findOrFail($id);
-        return 'Found video: ' . $video->title;
+
+        return 'Found video: '.$video->title;
     } catch (Exception $e) {
-        return 'Error: ' . $e->getMessage();
+        return 'Error: '.$e->getMessage();
     }
 });
 
 // DEBUG: Test exact VideoStreamController method call
-Route::get('/debug-stream/{video}', function(App\Models\Video $video) {
+Route::get('/debug-stream/{video}', function (App\Models\Video $video) {
     try {
-        $controller = new App\Http\Controllers\VideoStreamController();
+        $controller = new App\Http\Controllers\VideoStreamController;
         $request = request();
+
         return $controller->stream($video, $request);
     } catch (Exception $e) {
-        return 'VideoStreamController Error: ' . $e->getMessage();
+        return 'VideoStreamController Error: '.$e->getMessage();
     }
 });
 
 // ======================================
 // EVALUACIÓN DE COMPAÑEROS
 // ======================================
-Route::middleware('auth')->group(function() {
+Route::middleware('auth')->group(function () {
     Route::get('/evaluacion', [App\Http\Controllers\EvaluationController::class, 'index'])->name('evaluations.index');
     Route::get('/evaluacion/wizard/{player}', [App\Http\Controllers\EvaluationController::class, 'wizard'])->name('evaluations.wizard');
     Route::post('/evaluacion/store', [App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
@@ -287,20 +289,20 @@ Route::middleware('auth')->group(function() {
         ->name('evaluations.toggle');
 
     // Gestión de períodos de evaluación (entrenadores/analistas)
-    Route::middleware('role:entrenador,analista')->group(function() {
+    Route::middleware('role:entrenador,analista')->group(function () {
         Route::get('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'listPeriods'])->name('evaluations.periods.list');
         Route::post('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'createPeriod'])->name('evaluations.periods.create');
         Route::post('/evaluacion/periodos/{period}/activar', [App\Http\Controllers\EvaluationController::class, 'activatePeriod'])->name('evaluations.periods.activate');
         Route::post('/evaluacion/periodos/{period}/cerrar', [App\Http\Controllers\EvaluationController::class, 'closePeriod'])->name('evaluations.periods.close');
     });
 
-    Route::get('/evaluacion/completada', function() {
+    Route::get('/evaluacion/completada', function () {
         return view('evaluations.success');
     })->name('evaluations.success');
 });
 
 // API para búsqueda de jugadores (solo de la misma categoría)
-Route::middleware('auth')->get('/api/search-players', function(Illuminate\Http\Request $request) {
+Route::middleware('auth')->get('/api/search-players', function (Illuminate\Http\Request $request) {
     $query = $request->input('q', '');
     $currentUser = auth()->user();
     $categoryId = $currentUser->profile->user_category_id ?? null;
@@ -308,20 +310,20 @@ Route::middleware('auth')->get('/api/search-players', function(Illuminate\Http\R
     $players = App\Models\User::where('role', 'jugador')
         ->where('id', '!=', $currentUser->id) // Excluir a sí mismo
         ->where('name', 'LIKE', "%{$query}%")
-        ->when($categoryId, function($q) use ($categoryId) {
-            return $q->whereHas('profile', function($query) use ($categoryId) {
+        ->when($categoryId, function ($q) use ($categoryId) {
+            return $q->whereHas('profile', function ($query) use ($categoryId) {
                 $query->where('user_category_id', $categoryId);
             });
         })
         ->with('profile.category')
         ->limit(10)
         ->get()
-        ->map(function($user) {
+        ->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'position' => $user->profile->position ?? 'Sin posición',
-                'category' => $user->profile->category->name ?? 'Sin categoría'
+                'category' => $user->profile->category->name ?? 'Sin categoría',
             ];
         });
 
@@ -329,26 +331,26 @@ Route::middleware('auth')->get('/api/search-players', function(Illuminate\Http\R
 });
 
 // API para jugadores de la categoría del usuario actual
-Route::middleware('auth')->get('/api/category-players', function() {
+Route::middleware('auth')->get('/api/category-players', function () {
     $currentUser = auth()->user();
     $categoryId = $currentUser->profile->user_category_id ?? null;
 
     $players = App\Models\User::where('role', 'jugador')
         ->where('id', '!=', $currentUser->id)
-        ->when($categoryId, function($query) use ($categoryId) {
-            return $query->whereHas('profile', function($q) use ($categoryId) {
+        ->when($categoryId, function ($query) use ($categoryId) {
+            return $query->whereHas('profile', function ($q) use ($categoryId) {
                 $q->where('user_category_id', $categoryId);
             });
         })
         ->with('profile')
         ->limit(5)
         ->get()
-        ->map(function($user) {
+        ->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'position' => $user->profile->position ?? 'Sin posición',
-                'category' => $user->profile->category->name ?? 'Sin categoría'
+                'category' => $user->profile->category->name ?? 'Sin categoría',
             ];
         });
 
@@ -369,6 +371,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::get('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdminForm'])->name('organizations.assign-admin');
     Route::post('/organizations/{organization}/assign-admin', [App\Http\Controllers\SuperAdminController::class, 'assignAdmin'])->name('organizations.assign-admin.store');
     Route::post('/organizations/{organization}/create-user', [App\Http\Controllers\SuperAdminController::class, 'createUserForOrganization'])->name('organizations.create-user');
+    Route::get('/organizations/{organization}/settings', [App\Http\Controllers\SuperAdminController::class, 'settingsForm'])->name('organizations.settings');
+    Route::put('/organizations/{organization}/settings', [App\Http\Controllers\SuperAdminController::class, 'updateSettings'])->name('organizations.settings.update');
     Route::get('/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('users');
     Route::delete('/users/{user}', [App\Http\Controllers\SuperAdminController::class, 'destroyUser'])->name('users.destroy');
     Route::get('/storage', [App\Http\Controllers\SuperAdminController::class, 'storageStats'])->name('storage');

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use HasFactory, BelongsToOrganization;
+    use BelongsToOrganization, HasFactory;
 
     protected $fillable = ['key', 'value'];
 
@@ -18,6 +18,7 @@ class Setting extends Model
     public static function get($key, $default = null)
     {
         $setting = self::where('key', $key)->first();
+
         return $setting ? $setting->value : $default;
     }
 
@@ -48,6 +49,7 @@ class Setting extends Model
         $currentStatus = self::get('evaluations_enabled', '1');
         $newStatus = $currentStatus === '1' ? '0' : '1';
         self::set('evaluations_enabled', $newStatus);
+
         return $newStatus === '1';
     }
 }

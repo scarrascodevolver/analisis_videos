@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class Subscription extends Model
 {
@@ -92,7 +91,7 @@ class Subscription extends Model
      */
     public function daysRemaining(): int
     {
-        if (!$this->current_period_end) {
+        if (! $this->current_period_end) {
             return 0;
         }
 
@@ -107,7 +106,7 @@ class Subscription extends Model
         return $query->where('status', 'active')
             ->where(function ($q) {
                 $q->whereNull('current_period_end')
-                  ->orWhere('current_period_end', '>', now());
+                    ->orWhere('current_period_end', '>', now());
             });
     }
 
@@ -133,7 +132,7 @@ class Subscription extends Model
     /**
      * Renovar suscripción
      */
-    public function renew(int $months = null): void
+    public function renew(?int $months = null): void
     {
         $months = $months ?? $this->plan->duration_months ?? 1;
 

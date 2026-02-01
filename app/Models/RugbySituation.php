@@ -12,11 +12,11 @@ class RugbySituation extends Model
         'description',
         'color',
         'active',
-        'sort_order'
+        'sort_order',
     ];
 
     protected $casts = [
-        'active' => 'boolean'
+        'active' => 'boolean',
     ];
 
     public function videos()

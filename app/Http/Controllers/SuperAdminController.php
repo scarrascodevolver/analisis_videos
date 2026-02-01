@@ -30,7 +30,7 @@ class SuperAdminController extends Controller
             'users',
             'videos' => function ($query) {
                 $query->withoutGlobalScope('organization');
-            }
+            },
         ])->get();
 
         return view('super-admin.dashboard', compact('stats', 'orgStats'));
@@ -45,7 +45,7 @@ class SuperAdminController extends Controller
             'users',
             'videos' => function ($query) {
                 $query->withoutGlobalScope('organization');
-            }
+            },
         ])
             ->latest()
             ->paginate(10);
@@ -91,7 +91,7 @@ class SuperAdminController extends Controller
         $originalSlug = $slug;
         $counter = 1;
         while (Organization::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter++;
+            $slug = $originalSlug.'-'.$counter++;
         }
 
         $logoPath = null;
@@ -171,7 +171,7 @@ class SuperAdminController extends Controller
         }
 
         $organization->name = $validated['name'];
-        if (!empty($validated['slug'])) {
+        if (! empty($validated['slug'])) {
             $organization->slug = $validated['slug'];
         }
         $organization->is_active = $request->boolean('is_active', true);
@@ -344,8 +344,8 @@ class SuperAdminController extends Controller
         // Búsqueda
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -421,5 +421,67 @@ class SuperAdminController extends Controller
             'orphanVideos',
             'orphanSize'
         ));
+    }
+
+    /**
+     * Mostrar formulario de configuraciones de la organización
+     */
+    public function settingsForm(Organization $organization)
+    {
+        // Obtener todas las zonas horarias agrupadas por región
+        $timezones = $this->getGroupedTimezones();
+
+        return view('super-admin.organizations.settings', compact('organization', 'timezones'));
+    }
+
+    /**
+     * Actualizar configuraciones de la organización
+     */
+    public function updateSettings(Request $request, Organization $organization)
+    {
+        $validated = $request->validate(Organization::compressionSettingsValidationRules());
+
+        $organization->update($validated);
+
+        return redirect()->route('super-admin.organizations.settings', $organization)
+            ->with('success', 'Organization settings updated successfully. Compression schedule will apply from next hour.');
+    }
+
+    /**
+     * Obtener zonas horarias agrupadas por región
+     */
+    private function getGroupedTimezones(): array
+    {
+        $timezones = timezone_identifiers_list();
+        $grouped = [];
+
+        foreach ($timezones as $timezone) {
+            $parts = explode('/', $timezone);
+            $region = $parts[0];
+
+            if (! isset($grouped[$region])) {
+                $grouped[$region] = [];
+            }
+
+            $grouped[$region][$timezone] = $timezone;
+        }
+
+        // Ordenar regiones principales primero
+        $regionOrder = ['America', 'Europe', 'Asia', 'Africa', 'Pacific', 'Atlantic', 'Indian', 'Antarctica', 'UTC'];
+        $sortedGrouped = [];
+
+        foreach ($regionOrder as $region) {
+            if (isset($grouped[$region])) {
+                $sortedGrouped[$region] = $grouped[$region];
+                unset($grouped[$region]);
+            }
+        }
+
+        // Agregar regiones restantes
+        foreach ($grouped as $region => $zones) {
+            $sortedGrouped[$region] = $zones;
+        }
+
+        return $sortedGrouped;
     }
 }

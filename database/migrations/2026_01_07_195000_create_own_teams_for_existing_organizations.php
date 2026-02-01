@@ -20,7 +20,7 @@ return new class extends Migration
                 ->where('is_own_team', true)
                 ->exists();
 
-            if (!$hasOwnTeam) {
+            if (! $hasOwnTeam) {
                 // Crear equipo propio
                 DB::table('teams')->insert([
                     'name' => $org->name,

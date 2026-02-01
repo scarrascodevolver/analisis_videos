@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\User;
+use Illuminate\Console\Command;
 
 class ShowUsersCommand extends Command
 {
@@ -43,6 +43,7 @@ class ShowUsersCommand extends Command
 
         if ($users->isEmpty()) {
             $this->error('No se encontraron usuarios');
+
             return;
         }
 
@@ -50,7 +51,7 @@ class ShowUsersCommand extends Command
         $usersByRole = $users->groupBy('role');
 
         foreach ($usersByRole as $role => $roleUsers) {
-            $this->info("🏉 " . strtoupper($role) . "S:");
+            $this->info('🏉 '.strtoupper($role).'S:');
             $this->newLine();
 
             foreach ($roleUsers as $user) {
@@ -62,7 +63,7 @@ class ShowUsersCommand extends Command
                     if ($password) {
                         $this->line("   🔑 Password: <fg=red>{$password}</>");
                     } else {
-                        $this->line("   🔑 Password: <fg=gray>No disponible (verificar seeder)</>");
+                        $this->line('   🔑 Password: <fg=gray>No disponible (verificar seeder)</>');
                     }
                 }
 
@@ -79,11 +80,11 @@ class ShowUsersCommand extends Command
             }
         }
 
-        if (!$showPasswords) {
+        if (! $showPasswords) {
             $this->warn('💡 Usa --passwords para ver las contraseñas');
         }
 
-        $this->info('Total usuarios: ' . $users->count());
+        $this->info('Total usuarios: '.$users->count());
     }
 
     /**

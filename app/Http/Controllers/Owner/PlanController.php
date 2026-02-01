@@ -14,9 +14,10 @@ class PlanController extends Controller
         // Verificar can_edit_settings para acciones de modificación
         $this->middleware(function ($request, $next) {
             $partner = view()->shared('currentPartner');
-            if (!$partner || !$partner->can_edit_settings) {
+            if (! $partner || ! $partner->can_edit_settings) {
                 abort(403, 'Solo el propietario puede modificar planes.');
             }
+
             return $next($request);
         })->except(['index']);
     }
@@ -91,7 +92,7 @@ class PlanController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:subscription_plans,slug,' . $plan->id,
+            'slug' => 'nullable|string|max:255|unique:subscription_plans,slug,'.$plan->id,
             'description' => 'nullable|string',
             'price_clp' => 'required|numeric|min:0',
             'price_usd' => 'required|numeric|min:0',
@@ -134,9 +135,10 @@ class PlanController extends Controller
      */
     public function toggle(SubscriptionPlan $plan)
     {
-        $plan->update(['is_active' => !$plan->is_active]);
+        $plan->update(['is_active' => ! $plan->is_active]);
 
         $status = $plan->is_active ? 'activado' : 'desactivado';
+
         return back()->with('success', "Plan {$status}.");
     }
 }

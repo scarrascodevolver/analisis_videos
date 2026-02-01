@@ -50,6 +50,7 @@ class MigrateVideosToOrganizationFolders extends Command
 
         if ($organizations->isEmpty()) {
             $this->error('No se encontraron organizaciones para procesar.');
+
             return 1;
         }
 
@@ -67,8 +68,9 @@ class MigrateVideosToOrganizationFolders extends Command
                 ->get();
 
             if ($videos->isEmpty()) {
-                $this->line("  No hay videos para esta organización.");
+                $this->line('  No hay videos para esta organización.');
                 $this->newLine();
+
                 continue;
             }
 
@@ -145,6 +147,7 @@ class MigrateVideosToOrganizationFolders extends Command
 
         if ($dryRun) {
             $this->line("  [DRY-RUN] {$currentPath} → {$newPath}");
+
             return 'moved';
         }
 
@@ -172,21 +175,25 @@ class MigrateVideosToOrganizationFolders extends Command
                     return 'moved';
                 } else {
                     $this->error("  Error: No se pudo verificar la copia de {$currentPath}");
+
                     return 'error';
                 }
             } else {
                 // Intentar en storage local
-                $localPath = 'public/' . $currentPath;
+                $localPath = 'public/'.$currentPath;
                 if (Storage::disk('local')->exists($localPath)) {
                     $this->warn("  Video en storage local, no en Spaces: {$currentPath}");
+
                     return 'skipped';
                 } else {
                     $this->error("  Archivo no encontrado: {$currentPath}");
+
                     return 'error';
                 }
             }
         } catch (\Exception $e) {
-            $this->error("  Error moviendo {$currentPath}: " . $e->getMessage());
+            $this->error("  Error moviendo {$currentPath}: ".$e->getMessage());
+
             return 'error';
         }
     }
@@ -225,7 +232,7 @@ class MigrateVideosToOrganizationFolders extends Command
             }
         } catch (\Exception $e) {
             // Log pero no fallar por thumbnails
-            $this->warn("    No se pudo migrar thumbnail: " . $e->getMessage());
+            $this->warn('    No se pudo migrar thumbnail: '.$e->getMessage());
         }
     }
 }

@@ -25,10 +25,10 @@ return new class extends Migration
         // Paso 4: Agregar campo evaluation_period_id
         Schema::table('player_evaluations', function (Blueprint $table) {
             $table->foreignId('evaluation_period_id')
-                  ->nullable()
-                  ->after('evaluated_player_id')
-                  ->constrained('evaluation_periods')
-                  ->onDelete('cascade');
+                ->nullable()
+                ->after('evaluated_player_id')
+                ->constrained('evaluation_periods')
+                ->onDelete('cascade');
         });
 
         // Paso 5: Asignar todas las evaluaciones existentes al período inicial (ID 1)

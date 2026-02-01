@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\VideoAssignment;
 use App\Models\User;
 use App\Models\Video;
+use App\Models\VideoAssignment;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class VideoAssignmentSeeder extends Seeder
 {
@@ -21,6 +20,7 @@ class VideoAssignmentSeeder extends Seeder
 
         if ($analysts->isEmpty() || $players->isEmpty() || $videos->isEmpty()) {
             $this->command->info('No hay suficientes usuarios o videos para crear asignaciones');
+
             return;
         }
 
@@ -29,13 +29,13 @@ class VideoAssignmentSeeder extends Seeder
         // Create assignments from analysts to players
         foreach ($players as $player) {
             $videosToAssign = $videos->count() > 1 ? $videos->random(min(2, $videos->count())) : $videos;
-            if (!is_iterable($videosToAssign)) {
+            if (! is_iterable($videosToAssign)) {
                 $videosToAssign = [$videosToAssign];
             }
-            
+
             foreach ($videosToAssign as $video) {
                 $analyst = $analysts->random();
-                
+
                 $assignments[] = [
                     'video_id' => $video->id,
                     'assigned_to' => $player->id,
@@ -47,7 +47,7 @@ class VideoAssignmentSeeder extends Seeder
                         'Enfócate en las jugadas de lineout',
                         'Revisa las formaciones de scrum',
                         'Observa las jugadas de ataque en los últimos 15 minutos',
-                        'Analiza la estrategia de patadas del equipo rival'
+                        'Analiza la estrategia de patadas del equipo rival',
                     ])->random(),
                     'created_at' => Carbon::now()->subDays(rand(1, 30)),
                     'updated_at' => now(),
@@ -56,11 +56,11 @@ class VideoAssignmentSeeder extends Seeder
         }
 
         // Create assignments from coaches to players
-        if (!$coaches->isEmpty()) {
+        if (! $coaches->isEmpty()) {
             foreach ($players->take(1) as $player) {
                 $video = $videos->first();
                 $coach = $coaches->random();
-                
+
                 $assignments[] = [
                     'video_id' => $video->id,
                     'assigned_to' => $player->id,
@@ -71,7 +71,7 @@ class VideoAssignmentSeeder extends Seeder
                         'Preparación para el próximo partido',
                         'Estudia las jugadas especiales del rival',
                         'Enfócate en tu posición específica',
-                        'Analiza las oportunidades de mejora'
+                        'Analiza las oportunidades de mejora',
                     ])->random(),
                     'created_at' => Carbon::now()->subDays(rand(1, 7)),
                     'updated_at' => now(),
@@ -83,7 +83,7 @@ class VideoAssignmentSeeder extends Seeder
         foreach ($players->take(1) as $player) {
             $video = $videos->first();
             $analyst = $analysts->random();
-            
+
             $assignments[] = [
                 'video_id' => $video->id,
                 'assigned_to' => $player->id,
@@ -97,7 +97,7 @@ class VideoAssignmentSeeder extends Seeder
         }
 
         VideoAssignment::insert($assignments);
-        
-        $this->command->info('Se crearon ' . count($assignments) . ' asignaciones de video');
+
+        $this->command->info('Se crearon '.count($assignments).' asignaciones de video');
     }
 }

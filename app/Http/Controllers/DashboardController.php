@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoAssignment;
-use App\Models\Category;
-use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -25,7 +22,7 @@ class DashboardController extends Controller
         $totalAssignments = 0;
         $completedAssignments = 0;
         $pendingAssignments = 0;
-        
+
         return view('reports.analyst', compact(
             'totalVideos', 'totalAssignments', 'completedAssignments', 'pendingAssignments'
         ));
@@ -34,9 +31,9 @@ class DashboardController extends Controller
     public function playerVideos()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.category'])
-                                    ->latest()
-                                    ->get();
+            ->with(['video.category'])
+            ->latest()
+            ->get();
 
         return view('dashboards.player-videos', compact('assignments'));
     }
@@ -44,9 +41,9 @@ class DashboardController extends Controller
     public function playerCompleted()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.category'])
-                                    ->latest()
-                                    ->get();
+            ->with(['video.category'])
+            ->latest()
+            ->get();
 
         return view('dashboards.player-completed', compact('assignments'));
     }
@@ -54,9 +51,9 @@ class DashboardController extends Controller
     public function playerPending()
     {
         $assignments = VideoAssignment::where('assigned_to', auth()->id())
-                                    ->with(['video.category'])
-                                    ->latest()
-                                    ->get();
+            ->with(['video.category'])
+            ->latest()
+            ->get();
 
         return view('dashboards.player-pending', compact('assignments'));
     }
@@ -64,9 +61,9 @@ class DashboardController extends Controller
     public function coachVideos()
     {
         $videos = Video::with(['category', 'uploader'])
-                      ->coachVisible(auth()->user())
-                      ->latest()
-                      ->paginate(12);
+            ->coachVisible(auth()->user())
+            ->latest()
+            ->paginate(12);
 
         return view('dashboards.coach-videos', compact('videos'));
     }
@@ -83,13 +80,13 @@ class DashboardController extends Controller
             $coachCategoryId = $user->profile?->user_category_id;
 
             $users = User::where('role', 'jugador')
-                         ->when($coachCategoryId, function($query) use ($coachCategoryId) {
-                             return $query->whereHas('profile', function($q) use ($coachCategoryId) {
-                                 $q->where('user_category_id', $coachCategoryId);
-                             });
-                         })
-                         ->with('profile')
-                         ->get();
+                ->when($coachCategoryId, function ($query) use ($coachCategoryId) {
+                    return $query->whereHas('profile', function ($q) use ($coachCategoryId) {
+                        $q->where('user_category_id', $coachCategoryId);
+                    });
+                })
+                ->with('profile')
+                ->get();
         }
 
         return view('dashboards.coach-users', compact('users'));
@@ -100,17 +97,17 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         $assignments = VideoAssignment::with(['video', 'assignedTo', 'assignedBy'])
-                                     ->when($user->role === 'entrenador', function($query) use ($user) {
-                                         $coachCategoryId = $user->profile?->user_category_id;
-                                         if ($coachCategoryId) {
-                                             // Solo asignaciones de videos de su categoría
-                                             return $query->whereHas('video', function($q) use ($coachCategoryId) {
-                                                 $q->where('category_id', $coachCategoryId);
-                                             });
-                                         }
-                                     })
-                                     ->latest()
-                                     ->paginate(15);
+            ->when($user->role === 'entrenador', function ($query) use ($user) {
+                $coachCategoryId = $user->profile?->user_category_id;
+                if ($coachCategoryId) {
+                    // Solo asignaciones de videos de su categoría
+                    return $query->whereHas('video', function ($q) use ($coachCategoryId) {
+                        $q->where('category_id', $coachCategoryId);
+                    });
+                }
+            })
+            ->latest()
+            ->paginate(15);
 
         return view('dashboards.coach-assignments', compact('assignments'));
     }
@@ -119,11 +116,11 @@ class DashboardController extends Controller
     {
         // Obtener nombres únicos de rivales desde los videos
         $rivals = Video::whereNotNull('rival_team_name')
-                      ->where('rival_team_name', '!=', '')
-                      ->distinct()
-                      ->pluck('rival_team_name')
-                      ->sort()
-                      ->values();
+            ->where('rival_team_name', '!=', '')
+            ->distinct()
+            ->pluck('rival_team_name')
+            ->sort()
+            ->values();
 
         return view('dashboards.coach-rivals', compact('rivals'));
     }
@@ -137,7 +134,7 @@ class DashboardController extends Controller
     public function playersCompare()
     {
         $players = User::where('role', 'jugador')->with('profile')->get();
-        
+
         return view('dashboards.players-compare', compact('players'));
     }
 
@@ -149,7 +146,7 @@ class DashboardController extends Controller
     public function roster()
     {
         $players = User::where('role', 'jugador')->with('profile')->get();
-        
+
         return view('dashboards.roster', compact('players'));
     }
 
@@ -163,9 +160,9 @@ class DashboardController extends Controller
     public function playerAssign(User $user)
     {
         $videos = Video::with(['category'])
-                      ->coachVisible(auth()->user())
-                      ->latest()
-                      ->get();
+            ->coachVisible(auth()->user())
+            ->latest()
+            ->get();
 
         return view('dashboards.player-assign', compact('user', 'videos'));
     }

@@ -2,17 +2,18 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoComment;
-use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class VideoCommentMention extends Notification
 {
-
     public $video;
+
     public $comment;
+
     public $mentionedBy;
 
     /**
@@ -46,11 +47,11 @@ class VideoCommentMention extends Notification
 
         return (new MailMessage)
             ->subject('Te mencionaron en un comentario de video')
-            ->greeting('¡Hola ' . $notifiable->name . '!')
+            ->greeting('¡Hola '.$notifiable->name.'!')
             ->line("El {$roleLabel} **{$this->mentionedBy->name}** te mencionó en un comentario del video:")
-            ->line('**' . $this->video->title . '**')
+            ->line('**'.$this->video->title.'**')
             ->line('Comentario:')
-            ->line('"' . $this->comment->comment . '"')
+            ->line('"'.$this->comment->comment.'"')
             ->action('Ver Video', route('videos.show', $this->video->id))
             ->line('Gracias por usar el Sistema de Análisis Rugby Los Troncos.');
     }

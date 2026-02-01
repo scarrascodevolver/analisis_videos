@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::table('videos', function (Blueprint $table) {
             $table->enum('division', ['primera', 'intermedia', 'unica'])
-                  ->nullable()
-                  ->after('category_id')
-                  ->comment('División específica para categorías adultas (primera/intermedia) o única para otras');
+                ->nullable()
+                ->after('category_id')
+                ->comment('División específica para categorías adultas (primera/intermedia) o única para otras');
         });
     }
 

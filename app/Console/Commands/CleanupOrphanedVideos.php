@@ -4,9 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Video;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class CleanupOrphanedVideos extends Command
 {
@@ -42,7 +41,7 @@ class CleanupOrphanedVideos extends Command
 
         try {
             $files = Storage::disk('spaces')->allFiles('videos');
-            $this->line("   Archivos encontrados en Spaces: " . count($files));
+            $this->line('   Archivos encontrados en Spaces: '.count($files));
 
             $bar = $this->output->createProgressBar(count($files));
             $bar->start();
@@ -65,7 +64,7 @@ class CleanupOrphanedVideos extends Command
                     ->orWhere('original_file_path', $file)
                     ->exists();
 
-                if (!$existsInDb) {
+                if (! $existsInDb) {
                     $size = Storage::disk('spaces')->size($file);
                     $orphanedFiles[] = [
                         'path' => $file,
@@ -80,18 +79,20 @@ class CleanupOrphanedVideos extends Command
             $this->newLine(2);
 
         } catch (\Exception $e) {
-            $this->error("Error escaneando Spaces: " . $e->getMessage());
+            $this->error('Error escaneando Spaces: '.$e->getMessage());
+
             return 1;
         }
 
         // 3. Mostrar archivos huérfanos encontrados
         if (empty($orphanedFiles)) {
             $this->info('No se encontraron archivos huérfanos.');
+
             return 0;
         }
 
-        $this->warn("Archivos huérfanos encontrados: " . count($orphanedFiles));
-        $this->line("Espacio total a liberar: " . $this->formatBytes($orphanedSize));
+        $this->warn('Archivos huérfanos encontrados: '.count($orphanedFiles));
+        $this->line('Espacio total a liberar: '.$this->formatBytes($orphanedSize));
         $this->newLine();
 
         // Mostrar tabla con los archivos
@@ -99,20 +100,21 @@ class CleanupOrphanedVideos extends Command
             return [
                 $file['path'],
                 $this->formatBytes($file['size']),
-                $file['age_hours'] . 'h',
+                $file['age_hours'].'h',
             ];
         }, array_slice($orphanedFiles, 0, 20)); // Mostrar máximo 20
 
         $this->table(['Archivo', 'Tamaño', 'Antigüedad'], $tableData);
 
         if (count($orphanedFiles) > 20) {
-            $this->line("... y " . (count($orphanedFiles) - 20) . " archivos más");
+            $this->line('... y '.(count($orphanedFiles) - 20).' archivos más');
         }
 
         // 4. Eliminar archivos si no es dry-run
-        if (!$dryRun) {
-            if (!$this->confirm('¿Deseas eliminar estos archivos?')) {
+        if (! $dryRun) {
+            if (! $this->confirm('¿Deseas eliminar estos archivos?')) {
                 $this->info('Operación cancelada.');
+
                 return 0;
             }
 
@@ -132,7 +134,7 @@ class CleanupOrphanedVideos extends Command
                 } catch (\Exception $e) {
                     $errors++;
                     $this->newLine();
-                    $this->error("Error eliminando {$file['path']}: " . $e->getMessage());
+                    $this->error("Error eliminando {$file['path']}: ".$e->getMessage());
                 }
                 $bar->advance();
             }
@@ -144,7 +146,7 @@ class CleanupOrphanedVideos extends Command
             if ($errors > 0) {
                 $this->error("Errores: {$errors}");
             }
-            $this->info("Espacio liberado: " . $this->formatBytes($orphanedSize));
+            $this->info('Espacio liberado: '.$this->formatBytes($orphanedSize));
         }
 
         // 5. Limpiar thumbnails huérfanos
@@ -201,15 +203,15 @@ class CleanupOrphanedVideos extends Command
                     ->where('thumbnail_path', $file)
                     ->exists();
 
-                if (!$existsInDb) {
+                if (! $existsInDb) {
                     $count++;
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         Storage::disk('spaces')->delete($file);
                     }
                 }
             }
         } catch (\Exception $e) {
-            $this->warn("Error verificando thumbnails: " . $e->getMessage());
+            $this->warn('Error verificando thumbnails: '.$e->getMessage());
         }
 
         return $count;
@@ -223,6 +225,7 @@ class CleanupOrphanedVideos extends Command
             $bytes /= 1024;
             $i++;
         }
-        return round($bytes, 2) . ' ' . $units[$i];
+
+        return round($bytes, 2).' '.$units[$i];
     }
 }

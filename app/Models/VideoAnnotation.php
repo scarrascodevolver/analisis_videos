@@ -70,7 +70,7 @@ class VideoAnnotation extends Model
     {
         return $query->whereBetween('timestamp', [
             $timestamp - $tolerance,
-            $timestamp + $tolerance
+            $timestamp + $tolerance,
         ]);
     }
 

@@ -49,7 +49,7 @@ class VideoView extends Model
             ->latest('viewed_at')
             ->first();
 
-        if (!$lastView) {
+        if (! $lastView) {
             return false;
         }
 

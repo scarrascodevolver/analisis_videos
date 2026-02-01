@@ -2,9 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Models\VideoAssignment;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\VideoAssignment;
 
 class AssignmentCompleted extends Notification
 {
@@ -23,18 +23,18 @@ class AssignmentCompleted extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->subject('Análisis de Video Completado - Los Troncos')
-                    ->greeting('¡Hola ' . $notifiable->name . '!')
-                    ->line('El jugador ' . $this->assignment->player->name . ' ha completado el análisis del video asignado.')
-                    ->line('**Video:** ' . $this->assignment->video->title)
-                    ->line('**Jugador:** ' . $this->assignment->player->name)
-                    ->line('**Autoevaluación:** ' . $this->assignment->self_evaluation . '/10')
-                    ->line('**Fecha de completado:** ' . $this->assignment->completed_at->format('d/m/Y H:i'))
-                    ->when($this->assignment->player_notes, function ($message) {
-                        return $message->line('**Notas del jugador:** ' . substr($this->assignment->player_notes, 0, 100) . '...');
-                    })
-                    ->action('Ver Análisis Completo', url('/analyst/assignments/' . $this->assignment->id))
-                    ->line('Puedes revisar el análisis detallado y proporcionar retroalimentación.');
+            ->subject('Análisis de Video Completado - Los Troncos')
+            ->greeting('¡Hola '.$notifiable->name.'!')
+            ->line('El jugador '.$this->assignment->player->name.' ha completado el análisis del video asignado.')
+            ->line('**Video:** '.$this->assignment->video->title)
+            ->line('**Jugador:** '.$this->assignment->player->name)
+            ->line('**Autoevaluación:** '.$this->assignment->self_evaluation.'/10')
+            ->line('**Fecha de completado:** '.$this->assignment->completed_at->format('d/m/Y H:i'))
+            ->when($this->assignment->player_notes, function ($message) {
+                return $message->line('**Notas del jugador:** '.substr($this->assignment->player_notes, 0, 100).'...');
+            })
+            ->action('Ver Análisis Completo', url('/analyst/assignments/'.$this->assignment->id))
+            ->line('Puedes revisar el análisis detallado y proporcionar retroalimentación.');
     }
 
     public function toArray($notifiable)
@@ -48,7 +48,7 @@ class AssignmentCompleted extends Notification
             'player_id' => $this->assignment->player->id,
             'self_evaluation' => $this->assignment->self_evaluation,
             'completed_at' => $this->assignment->completed_at->format('Y-m-d H:i:s'),
-            'message' => $this->assignment->player->name . ' completó el análisis de "' . $this->assignment->video->title . '"'
+            'message' => $this->assignment->player->name.' completó el análisis de "'.$this->assignment->video->title.'"',
         ];
     }
 }

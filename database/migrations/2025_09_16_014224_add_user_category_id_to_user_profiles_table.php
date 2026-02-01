@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::table('user_profiles', function (Blueprint $table) {
             $table->unsignedBigInteger('user_category_id')
-                  ->nullable()
-                  ->after('division_category')
-                  ->comment('FK a categories - categoría del usuario (Juveniles, Adulta Primera, etc.)');
+                ->nullable()
+                ->after('division_category')
+                ->comment('FK a categories - categoría del usuario (Juveniles, Adulta Primera, etc.)');
 
             $table->foreign('user_category_id')
-                  ->references('id')
-                  ->on('categories')
-                  ->onUpdate('cascade')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('categories')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
         });
     }
 

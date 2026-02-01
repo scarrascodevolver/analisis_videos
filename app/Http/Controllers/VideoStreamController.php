@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VideoStreamController extends Controller
 {
@@ -61,7 +60,7 @@ class VideoStreamController extends Controller
             ? config('filesystems.cloudflare.worker_url')
             : config('filesystems.disks.spaces.url');
 
-        if (!$checkUrl) {
+        if (! $checkUrl) {
             return false;
         }
 
@@ -70,12 +69,12 @@ class VideoStreamController extends Controller
                 'http' => [
                     'method' => 'HEAD',
                     'timeout' => self::CDN_HEALTH_TIMEOUT,
-                    'user_agent' => 'HealthCheck/1.0'
+                    'user_agent' => 'HealthCheck/1.0',
                 ],
                 'ssl' => [
                     'verify_peer' => true,
                     'verify_peer_name' => true,
-                ]
+                ],
             ]);
 
             // Check URL accessibility (Worker or CDN)
@@ -89,17 +88,18 @@ class VideoStreamController extends Controller
             // Cache result
             Cache::put($cacheKey, $isHealthy, self::CDN_HEALTH_CACHE_SECONDS);
 
-            if (!$isHealthy) {
+            if (! $isHealthy) {
                 $service = $workerEnabled ? 'Worker' : 'CDN';
-                \Log::warning("$service health check failed - Response: " . ($headers[0] ?? 'No response'));
+                \Log::warning("$service health check failed - Response: ".($headers[0] ?? 'No response'));
             }
 
             return $isHealthy;
 
         } catch (Exception $e) {
             $service = $workerEnabled ? 'Worker' : 'CDN';
-            \Log::error("$service health check exception: " . $e->getMessage());
+            \Log::error("$service health check exception: ".$e->getMessage());
             Cache::put($cacheKey, false, 60); // Cache failure for 1 minute only
+
             return false;
         }
     }
@@ -110,6 +110,7 @@ class VideoStreamController extends Controller
     public function refreshCdnHealth(): bool
     {
         Cache::forget('cdn_health_status');
+
         return $this->isCdnHealthy();
     }
 
@@ -119,7 +120,7 @@ class VideoStreamController extends Controller
      * When Cloudflare Worker is enabled, returns the Worker URL which adds
      * CORS headers at the edge (0ms overhead vs Laravel proxy).
      *
-     * @param string $filePath Path to the file in storage
+     * @param  string  $filePath  Path to the file in storage
      * @return string Full URL to access the file
      */
     private function getOptimalCdnUrl(string $filePath): string
@@ -130,11 +131,11 @@ class VideoStreamController extends Controller
 
         if ($workerEnabled && $workerUrl) {
             // Use Cloudflare Worker (fast - 0ms overhead)
-            return rtrim($workerUrl, '/') . '/' . ltrim($filePath, '/');
+            return rtrim($workerUrl, '/').'/'.ltrim($filePath, '/');
         }
 
         // Fallback to CDN direct (will use proxy if needed)
-        return rtrim($cdnUrl, '/') . '/' . ltrim($filePath, '/');
+        return rtrim($cdnUrl, '/').'/'.ltrim($filePath, '/');
     }
 
     /**
@@ -161,7 +162,7 @@ class VideoStreamController extends Controller
             'worker_enabled' => $workerEnabled,
             'worker_url' => $workerUrl,
             'active_endpoint' => $workerEnabled ? $workerUrl : $cdnUrl,
-            'cached' => !$forceRefresh && Cache::has('cdn_health_status'),
+            'cached' => ! $forceRefresh && Cache::has('cdn_health_status'),
             'cache_ttl_seconds' => self::CDN_HEALTH_CACHE_SECONDS,
             'fallback_available' => true,
             'fallback_method' => 'Spaces SDK Direct Streaming',
@@ -182,43 +183,44 @@ class VideoStreamController extends Controller
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
                         $cdnUrl = $this->getOptimalCdnUrl($video->file_path);
 
-                        \Log::debug('CDN redirect via Worker - video: ' . $video->id);
+                        \Log::debug('CDN redirect via Worker - video: '.$video->id);
 
                         return redirect($cdnUrl);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
-                    if ($cdnBaseUrl && !$this->isCdnHealthy()) {
-                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for video: ' . $video->id);
+                    if ($cdnBaseUrl && ! $this->isCdnHealthy()) {
+                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for video: '.$video->id);
                     }
 
                     return $this->streamFromSpaces($video, $request);
                 }
             } catch (Exception $e) {
                 // Log error and continue to local fallback
-                \Log::warning('DigitalOcean Spaces access failed: ' . $e->getMessage());
+                \Log::warning('DigitalOcean Spaces access failed: '.$e->getMessage());
             }
         }
 
         // Local/Development: Try local storage first (fast), then Spaces as fallback (slow but works)
         if (config('app.env') === 'local') {
-            $path = storage_path('app/public/' . $video->file_path);
+            $path = storage_path('app/public/'.$video->file_path);
 
             // Try local storage first (instant loading for new videos)
             if (file_exists($path)) {
-                \Log::debug('Streaming from local storage - video: ' . $video->id);
+                \Log::debug('Streaming from local storage - video: '.$video->id);
                 // Continue to stream from local (code below)
             } else {
                 // Local file doesn't exist, try Spaces as fallback (for old videos)
                 try {
                     if (Storage::disk('spaces')->exists($video->file_path)) {
-                        \Log::info('Local file not found, streaming from Spaces - video: ' . $video->id);
+                        \Log::info('Local file not found, streaming from Spaces - video: '.$video->id);
 
                         $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
                             $cdnUrl = $this->getOptimalCdnUrl($video->file_path);
+
                             return redirect($cdnUrl);
                         }
 
@@ -226,20 +228,20 @@ class VideoStreamController extends Controller
                         return $this->streamFromSpaces($video, $request);
                     }
                 } catch (Exception $e) {
-                    \Log::warning('Spaces fallback failed in local environment: ' . $e->getMessage());
+                    \Log::warning('Spaces fallback failed in local environment: '.$e->getMessage());
                 }
 
                 // File not found in local or Spaces
-                \Log::error('Video file not found anywhere - video: ' . $video->id . ' path: ' . $video->file_path);
+                \Log::error('Video file not found anywhere - video: '.$video->id.' path: '.$video->file_path);
                 abort(404, 'Video file not found');
             }
         }
 
         // Fallback to local storage (for other environments or production fallback)
-        $path = storage_path('app/public/' . $video->file_path);
+        $path = storage_path('app/public/'.$video->file_path);
 
-        if (!file_exists($path)) {
-            \Log::error('Video file not found anywhere - video: ' . $video->id . ' path: ' . $video->file_path);
+        if (! file_exists($path)) {
+            \Log::error('Video file not found anywhere - video: '.$video->id.' path: '.$video->file_path);
             abort(404, 'Video file not found');
         }
 
@@ -256,7 +258,7 @@ class VideoStreamController extends Controller
             // Parse range header
             preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
             $start = intval($matches[1]);
-            $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+            $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
             // Validate range
             if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -274,7 +276,7 @@ class VideoStreamController extends Controller
                 $chunkSize = $this->getOptimalChunkSize($fileSize, true);
                 $bytesRead = 0;
 
-                while (!feof($file) && $bytesRead < $length) {
+                while (! feof($file) && $bytesRead < $length) {
                     $remainingBytes = $length - $bytesRead;
                     $currentChunkSize = min($chunkSize, $remainingBytes);
 
@@ -304,7 +306,7 @@ class VideoStreamController extends Controller
 
             $chunkSize = $this->getOptimalChunkSize($fileSize, false);
 
-            while (!feof($file)) {
+            while (! feof($file)) {
                 $chunk = fread($file, $chunkSize);
                 if ($chunk === false || strlen($chunk) === 0) {
                     break;
@@ -341,7 +343,7 @@ class VideoStreamController extends Controller
                 // Parse range header
                 preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
                 $start = intval($matches[1]);
-                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+                $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
                 // Validate range
                 if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -360,7 +362,7 @@ class VideoStreamController extends Controller
                     $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                     $bytesRead = 0;
 
-                    while (!feof($stream) && $bytesRead < $length) {
+                    while (! feof($stream) && $bytesRead < $length) {
                         $remainingBytes = $length - $bytesRead;
                         $currentChunkSize = min($chunkSize, $remainingBytes);
 
@@ -390,7 +392,7 @@ class VideoStreamController extends Controller
 
                 $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
-                while (!feof($stream)) {
+                while (! feof($stream)) {
                     $chunk = fread($stream, $chunkSize);
                     if ($chunk === false || strlen($chunk) === 0) {
                         break;
@@ -409,7 +411,7 @@ class VideoStreamController extends Controller
             ]);
 
         } catch (Exception $e) {
-            \Log::error('Spaces streaming failed: ' . $e->getMessage());
+            \Log::error('Spaces streaming failed: '.$e->getMessage());
             // Return 404 to trigger local fallback
             abort(404, 'Video streaming failed');
         }
@@ -417,7 +419,7 @@ class VideoStreamController extends Controller
 
     public function streamByPath($filename, Request $request)
     {
-        $spacesPath = 'videos/' . $filename;
+        $spacesPath = 'videos/'.$filename;
 
         // Production: Use Spaces/CDN as primary source
         if (config('app.env') === 'production') {
@@ -430,43 +432,44 @@ class VideoStreamController extends Controller
                     if ($cdnBaseUrl && $this->isCdnHealthy()) {
                         $cdnUrl = $this->getOptimalCdnUrl($spacesPath);
 
-                        \Log::debug('CDN redirect by path via Worker - file: ' . $filename);
+                        \Log::debug('CDN redirect by path via Worker - file: '.$filename);
 
                         return redirect($cdnUrl);
                     }
 
                     // CDN not available - use direct Spaces streaming as fallback
-                    if ($cdnBaseUrl && !$this->isCdnHealthy()) {
-                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for file: ' . $filename);
+                    if ($cdnBaseUrl && ! $this->isCdnHealthy()) {
+                        \Log::warning('CDN unhealthy - using Spaces SDK fallback for file: '.$filename);
                     }
 
                     return $this->streamFileFromSpaces($spacesPath, $request);
                 }
             } catch (Exception $e) {
                 // Log error and continue to local fallback
-                \Log::warning('DigitalOcean Spaces access failed for path: ' . $e->getMessage());
+                \Log::warning('DigitalOcean Spaces access failed for path: '.$e->getMessage());
             }
         }
 
         // Local/Development: Try local storage first (fast), then Spaces as fallback (slow but works)
         if (config('app.env') === 'local') {
-            $path = storage_path('app/public/videos/' . $filename);
+            $path = storage_path('app/public/videos/'.$filename);
 
             // Try local storage first (instant loading for new videos)
             if (file_exists($path)) {
-                \Log::debug('Streaming from local storage - file: ' . $filename);
+                \Log::debug('Streaming from local storage - file: '.$filename);
                 // Continue to stream from local (code below)
             } else {
                 // Local file doesn't exist, try Spaces as fallback (for old videos)
                 try {
                     if (Storage::disk('spaces')->exists($spacesPath)) {
-                        \Log::info('Local file not found, streaming from Spaces - file: ' . $filename);
+                        \Log::info('Local file not found, streaming from Spaces - file: '.$filename);
 
                         $cdnBaseUrl = config('filesystems.disks.spaces.url');
 
                         // Try CDN first if configured and healthy
                         if ($cdnBaseUrl && $this->isCdnHealthy()) {
                             $cdnUrl = $this->getOptimalCdnUrl($spacesPath);
+
                             return redirect($cdnUrl);
                         }
 
@@ -474,7 +477,7 @@ class VideoStreamController extends Controller
                         return $this->streamFileFromSpaces($spacesPath, $request);
                     }
                 } catch (Exception $e) {
-                    \Log::warning('Spaces fallback failed in local environment: ' . $e->getMessage());
+                    \Log::warning('Spaces fallback failed in local environment: '.$e->getMessage());
                 }
 
                 // File not found in local or Spaces
@@ -483,9 +486,9 @@ class VideoStreamController extends Controller
         }
 
         // Fallback to local storage for old videos (other environments or production fallback)
-        $path = storage_path('app/public/videos/' . $filename);
+        $path = storage_path('app/public/videos/'.$filename);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             abort(404, 'Video file not found');
         }
 
@@ -499,7 +502,7 @@ class VideoStreamController extends Controller
             // Parse range header
             preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
             $start = intval($matches[1]);
-            $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+            $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
             // Validate range
             if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -517,7 +520,7 @@ class VideoStreamController extends Controller
                 $chunkSize = $this->getOptimalChunkSize($fileSize, true);
                 $bytesRead = 0;
 
-                while (!feof($file) && $bytesRead < $length) {
+                while (! feof($file) && $bytesRead < $length) {
                     $remainingBytes = $length - $bytesRead;
                     $currentChunkSize = min($chunkSize, $remainingBytes);
 
@@ -547,7 +550,7 @@ class VideoStreamController extends Controller
 
             $chunkSize = $this->getOptimalChunkSize($fileSize, false);
 
-            while (!feof($file)) {
+            while (! feof($file)) {
                 $chunk = fread($file, $chunkSize);
                 if ($chunk === false || strlen($chunk) === 0) {
                     break;
@@ -584,7 +587,7 @@ class VideoStreamController extends Controller
                 // Parse range header
                 preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
                 $start = intval($matches[1]);
-                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+                $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
                 // Validate range
                 if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -603,7 +606,7 @@ class VideoStreamController extends Controller
                     $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                     $bytesRead = 0;
 
-                    while (!feof($stream) && $bytesRead < $length) {
+                    while (! feof($stream) && $bytesRead < $length) {
                         $remainingBytes = $length - $bytesRead;
                         $currentChunkSize = min($chunkSize, $remainingBytes);
 
@@ -633,7 +636,7 @@ class VideoStreamController extends Controller
 
                 $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
-                while (!feof($stream)) {
+                while (! feof($stream)) {
                     $chunk = fread($stream, $chunkSize);
                     if ($chunk === false || strlen($chunk) === 0) {
                         break;
@@ -652,7 +655,7 @@ class VideoStreamController extends Controller
             ]);
 
         } catch (Exception $e) {
-            \Log::error('Spaces file streaming failed: ' . $e->getMessage());
+            \Log::error('Spaces file streaming failed: '.$e->getMessage());
             // Return 404 to trigger local fallback
             abort(404, 'File streaming failed');
         }
@@ -665,7 +668,7 @@ class VideoStreamController extends Controller
     private function optimizedRedirectToCDN($cdnUrl, $video, Request $request)
     {
         // Log for monitoring
-        \Log::info('Chrome-optimized raw redirect for: ' . $cdnUrl);
+        \Log::info('Chrome-optimized raw redirect for: '.$cdnUrl);
 
         // Use raw HTTP response instead of Laravel redirect for Chrome compatibility
         return response('', 302, [
@@ -681,7 +684,7 @@ class VideoStreamController extends Controller
             'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges',
             'Vary' => 'Accept-Encoding',
             'X-Content-Type-Options' => 'nosniff',
-            'Referrer-Policy' => 'strict-origin-when-cross-origin'
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
         ]);
     }
 
@@ -699,12 +702,12 @@ class VideoStreamController extends Controller
                 'http' => [
                     'method' => 'HEAD',
                     'timeout' => 5,
-                    'user_agent' => 'Mozilla/5.0 (compatible; LaravelProxy/1.0)'
-                ]
+                    'user_agent' => 'Mozilla/5.0 (compatible; LaravelProxy/1.0)',
+                ],
             ]);
 
             $headers = get_headers($cdnUrl, 1, $context);
-            if (!$headers || strpos($headers[0], '200') === false) {
+            if (! $headers || strpos($headers[0], '200') === false) {
                 throw new \Exception('CDN file not accessible');
             }
 
@@ -717,7 +720,7 @@ class VideoStreamController extends Controller
                 // Parse range header
                 preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
                 $start = intval($matches[1]);
-                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+                $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
                 // Validate range
                 if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -733,10 +736,10 @@ class VideoStreamController extends Controller
                     $context = stream_context_create([
                         'http' => [
                             'method' => 'GET',
-                            'header' => "Range: bytes=$start-" . ($start + $length - 1) . "\r\n" .
+                            'header' => "Range: bytes=$start-".($start + $length - 1)."\r\n".
                                        "User-Agent: Mozilla/5.0 (compatible; LaravelProxy/1.0)\r\n",
-                            'timeout' => 30
-                        ]
+                            'timeout' => 30,
+                        ],
                     ]);
 
                     $stream = fopen($cdnUrl, 'r', false, $context);
@@ -744,7 +747,7 @@ class VideoStreamController extends Controller
                         $chunkSize = $this->getOptimalChunkSize($fileSize, true); // Adaptive chunk for seeking
                         $bytesRead = 0;
 
-                        while (!feof($stream) && $bytesRead < $length) {
+                        while (! feof($stream) && $bytesRead < $length) {
                             $remainingBytes = $length - $bytesRead;
                             $currentChunkSize = min($chunkSize, $remainingBytes);
 
@@ -768,7 +771,7 @@ class VideoStreamController extends Controller
                     'Cache-Control' => 'no-cache',
                     'Access-Control-Allow-Origin' => '*',
                     'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
-                    'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
+                    'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges',
                 ]);
             }
 
@@ -778,7 +781,7 @@ class VideoStreamController extends Controller
                 if ($stream) {
                     $chunkSize = $this->getOptimalChunkSize($fileSize, false); // Adaptive chunk for full stream
 
-                    while (!feof($stream)) {
+                    while (! feof($stream)) {
                         $chunk = fread($stream, $chunkSize);
                         if ($chunk === false || strlen($chunk) === 0) {
                             break;
@@ -797,11 +800,12 @@ class VideoStreamController extends Controller
                 'Cache-Control' => 'public, max-age=3600',
                 'Access-Control-Allow-Origin' => '*',
                 'Access-Control-Allow-Headers' => 'Range, Content-Range, Accept-Ranges',
-                'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges'
+                'Access-Control-Expose-Headers' => 'Content-Length, Content-Range, Accept-Ranges',
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Optimized CDN proxy streaming failed: ' . $e->getMessage());
+            \Log::error('Optimized CDN proxy streaming failed: '.$e->getMessage());
+
             // Fallback to direct Spaces streaming
             return $this->streamFromSpaces($video, $request);
         }
@@ -818,12 +822,12 @@ class VideoStreamController extends Controller
             $context = stream_context_create([
                 'http' => [
                     'method' => 'HEAD',
-                    'timeout' => 10
-                ]
+                    'timeout' => 10,
+                ],
             ]);
 
             $headers = get_headers($cdnUrl, 1, $context);
-            if (!$headers || strpos($headers[0], '200') === false) {
+            if (! $headers || strpos($headers[0], '200') === false) {
                 throw new \Exception('CDN file not accessible');
             }
 
@@ -837,7 +841,7 @@ class VideoStreamController extends Controller
                 // Parse range header
                 preg_match('/bytes=(\d+)-(\d*)/i', $range, $matches);
                 $start = intval($matches[1]);
-                $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+                $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
                 // Validate range
                 if ($start > $fileSize - 1 || $end > $fileSize - 1) {
@@ -853,9 +857,9 @@ class VideoStreamController extends Controller
                     $context = stream_context_create([
                         'http' => [
                             'method' => 'GET',
-                            'header' => "Range: bytes=$start-" . ($start + $length - 1) . "\r\n",
-                            'timeout' => 30
-                        ]
+                            'header' => "Range: bytes=$start-".($start + $length - 1)."\r\n",
+                            'timeout' => 30,
+                        ],
                     ]);
 
                     $stream = fopen($cdnUrl, 'r', false, $context);
@@ -887,7 +891,7 @@ class VideoStreamController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('CDN proxy streaming failed: ' . $e->getMessage());
+            \Log::error('CDN proxy streaming failed: '.$e->getMessage());
             // Fallback to direct Spaces streaming
             if (is_object($video) && isset($video->file_path)) {
                 return $this->streamFromSpaces($video, $request);
@@ -903,7 +907,7 @@ class VideoStreamController extends Controller
     private function isChromeBasedBrowser($userAgent)
     {
         return preg_match('/Chrome|Chromium|Edge|Opera/i', $userAgent) &&
-               !preg_match('/Firefox|Safari(?!.*Chrome)/i', $userAgent);
+               ! preg_match('/Firefox|Safari(?!.*Chrome)/i', $userAgent);
     }
 
     /**
@@ -926,15 +930,15 @@ class VideoStreamController extends Controller
 </head>
 <body>
     <video controls autoplay preload="metadata">
-        <source src="' . htmlspecialchars($cdnUrl) . '" type="' . $mimeType . '">
+        <source src="'.htmlspecialchars($cdnUrl).'" type="'.$mimeType.'">
         Your browser does not support the video tag.
     </video>
     <script>
         // Redirect parent frame to CDN URL for seamless experience
         if (window.parent !== window) {
-            window.parent.location.href = "' . htmlspecialchars($cdnUrl) . '";
+            window.parent.location.href = "'.htmlspecialchars($cdnUrl).'";
         } else {
-            window.location.href = "' . htmlspecialchars($cdnUrl) . '";
+            window.location.href = "'.htmlspecialchars($cdnUrl).'";
         }
     </script>
 </body>
@@ -944,7 +948,7 @@ class VideoStreamController extends Controller
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
-            'Expires' => '0'
+            'Expires' => '0',
         ]);
     }
 

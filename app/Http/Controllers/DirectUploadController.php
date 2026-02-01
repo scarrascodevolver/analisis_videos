@@ -50,7 +50,7 @@ class DirectUploadController extends Controller
         // Sanitize filename
         $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalFilename);
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName);
-        $filename = time() . '_' . $sanitizedName;
+        $filename = time().'_'.$sanitizedName;
 
         // Get organization slug for path
         $currentOrg = auth()->user()->currentOrganization();
@@ -106,15 +106,15 @@ class DirectUploadController extends Controller
                 'upload_url' => $presignedUrl,
                 'upload_id' => $uploadId,
                 'key' => $key,
-                'cdn_url' => config('filesystems.disks.spaces.url') . '/' . $key,
+                'cdn_url' => config('filesystems.disks.spaces.url').'/'.$key,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to generate pre-signed URL: ' . $e->getMessage());
+            Log::error('Failed to generate pre-signed URL: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error generando URL de subida: ' . $e->getMessage(),
+                'message' => 'Error generando URL de subida: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -143,11 +143,12 @@ class DirectUploadController extends Controller
         // Retrieve upload info from cache
         $uploadInfo = cache()->get("direct_upload_{$request->upload_id}");
 
-        if (!$uploadInfo) {
+        if (! $uploadInfo) {
             Log::warning("Upload ID not found in cache: {$request->upload_id}", [
                 'user_id' => auth()->id(),
                 'ip' => $request->ip(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Upload ID no válido o expirado',
@@ -211,7 +212,7 @@ class DirectUploadController extends Controller
                     $xmlImportStats = $this->xmlParser->importToVideo($video, $parsedData, true);
                     Log::info("LongoMatch XML imported for video {$video->id}", $xmlImportStats);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to import LongoMatch XML for video {$video->id}: " . $e->getMessage());
+                    Log::warning("Failed to import LongoMatch XML for video {$video->id}: ".$e->getMessage());
                     // Don't fail the whole upload, just log the error
                 }
             }
@@ -235,11 +236,11 @@ class DirectUploadController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            Log::error('Failed to confirm upload: ' . $e->getMessage());
+            Log::error('Failed to confirm upload: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error creando registro de video: ' . $e->getMessage(),
+                'message' => 'Error creando registro de video: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -248,6 +249,7 @@ class DirectUploadController extends Controller
     {
         if ($visibilityType === 'specific' && count($assignedPlayers) > 0) {
             $count = count($assignedPlayers);
+
             return "Video subido exitosamente y asignado a {$count} jugador(es). Se está comprimiendo en segundo plano.";
         }
 
@@ -285,7 +287,7 @@ class DirectUploadController extends Controller
 
             Log::info("ACL set to public-read for: {$key}");
         } catch (\Exception $e) {
-            Log::warning("Failed to set ACL for {$key}: " . $e->getMessage());
+            Log::warning("Failed to set ACL for {$key}: ".$e->getMessage());
         }
     }
 
@@ -306,7 +308,7 @@ class DirectUploadController extends Controller
         // Sanitize filename
         $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalFilename);
         $sanitizedName = preg_replace('/_+/', '_', $sanitizedName);
-        $filename = time() . '_' . $sanitizedName;
+        $filename = time().'_'.$sanitizedName;
 
         // Get organization slug for path
         $currentOrg = auth()->user()->currentOrganization();
@@ -367,11 +369,11 @@ class DirectUploadController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to initiate multipart upload: ' . $e->getMessage());
+            Log::error('Failed to initiate multipart upload: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error iniciando subida multipart: ' . $e->getMessage(),
+                'message' => 'Error iniciando subida multipart: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -389,7 +391,7 @@ class DirectUploadController extends Controller
 
         $uploadInfo = cache()->get("multipart_upload_{$request->upload_id}");
 
-        if (!$uploadInfo) {
+        if (! $uploadInfo) {
             return response()->json([
                 'success' => false,
                 'message' => 'Upload ID no válido o expirado',
@@ -427,11 +429,11 @@ class DirectUploadController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to generate part URLs: ' . $e->getMessage());
+            Log::error('Failed to generate part URLs: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error generando URLs de partes: ' . $e->getMessage(),
+                'message' => 'Error generando URLs de partes: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -462,8 +464,9 @@ class DirectUploadController extends Controller
 
         $uploadInfo = cache()->get("multipart_upload_{$request->upload_id}");
 
-        if (!$uploadInfo) {
+        if (! $uploadInfo) {
             Log::warning("Multipart Upload ID not found in cache: {$request->upload_id}");
+
             return response()->json([
                 'success' => false,
                 'message' => 'Upload ID no válido o expirado',
@@ -491,8 +494,8 @@ class DirectUploadController extends Controller
             // If parts not provided or incomplete (CORS issue), fetch from S3
             $parts = $request->parts ?? [];
 
-            if (empty($parts) || !isset($parts[0]['ETag'])) {
-                Log::info("ETags not provided by client, fetching from Spaces", [
+            if (empty($parts) || ! isset($parts[0]['ETag'])) {
+                Log::info('ETags not provided by client, fetching from Spaces', [
                     'upload_id' => $request->upload_id,
                 ]);
 
@@ -511,7 +514,7 @@ class DirectUploadController extends Controller
                     ];
                 }
 
-                Log::info("Retrieved {count} parts from Spaces", [
+                Log::info('Retrieved {count} parts from Spaces', [
                     'count' => count($parts),
                 ]);
             }
@@ -521,7 +524,7 @@ class DirectUploadController extends Controller
             $receivedPartsCount = count($parts);
 
             if ($receivedPartsCount !== $expectedPartsCount) {
-                Log::error("Multipart upload validation failed: part count mismatch", [
+                Log::error('Multipart upload validation failed: part count mismatch', [
                     'upload_id' => $request->upload_id,
                     'expected' => $expectedPartsCount,
                     'received' => $receivedPartsCount,
@@ -561,7 +564,7 @@ class DirectUploadController extends Controller
                 }
             }
 
-            Log::info("Multipart upload validation passed", [
+            Log::info('Multipart upload validation passed', [
                 'upload_id' => $request->upload_id,
                 'parts_count' => count($parts),
             ]);
@@ -576,7 +579,7 @@ class DirectUploadController extends Controller
                 ],
             ]);
 
-            Log::info("Multipart upload completed on Spaces", [
+            Log::info('Multipart upload completed on Spaces', [
                 'upload_id' => $request->upload_id,
                 'key' => $uploadInfo['key'],
                 'parts_count' => count($parts),
@@ -606,10 +609,10 @@ class DirectUploadController extends Controller
                 'processing_status' => 'pending',
             ]);
 
-            // Dispatch compression job
-            CompressVideoJob::dispatch($video->id);
+            // Dispatch compression job based on organization strategy
+            $this->dispatchCompressionJob($video);
 
-            Log::info("Video {$video->id} created via multipart upload, compression job dispatched");
+            Log::info("Video {$video->id} created via multipart upload, compression decision applied");
 
             // Create assignments if visibility is 'specific'
             if ($request->visibility_type === 'specific' && $request->filled('assigned_players')) {
@@ -631,7 +634,7 @@ class DirectUploadController extends Controller
                     $xmlImportStats = $this->xmlParser->importToVideo($video, $parsedData, true);
                     Log::info("LongoMatch XML imported for video {$video->id}", $xmlImportStats);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to import LongoMatch XML for video {$video->id}: " . $e->getMessage());
+                    Log::warning("Failed to import LongoMatch XML for video {$video->id}: ".$e->getMessage());
                 }
             }
 
@@ -654,7 +657,7 @@ class DirectUploadController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            Log::error('Failed to complete multipart upload: ' . $e->getMessage());
+            Log::error('Failed to complete multipart upload: '.$e->getMessage());
 
             // Try to abort the multipart upload
             try {
@@ -664,12 +667,12 @@ class DirectUploadController extends Controller
                     'UploadId' => $uploadInfo['s3_upload_id'],
                 ]);
             } catch (\Exception $abortError) {
-                Log::error('Failed to abort multipart upload: ' . $abortError->getMessage());
+                Log::error('Failed to abort multipart upload: '.$abortError->getMessage());
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error completando subida: ' . $e->getMessage(),
+                'message' => 'Error completando subida: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -685,8 +688,9 @@ class DirectUploadController extends Controller
 
         $uploadInfo = cache()->get("multipart_upload_{$request->upload_id}");
 
-        if (!$uploadInfo) {
+        if (! $uploadInfo) {
             Log::warning("Abort requested for non-existent upload: {$request->upload_id}");
+
             return response()->json([
                 'success' => false,
                 'message' => 'Upload ID no válido o ya expirado',
@@ -720,7 +724,7 @@ class DirectUploadController extends Controller
             // Clear cache
             cache()->forget("multipart_upload_{$request->upload_id}");
 
-            Log::info("Multipart upload aborted successfully", [
+            Log::info('Multipart upload aborted successfully', [
                 'upload_id' => $request->upload_id,
                 'key' => $uploadInfo['key'],
                 'user_id' => auth()->id(),
@@ -732,12 +736,41 @@ class DirectUploadController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to abort multipart upload: ' . $e->getMessage());
+            Log::error('Failed to abort multipart upload: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error abortando upload: ' . $e->getMessage(),
+                'message' => 'Error abortando upload: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Dispatch compression job based on organization compression strategy
+     */
+    private function dispatchCompressionJob(\App\Models\Video $video): void
+    {
+        $org = auth()->user()->currentOrganization();
+        $fileSizeMB = $video->file_size / 1024 / 1024;
+
+        switch ($org->compression_strategy) {
+            case 'immediate':
+                \App\Jobs\CompressVideoJob::dispatch($video->id);
+                Log::info("Video {$video->id} queued for immediate compression (strategy: immediate)");
+                break;
+
+            case 'nocturnal':
+                Log::info("Video {$video->id} queued for nocturnal compression (strategy: nocturnal, size: {$fileSizeMB}MB)");
+                break;
+
+            case 'hybrid':
+                if ($fileSizeMB < $org->compression_hybrid_threshold) {
+                    \App\Jobs\CompressVideoJob::dispatch($video->id);
+                    Log::info("Video {$video->id} queued for immediate compression (strategy: hybrid, size: {$fileSizeMB}MB < {$org->compression_hybrid_threshold}MB threshold)");
+                } else {
+                    Log::info("Video {$video->id} queued for nocturnal compression (strategy: hybrid, size: {$fileSizeMB}MB >= {$org->compression_hybrid_threshold}MB threshold)");
+                }
+                break;
         }
     }
 }
