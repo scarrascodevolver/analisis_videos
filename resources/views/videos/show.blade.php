@@ -446,7 +446,8 @@ window.VideoPlayer = {
             stats: '{{ route("api.videos.stats", $video) }}',
             clipCategories: '{{ route("api.clip-categories.index") }}',
             clips: '{{ route("api.clips.index", $video) }}',
-            createClip: '{{ route("api.clips.quick-store", $video) }}'
+            createClip: '{{ route("api.clips.quick-store", $video) }}',
+            createCategory: '{{ route("admin.clip-categories.store") }}'
         }
     }
 };
