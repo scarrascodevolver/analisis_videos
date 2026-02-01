@@ -516,6 +516,56 @@ class DirectUploadController extends Controller
                 ]);
             }
 
+            // CRITICAL VALIDATION: Ensure ALL expected parts are present
+            $expectedPartsCount = $uploadInfo['parts_count'];
+            $receivedPartsCount = count($parts);
+
+            if ($receivedPartsCount !== $expectedPartsCount) {
+                Log::error("Multipart upload validation failed: part count mismatch", [
+                    'upload_id' => $request->upload_id,
+                    'expected' => $expectedPartsCount,
+                    'received' => $receivedPartsCount,
+                ]);
+
+                // Abort the incomplete upload
+                $client->abortMultipartUpload([
+                    'Bucket' => config('filesystems.disks.spaces.bucket'),
+                    'Key' => $uploadInfo['key'],
+                    'UploadId' => $uploadInfo['s3_upload_id'],
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Upload incompleto: se esperaban {$expectedPartsCount} partes pero solo se recibieron {$receivedPartsCount}. Upload abortado.",
+                ], 400);
+            }
+
+            // Validate all parts have valid ETags
+            foreach ($parts as $part) {
+                if (empty($part['ETag'])) {
+                    Log::error("Part {$part['PartNumber']} has invalid ETag", [
+                        'upload_id' => $request->upload_id,
+                    ]);
+
+                    // Abort the corrupted upload
+                    $client->abortMultipartUpload([
+                        'Bucket' => config('filesystems.disks.spaces.bucket'),
+                        'Key' => $uploadInfo['key'],
+                        'UploadId' => $uploadInfo['s3_upload_id'],
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Parte {$part['PartNumber']} tiene ETag inválido. Upload abortado.",
+                    ], 400);
+                }
+            }
+
+            Log::info("Multipart upload validation passed", [
+                'upload_id' => $request->upload_id,
+                'parts_count' => count($parts),
+            ]);
+
             // Complete the multipart upload
             $result = $client->completeMultipartUpload([
                 'Bucket' => config('filesystems.disks.spaces.bucket'),
@@ -620,6 +670,73 @@ class DirectUploadController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error completando subida: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Abort multipart upload (called when frontend encounters unrecoverable error)
+     */
+    public function abortMultipartUpload(Request $request)
+    {
+        $request->validate([
+            'upload_id' => 'required|string',
+        ]);
+
+        $uploadInfo = cache()->get("multipart_upload_{$request->upload_id}");
+
+        if (!$uploadInfo) {
+            Log::warning("Abort requested for non-existent upload: {$request->upload_id}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload ID no válido o ya expirado',
+            ], 400);
+        }
+
+        if ($uploadInfo['user_id'] !== auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado',
+            ], 403);
+        }
+
+        try {
+            $client = new S3Client([
+                'version' => 'latest',
+                'region' => config('filesystems.disks.spaces.region'),
+                'endpoint' => config('filesystems.disks.spaces.endpoint'),
+                'credentials' => [
+                    'key' => config('filesystems.disks.spaces.key'),
+                    'secret' => config('filesystems.disks.spaces.secret'),
+                ],
+            ]);
+
+            $client->abortMultipartUpload([
+                'Bucket' => config('filesystems.disks.spaces.bucket'),
+                'Key' => $uploadInfo['key'],
+                'UploadId' => $uploadInfo['s3_upload_id'],
+            ]);
+
+            // Clear cache
+            cache()->forget("multipart_upload_{$request->upload_id}");
+
+            Log::info("Multipart upload aborted successfully", [
+                'upload_id' => $request->upload_id,
+                'key' => $uploadInfo['key'],
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Upload abortado exitosamente',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to abort multipart upload: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error abortando upload: ' . $e->getMessage(),
             ], 500);
         }
     }

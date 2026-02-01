@@ -522,7 +522,7 @@ $(document).ready(function() {
     }
 
     function uploadMultipart(file, formData) {
-        var chunkSize = 100 * 1024 * 1024; // 100MB chunks (optimized for stability and speed)
+        var chunkSize = 50 * 1024 * 1024; // 50MB chunks (optimized for slow connections)
         var totalParts = Math.ceil(file.size / chunkSize);
 
         $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida multipart (' + totalParts + ' partes)...');
@@ -615,13 +615,38 @@ $(document).ready(function() {
                 }, 2000);
             } else {
                 hasError = true;
-                showError(errorMsg + ' (máximo de reintentos alcanzado)');
+                console.error('Max retries exceeded for part', partNumber);
+
+                // CRITICAL: Abort the multipart upload on server
+                abortMultipartUpload(uploadId, errorMsg);
             }
+        }
+
+        function abortMultipartUpload(uploadId, reason) {
+            console.error('Aborting multipart upload:', reason);
+
+            $.ajax({
+                url: '{{ route("api.upload.multipart.abort") }}',
+                method: 'POST',
+                timeout: 30000,
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    upload_id: uploadId
+                },
+                success: function(response) {
+                    console.log('Multipart upload aborted on server');
+                },
+                error: function(xhr) {
+                    console.error('Failed to abort multipart upload:', xhr);
+                }
+            });
+
+            showError(reason + ' (upload abortado después de máximo de reintentos)');
         }
 
         function uploadPart(chunk, partNumber, presignedUrl) {
             var xhr = new XMLHttpRequest();
-            xhr.timeout = 300000; // 5 minutes timeout for upload
+            xhr.timeout = 1800000; // 30 minutes timeout for upload (slow connections)
 
             xhr.upload.addEventListener('progress', function(e) {
                 if (e.lengthComputable) {
@@ -642,22 +667,22 @@ $(document).ready(function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     var etag = xhr.getResponseHeader('ETag');
 
-                    // Store part info (ETag might be null if CORS not configured)
-                    if (etag) {
-                        etag = etag.replace(/"/g, ''); // Remove quotes
-                        console.log('Part', partNumber, 'uploaded with ETag:', etag);
-                    } else {
-                        console.warn('Part', partNumber, 'uploaded but ETag not available (will be fetched by backend)');
+                    // CRITICAL: ETag MUST be present, otherwise the part is corrupted
+                    if (!etag) {
+                        console.error('Part', partNumber, 'uploaded but ETag missing - treating as failure');
+                        retryOrFail(partNumber, chunk, 'ETag no disponible para parte ' + partNumber + ' (posible corrupción)');
+                        return;
                     }
+
+                    etag = etag.replace(/"/g, ''); // Remove quotes
+                    console.log('Part', partNumber, 'uploaded successfully with ETag:', etag);
 
                     completedParts.push({
                         PartNumber: partNumber,
-                        ETag: etag || null
+                        ETag: etag
                     });
 
                     checkCompletion();
-
-                    // This code is reached when ETag is available from header
                 } else {
                     console.error('Part', partNumber, 'upload failed:', xhr.status);
                     retryOrFail(partNumber, chunk, 'Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
@@ -667,10 +692,29 @@ $(document).ready(function() {
             function checkCompletion() {
                 uploadedBytes += chunk.size;
 
-                console.log('Part', partNumber, 'uploaded. Total:', completedParts.length, '/', totalParts);
+                console.log('Part', partNumber, 'uploaded successfully. Total completed:', completedParts.length, '/', totalParts);
 
                 // Check if all parts are completed
                 if (completedParts.length === totalParts) {
+                    console.log('All parts uploaded. Validating before completion...');
+
+                    // Final validation: ensure all part numbers from 1 to totalParts are present
+                    var partNumbers = completedParts.map(p => p.PartNumber).sort((a, b) => a - b);
+                    var missingParts = [];
+
+                    for (var i = 1; i <= totalParts; i++) {
+                        if (!partNumbers.includes(i)) {
+                            missingParts.push(i);
+                        }
+                    }
+
+                    if (missingParts.length > 0) {
+                        console.error('CRITICAL: Missing parts detected:', missingParts);
+                        showError('Error: faltan las partes ' + missingParts.join(', ') + '. No se puede completar upload.');
+                        return;
+                    }
+
+                    console.log('All parts validated successfully. Completing multipart upload...');
                     $('#progressBar').css('background-color', '#ffc107');
                     $('#uploadStatus').html('<i class="fas fa-spinner fa-spin text-warning"></i> Finalizando upload...');
                     completeMultipartUpload(uploadId, completedParts, formData);
@@ -704,16 +748,21 @@ $(document).ready(function() {
         // Sort parts by PartNumber
         parts.sort((a, b) => a.PartNumber - b.PartNumber);
 
-        // Filter out parts with null ETags (backend will fetch them)
-        var partsWithETags = parts.filter(p => p.ETag !== null);
+        // CRITICAL: Validate ALL parts have ETags (strict validation)
+        var invalidParts = parts.filter(p => !p.ETag || p.ETag === null);
 
-        console.log('Completing upload with', partsWithETags.length, 'parts with ETags,',
-                    (parts.length - partsWithETags.length), 'will be fetched by backend');
+        if (invalidParts.length > 0) {
+            console.error('CRITICAL: Parts with missing ETags detected:', invalidParts);
+            showError('Error: ' + invalidParts.length + ' partes sin ETag válido. No se puede completar upload.');
+            return;
+        }
+
+        console.log('All', parts.length, 'parts have valid ETags. Proceeding to complete upload.');
 
         var confirmData = {
             _token: '{{ csrf_token() }}',
             upload_id: uploadId,
-            parts: partsWithETags.length > 0 ? partsWithETags : [],
+            parts: parts, // All parts are validated to have ETags
             title: formData.get('title'),
             description: formData.get('description'),
             rival_team_name: formData.get('rival_team_name'),
