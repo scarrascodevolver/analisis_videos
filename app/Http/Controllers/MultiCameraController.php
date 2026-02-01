@@ -162,15 +162,6 @@ class MultiCameraController extends Controller
                     'sync_offset' => 0,
                 ]);
 
-                // Also update old system for backward compatibility
-                if (! $masterVideo->video_group_id) {
-                    $masterVideo->update([
-                        'video_group_id' => Video::generateGroupId(),
-                        'is_master' => true,
-                        'camera_angle' => $masterAngle,
-                    ]);
-                }
-
                 Log::info("Created new group {$group->id} for master video {$masterVideo->id}");
             }
         }
@@ -387,7 +378,7 @@ class MultiCameraController extends Controller
                 ], 400);
             }
 
-            // Reset sync in all groups (old system)
+            // Reset sync in all groups
             foreach ($video->videoGroups as $group) {
                 $video->videoGroups()->updateExistingPivot($group->id, [
                     'sync_offset' => null,
@@ -396,13 +387,9 @@ class MultiCameraController extends Controller
                 ]);
             }
 
-            // Also reset old system columns
-            $video->sync_offset = null;
-            $video->is_synced = false;
-            $video->sync_reference_event = null;
-            $video->save();
-
-            $cameraAngle = $video->camera_angle;
+            // Get camera angle from first group
+            $firstGroup = $video->videoGroups->first();
+            $cameraAngle = $firstGroup ? $firstGroup->pivot->camera_angle : null;
 
             Log::info("Video {$video->id} sync reset in all groups");
         }
@@ -425,17 +412,21 @@ class MultiCameraController extends Controller
      */
     public function getStreamUrl(Video $video)
     {
+        // Get data from first group if video is in a group
+        $firstGroup = $video->videoGroups->first();
+        $pivot = $firstGroup ? $firstGroup->pivot : null;
+
         return response()->json([
             'success' => true,
             'stream_url' => route('videos.stream', $video->id),
             'video' => [
                 'id' => $video->id,
                 'title' => $video->title,
-                'camera_angle' => $video->camera_angle,
+                'camera_angle' => $pivot->camera_angle ?? null,
                 'duration' => $video->duration,
-                'is_master' => $video->is_master,
-                'sync_offset' => $video->sync_offset ?? 0,
-                'is_synced' => $video->is_synced,
+                'is_master' => $pivot->is_master ?? false,
+                'sync_offset' => $pivot->sync_offset ?? 0,
+                'is_synced' => $pivot->is_synced ?? false,
             ],
         ]);
     }

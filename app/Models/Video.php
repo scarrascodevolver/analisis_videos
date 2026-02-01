@@ -38,13 +38,6 @@ class Video extends Model
         'compression_ratio',
         'processing_started_at',
         'processing_completed_at',
-        // Multi-camera fields
-        'video_group_id',
-        'is_master',
-        'camera_angle',
-        'sync_offset',
-        'is_synced',
-        'sync_reference_event',
     ];
 
     protected function casts(): array
@@ -54,10 +47,6 @@ class Video extends Model
             'match_date' => 'date',
             'processing_started_at' => 'datetime',
             'processing_completed_at' => 'datetime',
-            // Multi-camera boolean casts
-            'is_master' => 'boolean',
-            'is_synced' => 'boolean',
-            'sync_offset' => 'decimal:2',
         ];
     }
 
@@ -348,13 +337,7 @@ class Video extends Model
      */
     public function isPartOfGroup(): bool
     {
-        // New system: check if has any groups
-        if ($this->videoGroups()->exists()) {
-            return true;
-        }
-
-        // Fallback: old system (backward compatibility)
-        return ! is_null($this->video_group_id);
+        return $this->videoGroups()->exists();
     }
 
     /**
@@ -364,7 +347,6 @@ class Video extends Model
      */
     public function isMaster(?int $groupId = null): bool
     {
-        // New system
         if ($groupId) {
             return $this->videoGroups()
                 ->where('video_groups.id', $groupId)
@@ -372,13 +354,8 @@ class Video extends Model
                 ->exists();
         }
 
-        // Check if master in any group (new system)
-        if ($this->videoGroups()->wherePivot('is_master', true)->exists()) {
-            return true;
-        }
-
-        // Fallback: old system
-        return $this->is_master === true;
+        // Check if master in any group
+        return $this->videoGroups()->wherePivot('is_master', true)->exists();
     }
 
     /**
@@ -395,13 +372,8 @@ class Video extends Model
                 ->exists();
         }
 
-        // Check if slave in any group (new system)
-        if ($this->videoGroups()->wherePivot('is_master', false)->exists()) {
-            return true;
-        }
-
-        // Fallback: old system
-        return $this->isPartOfGroup() && ! $this->isMaster();
+        // Check if slave in any group
+        return $this->videoGroups()->wherePivot('is_master', false)->exists();
     }
 
     /**
@@ -438,7 +410,6 @@ class Video extends Model
      */
     public function isSynced(?int $groupId = null): bool
     {
-        // New system
         if ($groupId) {
             $pivot = $this->videoGroups()
                 ->where('video_groups.id', $groupId)
@@ -447,20 +418,15 @@ class Video extends Model
             if ($pivot) {
                 return $pivot->pivot->is_synced === true && ! is_null($pivot->pivot->sync_offset);
             }
+
+            return false;
         }
 
-        // Check if synced in any group (new system)
-        $syncedGroup = $this->videoGroups()
+        // Check if synced in any group
+        return $this->videoGroups()
             ->wherePivot('is_synced', true)
             ->whereNotNull('sync_offset')
-            ->first();
-
-        if ($syncedGroup) {
-            return true;
-        }
-
-        // Fallback: old system
-        return $this->is_synced === true && ! is_null($this->sync_offset);
+            ->exists();
     }
 
     /**
@@ -470,29 +436,23 @@ class Video extends Model
      */
     public function groupVideos(?int $groupId = null)
     {
-        // New system
         if ($groupId) {
             $group = VideoGroup::find($groupId);
             if ($group) {
                 return $group->videos;
             }
+
+            return collect();
         }
 
-        // Try to get first group (new system)
+        // Get first group
         $firstGroup = $this->videoGroups()->first();
         if ($firstGroup) {
             return $firstGroup->videos;
         }
 
-        // Fallback: old system
-        if (! $this->isPartOfGroup()) {
-            return collect([$this]);
-        }
-
-        return Video::where('video_group_id', $this->video_group_id)
-            ->orderByDesc('is_master')
-            ->orderBy('camera_angle')
-            ->get();
+        // Not in any group, return just this video
+        return collect([$this]);
     }
 
     /**
@@ -502,32 +462,27 @@ class Video extends Model
      */
     public function getMasterVideo(?int $groupId = null)
     {
-        // New system
         if ($groupId) {
             $group = VideoGroup::find($groupId);
             if ($group) {
                 return $group->getMasterVideo();
             }
+
+            return null;
         }
 
-        // Try to get master from first group (new system)
+        // Get master from first group
         $firstGroup = $this->videoGroups()->first();
         if ($firstGroup) {
             return $firstGroup->getMasterVideo();
         }
 
-        // Fallback: old system
+        // If this video is master of a group, return itself
         if ($this->isMaster()) {
             return $this;
         }
 
-        if (! $this->isPartOfGroup()) {
-            return null;
-        }
-
-        return Video::where('video_group_id', $this->video_group_id)
-            ->where('is_master', true)
-            ->first();
+        return null;
     }
 
     /**
@@ -537,29 +492,23 @@ class Video extends Model
      */
     public function getSlaveVideos(?int $groupId = null)
     {
-        // New system
         if ($groupId) {
             $group = VideoGroup::find($groupId);
             if ($group) {
                 return $group->getSlaveVideos();
             }
+
+            return collect();
         }
 
-        // Try to get slaves from first group (new system)
+        // Get slaves from first group
         $firstGroup = $this->videoGroups()->first();
         if ($firstGroup) {
             return $firstGroup->getSlaveVideos();
         }
 
-        // Fallback: old system
-        if (! $this->isPartOfGroup()) {
-            return collect();
-        }
-
-        return Video::where('video_group_id', $this->video_group_id)
-            ->where('is_master', false)
-            ->orderBy('camera_angle')
-            ->get();
+        // Not in any group
+        return collect();
     }
 
     /**
