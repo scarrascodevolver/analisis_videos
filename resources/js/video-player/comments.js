@@ -102,7 +102,6 @@ function initToggleComments() {
                 toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
                 toggleText.text('Mostrar Comentarios');
                 toggleBtn.removeClass('btn-rugby-outline').addClass('btn-rugby-light');
-                $('#rugbyVideo').css('height', '600px');
                 // Disable timeline notifications
                 setNotificationsEnabled(false);
             } else {
@@ -111,7 +110,6 @@ function initToggleComments() {
                 toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
                 toggleText.text('Ocultar Comentarios');
                 toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
-                $('#rugbyVideo').css('height', '500px');
                 // Enable timeline notifications
                 setNotificationsEnabled(true);
             }
@@ -158,7 +156,6 @@ function initAddCommentButton() {
             toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
             toggleText.text('Ocultar Comentarios');
             toggleBtn.removeClass('btn-rugby-light').addClass('btn-rugby-outline');
-            $('#rugbyVideo').css('height', '500px');
         }
 
         // Scroll to comments section

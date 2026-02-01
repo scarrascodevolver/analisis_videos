@@ -8,9 +8,19 @@
     min-height: 300px; /* Mínimo para móviles */
 }
 
-#rugbyVideo {
+.video-container > video,
+#rugbyVideo,
+#multiMasterVideo {
     object-fit: contain; /* Mantiene aspect ratio sin cortar */
     background: #000;
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    max-height: min(70vh, 550px) !important; /* Limita altura en pantallas bajas y respeta tope actual */
+}
+
+/* Limita el alto del master cuando está en layout multi-cámara (contenedor de 60vh) */
+.multi-camera-layout .video-container > video {
+    max-height: 60vh !important;
 }
 
 @keyframes fadeIn {

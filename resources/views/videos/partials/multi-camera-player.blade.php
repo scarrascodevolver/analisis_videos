@@ -2,7 +2,7 @@
 <div id="multiCameraPlayer" style="display: none;">
     {{-- Master Video (Left 70%) --}}
     <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
-        <video id="multiMasterVideo" controls style="width: 100%; height: auto; max-height: 550px; display: block;"
+        <video id="multiMasterVideo" controls style="width: 100%; height: auto; display: block;"
                preload="metadata"
                crossorigin="anonymous"
                x-webkit-airplay="allow">
