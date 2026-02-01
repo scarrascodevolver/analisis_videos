@@ -150,6 +150,9 @@
 
         .main-sidebar {
             background-color: var(--color-primary-hover) !important;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
         .nav-sidebar .nav-link {
@@ -183,7 +186,9 @@
         }
 
         .sidebar {
-            padding-bottom: 12px;
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding-bottom: 16px;
         }
 
         /* ========================================
