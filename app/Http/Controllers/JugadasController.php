@@ -184,7 +184,7 @@ class JugadasController extends Controller
             // Convertir con FFmpeg
             // -vf scale: asegura dimensiones pares (requerido por libx264)
             $command = sprintf(
-                'ffmpeg -i %s -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart -y %s 2>&1',
+                'ffmpeg -i %s -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart -threads 1 -y %s 2>&1',
                 escapeshellarg($webmPath),
                 escapeshellarg($mp4Path)
             );
