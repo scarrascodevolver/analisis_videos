@@ -1033,22 +1033,22 @@
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     background: rgba(0, 183, 181, 0.9);
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 14px;
+    height: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    font-size: 11px;
+    border-radius: 2px;
+    font-size: 7px;
     opacity: 0;
     transition: opacity 0.2s ease;
     pointer-events: none;
     z-index: 20;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .slave-video-card:hover::after {

@@ -69,7 +69,7 @@
     <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 0 0 auto; height: 18vh; max-height: 18vh;">
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
-            <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
+            <video class="slave-video" style="width: 100%; height: 100%; display: block; object-fit: cover;"
                    preload="auto"
                    crossorigin="anonymous">
                 {{-- Source will be set by JavaScript --}}
