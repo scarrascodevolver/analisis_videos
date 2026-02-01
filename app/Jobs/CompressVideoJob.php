@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Video;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class CompressVideoJob implements ShouldQueue
+class CompressVideoJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -55,6 +56,17 @@ class CompressVideoJob implements ShouldQueue
     }
 
     /**
+     * The unique ID of the job.
+     * Prevents duplicate compression jobs for the same video from being queued.
+     *
+     * @return string
+     */
+    public function uniqueId(): string
+    {
+        return 'compress-video-' . $this->videoId;
+    }
+
+    /**
      * Execute the job.
      */
     public function handle(): void
@@ -65,6 +77,21 @@ class CompressVideoJob implements ShouldQueue
             Log::warning("CompressVideoJob: Video {$this->videoId} not found (probably deleted). Skipping job.");
 
             // Delete this job from queue to prevent retries
+            $this->delete();
+            return;
+        }
+
+        // CRITICAL: Skip if video is already compressed or currently being processed
+        // Prevents duplicate jobs from re-compressing the same video multiple times
+        if ($video->processing_status === 'completed' || $video->original_file_path) {
+            Log::warning("CompressVideoJob: Video {$video->id} already compressed (status: {$video->processing_status}, has original_file_path: " . ($video->original_file_path ? 'YES' : 'NO') . "). Skipping duplicate job.");
+            $this->delete();
+            return;
+        }
+
+        // Skip if currently being processed by another job
+        if ($video->processing_status === 'processing') {
+            Log::warning("CompressVideoJob: Video {$video->id} is currently being processed by another job. Skipping duplicate.");
             $this->delete();
             return;
         }
