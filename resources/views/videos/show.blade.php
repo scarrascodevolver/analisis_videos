@@ -78,6 +78,23 @@
                             </div>
                         </div>
 
+                        @if($video->isPartOfGroup())
+                        <!-- Inline Script: Show overlay IMMEDIATELY if video has slaves -->
+                        <script>
+                        (function() {
+                            const overlay = document.getElementById('slaveLoadingOverlay');
+                            const masterVideo = document.getElementById('rugbyVideo');
+
+                            if (overlay && masterVideo) {
+                                console.log('🎬 Video tiene slaves - mostrando overlay inmediatamente');
+                                overlay.style.display = 'block';
+                                masterVideo.removeAttribute('controls');
+                                masterVideo.style.pointerEvents = 'none';
+                            }
+                        })();
+                        </script>
+                        @endif
+
                         <!-- Canvas overlay para anotaciones -->
                         <canvas id="annotationCanvas"
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
