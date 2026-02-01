@@ -647,6 +647,143 @@
                 }
             });
         @endif
+
+        // ═══════════════════════════════════════════════════════════
+        // SWAP MASTER/SLAVE: Click en slave para intercambiar con master
+        // ═══════════════════════════════════════════════════════════
+
+        function swapMasterWithSlave(slaveVideoId) {
+            if (!isMultiCameraActive) {
+                console.warn('Multi-camera not active, swap cancelled');
+                return;
+            }
+
+            const currentMasterVideo = masterVideo; // #rugbyVideo o #multiMasterVideo
+            const currentMasterId = videoId; // Variable global del video actual
+
+            // Buscar el slave clickeado
+            const slaveCard = $(`.slave-video-card[data-video-id="${slaveVideoId}"]`);
+            if (!slaveCard.length) {
+                console.error('Slave video not found:', slaveVideoId);
+                return;
+            }
+
+            const slaveVideoElement = slaveCard.find('.slave-video')[0];
+            if (!slaveVideoElement) {
+                console.error('Slave video element not found');
+                return;
+            }
+
+            // Guardar estado actual del master
+            const masterState = {
+                currentTime: currentMasterVideo.currentTime,
+                paused: currentMasterVideo.paused,
+                volume: currentMasterVideo.volume,
+                playbackRate: currentMasterVideo.playbackRate
+            };
+
+            // Guardar estado actual del slave
+            const slaveState = {
+                currentTime: slaveVideoElement.currentTime,
+                paused: slaveVideoElement.paused,
+                volume: slaveVideoElement.volume,
+                playbackRate: slaveVideoElement.playbackRate
+            };
+
+            // Obtener URLs
+            const masterSource = currentMasterVideo.querySelector('source');
+            const slaveSource = slaveVideoElement.querySelector('source');
+
+            if (!masterSource || !slaveSource) {
+                console.error('Video sources not found');
+                return;
+            }
+
+            const masterUrl = masterSource.src;
+            const slaveUrl = slaveSource.src;
+
+            // Intercambiar sources
+            masterSource.src = slaveUrl;
+            slaveSource.src = masterUrl;
+
+            // Recargar videos
+            currentMasterVideo.load();
+            slaveVideoElement.load();
+
+            // Sincronizar timestamps y estado cuando estén listos
+            const onMasterLoaded = function() {
+                // Aplicar estado del slave al nuevo master
+                currentMasterVideo.currentTime = slaveState.currentTime;
+                currentMasterVideo.volume = slaveState.volume;
+                currentMasterVideo.playbackRate = slaveState.playbackRate;
+
+                if (!slaveState.paused) {
+                    currentMasterVideo.play().catch(e => console.warn('Master play failed:', e));
+                }
+
+                currentMasterVideo.removeEventListener('loadedmetadata', onMasterLoaded);
+            };
+
+            const onSlaveLoaded = function() {
+                // Aplicar estado del master al nuevo slave
+                slaveVideoElement.currentTime = masterState.currentTime;
+                slaveVideoElement.volume = masterState.volume;
+                slaveVideoElement.playbackRate = masterState.playbackRate;
+
+                if (!masterState.paused) {
+                    slaveVideoElement.play().catch(e => console.warn('Slave play failed:', e));
+                }
+
+                slaveVideoElement.removeEventListener('loadedmetadata', onSlaveLoaded);
+            };
+
+            currentMasterVideo.addEventListener('loadedmetadata', onMasterLoaded);
+            slaveVideoElement.addEventListener('loadedmetadata', onSlaveLoaded);
+
+            // Actualizar data-video-id del slave para reflejar el cambio
+            slaveCard.attr('data-video-id', currentMasterId);
+
+            // Actualizar variable global videoId al nuevo master
+            videoId = slaveVideoId;
+
+            // Mostrar notificación de feedback
+            showSwapNotification('Ángulo intercambiado');
+
+            console.log(`Swapped master (${currentMasterId}) ↔ slave (${slaveVideoId})`);
+        }
+
+        function showSwapNotification(message) {
+            const notification = $(`
+                <div class="swap-notification">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>${message}</span>
+                </div>
+            `);
+
+            $('body').append(notification);
+
+            setTimeout(() => {
+                notification.fadeOut(400, function() {
+                    $(this).remove();
+                });
+            }, 2500);
+        }
+
+        // Event listener: Click en slave card para swap
+        $(document).on('click', '.slave-video-card', function(e) {
+            // Evitar swap si se clickeó en botones de acción
+            if ($(e.target).closest('.slave-sync-btn, .slave-remove-btn').length) {
+                return;
+            }
+
+            const slaveVideoId = parseInt($(this).attr('data-video-id'));
+            if (!slaveVideoId || isNaN(slaveVideoId)) {
+                console.warn('Invalid slave video ID');
+                return;
+            }
+
+            swapMasterWithSlave(slaveVideoId);
+        });
     }
 
     // Initialize when DOM and jQuery are ready
