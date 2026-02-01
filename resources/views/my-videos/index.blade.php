@@ -21,6 +21,9 @@
             @if($assignedVideos->count() > 0)
                 <div class="row">
                     @foreach($assignedVideos as $assignment)
+                        @if(!$assignment->video)
+                            @continue
+                        @endif
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div class="card video-card h-100">
                                 

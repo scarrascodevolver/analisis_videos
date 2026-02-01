@@ -15,6 +15,7 @@ class MyVideosController extends Controller
         
         // Obtener videos asignados al usuario
         $assignedVideos = VideoAssignment::where('assigned_to', $user->id)
+            ->whereHas('video')
             ->with(['video.category', 'video.rugbySituation', 'video.uploader', 'assignedBy'])
             ->latest()
             ->paginate(12, ['*'], 'assigned');
