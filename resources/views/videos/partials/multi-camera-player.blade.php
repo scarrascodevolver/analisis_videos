@@ -19,7 +19,7 @@
 
 {{-- Template for Slave Video --}}
 <template id="slaveVideoTemplate">
-    <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 1; min-height: 200px;">
+    <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 1; min-height: 150px;">
         {{-- Video Player --}}
         <div style="position: relative; background: #000; height: 100%;">
             <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
@@ -268,11 +268,11 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master 66%, slaves 33% - 75vh (leaves 25vh for timeline)
+            // Create flex container - master 66%, slaves 33% - 70vh (leaves 30vh for timeline + controls)
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: stretch; height: 75vh;"></div>');
-                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: center; height: 75vh;"></div>');
-                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; height: 75vh; display: flex; flex-direction: column;"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: stretch; height: 70vh;"></div>');
+                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: center; justify-content: center; height: 70vh;"></div>');
+                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; height: 70vh; display: flex; flex-direction: column;"></div>');
 
                 // Remove border-radius from video container when in multi-camera
                 mainContainer.css('border-radius', '0');
