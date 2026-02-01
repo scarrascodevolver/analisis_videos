@@ -217,8 +217,18 @@
                     renderAngles(response.angles);
                 }
             },
-            error: function() {
-                showError('Error al cargar ángulos');
+            error: function(xhr) {
+                // Check if master was deleted (404 + should_reload flag)
+                if (xhr.status === 404 && xhr.responseJSON?.should_reload) {
+                    console.log('Master video deleted, reloading page to clear multi-camera UI...');
+                    showError('El video principal fue eliminado. Recargando página...');
+
+                    // Reload page after short delay
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    // Other errors - show message but don't retry infinitely
+                    showError('Error al cargar ángulos de cámara');
+                }
             }
         });
     }
@@ -416,8 +426,13 @@
                                     window.activateMultiCamera(anglesResponse.angles, activeGroupId);
                                 }
                             },
-                            error: function() {
-                                console.error('❌ Failed to fetch angles after association');
+                            error: function(xhr) {
+                                if (xhr.status === 404 && xhr.responseJSON?.should_reload) {
+                                    console.log('Master deleted during association, reloading...');
+                                    setTimeout(() => window.location.reload(), 1000);
+                                } else {
+                                    console.error('❌ Failed to fetch angles after association');
+                                }
                             }
                         });
                     }

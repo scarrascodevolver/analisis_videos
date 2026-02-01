@@ -45,6 +45,31 @@ class MultiCameraController extends Controller
         $master = $group->getMasterVideo();
         $slaves = $group->getSlaveVideos();
 
+        // DEFENSIVE: Check if master still exists (orphaned group cleanup)
+        if (! $master) {
+            Log::warning("Group {$group->id} has no master video (probably deleted). Dissolving orphaned group.");
+
+            // Clean up orphaned group
+            $group->videos()->detach();
+            $group->delete();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Master video no longer exists. Group has been dissolved.',
+                'should_reload' => true, // Signal frontend to reload page
+            ], 404);
+        }
+
+        // DEFENSIVE: Filter out any null slaves (orphaned references)
+        $validSlaves = $slaves->filter(function ($slave) {
+            return $slave !== null;
+        });
+
+        if ($validSlaves->count() !== $slaves->count()) {
+            $orphanedCount = $slaves->count() - $validSlaves->count();
+            Log::warning("Group {$group->id} had {$orphanedCount} orphaned slave reference(s) - filtered out");
+        }
+
         return response()->json([
             'success' => true,
             'current_group_id' => $group->id,
@@ -62,7 +87,7 @@ class MultiCameraController extends Controller
                 'is_synced' => true,
                 'sync_offset' => 0,
             ],
-            'angles' => $slaves->map(function ($slave) {
+            'angles' => $validSlaves->map(function ($slave) {
                 return [
                     'id' => $slave->id,
                     'title' => $slave->title,

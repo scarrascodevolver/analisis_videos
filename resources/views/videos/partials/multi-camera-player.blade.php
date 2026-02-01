@@ -644,6 +644,22 @@
 
                         window.activateMultiCamera(response.angles, activeGroupId);
                     }
+                },
+                error: function(xhr) {
+                    // Check if master was deleted (404 + should_reload flag)
+                    if (xhr.status === 404 && xhr.responseJSON?.should_reload) {
+                        console.log('Master video deleted, reloading page to clear multi-camera UI...');
+
+                        if (typeof showToast === 'function') {
+                            showToast('El video principal fue eliminado. Recargando...', 'warning');
+                        }
+
+                        // Reload page after short delay
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        // Other errors - log but don't block (video page should still work)
+                        console.error('Failed to load multi-camera angles:', xhr.status);
+                    }
                 }
             });
         @endif
