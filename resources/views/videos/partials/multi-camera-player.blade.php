@@ -29,25 +29,25 @@
             </video>
 
             {{-- Floating Header (over video) --}}
-            <div class="d-flex justify-content-between align-items-center" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 6px 10px; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+            <div class="d-flex justify-content-between align-items-center" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 6px 10px; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
                 <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
                     <h6 class="mb-0 slave-angle-name" style="color: #00B7B5; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
                         <i class="fas fa-video" style="font-size: 9px;"></i> <span></span>
                     </h6>
                     {{-- Sync Badge Inline --}}
-                    <span class="slave-sync-badge badge badge-success ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(40, 167, 69, 0.9);">
+                    <span class="slave-sync-badge badge badge-success ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(40, 167, 69, 0.65);">
                         <i class="fas fa-check"></i> <span class="slave-offset-text"></span>
                     </span>
-                    <span class="slave-unsync-badge badge badge-warning ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(255, 193, 7, 0.9);">
+                    <span class="slave-unsync-badge badge badge-warning ml-2" style="display: none; font-size: 8px; padding: 2px 5px; background: rgba(255, 193, 7, 0.65);">
                         <i class="fas fa-exclamation-triangle"></i>
                     </span>
                 </div>
                 {{-- Compact Icon Buttons --}}
                 <div class="ml-2" style="white-space: nowrap;">
-                    <button class="btn btn-sm btn-info slave-sync-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(23, 162, 184, 0.9); border: none;" title="Sincronizar">
+                    <button class="btn btn-sm btn-info slave-sync-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(23, 162, 184, 0.65); border: none;" title="Sincronizar">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger slave-remove-btn ml-1" style="padding: 2px 6px; font-size: 10px; background: rgba(220, 53, 69, 0.9); border: none;" title="Eliminar">
+                    <button class="btn btn-sm btn-danger slave-remove-btn ml-1" style="padding: 2px 6px; font-size: 10px; background: rgba(220, 53, 69, 0.65); border: none;" title="Eliminar">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
