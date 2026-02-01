@@ -182,6 +182,10 @@
             color: #c2c7d0;
         }
 
+        .sidebar {
+            padding-bottom: 12px;
+        }
+
         /* ========================================
            COMPONENTES
            ======================================== */
@@ -559,7 +563,7 @@
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
-            <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-3">
+            <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-2">
                 <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo" class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain;">
                 <img src="{{ asset('favicon.png') }}" alt="{{ $orgName }}" class="brand-logo-mini"
