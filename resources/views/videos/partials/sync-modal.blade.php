@@ -223,9 +223,13 @@
     let currentOffset = 0;
     let masterVideo = null;
     let slaveVideo = null;
+    let currentGroupId = null; // Track group for multi-group support
 
-    window.openSyncModal = function(slaveVideoId) {
+    window.openSyncModal = function(slaveVideoId, groupId = null) {
         currentSlaveVideoId = slaveVideoId;
+        currentGroupId = groupId; // Store group ID
+
+        console.log('Opening sync modal for video', slaveVideoId, 'in group', groupId || 'default');
 
         // Load slave video info
         $.ajax({
@@ -410,7 +414,8 @@
             data: {
                 _token: '{{ csrf_token() }}',
                 sync_offset: currentOffset,
-                reference_event: referenceEvent || null
+                reference_event: referenceEvent || null,
+                group_id: currentGroupId // Pass group ID
             },
             success: function(response) {
                 if (response.success) {
@@ -454,7 +459,8 @@
             url: `/videos/${currentSlaveVideoId}/multi-camera/reset-sync`,
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}'
+                _token: '{{ csrf_token() }}',
+                group_id: currentGroupId // Pass group ID
             },
             success: function(response) {
                 if (response.success) {

@@ -121,7 +121,7 @@
 </template>
 
 <script>
-// Multi-Camera Management JavaScript
+// Multi-Camera Management JavaScript (UPDATED: Multi-Group Support)
 (function() {
     function init() {
         const $ = window.jQuery;
@@ -132,6 +132,35 @@
 
         const videoId = {{ $video->id }};
         const isPartOfGroup = {{ $video->isPartOfGroup() ? 'true' : 'false' }};
+
+        // ═══════════════════════════════════════════════════════════
+        // MULTI-GROUP SUPPORT: Determine active group
+        // ═══════════════════════════════════════════════════════════
+        let activeGroupId = null;
+
+        @php
+            $videoGroups = $video->videoGroups;
+            $masterGroup = $videoGroups->where('pivot.is_master', true)->first();
+            $firstGroup = $videoGroups->first();
+        @endphp
+
+        @if($masterGroup)
+            // Video is master in at least one group - use that group
+            activeGroupId = {{ $masterGroup->id }};
+            console.log('Video is MASTER in group {{ $masterGroup->id }}');
+        @elseif($firstGroup)
+            // Video is slave in all groups - use first group
+            activeGroupId = {{ $firstGroup->id }};
+            console.log('Video is SLAVE, using first group {{ $firstGroup->id }}');
+        @else
+            // Fallback to old system (backward compatibility)
+            activeGroupId = null;
+            console.log('Using old single-group system');
+        @endif
+
+        @if($videoGroups->count() > 1)
+            console.warn('⚠️ Video is in {{ $videoGroups->count() }} groups - showing group ' + activeGroupId);
+        @endif
 
     // Load angles on page load
     if (isPartOfGroup) {
@@ -166,11 +195,25 @@
     });
 
     function loadAngles() {
+        const params = activeGroupId ? { group_id: activeGroupId } : {};
+
         $.ajax({
             url: `/videos/${videoId}/multi-camera/angles`,
             method: 'GET',
+            data: params,
             success: function(response) {
                 if (response.success) {
+                    // Update activeGroupId if returned (new system)
+                    if (response.current_group_id) {
+                        activeGroupId = response.current_group_id;
+                        console.log('Active group:', activeGroupId);
+                    }
+
+                    // Show multi-group indicator if applicable
+                    if (response.groups && response.groups.length > 1) {
+                        console.log('Video is in', response.groups.length, 'groups:', response.groups);
+                    }
+
                     renderAngles(response.angles);
                 }
             },
@@ -237,12 +280,13 @@
     function searchVideos(customQuery = null) {
         const query = customQuery !== null ? customQuery : $('#searchVideoInput').val();
 
+        // UPDATED: No longer exclude videos in groups (multi-group support)
         $.ajax({
             url: '/videos/search-for-angles',
             method: 'GET',
             data: {
-                query: query,
-                exclude_group_id: {!! json_encode($video->video_group_id) !!}
+                query: query
+                // NOTE: exclude_group_id removed to allow videos in multiple groups
             },
             success: function(response) {
                 if (response.success) {
@@ -318,6 +362,13 @@
             }
         }
 
+        // Check maximum angles limit (3 slaves max)
+        const currentSlaveCount = $('.slave-video-card').length;
+        if (currentSlaveCount >= 3) {
+            showError('⚠️ Máximo 3 ángulos permitidos por razones de rendimiento.<br><small>Con más de 3 videos sincronizados, el navegador puede congelarse.</small>');
+            return;
+        }
+
         const btn = $('#confirmAssociateBtn');
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Asociando...');
 
@@ -327,12 +378,19 @@
             data: {
                 _token: '{{ csrf_token() }}',
                 slave_video_id: videoId,
-                camera_angle: cameraAngle
+                camera_angle: cameraAngle,
+                group_id: activeGroupId // Pass active group ID
             },
             success: function(response) {
                 if (response.success) {
                     showSuccess('Ángulo asociado correctamente');
                     $('#associateAngleModal').modal('hide');
+
+                    // Update activeGroupId if returned
+                    if (response.group_id) {
+                        activeGroupId = response.group_id;
+                        console.log('Video associated to group:', activeGroupId);
+                    }
 
                     // Angles are included in response, no need for second request
                     if (response.angles && response.angles.length > 0) {
@@ -340,7 +398,7 @@
 
                         // Activate multi-camera with the angles
                         if (typeof window.activateMultiCamera === 'function') {
-                            window.activateMultiCamera(response.angles);
+                            window.activateMultiCamera(response.angles, activeGroupId);
                         } else {
                             console.error('⚠️ activateMultiCamera function not found');
                         }
@@ -348,12 +406,14 @@
                         console.warn('⚠️ No angles returned in response, trying fallback GET request...');
 
                         // Fallback: fetch angles if not included in response (shouldn't happen)
+                        const params = activeGroupId ? { group_id: activeGroupId } : {};
                         $.ajax({
                             url: `/videos/{{ $video->id }}/multi-camera/angles`,
                             method: 'GET',
+                            data: params,
                             success: function(anglesResponse) {
                                 if (anglesResponse.success && anglesResponse.angles.length > 0) {
-                                    window.activateMultiCamera(anglesResponse.angles);
+                                    window.activateMultiCamera(anglesResponse.angles, activeGroupId);
                                 }
                             },
                             error: function() {
@@ -382,7 +442,10 @@
         $.ajax({
             url: `/videos/${angleId}/multi-camera/remove`,
             method: 'DELETE',
-            data: { _token: '{{ csrf_token() }}' },
+            data: {
+                _token: '{{ csrf_token() }}',
+                group_id: activeGroupId // Pass active group ID
+            },
             success: function(response) {
                 if (response.success) {
                     showSuccess('Ángulo eliminado');

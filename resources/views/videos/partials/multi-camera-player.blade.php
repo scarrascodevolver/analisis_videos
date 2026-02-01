@@ -14,20 +14,14 @@
 
 {{-- Slave Videos Container (Right 30%) --}}
 <div id="slaveVideosContainer" style="display: none;">
-    {{-- Loading Spinner --}}
-    <div id="slaveLoadingSpinner" style="display: none; text-align: center; padding: 40px; color: #00B7B5;">
-        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
-        <p id="slaveLoadingText">Preparando ángulos...</p>
-        <small id="slaveLoadingProgress" class="text-muted" style="display: none;"></small>
-    </div>
     {{-- Will be populated by JavaScript --}}
 </div>
 
 {{-- Template for Slave Video --}}
 <template id="slaveVideoTemplate">
-    <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; flex: 1;">
+    <div class="slave-video-card" data-video-id="" style="background: #000; overflow: hidden; border-bottom: 1px solid #111; min-height: 320px; height: auto; flex: 0 0 auto;">
         {{-- Video Player --}}
-        <div style="position: relative; background: #000; height: 100%;">
+        <div style="position: relative; background: #000; height: 320px;">
             <video class="slave-video" controls style="width: 100%; height: 100%; display: block; object-fit: cover;"
                    preload="metadata"
                    crossorigin="anonymous">
@@ -77,6 +71,7 @@
         let multiMasterVideo = document.getElementById('multiMasterVideo');
         let slaveVideos = [];
         let isMultiCameraActive = false;
+        let activeGroupId = null; // Track active group for multi-group support
 
         // ═══════════════════════════════════════════════════════════
         // OPTIMIZATION 1 & 2: Single Master Listener with AbortController
@@ -235,25 +230,28 @@
             }
         }
 
-        // Public function to activate multi-camera view
-        window.activateMultiCamera = function(angles) {
+        // Public function to activate multi-camera view (UPDATED: Multi-Group Support)
+        window.activateMultiCamera = function(angles, groupId = null) {
             if (!angles || angles.length === 0) {
                 console.log('No angles to display');
                 return;
             }
 
-            isMultiCameraActive = true;
+            activeGroupId = groupId; // Store active group
 
-            // Show multi-camera layout
-            activateSideBySideLayout();
+            // Only activate layout if not already active (prevents multiple wraps)
+            if (!isMultiCameraActive) {
+                console.log('🎬 Activating multi-camera layout for the first time');
+                isMultiCameraActive = true;
+                activateSideBySideLayout();
+            } else {
+                console.log('♻️ Multi-camera already active, only updating slaves');
+            }
 
-            // Show loading spinner
-            $('#slaveLoadingSpinner').show();
-
-            // Render slave videos
+            // Render slave videos (incremental - adds new, removes old, keeps existing)
             renderSlaveVideos(angles);
 
-            console.log('Multi-camera activated with', angles.length, 'angle(s)');
+            console.log('Multi-camera activated with', angles.length, 'angle(s)', groupId ? `in group ${groupId}` : '');
         };
 
         window.deactivateMultiCamera = function() {
@@ -272,9 +270,9 @@
 
             // Create flex container - master 70%, slaves 30% - NO GAPS, CENTERED
             if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: stretch;"></div>');
-                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: center;"></div>');
-                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; max-height: 100vh; display: flex; flex-direction: column;"></div>');
+                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: stretch; height: 100vh;"></div>');
+                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: center; height: 100vh;"></div>');
+                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; height: 100vh; display: flex; flex-direction: column;"></div>');
 
                 // Remove border-radius from video container when in multi-camera
                 mainContainer.css('border-radius', '0');
@@ -300,15 +298,42 @@
 
         function renderSlaveVideos(angles) {
             const container = $('#slaveVideosContainer');
-            const loadingSpinner = $('#slaveLoadingSpinner');
 
-            // Clear previous content (keep spinner)
-            container.find('.slave-video-card').remove();
+            // Get IDs from response
+            const responseIds = angles.map(a => a.id);
 
-            let loadedCount = 0;
+            // Remove slaves that are no longer in the response
+            container.find('.slave-video-card').each(function() {
+                const slaveId = parseInt($(this).attr('data-video-id'));
+                if (!responseIds.includes(slaveId)) {
+                    console.log(`Removing slave ${slaveId} (no longer in group)`);
+                    $(this).remove();
+
+                    // Also remove from slaveVideos array
+                    slaveVideos = slaveVideos.filter(s => s.id !== slaveId);
+                }
+            });
+
+            // Get existing slave video IDs after cleanup
+            const existingSlaveIds = [];
+            container.find('.slave-video-card').each(function() {
+                existingSlaveIds.push(parseInt($(this).attr('data-video-id')));
+            });
+
+            // Count existing slaves
+            let loadedCount = existingSlaveIds.length;
             const totalAngles = angles.length;
 
+            // Only add new angles that don't exist yet
             angles.forEach(angle => {
+                // Skip if this slave already exists
+                if (existingSlaveIds.includes(angle.id)) {
+                    console.log(`Slave ${angle.id} already exists, skipping...`);
+                    return;
+                }
+
+                console.log(`Adding new slave: ${angle.camera_angle} (ID: ${angle.id})`);
+
                 const template = document.getElementById('slaveVideoTemplate').content.cloneNode(true);
                 const card = $(template).find('.slave-video-card');
 
@@ -366,18 +391,8 @@
                                     // Increment counter when buffer is ready
                                     loadedCount++;
 
-                                    // Update progress
-                                    const progressText = document.getElementById('slaveLoadingProgress');
-                                    if (progressText) {
-                                        progressText.style.display = 'block';
-                                        progressText.textContent = `${loadedCount} de ${totalAngles} ángulos listos`;
-                                    }
-
-                                    // Hide spinner when all angles have buffer loaded
+                                    // Setup master sync when all angles have buffer loaded
                                     if (loadedCount === totalAngles) {
-                                        loadingSpinner.fadeOut(300);
-
-                                        // Setup master sync ONCE after all slaves loaded
                                         setupMasterSync();
                                     }
                                 }, { once: true });
@@ -404,25 +419,25 @@
                     }
                 });
 
-                // Sync button
+                // Sync button (UPDATED: Pass group ID)
                 card.find('.slave-sync-btn').on('click', function() {
                     if (typeof window.openSyncModal === 'function') {
-                        window.openSyncModal(angle.id);
+                        window.openSyncModal(angle.id, activeGroupId);
                     } else {
                         alert('Función de sincronización no disponible');
                     }
                 });
 
-                // Remove button
+                // Remove button (UPDATED: Pass group ID context)
                 card.find('.slave-remove-btn').on('click', function() {
-                    removeAngle(angle.id, card);
+                    removeAngle(angle.id, card, activeGroupId);
                 });
 
                 container.append(card);
             });
         }
 
-        function removeAngle(angleId, cardElement) {
+        function removeAngle(angleId, cardElement, groupId = null) {
             if (!confirm('¿Eliminar este ángulo del grupo?')) {
                 return;
             }
@@ -430,7 +445,10 @@
             $.ajax({
                 url: `/videos/${angleId}/multi-camera/remove`,
                 method: 'DELETE',
-                data: { _token: '{{ csrf_token() }}' },
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    group_id: groupId // Pass group ID
+                },
                 success: function(response) {
                     if (response.success) {
                         if (typeof showToast === 'function') {
@@ -464,14 +482,32 @@
             });
         }
 
-        // Load angles on page load if video is part of a group
+        // Load angles on page load if video is part of a group (UPDATED: Multi-Group Support)
         @if($video->isPartOfGroup())
+            @php
+                $masterGroup = $video->videoGroups->where('pivot.is_master', true)->first();
+                $firstGroup = $video->videoGroups->first();
+                $initialGroupId = $masterGroup ? $masterGroup->id : ($firstGroup ? $firstGroup->id : null);
+            @endphp
+
+            @if($initialGroupId)
+                activeGroupId = {{ $initialGroupId }};
+            @endif
+
+            const initialParams = activeGroupId ? { group_id: activeGroupId } : {};
+
             $.ajax({
                 url: `/videos/${videoId}/multi-camera/angles`,
                 method: 'GET',
+                data: initialParams,
                 success: function(response) {
                     if (response.success && response.angles.length > 0) {
-                        window.activateMultiCamera(response.angles);
+                        // Update activeGroupId from response
+                        if (response.current_group_id) {
+                            activeGroupId = response.current_group_id;
+                        }
+
+                        window.activateMultiCamera(response.angles, activeGroupId);
                     }
                 }
             });

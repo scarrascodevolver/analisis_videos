@@ -98,7 +98,7 @@ class Video extends Model
      */
     public function hasRival(): bool
     {
-        return !empty($this->rival_team_name);
+        return ! empty($this->rival_team_name);
     }
 
     public function category()
@@ -137,6 +137,23 @@ class Video extends Model
     }
 
     /**
+     * New many-to-many relationship with VideoGroups
+     * A video can belong to multiple groups simultaneously
+     */
+    public function videoGroups()
+    {
+        return $this->belongsToMany(VideoGroup::class, 'video_group_video')
+            ->withPivot([
+                'is_master',
+                'camera_angle',
+                'sync_offset',
+                'is_synced',
+                'sync_reference_event',
+            ])
+            ->withTimestamps();
+    }
+
+    /**
      * Get total view count for this video
      */
     public function getViewCountAttribute()
@@ -165,8 +182,9 @@ class Video extends Model
             ->get();
 
         // Formatear last_viewed como timestamp Unix (segundos) para evitar problemas de timezone
-        return $stats->map(function($stat) {
+        return $stats->map(function ($stat) {
             $stat->last_viewed_timestamp = strtotime($stat->last_viewed);
+
             return $stat;
         });
     }
@@ -183,7 +201,7 @@ class Video extends Model
 
     public function scopeByRugbyCategory($query, $rugbyCategory)
     {
-        return $query->whereHas('rugbySituation', function($q) use ($rugbyCategory) {
+        return $query->whereHas('rugbySituation', function ($q) use ($rugbyCategory) {
             $q->where('category', $rugbyCategory);
         });
     }
@@ -193,9 +211,9 @@ class Video extends Model
      */
     public function scopeByTeamName($query, $teamName)
     {
-        return $query->where(function($q) use ($teamName) {
+        return $query->where(function ($q) use ($teamName) {
             $q->where('analyzed_team_name', 'LIKE', "%{$teamName}%")
-              ->orWhere('rival_team_name', 'LIKE', "%{$teamName}%");
+                ->orWhere('rival_team_name', 'LIKE', "%{$teamName}%");
         });
     }
 
@@ -215,19 +233,19 @@ class Video extends Model
             $userPosition = $user->profile?->position;
             $playerCategory = $this->getPlayerCategory($userPosition);
 
-            return $query->where(function($q) use ($user, $userCategoryId, $playerCategory) {
+            return $query->where(function ($q) use ($user, $userCategoryId, $playerCategory) {
                 // Solo videos de la misma categoría del usuario (o si no tiene categoría, ve todos los públicos)
                 if ($userCategoryId) {
                     $q->where('category_id', $userCategoryId);
                 }
 
                 // Además debe cumplir con el tipo de visibilidad
-                $q->where(function($visQ) use ($user, $playerCategory) {
+                $q->where(function ($visQ) use ($user, $playerCategory) {
                     $visQ->where('visibility_type', 'public')
-                         ->orWhere('visibility_type', $playerCategory)
-                         ->orWhereHas('assignments', function($assignQ) use ($user) {
-                             $assignQ->where('assigned_to', $user->id);
-                         });
+                        ->orWhere('visibility_type', $playerCategory)
+                        ->orWhereHas('assignments', function ($assignQ) use ($user) {
+                            $assignQ->where('assigned_to', $user->id);
+                        });
                 });
             });
         }
@@ -264,16 +282,16 @@ class Video extends Model
             $userPosition = $user->profile?->position;
             $playerCategory = $this->getPlayerCategory($userPosition);
 
-            return $query->where(function($q) use ($user, $userCategoryId, $playerCategory) {
+            return $query->where(function ($q) use ($userCategoryId, $playerCategory) {
                 // Solo videos de la misma categoría del usuario
                 if ($userCategoryId) {
                     $q->where('category_id', $userCategoryId);
                 }
 
                 // SOLO tipos de visibilidad pública y por posición - NO incluir 'specific'
-                $q->where(function($visQ) use ($playerCategory) {
+                $q->where(function ($visQ) use ($playerCategory) {
                     $visQ->where('visibility_type', 'public')
-                         ->orWhere('visibility_type', $playerCategory);
+                        ->orWhere('visibility_type', $playerCategory);
                 });
             });
         }
@@ -286,7 +304,7 @@ class Video extends Model
      */
     public function scopeMyAssignedVideos($query, $user)
     {
-        return $query->whereHas('assignments', function($assignQ) use ($user) {
+        return $query->whereHas('assignments', function ($assignQ) use ($user) {
             $assignQ->where('assigned_to', $user->id);
         });
     }
@@ -321,47 +339,153 @@ class Video extends Model
     /**
      * ==========================================
      * Multi-Camera / Multi-Angle Methods
+     * REFACTORED: Now supports multiple groups per video
      * ==========================================
      */
 
     /**
-     * Check if this video is part of a multi-camera group
+     * Check if this video is part of ANY multi-camera group
      */
     public function isPartOfGroup(): bool
     {
-        return !is_null($this->video_group_id);
+        // New system: check if has any groups
+        if ($this->videoGroups()->exists()) {
+            return true;
+        }
+
+        // Fallback: old system (backward compatibility)
+        return ! is_null($this->video_group_id);
     }
 
     /**
-     * Check if this video is the master of its group
+     * Check if this video is the master in ANY group or a specific group
+     *
+     * @param  int|null  $groupId  Specific group to check, null checks all groups
      */
-    public function isMaster(): bool
+    public function isMaster(?int $groupId = null): bool
     {
+        // New system
+        if ($groupId) {
+            return $this->videoGroups()
+                ->where('video_groups.id', $groupId)
+                ->wherePivot('is_master', true)
+                ->exists();
+        }
+
+        // Check if master in any group (new system)
+        if ($this->videoGroups()->wherePivot('is_master', true)->exists()) {
+            return true;
+        }
+
+        // Fallback: old system
         return $this->is_master === true;
     }
 
     /**
-     * Check if this video is a slave (secondary angle)
+     * Check if this video is a slave in ANY group or a specific group
+     *
+     * @param  int|null  $groupId  Specific group to check, null checks all groups
      */
-    public function isSlave(): bool
+    public function isSlave(?int $groupId = null): bool
     {
-        return $this->isPartOfGroup() && !$this->isMaster();
+        if ($groupId) {
+            return $this->videoGroups()
+                ->where('video_groups.id', $groupId)
+                ->wherePivot('is_master', false)
+                ->exists();
+        }
+
+        // Check if slave in any group (new system)
+        if ($this->videoGroups()->wherePivot('is_master', false)->exists()) {
+            return true;
+        }
+
+        // Fallback: old system
+        return $this->isPartOfGroup() && ! $this->isMaster();
     }
 
     /**
-     * Check if this video has been synced with the master
+     * Get all groups this video belongs to
      */
-    public function isSynced(): bool
+    public function getGroups()
     {
-        return $this->is_synced === true && !is_null($this->sync_offset);
+        return $this->videoGroups()->get();
+    }
+
+    /**
+     * Check if video is in a specific group
+     */
+    public function isInGroup(int $groupId): bool
+    {
+        return $this->videoGroups()->where('video_groups.id', $groupId)->exists();
+    }
+
+    /**
+     * Check if video is master in a specific group
+     */
+    public function isMasterInGroup(int $groupId): bool
+    {
+        return $this->videoGroups()
+            ->where('video_groups.id', $groupId)
+            ->wherePivot('is_master', true)
+            ->exists();
+    }
+
+    /**
+     * Check if this video has been synced with the master in a specific group
+     *
+     * @param  int|null  $groupId  Specific group to check, null checks any group
+     */
+    public function isSynced(?int $groupId = null): bool
+    {
+        // New system
+        if ($groupId) {
+            $pivot = $this->videoGroups()
+                ->where('video_groups.id', $groupId)
+                ->first();
+
+            if ($pivot) {
+                return $pivot->pivot->is_synced === true && ! is_null($pivot->pivot->sync_offset);
+            }
+        }
+
+        // Check if synced in any group (new system)
+        $syncedGroup = $this->videoGroups()
+            ->wherePivot('is_synced', true)
+            ->whereNotNull('sync_offset')
+            ->first();
+
+        if ($syncedGroup) {
+            return true;
+        }
+
+        // Fallback: old system
+        return $this->is_synced === true && ! is_null($this->sync_offset);
     }
 
     /**
      * Get all videos in the same group (including this one)
+     *
+     * @param  int|null  $groupId  Specific group ID, if null uses first group or old system
      */
-    public function groupVideos()
+    public function groupVideos(?int $groupId = null)
     {
-        if (!$this->isPartOfGroup()) {
+        // New system
+        if ($groupId) {
+            $group = VideoGroup::find($groupId);
+            if ($group) {
+                return $group->videos;
+            }
+        }
+
+        // Try to get first group (new system)
+        $firstGroup = $this->videoGroups()->first();
+        if ($firstGroup) {
+            return $firstGroup->videos;
+        }
+
+        // Fallback: old system
+        if (! $this->isPartOfGroup()) {
             return collect([$this]);
         }
 
@@ -372,15 +496,32 @@ class Video extends Model
     }
 
     /**
-     * Get the master video of this group
+     * Get the master video of a specific group
+     *
+     * @param  int|null  $groupId  Specific group ID, if null uses first group or old system
      */
-    public function getMasterVideo()
+    public function getMasterVideo(?int $groupId = null)
     {
+        // New system
+        if ($groupId) {
+            $group = VideoGroup::find($groupId);
+            if ($group) {
+                return $group->getMasterVideo();
+            }
+        }
+
+        // Try to get master from first group (new system)
+        $firstGroup = $this->videoGroups()->first();
+        if ($firstGroup) {
+            return $firstGroup->getMasterVideo();
+        }
+
+        // Fallback: old system
         if ($this->isMaster()) {
             return $this;
         }
 
-        if (!$this->isPartOfGroup()) {
+        if (! $this->isPartOfGroup()) {
             return null;
         }
 
@@ -390,11 +531,28 @@ class Video extends Model
     }
 
     /**
-     * Get all slave videos (secondary angles) of this group
+     * Get all slave videos (secondary angles) of a specific group
+     *
+     * @param  int|null  $groupId  Specific group ID, if null uses first group or old system
      */
-    public function getSlaveVideos()
+    public function getSlaveVideos(?int $groupId = null)
     {
-        if (!$this->isPartOfGroup()) {
+        // New system
+        if ($groupId) {
+            $group = VideoGroup::find($groupId);
+            if ($group) {
+                return $group->getSlaveVideos();
+            }
+        }
+
+        // Try to get slaves from first group (new system)
+        $firstGroup = $this->videoGroups()->first();
+        if ($firstGroup) {
+            return $firstGroup->getSlaveVideos();
+        }
+
+        // Fallback: old system
+        if (! $this->isPartOfGroup()) {
             return collect();
         }
 
@@ -405,65 +563,157 @@ class Video extends Model
     }
 
     /**
-     * Get only synced slave videos
+     * Get only synced slave videos of a specific group
      */
-    public function getSyncedSlaveVideos()
+    public function getSyncedSlaveVideos(?int $groupId = null)
     {
-        return $this->getSlaveVideos()->filter(function ($video) {
-            return $video->isSynced();
+        return $this->getSlaveVideos($groupId)->filter(function ($video) use ($groupId) {
+            return $video->isSynced($groupId);
         });
     }
 
     /**
-     * Get only unsynced slave videos
+     * Get only unsynced slave videos of a specific group
      */
-    public function getUnsyncedSlaveVideos()
+    public function getUnsyncedSlaveVideos(?int $groupId = null)
     {
-        return $this->getSlaveVideos()->filter(function ($video) {
-            return !$video->isSynced();
+        return $this->getSlaveVideos($groupId)->filter(function ($video) use ($groupId) {
+            return ! $video->isSynced($groupId);
         });
     }
 
     /**
-     * Generate a unique group ID for multi-camera videos
+     * Generate a unique group ID for multi-camera videos (DEPRECATED - kept for old system)
      */
     public static function generateGroupId(): string
     {
-        return 'group_' . time() . '_' . uniqid();
+        return 'group_'.time().'_'.uniqid();
     }
 
     /**
-     * Associate this video as a slave to a master video
+     * Associate this video as a slave to a master video in a specific group
+     *
+     * @param  Video  $masterVideo  The master video
+     * @param  string  $cameraAngle  Camera angle name
+     * @param  int|null  $groupId  Specific group ID, if null creates/uses first group
      */
-    public function associateToMaster(Video $masterVideo, string $cameraAngle): bool
+    public function associateToMaster(Video $masterVideo, string $cameraAngle, ?int $groupId = null): bool
     {
-        \Log::info("associateToMaster() - Master ID: {$masterVideo->id}, is_master: " . var_export($masterVideo->is_master, true) . ", isMaster(): " . var_export($masterVideo->isMaster(), true));
+        \Log::info("associateToMaster() - Master ID: {$masterVideo->id}, Slave ID: {$this->id}, Group ID: {$groupId}, Angle: {$cameraAngle}");
 
-        if (!$masterVideo->isMaster()) {
-            \Log::error("associateToMaster() FAILED - master video isMaster() returned false");
-            return false;
+        // NEW SYSTEM: Use VideoGroup
+        if ($groupId) {
+            $group = VideoGroup::find($groupId);
+            if (! $group) {
+                \Log::error("associateToMaster() FAILED - group {$groupId} not found");
+
+                return false;
+            }
+        } else {
+            // Get master's first group or create new one
+            $group = $masterVideo->videoGroups()->first();
+
+            if (! $group) {
+                // Create new group for master
+                $group = VideoGroup::create([
+                    'name' => null,
+                    'organization_id' => $masterVideo->organization_id,
+                ]);
+
+                // Attach master to group
+                $group->videos()->attach($masterVideo->id, [
+                    'is_master' => true,
+                    'camera_angle' => 'Master / Tribuna Central',
+                    'is_synced' => true,
+                    'sync_offset' => 0,
+                ]);
+
+                \Log::info("Created new group {$group->id} for master video {$masterVideo->id}");
+            }
         }
 
-        \Log::info("associateToMaster() - Updating slave video {$this->id} with group_id: {$masterVideo->video_group_id}, camera_angle: {$cameraAngle}");
+        // Check if this video is already in the group
+        if ($this->isInGroup($group->id)) {
+            \Log::warning("Video {$this->id} is already in group {$group->id}");
+            // Update existing association
+            $this->videoGroups()->updateExistingPivot($group->id, [
+                'is_master' => false,
+                'camera_angle' => $cameraAngle,
+                'is_synced' => false,
+                'sync_offset' => null,
+            ]);
+        } else {
+            // Attach slave to group
+            $this->videoGroups()->attach($group->id, [
+                'is_master' => false,
+                'camera_angle' => $cameraAngle,
+                'is_synced' => false,
+                'sync_offset' => null,
+            ]);
+        }
 
-        $this->update([
-            'video_group_id' => $masterVideo->video_group_id,
-            'is_master' => false,
-            'camera_angle' => $cameraAngle,
-            'is_synced' => false,
-            'sync_offset' => null,
-        ]);
+        \Log::info("associateToMaster() SUCCESS - Slave video {$this->id} associated to group {$group->id}");
 
-        \Log::info("associateToMaster() SUCCESS - Slave video {$this->id} associated to group {$this->video_group_id}");
+        // FALLBACK: Also update old system columns for backward compatibility
+        if (is_null($this->video_group_id)) {
+            $legacyGroupId = $masterVideo->video_group_id ?? Video::generateGroupId();
+            $this->update([
+                'video_group_id' => $legacyGroupId,
+                'is_master' => false,
+                'camera_angle' => $cameraAngle,
+            ]);
+        }
+
         return true;
     }
 
     /**
-     * Sync this slave video with the master
+     * Sync this slave video with the master in a specific group
+     *
+     * @param  float  $offset  Sync offset in seconds
+     * @param  string|null  $referenceEvent  Reference event description
+     * @param  int|null  $groupId  Specific group ID, if null uses first group
      */
-    public function syncWithMaster(float $offset, ?string $referenceEvent = null): bool
+    public function syncWithMaster(float $offset, ?string $referenceEvent = null, ?int $groupId = null): bool
     {
-        if (!$this->isSlave()) {
+        \Log::info("syncWithMaster() - Video ID: {$this->id}, Group ID: {$groupId}, Offset: {$offset}");
+
+        // NEW SYSTEM
+        if ($groupId) {
+            if (! $this->isInGroup($groupId)) {
+                \Log::error("syncWithMaster() FAILED - video {$this->id} not in group {$groupId}");
+
+                return false;
+            }
+
+            $this->videoGroups()->updateExistingPivot($groupId, [
+                'sync_offset' => $offset,
+                'is_synced' => true,
+                'sync_reference_event' => $referenceEvent,
+            ]);
+
+            \Log::info("syncWithMaster() SUCCESS - Video {$this->id} synced in group {$groupId}");
+
+            // FALLBACK: Also update old system
+            if ($this->video_group_id) {
+                $this->update([
+                    'sync_offset' => $offset,
+                    'is_synced' => true,
+                    'sync_reference_event' => $referenceEvent,
+                ]);
+            }
+
+            return true;
+        }
+
+        // Fallback to first group or old system
+        $firstGroup = $this->videoGroups()->first();
+        if ($firstGroup) {
+            return $this->syncWithMaster($offset, $referenceEvent, $firstGroup->id);
+        }
+
+        // OLD SYSTEM fallback
+        if (! $this->isSlave()) {
             return false;
         }
 
@@ -477,10 +727,44 @@ class Video extends Model
     }
 
     /**
-     * Remove this video from its group
+     * Remove this video from a specific group (or all groups if null)
+     *
+     * @param  int|null  $groupId  Specific group to remove from, null removes from all
      */
-    public function removeFromGroup(): bool
+    public function removeFromGroup(?int $groupId = null): bool
     {
+        \Log::info("removeFromGroup() - Video ID: {$this->id}, Group ID: ".($groupId ?? 'all'));
+
+        // NEW SYSTEM
+        if ($groupId) {
+            if (! $this->isInGroup($groupId)) {
+                \Log::warning("Video {$this->id} not in group {$groupId}");
+
+                return false;
+            }
+
+            $this->videoGroups()->detach($groupId);
+            \Log::info("Video {$this->id} removed from group {$groupId}");
+
+            // If this was the last group, reset old system columns
+            if ($this->videoGroups()->count() === 0) {
+                $this->update([
+                    'video_group_id' => null,
+                    'is_master' => true,
+                    'camera_angle' => null,
+                    'sync_offset' => null,
+                    'is_synced' => false,
+                    'sync_reference_event' => null,
+                ]);
+            }
+
+            return true;
+        }
+
+        // Remove from all groups
+        $this->videoGroups()->detach();
+
+        // OLD SYSTEM fallback
         $this->update([
             'video_group_id' => null,
             'is_master' => true,
@@ -489,6 +773,8 @@ class Video extends Model
             'is_synced' => false,
             'sync_reference_event' => null,
         ]);
+
+        \Log::info("Video {$this->id} removed from all groups");
 
         return true;
     }
@@ -512,7 +798,7 @@ class Video extends Model
             'pilar_izquierdo', 'hooker', 'pilar_derecho',
             'segunda_linea_4', 'segunda_linea_5',
             'ala_ciega', 'ala_abierta', 'octavo',
-            'ala_izquierdo_forward', 'ala_derecho_forward'
+            'ala_izquierdo_forward', 'ala_derecho_forward',
         ];
 
         // Verificar si la posición es Forward
