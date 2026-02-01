@@ -21,6 +21,16 @@
 /* Limita el alto del master cuando está en layout multi-cámara (contenedor de 60vh) */
 .multi-camera-layout .video-container > video {
     max-height: 60vh !important;
+    width: auto !important;      /* evita que el ancho fuerce un alto mayor al permitido */
+    max-width: 100%;
+}
+
+/* Centra y ajusta el master dentro del contenedor multi-cámara */
+.multi-camera-layout .video-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 @keyframes fadeIn {
