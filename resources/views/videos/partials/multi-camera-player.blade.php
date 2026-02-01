@@ -345,10 +345,7 @@
 
                     console.log('🔓 Master desbloqueado - todos los slaves listos');
 
-                    // Show toast notification
-                    if (typeof showToast === 'function') {
-                        showToast('✅ Listo para reproducir', 'success');
-                    }
+                    // Toast removed per UX preference
                 }, 500);
             }
         }
