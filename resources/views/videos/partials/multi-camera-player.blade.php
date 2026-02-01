@@ -690,21 +690,27 @@
                 playbackRate: slaveVideoElement.playbackRate
             };
 
-            // Obtener URLs
+            // Obtener URLs (master usa <source>, slaves usan src directo)
             const masterSource = currentMasterVideo.querySelector('source');
-            const slaveSource = slaveVideoElement.querySelector('source');
+            const masterUrl = masterSource ? masterSource.src : currentMasterVideo.src;
+            const slaveUrl = slaveVideoElement.src; // Slaves usan src directo
 
-            if (!masterSource || !slaveSource) {
-                console.error('Video sources not found');
+            if (!masterUrl || !slaveUrl) {
+                console.error('Video URLs not found', {masterUrl, slaveUrl});
                 return;
             }
 
-            const masterUrl = masterSource.src;
-            const slaveUrl = slaveSource.src;
-
             // Intercambiar sources
-            masterSource.src = slaveUrl;
-            slaveSource.src = masterUrl;
+            if (masterSource) {
+                // Master tiene <source>, intercambiamos via <source>
+                masterSource.src = slaveUrl;
+            } else {
+                // Master usa src directo
+                currentMasterVideo.src = slaveUrl;
+            }
+
+            // Slave siempre usa src directo
+            slaveVideoElement.src = masterUrl;
 
             // Recargar videos
             currentMasterVideo.load();
