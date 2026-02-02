@@ -608,11 +608,14 @@ $(document).ready(function() {
                 console.log('Retrying part', partNumber, '(attempt', retryCount[partNumber], 'of', maxRetries + ')');
                 $('#uploadStatus').html('<i class="fas fa-redo text-warning"></i> Reintentando parte ' + partNumber + ' (intento ' + retryCount[partNumber] + ')...');
 
-                // Wait 2 seconds before retrying
+                // Exponential backoff: 1s, 2s, 4s (max 16s)
+                var delay = Math.min(1000 * Math.pow(2, retryCount[partNumber] - 1), 16000);
+                console.log('Waiting', delay, 'ms before retry');
+
                 setTimeout(function() {
                     currentPart--; // Reset counter to retry this part
                     uploadNextPart();
-                }, 2000);
+                }, delay);
             } else {
                 hasError = true;
                 console.error('Max retries exceeded for part', partNumber);
@@ -785,42 +788,64 @@ $(document).ready(function() {
             confirmData['assigned_players'] = assignedPlayers;
         }
 
-        $.ajax({
-            url: '{{ route("api.upload.multipart.complete") }}',
-            method: 'POST',
-            timeout: 60000, // 60 seconds timeout for completion
-            data: confirmData,
-            success: function(response) {
-                if (response.success) {
-                    $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)');
-                    $('#progressText').text('¡Completado!');
+        // Retry wrapper with exponential backoff
+        function attemptComplete(attemptNumber) {
+            var maxAttempts = 3;
 
-                    var successMsg = '<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong>';
-                    successMsg += '<br><small class="text-muted">El video se está optimizando en segundo plano.</small>';
+            console.log('Attempting to complete multipart upload (attempt', attemptNumber, 'of', maxAttempts + ')');
 
-                    if (response.xml_import) {
-                        successMsg += '<br><small class="text-success"><i class="fas fa-file-code"></i> ';
-                        successMsg += response.xml_import.clips_created + ' clips importados';
-                        if (response.xml_import.categories_created > 0) {
-                            successMsg += ', ' + response.xml_import.categories_created + ' categorías creadas';
+            $.ajax({
+                url: '{{ route("api.upload.multipart.complete") }}',
+                method: 'POST',
+                timeout: 300000, // 5 minutes timeout for completion (increased from 60s)
+                data: confirmData,
+                success: function(response) {
+                    if (response.success) {
+                        $('#progressBar').css('background-color', 'var(--color-accent, #4B9DA9)');
+                        $('#progressText').text('¡Completado!');
+
+                        var successMsg = '<i class="fas fa-check-double text-success"></i> <strong>¡Video subido exitosamente!</strong>';
+                        successMsg += '<br><small class="text-muted">El video se está optimizando en segundo plano.</small>';
+
+                        if (response.xml_import) {
+                            successMsg += '<br><small class="text-success"><i class="fas fa-file-code"></i> ';
+                            successMsg += response.xml_import.clips_created + ' clips importados';
+                            if (response.xml_import.categories_created > 0) {
+                                successMsg += ', ' + response.xml_import.categories_created + ' categorías creadas';
+                            }
+                            successMsg += '</small>';
                         }
-                        successMsg += '</small>';
+
+                        $('#uploadStatus').html(successMsg);
+
+                        setTimeout(function() {
+                            window.location.href = response.redirect || '/videos';
+                        }, 2500);
+                    } else {
+                        showError('Error finalizando video: ' + response.message);
                     }
+                },
+                error: function(xhr) {
+                    console.error('Complete multipart error (attempt ' + attemptNumber + '):', xhr);
 
-                    $('#uploadStatus').html(successMsg);
+                    // Retry with exponential backoff if not max attempts
+                    if (attemptNumber < maxAttempts) {
+                        var delay = 2000 * Math.pow(2, attemptNumber - 1); // 2s, 4s, 8s
+                        console.log('Retrying complete in', delay, 'ms...');
+                        $('#uploadStatus').html('<i class="fas fa-redo text-warning"></i> Reintentando finalización (intento ' + (attemptNumber + 1) + ')...');
 
-                    setTimeout(function() {
-                        window.location.href = response.redirect || '/videos';
-                    }, 2500);
-                } else {
-                    showError('Error finalizando video: ' + response.message);
+                        setTimeout(function() {
+                            attemptComplete(attemptNumber + 1);
+                        }, delay);
+                    } else {
+                        showError('Error finalizando upload después de ' + maxAttempts + ' intentos: ' + (xhr.responseJSON?.message || 'Error de conexión'));
+                    }
                 }
-            },
-            error: function(xhr) {
-                console.error('Complete multipart error:', xhr);
-                showError('Error finalizando upload: ' + (xhr.responseJSON?.message || 'Error de conexión'));
-            }
-        });
+            });
+        }
+
+        // Start first attempt
+        attemptComplete(1);
     }
 
     function uploadToSpaces(presignedUrl, uploadId, file, formData) {

@@ -439,6 +439,55 @@ class DirectUploadController extends Controller
     }
 
     /**
+     * Helper: Complete multipart upload with retry and exponential backoff
+     */
+    private function completeMultipartWithRetry($client, array $params, int $maxAttempts = 3)
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                Log::info("Attempting to complete multipart upload (attempt {$attempt}/{$maxAttempts})", [
+                    'upload_id' => $params['UploadId'],
+                    'key' => $params['Key'],
+                    'parts_count' => count($params['MultipartUpload']['Parts']),
+                ]);
+
+                $result = $client->completeMultipartUpload($params);
+
+                Log::info("Multipart upload completed successfully on attempt {$attempt}", [
+                    'upload_id' => $params['UploadId'],
+                    'location' => $result['Location'] ?? 'unknown',
+                ]);
+
+                return $result;
+
+            } catch (\Exception $e) {
+                $lastException = $e;
+                Log::warning("Complete multipart attempt {$attempt} failed: {$e->getMessage()}", [
+                    'upload_id' => $params['UploadId'],
+                    'error_code' => $e->getCode(),
+                    'error_type' => get_class($e),
+                ]);
+
+                if ($attempt < $maxAttempts) {
+                    // Exponential backoff: 1s, 2s, 4s
+                    $delay = 1000000 * pow(2, $attempt - 1); // microseconds
+                    Log::info("Waiting {$delay}μs before retry {$attempt}...");
+                    usleep($delay);
+                } else {
+                    Log::error("Failed to complete multipart upload after {$maxAttempts} attempts", [
+                        'upload_id' => $params['UploadId'],
+                        'final_error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        throw $lastException;
+    }
+
+    /**
      * Complete multipart upload
      */
     public function completeMultipartUpload(Request $request)
@@ -499,24 +548,37 @@ class DirectUploadController extends Controller
                     'upload_id' => $request->upload_id,
                 ]);
 
-                // List all uploaded parts to get their ETags
-                $listResult = $client->listParts([
-                    'Bucket' => config('filesystems.disks.spaces.bucket'),
-                    'Key' => $uploadInfo['key'],
-                    'UploadId' => $uploadInfo['s3_upload_id'],
-                ]);
+                try {
+                    // List all uploaded parts to get their ETags
+                    $listResult = $client->listParts([
+                        'Bucket' => config('filesystems.disks.spaces.bucket'),
+                        'Key' => $uploadInfo['key'],
+                        'UploadId' => $uploadInfo['s3_upload_id'],
+                    ]);
 
-                $parts = [];
-                foreach ($listResult['Parts'] as $part) {
-                    $parts[] = [
-                        'PartNumber' => $part['PartNumber'],
-                        'ETag' => $part['ETag'],
-                    ];
+                    $parts = [];
+                    foreach ($listResult['Parts'] as $part) {
+                        $parts[] = [
+                            'PartNumber' => $part['PartNumber'],
+                            'ETag' => $part['ETag'],
+                        ];
+                    }
+
+                    Log::info('Retrieved {count} parts from Spaces', [
+                        'count' => count($parts),
+                    ]);
+
+                } catch (\Exception $e) {
+                    Log::error('Failed to list parts from S3: '.$e->getMessage(), [
+                        'upload_id' => $request->upload_id,
+                        'error_type' => get_class($e),
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error obteniendo partes del servidor: '.$e->getMessage(),
+                    ], 500);
                 }
-
-                Log::info('Retrieved {count} parts from Spaces', [
-                    'count' => count($parts),
-                ]);
             }
 
             // CRITICAL VALIDATION: Ensure ALL expected parts are present
@@ -569,8 +631,8 @@ class DirectUploadController extends Controller
                 'parts_count' => count($parts),
             ]);
 
-            // Complete the multipart upload
-            $result = $client->completeMultipartUpload([
+            // Complete the multipart upload with retry and exponential backoff
+            $result = $this->completeMultipartWithRetry($client, [
                 'Bucket' => config('filesystems.disks.spaces.bucket'),
                 'Key' => $uploadInfo['key'],
                 'UploadId' => $uploadInfo['s3_upload_id'],
@@ -579,7 +641,7 @@ class DirectUploadController extends Controller
                 ],
             ]);
 
-            Log::info('Multipart upload completed on Spaces', [
+            Log::info('Multipart upload completed successfully', [
                 'upload_id' => $request->upload_id,
                 'key' => $uploadInfo['key'],
                 'parts_count' => count($parts),
