@@ -522,7 +522,7 @@ $(document).ready(function() {
     }
 
     function uploadMultipart(file, formData) {
-        var chunkSize = 50 * 1024 * 1024; // 50MB chunks (optimized for slow connections)
+        var chunkSize = 100 * 1024 * 1024; // 100MB chunks (increased from 50MB for better throughput)
         var totalParts = Math.ceil(file.size / chunkSize);
 
         $('#uploadStatus').html('<i class="fas fa-spinner fa-spin"></i> Preparando subida multipart (' + totalParts + ' partes)...');
@@ -557,7 +557,7 @@ $(document).ready(function() {
     function uploadPartsInParallel(file, formData, uploadId, s3UploadId, chunkSize, totalParts) {
         var completedParts = [];
         var uploadedBytes = 0;
-        var maxConcurrent = 2; // Upload 2 parts at a time (optimized for multiple simultaneous uploads)
+        var maxConcurrent = 10; // ✅ Increased from 2 to 10 for faster uploads (5x parallelization)
         var hasError = false;
         var maxRetries = 3; // Retry failed parts up to 3 times
         var retryCount = {}; // Track retries per part
