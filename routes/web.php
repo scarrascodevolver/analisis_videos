@@ -10,6 +10,7 @@ use App\Http\Controllers\JugadasController;
 use App\Http\Controllers\MultiCameraController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PlayerApiController;
+use App\Http\Controllers\RivalTeamController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\VideoController;
@@ -127,6 +128,9 @@ Route::middleware(['auth'])->group(function () {
     // Clip Categories API
     Route::get('api/clip-categories', [ClipCategoryController::class, 'apiIndex'])->name('api.clip-categories.index');
 
+    // Rival Teams API (for autocomplete in video upload)
+    Route::get('api/rival-teams/autocomplete', [RivalTeamController::class, 'autocomplete'])->name('api.rival-teams.autocomplete');
+
     // Video Clips CRUD Routes
     Route::prefix('videos/{video}/clips')->name('videos.clips.')->group(function () {
         Route::get('/', [VideoClipController::class, 'index'])->name('index');
@@ -195,6 +199,9 @@ Route::middleware(['auth'])->group(function () {
         // Gestión de Situaciones de Rugby
         Route::resource('situations', App\Http\Controllers\RugbySituationController::class);
         Route::post('situations/reorder', [App\Http\Controllers\RugbySituationController::class, 'reorder'])->name('situations.reorder');
+
+        // Gestión de Equipos Rivales
+        Route::resource('rival-teams', RivalTeamController::class);
 
         // Gestión de Usuarios
         Route::resource('users', App\Http\Controllers\UserManagementController::class);

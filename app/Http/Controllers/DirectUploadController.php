@@ -128,7 +128,8 @@ class DirectUploadController extends Controller
             'upload_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'rival_team_name' => 'nullable|string|max:255',
+            'rival_team_id' => 'nullable|string|max:255', // Can be numeric ID or "new:RivalName"
+            'rival_team_name' => 'nullable|string|max:255', // Fallback
             'category_id' => 'required|exists:categories,id',
             'division' => 'nullable|in:primera,intermedia,unica',
             'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -171,6 +172,9 @@ class DirectUploadController extends Controller
             // Ensure ACL is public-read (fallback in case client header didn't work)
             $this->ensurePublicAcl($uploadInfo['key']);
 
+            // Process rival_team_id (can be numeric ID or "new:RivalName")
+            [$rivalTeamId, $rivalTeamName] = $this->processRivalTeamId($request);
+
             $video = Video::create([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -181,7 +185,8 @@ class DirectUploadController extends Controller
                 'mime_type' => $uploadInfo['content_type'],
                 'uploaded_by' => auth()->id(),
                 'analyzed_team_name' => $uploadInfo['org_name'], // Nombre de la organización
-                'rival_team_name' => $request->rival_team_name,
+                'rival_team_id' => $rivalTeamId,
+                'rival_team_name' => $rivalTeamName,
                 'category_id' => $request->category_id,
                 'division' => $request->division,
                 'rugby_situation_id' => $request->rugby_situation_id,
@@ -508,7 +513,8 @@ class DirectUploadController extends Controller
             'parts.*.ETag' => 'string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'rival_team_name' => 'nullable|string|max:255',
+            'rival_team_id' => 'nullable|string|max:255', // Can be numeric ID or "new:RivalName"
+            'rival_team_name' => 'nullable|string|max:255', // Fallback
             'category_id' => 'required|exists:categories,id',
             'division' => 'nullable|in:primera,intermedia,unica',
             'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -663,6 +669,9 @@ class DirectUploadController extends Controller
             // Ensure ACL is public-read
             $this->ensurePublicAcl($uploadInfo['key']);
 
+            // Process rival_team_id (can be numeric ID or "new:RivalName")
+            [$rivalTeamId, $rivalTeamName] = $this->processRivalTeamId($request);
+
             // Create video record
             $video = Video::create([
                 'title' => $request->title,
@@ -674,7 +683,8 @@ class DirectUploadController extends Controller
                 'mime_type' => $uploadInfo['content_type'],
                 'uploaded_by' => auth()->id(),
                 'analyzed_team_name' => $uploadInfo['org_name'],
-                'rival_team_name' => $request->rival_team_name,
+                'rival_team_id' => $rivalTeamId,
+                'rival_team_name' => $rivalTeamName,
                 'category_id' => $request->category_id,
                 'division' => $request->division,
                 'rugby_situation_id' => $request->rugby_situation_id,
@@ -926,5 +936,57 @@ class DirectUploadController extends Controller
                 }
                 break;
         }
+    }
+
+    /**
+     * Process rival_team_id from request
+     * Handles three cases:
+     * 1. Numeric ID: existing rival team
+     * 2. "new:RivalName": create new rival team
+     * 3. Empty/null: use rival_team_name fallback
+     *
+     * @return array [rivalTeamId, rivalTeamName]
+     */
+    private function processRivalTeamId(Request $request): array
+    {
+        $rivalTeamId = null;
+        $rivalTeamName = $request->rival_team_name;
+
+        if ($request->filled('rival_team_id')) {
+            $rivalTeamIdInput = $request->rival_team_id;
+
+            // Check if it's a "new:RivalName" format
+            if (str_starts_with($rivalTeamIdInput, 'new:')) {
+                // Create new rival team
+                $name = trim(substr($rivalTeamIdInput, 4));
+
+                if (!empty($name)) {
+                    $newRival = \App\Models\RivalTeam::firstOrCreate([
+                        'organization_id' => auth()->user()->currentOrganization()->id,
+                        'name' => $name,
+                    ]);
+
+                    $rivalTeamId = $newRival->id;
+                    $rivalTeamName = $newRival->name;
+
+                    Log::info("Created new rival team during upload", [
+                        'rival_team_id' => $rivalTeamId,
+                        'name' => $name,
+                        'user_id' => auth()->id(),
+                    ]);
+                }
+            } elseif (is_numeric($rivalTeamIdInput)) {
+                // Existing rival team ID
+                $rivalTeamId = (int) $rivalTeamIdInput;
+
+                // Get the name for fallback
+                $rival = \App\Models\RivalTeam::find($rivalTeamId);
+                if ($rival) {
+                    $rivalTeamName = $rival->name;
+                }
+            }
+        }
+
+        return [$rivalTeamId, $rivalTeamName];
     }
 }

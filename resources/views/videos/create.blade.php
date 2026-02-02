@@ -406,11 +406,16 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="batch_rival_team_name">
-                                            <i class="fas fa-shield-alt"></i> Equipo Rival
+                                        <label for="batch_rival_team_id">
+                                            <i class="fas fa-shield-alt"></i> Equipo Rival Común
                                             <small class="text-muted">(Opcional)</small>
                                         </label>
-                                        <input type="text" class="form-control" id="batch_rival_team_name" placeholder="Ej: Club Rugby Rival">
+                                        <select class="form-control" id="batch_rival_team_id" style="width: 100%;">
+                                            <option value="">Sin rival</option>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Puedes configurar un rival diferente para cada video en su configuración individual
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -1349,6 +1354,44 @@ $(document).ready(function() {
                     width: '100%'
                 });
             }
+
+            // Initialize batch rival team select2
+            if (!$('#batch_rival_team_id').hasClass('select2-hidden-accessible')) {
+                $('#batch_rival_team_id').select2({
+                    theme: 'bootstrap4',
+                    placeholder: 'Seleccionar o buscar equipo rival...',
+                    allowClear: true,
+                    tags: true,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route("api.rival-teams.autocomplete") }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                q: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data
+                            };
+                        },
+                        cache: true
+                    },
+                    createTag: function (params) {
+                        var term = $.trim(params.term);
+                        if (term === '') {
+                            return null;
+                        }
+                        return {
+                            id: 'new:' + term,
+                            text: term + ' (crear nuevo)',
+                            newTag: true
+                        };
+                    }
+                });
+            }
         } else {
             $('#singleUploadCard').show();
             $('#batchUploadCard').hide();
@@ -1500,6 +1543,69 @@ $(document).ready(function() {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Per-Video Configuration (Collapsible) -->
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#config_${video.id}">
+                                <i class="fas fa-cog"></i> Configuración Individual (Override)
+                            </button>
+                            <div id="config_${video.id}" class="collapse mt-2">
+                                <div class="card card-body bg-light">
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-info-circle"></i> Estos campos sobrescriben la configuración común solo para este video
+                                    </p>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Equipo Rival</label>
+                                                <select class="form-control video-rival-select" id="rival_${video.id}" data-video-id="${video.id}" style="width: 100%;">
+                                                    <option value="">-- Usar común --</option>
+                                                </select>
+                                                <small class="form-text text-muted">Dejar vacío para usar el rival común</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Fecha del Partido</label>
+                                                <input type="date" class="form-control video-match-date" id="match_date_${video.id}" data-video-id="${video.id}">
+                                                <small class="form-text text-muted">Dejar vacío para usar fecha común</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-0">
+                                                <label>Situación de Rugby</label>
+                                                <select class="form-control video-situation-select" id="situation_${video.id}" data-video-id="${video.id}">
+                                                    <option value="">-- Usar común --</option>
+                                                    @foreach($rugbySituations as $categoryName => $situations)
+                                                        <optgroup label="{{ $categoryName }}">
+                                                            @foreach($situations as $situation)
+                                                                <option value="{{ $situation->id }}">{{ $situation->name }}</option>
+                                                            @endforeach
+                                                        </optgroup>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-0">
+                                                <label>Visibilidad</label>
+                                                <select class="form-control video-visibility-select" id="visibility_${video.id}" data-video-id="${video.id}">
+                                                    <option value="">-- Usar común --</option>
+                                                    <option value="public">Pública</option>
+                                                    <option value="forwards">Solo Forwards</option>
+                                                    <option value="backs">Solo Backs</option>
+                                                    <option value="specific">Jugadores Específicos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="upload-progress-section mt-3" id="progress_${video.id}" style="display: none;">
                             <div class="progress mb-2">
                                 <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar_${video.id}">
@@ -1515,6 +1621,49 @@ $(document).ready(function() {
             `;
 
             $('#videosListContainer').append(html);
+
+            // Initialize Select2 for this video's rival selector
+            this.initVideoRivalSelect(video.id);
+        }
+
+        initVideoRivalSelect(videoId) {
+            const selectId = `#rival_${videoId}`;
+            if (!$(selectId).hasClass('select2-hidden-accessible')) {
+                $(selectId).select2({
+                    theme: 'bootstrap4',
+                    placeholder: 'Seleccionar o buscar equipo rival...',
+                    allowClear: true,
+                    tags: true,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route("api.rival-teams.autocomplete") }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                q: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data
+                            };
+                        },
+                        cache: true
+                    },
+                    createTag: function (params) {
+                        var term = $.trim(params.term);
+                        if (term === '') {
+                            return null;
+                        }
+                        return {
+                            id: 'new:' + term,
+                            text: term + ' (crear nuevo)',
+                            newTag: true
+                        };
+                    }
+                });
+            }
         }
 
         updateUI() {
@@ -1617,7 +1766,7 @@ $(document).ready(function() {
         getCommonData() {
             return {
                 match_date: $('#batch_match_date').val(),
-                rival_team_name: $('#batch_rival_team_name').val(),
+                rival_team_id: $('#batch_rival_team_id').val(),
                 category_id: $('#batch_category_id').val(),
                 division: $('#batch_division').val(),
                 rugby_situation_id: $('#batch_rugby_situation_id').val(),
@@ -1626,6 +1775,37 @@ $(document).ready(function() {
                 assignment_notes: $('#batch_assignment_notes').val(),
                 description: $('#batch_description').val()
             };
+        }
+
+        getVideoOverrides(videoId) {
+            // Collect per-video overrides (only if different from common)
+            const overrides = {};
+
+            // Rival team override
+            const rivalVal = $(`#rival_${videoId}`).val();
+            if (rivalVal) {
+                overrides.rival_team_id = rivalVal;
+            }
+
+            // Match date override
+            const matchDateVal = $(`#match_date_${videoId}`).val();
+            if (matchDateVal) {
+                overrides.match_date = matchDateVal;
+            }
+
+            // Rugby situation override
+            const situationVal = $(`#situation_${videoId}`).val();
+            if (situationVal) {
+                overrides.rugby_situation_id = situationVal;
+            }
+
+            // Visibility override
+            const visibilityVal = $(`#visibility_${videoId}`).val();
+            if (visibilityVal) {
+                overrides.visibility_type = visibilityVal;
+            }
+
+            return overrides;
         }
 
         async uploadNext() {
@@ -1651,15 +1831,18 @@ $(document).ready(function() {
             video.status = 'uploading';
             $(`#uploadStatus_${video.id}`).html('<i class="fas fa-spinner fa-spin text-info"></i> Iniciando...');
 
+            // Get per-video overrides
+            const overrides = this.getVideoOverrides(video.id);
+
             const formData = new FormData();
             formData.set('title', video.title);
             formData.set('description', video.commonData.description);
-            formData.set('rival_team_name', video.commonData.rival_team_name);
+            formData.set('rival_team_id', overrides.rival_team_id || video.commonData.rival_team_id || '');
             formData.set('category_id', video.commonData.category_id);
             formData.set('division', video.commonData.division);
-            formData.set('rugby_situation_id', video.commonData.rugby_situation_id);
-            formData.set('match_date', video.commonData.match_date);
-            formData.set('visibility_type', video.commonData.visibility_type);
+            formData.set('rugby_situation_id', overrides.rugby_situation_id || video.commonData.rugby_situation_id || '');
+            formData.set('match_date', overrides.match_date || video.commonData.match_date);
+            formData.set('visibility_type', overrides.visibility_type || video.commonData.visibility_type);
             formData.set('assignment_notes', video.commonData.assignment_notes);
 
             // Add assigned players
@@ -1773,7 +1956,7 @@ $(document).ready(function() {
                 upload_id: video.uploadId,
                 title: formData.get('title'),
                 description: formData.get('description'),
-                rival_team_name: formData.get('rival_team_name'),
+                rival_team_id: formData.get('rival_team_id'),
                 category_id: formData.get('category_id'),
                 division: formData.get('division'),
                 rugby_situation_id: formData.get('rugby_situation_id'),
@@ -1898,7 +2081,7 @@ $(document).ready(function() {
                 parts: parts,
                 title: formData.get('title'),
                 description: formData.get('description'),
-                rival_team_name: formData.get('rival_team_name'),
+                rival_team_id: formData.get('rival_team_id'),
                 category_id: formData.get('category_id'),
                 division: formData.get('division'),
                 rugby_situation_id: formData.get('rugby_situation_id'),
