@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multipart Upload Logic Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00B7B5;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border: 1px solid #00B7B5;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        button {
+            background: #005461;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #00B7B5;
+        }
+        .log {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-success { color: #00ff00; }
+        .log-error { color: #ff0000; }
+        .log-warning { color: #ffaa00; }
+        .log-info { color: #00aaff; }
+        .state {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            background: #333;
+            border-radius: 3px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .metric {
+            background: #0f0f0f;
+            padding: 10px;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .metric-label {
+            color: #888;
+            font-size: 11px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00B7B5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multipart Upload Queue Logic Test</h1>
+    <p>This page simulates the queue-based multipart upload logic to verify race condition fixes.</p>
+
+    <div class="test-section">
+        <h3>Test Configuration</h3>
+        <label>Total Parts: <input type="number" id="totalParts" value="10" min="5" max="100"></label>
+        <label>Max Concurrent: <input type="number" id="maxConcurrent" value="2" min="1" max="5"></label>
+        <label>Failure Rate: <input type="number" id="failureRate" value="20" min="0" max="80">%</label>
+        <label>Upload Time (ms): <input type="number" id="uploadTime" value="500" min="100" max="5000"></label>
+        <br><br>
+        <button onclick="startTest()">Start Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="stopTest()">Stop Test</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Current State</h3>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">Pending</div>
+                <div class="metric-value" id="pendingCount">0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">In Progress</div>
+                <div class="metric-value" id="inProgressCount">0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Completed</div>
+                <div class="metric-value" id="completedCount">0</div>
+            </div>
+        </div>
+        <div>
+            <strong>Pending Parts:</strong> <span id="pendingParts" class="state">[]</span><br>
+            <strong>In Progress Parts:</strong> <span id="inProgressParts" class="state">[]</span><br>
+            <strong>Completed Parts:</strong> <span id="completedParts" class="state">[]</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Log</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        // Simulate the queue-based upload system
+        let pendingParts = [];
+        let inProgressParts = new Set();
+        let completedParts = [];
+        let hasError = false;
+        let maxRetries = 3;
+        let retryCount = {};
+        let testRunning = false;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toISOString().substr(11, 8)}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateState() {
+            document.getElementById('pendingCount').textContent = pendingParts.length;
+            document.getElementById('inProgressCount').textContent = inProgressParts.size;
+            document.getElementById('completedCount').textContent = completedParts.length;
+
+            document.getElementById('pendingParts').textContent = JSON.stringify([...pendingParts]);
+            document.getElementById('inProgressParts').textContent = JSON.stringify([...inProgressParts]);
+            document.getElementById('completedParts').textContent = JSON.stringify(completedParts.map(p => p.PartNumber));
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function stopTest() {
+            testRunning = false;
+            hasError = true;
+            log('Test stopped by user', 'warning');
+        }
+
+        function startTest() {
+            // Reset state
+            const totalParts = parseInt(document.getElementById('totalParts').value);
+            pendingParts = [];
+            inProgressParts = new Set();
+            completedParts = [];
+            hasError = false;
+            retryCount = {};
+            testRunning = true;
+
+            // Initialize queue
+            for (let i = 1; i <= totalParts; i++) {
+                pendingParts.push(i);
+            }
+
+            log(`========================================`, 'info');
+            log(`Test started: ${totalParts} parts, ${document.getElementById('maxConcurrent').value} concurrent`, 'success');
+            log(`Failure rate: ${document.getElementById('failureRate').value}%`, 'info');
+            log(`========================================`, 'info');
+
+            updateState();
+
+            // Start initial batch
+            const maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
+            for (let i = 0; i < maxConcurrent && i < totalParts; i++) {
+                uploadNextPart();
+            }
+        }
+
+        function uploadNextPart() {
+            if (hasError || !testRunning) {
+                return;
+            }
+
+            const maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
+
+            // Check capacity and availability
+            if (inProgressParts.size >= maxConcurrent || pendingParts.length === 0) {
+                return;
+            }
+
+            // Get next part from queue
+            const partNumber = pendingParts.shift();
+            inProgressParts.add(partNumber);
+
+            log(`Starting upload of part ${partNumber} (pending: ${pendingParts.length}, in-progress: ${inProgressParts.size})`, 'info');
+            updateState();
+
+            // Simulate upload with random success/failure
+            const uploadTime = parseInt(document.getElementById('uploadTime').value);
+            const failureRate = parseInt(document.getElementById('failureRate').value);
+            const willFail = Math.random() * 100 < failureRate;
+
+            setTimeout(() => {
+                if (willFail) {
+                    log(`Part ${partNumber} failed! Retrying...`, 'error');
+                    retryOrFail(partNumber);
+                } else {
+                    uploadSuccess(partNumber);
+                }
+            }, uploadTime + Math.random() * 500);
+        }
+
+        function uploadSuccess(partNumber) {
+            log(`Part ${partNumber} uploaded successfully`, 'success');
+
+            // Remove from in-progress
+            inProgressParts.delete(partNumber);
+
+            // Prevent duplicate entries
+            const existingPart = completedParts.find(p => p.PartNumber === partNumber);
+            if (!existingPart) {
+                completedParts.push({
+                    PartNumber: partNumber,
+                    ETag: 'etag-' + partNumber
+                });
+            } else {
+                log(`WARNING: Part ${partNumber} already in completedParts!`, 'warning');
+            }
+
+            updateState();
+            checkCompletion();
+        }
+
+        function retryOrFail(partNumber) {
+            // Remove from in-progress
+            inProgressParts.delete(partNumber);
+
+            if (!retryCount[partNumber]) {
+                retryCount[partNumber] = 0;
+            }
+            retryCount[partNumber]++;
+
+            if (retryCount[partNumber] <= maxRetries) {
+                const delay = 1000 * Math.pow(2, retryCount[partNumber] - 1);
+                log(`Retrying part ${partNumber} (attempt ${retryCount[partNumber]} of ${maxRetries}) in ${delay}ms`, 'warning');
+
+                setTimeout(() => {
+                    // Re-add to front of queue
+                    pendingParts.unshift(partNumber);
+                    log(`Part ${partNumber} re-added to queue`, 'info');
+                    updateState();
+                    uploadNextPart();
+                }, delay);
+            } else {
+                hasError = true;
+                log(`Max retries exceeded for part ${partNumber}. ABORTING.`, 'error');
+                showResults(false);
+            }
+        }
+
+        function checkCompletion() {
+            const totalParts = parseInt(document.getElementById('totalParts').value);
+
+            if (completedParts.length === totalParts) {
+                log(`All parts completed! Validating...`, 'success');
+
+                // Validate all parts present
+                const partNumbers = completedParts.map(p => p.PartNumber).sort((a, b) => a - b);
+                const missingParts = [];
+                const duplicates = [];
+
+                for (let i = 1; i <= totalParts; i++) {
+                    const count = partNumbers.filter(n => n === i).length;
+                    if (count === 0) {
+                        missingParts.push(i);
+                    } else if (count > 1) {
+                        duplicates.push(i);
+                    }
+                }
+
+                if (missingParts.length > 0 || duplicates.length > 0) {
+                    log(`VALIDATION FAILED!`, 'error');
+                    if (missingParts.length > 0) {
+                        log(`Missing parts: ${missingParts.join(', ')}`, 'error');
+                    }
+                    if (duplicates.length > 0) {
+                        log(`Duplicate parts: ${duplicates.join(', ')}`, 'error');
+                    }
+                    showResults(false);
+                } else {
+                    log(`VALIDATION PASSED! All parts uploaded correctly.`, 'success');
+                    showResults(true);
+                }
+            } else {
+                // Upload next part
+                uploadNextPart();
+            }
+        }
+
+        function showResults(success) {
+            testRunning = false;
+            const resultsDiv = document.getElementById('results');
+            const totalParts = parseInt(document.getElementById('totalParts').value);
+
+            let html = `<h4 style="color: ${success ? '#00ff00' : '#ff0000'}">${success ? 'TEST PASSED ✓' : 'TEST FAILED ✗'}</h4>`;
+            html += `<p><strong>Total Parts:</strong> ${totalParts}</p>`;
+            html += `<p><strong>Completed Parts:</strong> ${completedParts.length}</p>`;
+            html += `<p><strong>Pending Parts:</strong> ${pendingParts.length}</p>`;
+            html += `<p><strong>In Progress Parts:</strong> ${inProgressParts.size}</p>`;
+
+            // Check for issues
+            const partNumbers = completedParts.map(p => p.PartNumber).sort((a, b) => a - b);
+            const missingParts = [];
+            const duplicates = [];
+
+            for (let i = 1; i <= totalParts; i++) {
+                const count = partNumbers.filter(n => n === i).length;
+                if (count === 0) missingParts.push(i);
+                if (count > 1) duplicates.push(i);
+            }
+
+            if (missingParts.length > 0) {
+                html += `<p style="color: #ff0000"><strong>Missing Parts:</strong> ${missingParts.join(', ')}</p>`;
+            }
+            if (duplicates.length > 0) {
+                html += `<p style="color: #ff0000"><strong>Duplicate Parts:</strong> ${duplicates.join(', ')}</p>`;
+            }
+
+            if (success) {
+                html += `<p style="color: #00ff00">No missing or duplicate parts detected!</p>`;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Initialize display
+        updateState();
+    </script>
+</body>
+</html>

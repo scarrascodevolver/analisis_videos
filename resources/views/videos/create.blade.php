@@ -558,20 +558,38 @@ $(document).ready(function() {
         var completedParts = [];
         var uploadedBytes = 0;
         var maxConcurrent = 2; // Upload 2 parts at a time (optimized for multiple simultaneous uploads)
-        var currentPart = 1;
         var hasError = false;
         var maxRetries = 3; // Retry failed parts up to 3 times
         var retryCount = {}; // Track retries per part
 
+        // Queue-based approach to prevent race conditions with concurrent uploads
+        var pendingParts = []; // Queue of parts waiting to be uploaded
+        var inProgressParts = new Set(); // Track which parts are currently uploading
+
+        // Initialize queue with all part numbers
+        for (var i = 1; i <= totalParts; i++) {
+            pendingParts.push(i);
+        }
+
         function uploadNextPart() {
-            if (hasError || currentPart > totalParts) {
+            if (hasError) {
                 return;
             }
 
-            var partNumber = currentPart++;
+            // Check if we have capacity and pending parts
+            if (inProgressParts.size >= maxConcurrent || pendingParts.length === 0) {
+                return;
+            }
+
+            // Get next part from queue
+            var partNumber = pendingParts.shift();
+            inProgressParts.add(partNumber);
+
             var start = (partNumber - 1) * chunkSize;
             var end = Math.min(start + chunkSize, file.size);
             var chunk = file.slice(start, end);
+
+            console.log('Starting upload of part', partNumber, '(pending:', pendingParts.length, 'in-progress:', inProgressParts.size, ')');
 
             // Get presigned URL for this part
             $.ajax({
@@ -600,6 +618,9 @@ $(document).ready(function() {
         }
 
         function retryOrFail(partNumber, chunk, errorMsg, isNetworkError) {
+            // Remove from in-progress set
+            inProgressParts.delete(partNumber);
+
             if (!retryCount[partNumber]) {
                 retryCount[partNumber] = 0;
             }
@@ -632,7 +653,8 @@ $(document).ready(function() {
                 console.log('Waiting', delay, 'ms before retry');
 
                 setTimeout(function() {
-                    currentPart--; // Reset counter to retry this part
+                    // Re-add part to front of queue for retry
+                    pendingParts.unshift(partNumber);
                     uploadNextPart();
                 }, delay);
             } else {
@@ -699,10 +721,19 @@ $(document).ready(function() {
                     etag = etag.replace(/"/g, ''); // Remove quotes
                     console.log('Part', partNumber, 'uploaded successfully with ETag:', etag);
 
-                    completedParts.push({
-                        PartNumber: partNumber,
-                        ETag: etag
-                    });
+                    // Remove from in-progress set
+                    inProgressParts.delete(partNumber);
+
+                    // Prevent duplicate entries (check if part already completed)
+                    var existingPart = completedParts.find(p => p.PartNumber === partNumber);
+                    if (!existingPart) {
+                        completedParts.push({
+                            PartNumber: partNumber,
+                            ETag: etag
+                        });
+                    } else {
+                        console.warn('Part', partNumber, 'already in completedParts, skipping duplicate');
+                    }
 
                     checkCompletion();
                 } else {
