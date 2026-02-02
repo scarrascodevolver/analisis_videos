@@ -587,29 +587,48 @@ $(document).ready(function() {
                     if (response.success) {
                         uploadPart(chunk, partNumber, response.urls[partNumber]);
                     } else {
-                        retryOrFail(partNumber, chunk, 'Error obteniendo URL de parte ' + partNumber);
+                        retryOrFail(partNumber, chunk, 'Error obteniendo URL de parte ' + partNumber, false);
                     }
                 },
                 error: function(xhr, status) {
+                    // Detect network errors (offline, no connection)
+                    var isNetworkError = !xhr.status || xhr.status === 0 || status === 'timeout' || status === 'error';
                     var errorMsg = status === 'timeout' ? 'Timeout obteniendo URL de parte ' + partNumber : 'Error preparando parte ' + partNumber;
-                    retryOrFail(partNumber, chunk, errorMsg);
+                    retryOrFail(partNumber, chunk, errorMsg, isNetworkError);
                 }
             });
         }
 
-        function retryOrFail(partNumber, chunk, errorMsg) {
+        function retryOrFail(partNumber, chunk, errorMsg, isNetworkError) {
             if (!retryCount[partNumber]) {
                 retryCount[partNumber] = 0;
             }
 
             retryCount[partNumber]++;
 
-            if (retryCount[partNumber] <= maxRetries) {
-                console.log('Retrying part', partNumber, '(attempt', retryCount[partNumber], 'of', maxRetries + ')');
-                $('#uploadStatus').html('<i class="fas fa-redo text-warning"></i> Reintentando parte ' + partNumber + ' (intento ' + retryCount[partNumber] + ')...');
+            // More retries for network errors (connection lost/offline)
+            var maxRetriesForPart = isNetworkError ? 15 : maxRetries;
 
-                // Exponential backoff: 1s, 2s, 4s (max 16s)
-                var delay = Math.min(1000 * Math.pow(2, retryCount[partNumber] - 1), 16000);
+            if (retryCount[partNumber] <= maxRetriesForPart) {
+                console.log('Retrying part', partNumber, '(attempt', retryCount[partNumber], 'of', maxRetriesForPart + ')',
+                    isNetworkError ? '[NETWORK ERROR]' : '');
+
+                // Different backoff strategies
+                var delay;
+                if (isNetworkError) {
+                    // Linear backoff for network errors: 5s, 10s, 15s, 20s... (max 60s)
+                    // Give more time for connection to come back
+                    delay = Math.min(5000 * retryCount[partNumber], 60000);
+                    $('#uploadStatus').html(
+                        '<i class="fas fa-wifi text-warning"></i> Sin conexión. Reintentando parte ' +
+                        partNumber + ' en ' + (delay/1000) + 's... (intento ' + retryCount[partNumber] + '/' + maxRetriesForPart + ')'
+                    );
+                } else {
+                    // Exponential backoff for other errors: 1s, 2s, 4s (max 16s)
+                    delay = Math.min(1000 * Math.pow(2, retryCount[partNumber] - 1), 16000);
+                    $('#uploadStatus').html('<i class="fas fa-redo text-warning"></i> Reintentando parte ' + partNumber + ' (intento ' + retryCount[partNumber] + ')...');
+                }
+
                 console.log('Waiting', delay, 'ms before retry');
 
                 setTimeout(function() {
@@ -673,7 +692,7 @@ $(document).ready(function() {
                     // CRITICAL: ETag MUST be present, otherwise the part is corrupted
                     if (!etag) {
                         console.error('Part', partNumber, 'uploaded but ETag missing - treating as failure');
-                        retryOrFail(partNumber, chunk, 'ETag no disponible para parte ' + partNumber + ' (posible corrupción)');
+                        retryOrFail(partNumber, chunk, 'ETag no disponible para parte ' + partNumber + ' (posible corrupción)', false);
                         return;
                     }
 
@@ -688,7 +707,7 @@ $(document).ready(function() {
                     checkCompletion();
                 } else {
                     console.error('Part', partNumber, 'upload failed:', xhr.status);
-                    retryOrFail(partNumber, chunk, 'Error subiendo parte ' + partNumber + '. Código: ' + xhr.status);
+                    retryOrFail(partNumber, chunk, 'Error subiendo parte ' + partNumber + '. Código: ' + xhr.status, false);
                 }
             });
 
@@ -729,12 +748,12 @@ $(document).ready(function() {
 
             xhr.addEventListener('error', function() {
                 console.error('Part', partNumber, 'network error');
-                retryOrFail(partNumber, chunk, 'Error de conexión subiendo parte ' + partNumber);
+                retryOrFail(partNumber, chunk, 'Error de conexión subiendo parte ' + partNumber, true);
             });
 
             xhr.addEventListener('timeout', function() {
                 console.error('Part', partNumber, 'timeout');
-                retryOrFail(partNumber, chunk, 'Timeout subiendo parte ' + partNumber);
+                retryOrFail(partNumber, chunk, 'Timeout subiendo parte ' + partNumber, true);
             });
 
             xhr.open('PUT', presignedUrl);
