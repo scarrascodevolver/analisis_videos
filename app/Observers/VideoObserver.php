@@ -40,8 +40,8 @@ class VideoObserver
                 Log::info("Video {$video->id} is MASTER in group {$group->id} ('{$group->name}'). Dissolving entire group.");
 
                 // Get all videos in group for logging
-                $groupVideos = $group->videos()->pluck('id')->toArray();
-                Log::info("Group {$group->id} has ".count($groupVideos).' videos: '.implode(', ', $groupVideos));
+                $groupVideos = $group->videos()->pluck('videos.id')->toArray();
+                Log::info("Group {$group->id} has " . count($groupVideos) . ' videos: ' . implode(', ', $groupVideos));
 
                 // Detach all videos from group (including master)
                 $group->videos()->detach();
