@@ -64,8 +64,9 @@ El sistema aplica diferentes niveles de compresion segun el tamano del archivo:
 **Archivos Relacionados:**
 - `app/Jobs/CompressVideoJob.php` - Job de compresion
 - `start-queue-worker.sh` - Script de inicio del worker
-- `docs/VPS_OPTIMIZATION.md` - Documentacion completa
-- `DEPLOY_VPS_OPTIMIZATION.md` - Guia de despliegue
+- `docs/VPS_OPTIMIZATION.md` - Documentacion tecnica completa
+- `DEPLOY-VPS-INSTRUCCIONES.md` - Guia de deployment
+- `MIGRATION_HETZNER.md` - Plan de migracion a Hetzner VPS + Object Storage
 
 **Comandos:**
 ```bash
@@ -205,25 +206,21 @@ php artisan videos:migrate-to-org-folders
 
 ## DESPLIEGUE EN VPS
 
+**Ver guia completa:** `DEPLOY-VPS-INSTRUCCIONES.md`
+
 ```bash
-# 1. Backup BD
-mysqldump -u usuario -p rugby_db > backup.sql
-
-# 2. Pull cambios
+# Deployment rapido (desde VPS)
+cd /var/www/analisis_videos
 git pull origin main
-
-# 3. Migraciones
-php artisan migrate
-
-# 4. Limpiar cache
+npm run build  # Si hay cambios JS/CSS
+php artisan migrate --force  # Si hay migraciones
 php artisan config:clear && php artisan cache:clear
+sudo supervisorctl restart rugby-queue-worker:*  # Si hay cambios en workers
+```
 
-# 5. Permisos
-sudo chown -R www-data:www-data storage/
-sudo chmod -R 755 storage/
-
-# 6. Symlink storage
-php artisan storage:link
+**Comando unico (desde tu PC):**
+```bash
+ssh root@161.35.108.164 "cd /var/www/analisis_videos && git pull origin main && npm run build && php artisan config:clear && php artisan cache:clear && sudo supervisorctl restart rugby-queue-worker:*"
 ```
 
 ---
@@ -260,6 +257,23 @@ php artisan storage:link
 | `optimize/vps-2cpu-4gb` | Activa | Optimizacion para VPS limitado (temporal) |
 
 **Nota:** La rama `optimize/vps-2cpu-4gb` es temporal hasta migracion a Hetzner.
+
+---
+
+## ESTRUCTURA DE DOCUMENTACION
+
+### Documentos Principales
+- **CLAUDE.md** (este archivo) - Documentacion general del proyecto
+- **README.md** - README estandar de Laravel
+- **DEPLOY-VPS-INSTRUCCIONES.md** - Guia de deployment a produccion
+- **MIGRATION_HETZNER.md** - Plan de migracion a Hetzner VPS + Object Storage
+
+### Documentacion Tecnica
+- **docs/VPS_OPTIMIZATION.md** - Optimizacion de compresion de video
+- **docs/YOUTUBE_LEVEL_UPLOAD_SPEED.md** - Estrategias de optimizacion de upload
+
+### Archivo Historico
+- **docs/archive/** - Documentacion de features completadas y obsoletas
 
 ---
 
