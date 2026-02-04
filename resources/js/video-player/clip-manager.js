@@ -609,6 +609,20 @@ function setupHotkeys() {
         // Skip if typing in input fields
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
+        // SPACEBAR - Play/Pause video (including all slave videos in multi-camera mode)
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault(); // Prevent page scroll
+            const video = getVideo();
+            if (!video) return;
+
+            if (video.paused) {
+                video.play().catch(err => console.warn('Play failed:', err));
+            } else {
+                video.pause();
+            }
+            return; // Exit early to avoid processing other hotkeys
+        }
+
         // Skip if categories not loaded yet
         if (categories.length === 0) {
             console.log('Hotkey ignored: categories not loaded');
