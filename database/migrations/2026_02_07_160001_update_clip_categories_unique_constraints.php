@@ -15,16 +15,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, create a simple index on organization_id so the FK can use it
-        // This allows us to drop the composite unique indexes
-        Schema::table('clip_categories', function (Blueprint $table) {
-            $table->index('organization_id', 'clip_categories_org_id_index');
-        });
+        // Check which indexes exist before trying to drop them
+        $indexes = collect(DB::select("SHOW INDEX FROM clip_categories"))
+            ->pluck('Key_name')
+            ->unique()
+            ->toArray();
 
-        // Now we can safely drop the unique constraints
-        Schema::table('clip_categories', function (Blueprint $table) {
-            $table->dropUnique('clip_categories_organization_id_slug_unique');
-            $table->dropUnique('clip_categories_organization_id_hotkey_unique');
+        // First, create a simple index on organization_id so the FK can use it (if not exists)
+        if (!in_array('clip_categories_org_id_index', $indexes)) {
+            Schema::table('clip_categories', function (Blueprint $table) {
+                $table->index('organization_id', 'clip_categories_org_id_index');
+            });
+        }
+
+        // Now we can safely drop the unique constraints (if they exist)
+        Schema::table('clip_categories', function (Blueprint $table) use ($indexes) {
+            if (in_array('clip_categories_organization_id_slug_unique', $indexes)) {
+                $table->dropUnique('clip_categories_organization_id_slug_unique');
+            }
+            if (in_array('clip_categories_organization_id_hotkey_unique', $indexes)) {
+                $table->dropUnique('clip_categories_organization_id_hotkey_unique');
+            }
         });
 
         // Uniqueness is now enforced at application level in ClipCategoryController
@@ -36,13 +47,24 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('clip_categories', function (Blueprint $table) {
-            // Restore old constraints
-            $table->unique(['organization_id', 'slug'], 'clip_categories_organization_id_slug_unique');
-            $table->unique(['organization_id', 'hotkey'], 'clip_categories_organization_id_hotkey_unique');
+        $indexes = collect(DB::select("SHOW INDEX FROM clip_categories"))
+            ->pluck('Key_name')
+            ->unique()
+            ->toArray();
 
-            // Drop the simple index we created
-            $table->dropIndex('clip_categories_org_id_index');
+        Schema::table('clip_categories', function (Blueprint $table) use ($indexes) {
+            // Restore old constraints if not exist
+            if (!in_array('clip_categories_organization_id_slug_unique', $indexes)) {
+                $table->unique(['organization_id', 'slug'], 'clip_categories_organization_id_slug_unique');
+            }
+            if (!in_array('clip_categories_organization_id_hotkey_unique', $indexes)) {
+                $table->unique(['organization_id', 'hotkey'], 'clip_categories_organization_id_hotkey_unique');
+            }
+
+            // Drop the simple index we created if exists
+            if (in_array('clip_categories_org_id_index', $indexes)) {
+                $table->dropIndex('clip_categories_org_id_index');
+            }
         });
     }
 };
