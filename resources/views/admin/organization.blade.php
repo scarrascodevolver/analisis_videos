@@ -7,6 +7,39 @@
     <li class="breadcrumb-item active">Organización</li>
 @endsection
 
+@section('css')
+<style>
+    /* Estilos para inputs readonly en esta vista */
+    .readonly-highlight {
+        background-color: #1a1a1a !important;
+        color: #00ff88 !important;
+        border: 2px solid var(--color-accent, #00B7B5) !important;
+        font-weight: 600 !important;
+    }
+
+    .readonly-link {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 2px solid var(--color-secondary, #018790) !important;
+    }
+
+    /* Mejorar contraste de labels */
+    .card-body label {
+        color: #ffffff !important;
+        font-weight: 500;
+    }
+
+    /* Mejorar texto muted */
+    .card-body .text-muted {
+        color: #b8b8b8 !important;
+    }
+
+    .card-body small.text-muted {
+        color: #a0a0a0 !important;
+    }
+</style>
+@endsection
+
 @section('main_content')
 <div class="row">
     <div class="col-lg-8">
@@ -28,7 +61,7 @@
                 <div class="form-group">
                     <label>Código actual:</label>
                     <div class="input-group input-group-lg">
-                        <input type="text" class="form-control text-center font-weight-bold"
+                        <input type="text" class="form-control text-center readonly-highlight"
                                id="invitationCode"
                                value="{{ $organization->invitation_code }}"
                                readonly
@@ -45,7 +78,7 @@
                 <div class="form-group">
                     <label>Link de registro directo:</label>
                     <div class="input-group">
-                        <input type="text" class="form-control"
+                        <input type="text" class="form-control readonly-link"
                                id="registerUrl"
                                value="{{ $registerUrl }}"
                                readonly>
