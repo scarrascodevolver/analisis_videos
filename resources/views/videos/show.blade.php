@@ -505,8 +505,10 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Load categories (needed for visual timeline)
             if (window.sidebarCategoriesData.length === 0) {
-                const catResponse = await fetch('{{ route("api.clip-categories.index") }}');
-                window.sidebarCategoriesData = await catResponse.json();
+                const catResponse = await fetch('{{ route("api.clip-categories.index") }}?video_id={{ $video->id }}');
+                const catData = await catResponse.json();
+                // API now returns { categories: [...], grouped: {...} }
+                window.sidebarCategoriesData = catData.categories || catData;
             }
 
             // Load clips
