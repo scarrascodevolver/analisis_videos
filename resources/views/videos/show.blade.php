@@ -864,6 +864,11 @@ function openCategoryModal(category = null) {
     const catLead = document.getElementById('catLead');
     const catLag = document.getElementById('catLag');
 
+    // Get scope radio buttons
+    const scopeOrg = document.getElementById('scopeOrg');
+    const scopeUser = document.getElementById('scopeUser');
+    const scopeVideo = document.getElementById('scopeVideo');
+
     if (category) {
         // Modo editar
         modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Categoría';
@@ -873,6 +878,17 @@ function openCategoryModal(category = null) {
         catHotkey.value = category.hotkey || '';
         catLead.value = category.lead_seconds;
         catLag.value = category.lag_seconds;
+
+        // Set scope based on category (disable changing scope on edit)
+        const scope = category.scope || 'organization';
+        if (scopeOrg) scopeOrg.checked = (scope === 'organization');
+        if (scopeUser) scopeUser.checked = (scope === 'user');
+        if (scopeVideo) scopeVideo.checked = (scope === 'video');
+
+        // Disable scope selection on edit (can't change scope after creation)
+        document.querySelectorAll('input[name="scope"]').forEach(radio => {
+            radio.disabled = true;
+        });
     } else {
         // Modo crear
         modalTitle.innerHTML = '<i class="fas fa-plus"></i> Crear Categoría';
@@ -882,6 +898,14 @@ function openCategoryModal(category = null) {
         catHotkey.value = '';
         catLead.value = '3';
         catLag.value = '3';
+
+        // Reset scope to default (organization) and enable selection
+        if (scopeOrg) scopeOrg.checked = true;
+        if (scopeUser) scopeUser.checked = false;
+        if (scopeVideo) scopeVideo.checked = false;
+        document.querySelectorAll('input[name="scope"]').forEach(radio => {
+            radio.disabled = false;
+        });
     }
 
     // Cerrar modal de gestión si está abierto
@@ -943,13 +967,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const hotkey = document.getElementById('catHotkey').value.trim();
             const lead_seconds = parseInt(document.getElementById('catLead').value) || 3;
             const lag_seconds = parseInt(document.getElementById('catLag').value) || 3;
+            const scope = document.querySelector('input[name="scope"]:checked')?.value || 'organization';
+            const videoId = document.getElementById('catVideoId')?.value;
 
             if (!name) {
                 alert('El nombre es requerido');
                 return;
             }
 
-            const data = { name, color, hotkey, lead_seconds, lag_seconds };
+            const data = { name, color, hotkey, lead_seconds, lag_seconds, scope };
+
+            // Add video_id only if scope is 'video'
+            if (scope === 'video' && videoId) {
+                data.video_id = parseInt(videoId);
+            }
             const isEdit = !!catId;
             const url = isEdit
                 ? `/admin/clip-categories/${catId}`
@@ -996,13 +1027,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cargar lista de categorías al abrir modal de gestión
     $('#manageCategoriesModal').on('show.bs.modal', async function() {
         try {
-            const response = await fetch('{{ route("api.clip-categories.index") }}');
-            const categories = await response.json();
+            const videoId = window.VideoPlayer?.config?.videoId || {{ $video->id }};
+            const response = await fetch(`{{ route("api.clip-categories.index") }}?video_id=${videoId}`);
+            const data = await response.json();
+            const categories = data.categories || data;
 
             if (categories.length === 0) {
                 categoriesListModal.innerHTML = '<div class="text-center py-3" style="color: #888;">No hay categorías creadas</div>';
                 return;
             }
+
+            const getScopeLabel = (scope) => {
+                switch(scope) {
+                    case 'organization': return '<i class="fas fa-building"></i> Plantilla';
+                    case 'user': return '<i class="fas fa-user"></i> Personal';
+                    case 'video': return '<i class="fas fa-video"></i> Este video';
+                    default: return '';
+                }
+            };
+
+            const getScopeBadgeStyle = (scope) => {
+                switch(scope) {
+                    case 'organization': return 'background: #005461; color: #fff;';
+                    case 'user': return 'background: #8b5cf6; color: #fff;';
+                    case 'video': return 'background: #f97316; color: #fff;';
+                    default: return 'background: #333; color: #fff;';
+                }
+            };
 
             categoriesListModal.innerHTML = categories.map(cat => `
                 <div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background: #252525; border-radius: 5px;" id="category-row-${cat.id}">
@@ -1011,6 +1062,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div>
                             <strong>${cat.name}</strong>
                             ${cat.hotkey ? `<span class="badge ml-2" style="background: #333;">[${cat.hotkey.toUpperCase()}]</span>` : ''}
+                            <span class="badge ml-2" style="${getScopeBadgeStyle(cat.scope)}; font-size: 10px;">${getScopeLabel(cat.scope)}</span>
                             <br>
                             <small style="color: #888;">Lead: ${cat.lead_seconds}s | Lag: ${cat.lag_seconds}s</small>
                         </div>
