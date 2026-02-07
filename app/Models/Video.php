@@ -66,6 +66,12 @@ class Video extends Model
             if ($deletedCount > 0) {
                 Log::info("Video {$video->id} deleting: Cancelled {$deletedCount} pending compression job(s)");
             }
+
+            // Delete video assignments when video is deleted
+            $assignmentsDeleted = $video->assignments()->delete();
+            if ($assignmentsDeleted > 0) {
+                Log::info("Video {$video->id} deleting: Removed {$assignmentsDeleted} assignment(s)");
+            }
         });
     }
 
