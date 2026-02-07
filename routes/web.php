@@ -220,6 +220,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+        Route::get('/profile/password', [App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('profile.password');
+        Route::put('/profile/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password.update');
     });
 
     // Coach Routes
