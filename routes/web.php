@@ -16,6 +16,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\VideoViewController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Landing Page (público)
 Route::view('/', 'landing')->name('landing');
@@ -72,6 +73,9 @@ Route::middleware(['auth'])->group(function () {
     // Main Dashboard
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+
+    // Vue/Inertia Test Page
+    Route::get('/vue-test', fn () => Inertia::render('Test'))->name('vue.test');
 
     // Multi-Camera search route (must be BEFORE Route::resource to avoid conflict with videos/{video})
     Route::get('videos/search-for-angles', [MultiCameraController::class, 'searchVideos'])->name('videos.search-angles');
