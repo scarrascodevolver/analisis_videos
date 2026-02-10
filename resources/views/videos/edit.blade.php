@@ -12,6 +12,25 @@
 @section('main_content')
     <div class="row justify-content-center">
         <div class="col-md-10">
+            <!-- Success/Error Messages -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
             <div class="card card-rugby">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -142,8 +161,8 @@
                             <label for="description">
                                 <i class="fas fa-align-left"></i> Descripción del Video
                             </label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="4" 
+                            <textarea class="form-control @error('description') is-invalid @enderror"
+                                      id="description" name="description" rows="4"
                                       placeholder="Describe el contenido del video, aspectos importantes a analizar, etc.">{{ old('description', $video->description) }}</textarea>
                             <small class="form-text text-muted">
                                 Incluye información relevante sobre el partido, jugadas específicas, objetivos del análisis, etc.
@@ -152,6 +171,40 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <!-- Import LongoMatch XML -->
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                        <hr class="my-4">
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-file-code"></i> Importar Clips desde LongoMatch XML
+                            </label>
+                            <div class="card" style="background: #2d2d2d; border: 1px solid #444;">
+                                <div class="card-body">
+                                    <form action="{{ route('videos.import-xml', $video) }}" method="POST" enctype="multipart/form-data" id="xmlImportForm">
+                                        @csrf
+                                        <div class="form-group">
+                                            <label for="xml_file" class="text-light">
+                                                Seleccionar archivo XML
+                                            </label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="xml_file" name="xml_file" accept=".xml" required>
+                                                <label class="custom-file-label" for="xml_file">Elegir archivo XML...</label>
+                                            </div>
+                                            <small class="form-text text-muted mt-2">
+                                                <i class="fas fa-info-circle"></i>
+                                                Sube un archivo XML exportado desde LongoMatch.
+                                                Los clips existentes serán reemplazados.
+                                            </small>
+                                        </div>
+                                        <button type="submit" class="btn btn-sm" style="background: #005461; color: #fff;">
+                                            <i class="fas fa-upload"></i> Importar XML
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="card-footer">
@@ -203,6 +256,27 @@ $(document).ready(function() {
     // Remove validation errors on input
     $('input, select, textarea').on('input change', function() {
         $(this).removeClass('is-invalid');
+    });
+
+    // Update custom file input label
+    $('#xml_file').on('change', function() {
+        const fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName || 'Elegir archivo XML...');
+    });
+
+    // XML Import Form submission
+    $('#xmlImportForm').on('submit', function(e) {
+        const fileInput = $('#xml_file')[0];
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Por favor selecciona un archivo XML');
+            return false;
+        }
+
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Importando...');
     });
 });
 </script>
