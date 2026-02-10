@@ -341,6 +341,33 @@ class VideoController extends Controller
             ->with('success', 'Video eliminado exitosamente');
     }
 
+    /**
+     * Import LongoMatch XML clips to an existing video
+     */
+    public function importXml(Request $request, Video $video)
+    {
+        $request->validate([
+            'xml_file' => 'required|file|mimes:xml|max:10240', // 10MB max
+        ]);
+
+        try {
+            $xmlContent = file_get_contents($request->file('xml_file')->getRealPath());
+
+            $xmlParser = app(\App\Services\LongoMatchXmlParser::class);
+            $parsedData = $xmlParser->parse($xmlContent);
+            $stats = $xmlParser->importToVideo($video, $parsedData, true);
+
+            return redirect()->route('videos.edit', $video)
+                ->with('success', "XML importado exitosamente: {$stats['clips_created']} clips creados, {$stats['categories_created']} categorías nuevas, {$stats['categories_reused']} categorías reutilizadas.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error importing XML to video '.$video->id.': '.$e->getMessage());
+
+            return redirect()->route('videos.edit', $video)
+                ->with('error', 'Error al importar XML: '.$e->getMessage());
+        }
+    }
+
     public function playerUpload()
     {
         $categories = Category::all();
