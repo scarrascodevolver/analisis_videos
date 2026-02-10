@@ -19,6 +19,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     const slaveVideoElements = ref<Map<number, HTMLVideoElement>>(new Map());
     const lastSyncTimes = ref<Map<number, number>>(new Map());
     const abortController = ref<AbortController | null>(null);
+    const isBuffering = ref(false);
 
     // Helper to safely get the slaves Map
     function getSlavesMap(): Map<number, HTMLVideoElement> | null {
@@ -236,6 +237,58 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             if (!slaves) return;
             slaves.forEach(slave => {
                 slave.pause();
+            });
+        }, { signal });
+
+        // Waiting event - master is buffering, pause all slaves
+        master.addEventListener('waiting', () => {
+            const slaves = getSlavesMap();
+            if (!slaves) return;
+
+            console.log('⏸️ Master buffering - pausing all slaves to maintain sync');
+            isBuffering.value = true;
+
+            slaves.forEach(slave => {
+                if (!slave.paused) {
+                    slave.pause();
+                }
+            });
+        }, { signal });
+
+        // Playing event - master resumed after buffering, re-sync and play slaves
+        master.addEventListener('playing', async () => {
+            if (!isBuffering.value) return; // Only handle if we were buffering
+
+            const slaves = getSlavesMap();
+            if (!slaves) return;
+
+            console.log('▶️ Master resumed after buffering - re-syncing slaves...');
+
+            // Re-sync all slaves to master time
+            await syncAllSlavesAndWait();
+
+            // Resume playback on all slaves
+            slaves.forEach(slave => {
+                slave.play().catch(err => {
+                    if (err?.name === 'AbortError') return;
+                    console.warn('Slave play failed after buffering:', err);
+                });
+            });
+
+            isBuffering.value = false;
+            console.log('✅ All slaves resumed and synced after buffering');
+        }, { signal });
+
+        // Stalled event - network issues on master, pause slaves
+        master.addEventListener('stalled', () => {
+            const slaves = getSlavesMap();
+            if (!slaves) return;
+
+            console.warn('⚠️ Master stalled (network issue) - pausing slaves');
+            slaves.forEach(slave => {
+                if (!slave.paused) {
+                    slave.pause();
+                }
             });
         }, { signal });
 
