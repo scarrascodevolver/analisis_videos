@@ -9,6 +9,7 @@ use App\Models\Video;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class VideoController extends Controller
 {
@@ -219,7 +220,7 @@ class VideoController extends Controller
             ->with('success', $successMessage);
     }
 
-    public function show(Video $video)
+    public function show(Request $request, Video $video)
     {
         $video->load(['category', 'uploader']);
 
@@ -237,7 +238,43 @@ class VideoController extends Controller
             ->orderBy('timestamp_seconds')
             ->get();
 
-        return view('videos.show', compact('video', 'comments'));
+        // Blade fallback solo si se solicita explícitamente (para compatibilidad temporal)
+        if ($request->has('blade')) {
+            return view('videos.show', compact('video', 'comments'));
+        }
+
+        // Default: Usar Vue/Inertia (migración a SPA)
+        $currentOrgId = auth()->user()->currentOrganization()?->id;
+        $orgUsers = User::select('id', 'name', 'role')
+            ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
+            ->get();
+
+        return Inertia::render('Videos/Show', [
+            'video' => array_merge($video->toArray(), [
+                'stream_url' => route('videos.stream', $video),
+                'edit_url' => route('videos.edit', $video),
+                'is_part_of_group' => $video->isPartOfGroup(),
+                'slave_videos' => $video->isPartOfGroup()
+                    ? $video->videoGroups->flatMap(function ($group) use ($video) {
+                        return $group->videos
+                            ->filter(function ($v) use ($video) {
+                                return $v->id !== $video->id;
+                            })
+                            ->map(function ($v) {
+                                return [
+                                    'id' => $v->id,
+                                    'title' => $v->title,
+                                    'stream_url' => route('videos.stream', $v),
+                                    'sync_offset' => $v->pivot->sync_offset ?? 0,
+                                ];
+                            })
+                            ->values();
+                    })->values()->all()
+                    : [],
+            ]),
+            'comments' => $comments,
+            'allUsers' => $orgUsers,
+        ]);
     }
 
     public function edit(Video $video)

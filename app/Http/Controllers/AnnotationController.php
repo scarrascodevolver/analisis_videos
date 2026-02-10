@@ -7,6 +7,7 @@ use App\Models\VideoAnnotation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
 
 class AnnotationController extends Controller
@@ -32,13 +33,18 @@ class AnnotationController extends Controller
         $validator = Validator::make($request->all(), [
             'video_id' => 'required|exists:videos,id',
             'timestamp' => 'required|numeric|min:0',
-            'annotation_data' => 'required|array',
-            'annotation_type' => 'required|in:arrow,circle,line,text,rectangle,free_draw,canvas',
+            'annotation_data' => 'required|string', // Frontend envía JSON string, modelo lo castea a array
+            'annotation_type' => 'required|in:select,arrow,circle,line,text,rectangle,free_draw,area,canvas,spotlight,tackle,ball,x,check',
             'duration_seconds' => 'nullable|integer|min:1|max:60',
             'is_permanent' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Validation failed for annotation', [
+                'input' => $request->all(),
+                'errors' => $validator->errors()->toArray(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Datos inválidos',
@@ -74,6 +80,11 @@ class AnnotationController extends Controller
                 ],
             ], 201);
 
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Video no accesible o no encontrado para el usuario actual',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -117,6 +128,11 @@ class AnnotationController extends Controller
                 'annotations' => $annotations,
             ]);
 
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Video no accesible o no encontrado para el usuario actual',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -173,6 +189,11 @@ class AnnotationController extends Controller
                 'tolerance_used' => $tolerance,
             ]);
 
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Video no accesible o no encontrado para el usuario actual',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

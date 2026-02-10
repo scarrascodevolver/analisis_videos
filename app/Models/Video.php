@@ -219,7 +219,7 @@ class Video extends Model
 
     public function scopeVisibleForUser($query, $user)
     {
-        if (in_array($user->role, ['analista', 'entrenador', 'staff', 'director_tecnico'])) {
+        if (in_array($user->role, ['analista', 'entrenador', 'staff', 'director_tecnico', 'super_admin'])) {
             return $query; // Staff ve todos los videos
         }
 
