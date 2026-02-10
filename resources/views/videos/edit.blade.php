@@ -198,6 +198,17 @@
                         </h3>
                     </div>
                     <div class="card-body">
+                        @php
+                            $clipsCount = $video->clips()->count();
+                        @endphp
+
+                        @if($clipsCount > 0)
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            Este video tiene <strong>{{ $clipsCount }} clips</strong> actualmente.
+                        </div>
+                        @endif
+
                         <form action="{{ route('videos.import-xml', $video) }}" method="POST" enctype="multipart/form-data" id="xmlImportForm">
                             @csrf
                             <div class="form-group">
@@ -211,13 +222,30 @@
                                 <small class="form-text text-muted mt-2">
                                     <i class="fas fa-info-circle"></i>
                                     Sube un archivo XML exportado desde LongoMatch.
-                                    Los clips existentes serán reemplazados.
+                                    @if($clipsCount > 0)
+                                        Los {{ $clipsCount }} clips existentes serán reemplazados.
+                                    @endif
                                 </small>
                             </div>
                             <button type="submit" class="btn btn-rugby">
                                 <i class="fas fa-upload"></i> Importar XML
                             </button>
                         </form>
+
+                        @if($clipsCount > 0)
+                        <hr class="my-3">
+                        <form action="{{ route('videos.delete-all-clips', $video) }}" method="POST" id="deleteClipsForm">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Eliminar todos los clips ({{ $clipsCount }})
+                            </button>
+                            <small class="form-text text-muted mt-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Esta acción eliminará permanentemente todos los clips de este video.
+                            </small>
+                        </form>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -276,6 +304,21 @@ $(document).ready(function() {
         const submitBtn = $(this).find('button[type="submit"]');
         submitBtn.prop('disabled', true);
         submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Importando...');
+    });
+
+    // Delete all clips confirmation
+    $('#deleteClipsForm').on('submit', function(e) {
+        e.preventDefault();
+
+        if (confirm('¿Estás seguro de que deseas eliminar TODOS los clips de este video?\n\nEsta acción no se puede deshacer.')) {
+            // Show loading state
+            const submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Eliminando...');
+
+            // Submit form
+            this.submit();
+        }
     });
 });
 </script>
