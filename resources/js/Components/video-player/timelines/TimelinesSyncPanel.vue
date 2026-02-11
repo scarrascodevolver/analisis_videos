@@ -26,6 +26,7 @@
                     :duration="duration"
                     :offset="0"
                     :draggable="false"
+                    @seek="handleSeek"
                 />
 
                 <!-- Slave Timelines (arrastrables para multi-cámara) -->
@@ -39,6 +40,7 @@
                     :offset="Number(slave.sync_offset || 0)"
                     :draggable="true"
                     @offset-changed="handleSlaveOffsetChanged(slave.id, $event)"
+                    @seek="handleSeek"
                 />
 
                 <!-- Clips Timeline (arrastrable para sincronizar clips XML) -->
@@ -51,14 +53,15 @@
                     :offset="Number(clipsOffset)"
                     :draggable="true"
                     @offset-changed="handleClipsOffsetChanged"
+                    @seek="handleSeek"
                 />
 
                 <!-- Help message -->
                 <div class="help-message">
                     <i class="fas fa-info-circle"></i>
                     <span>
-                        <strong>Arrastra</strong> las barras de timeline para sincronizar.
-                        Los cambios se guardan automáticamente.
+                        <strong>Click</strong> en cualquier timeline para adelantar/atrasar el video.
+                        <strong>Arrastra</strong> las barras para sincronizar (se guarda automáticamente).
                     </span>
                 </div>
             </div>
@@ -146,6 +149,11 @@ async function handleClipsOffsetChanged(newOffset: number) {
         console.error('Error updating clips offset:', error);
         toast?.error('Error al sincronizar clips');
     }
+}
+
+function handleSeek(time: number) {
+    // Seek to the specified time in the master video
+    videoStore.seek(time);
 }
 </script>
 

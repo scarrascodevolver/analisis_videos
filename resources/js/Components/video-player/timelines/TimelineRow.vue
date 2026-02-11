@@ -65,6 +65,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'offset-changed': [newOffset: number];
+    'seek': [time: number];
 }>();
 
 const trackRef = ref<HTMLElement | null>(null);
@@ -72,6 +73,7 @@ const isDragging = ref(false);
 const tempOffset = ref(props.offset);
 const dragStartX = ref(0);
 const initialOffset = ref(0);
+const justDragged = ref(false);
 
 const rowClass = computed(() => ({
     'is-master': props.type === 'master',
@@ -160,25 +162,32 @@ function endDrag() {
     document.removeEventListener('mousemove', handleDrag);
     document.removeEventListener('mouseup', endDrag);
 
-    // Emitir el nuevo offset si cambió
-    if (Math.abs(tempOffset.value - props.offset) > 0.1) {
+    // Detectar si realmente se arrastró
+    const offsetChanged = Math.abs(tempOffset.value - props.offset) > 0.1;
+
+    if (offsetChanged) {
         emit('offset-changed', tempOffset.value);
+        justDragged.value = true;
+        // Reset flag después de un breve delay
+        setTimeout(() => {
+            justDragged.value = false;
+        }, 100);
     }
 }
 
 function handleClick(event: MouseEvent) {
-    // Si es arrastrable, no hacer nada al hacer click (solo drag)
-    if (props.draggable) return;
+    // No hacer seek si acabamos de arrastrar
+    if (justDragged.value) return;
 
-    // Para timeline master, permitir seek
-    if (props.type === 'master' && trackRef.value) {
+    // Permitir seek en todos los timelines
+    if (trackRef.value) {
         const rect = trackRef.value.getBoundingClientRect();
         const clickX = event.clientX - rect.left;
         const percent = clickX / rect.width;
         const seekTime = percent * props.duration;
 
-        // Emitir evento de seek (el padre debe manejarlo)
-        // emit('seek', seekTime);
+        // Emitir evento de seek
+        emit('seek', seekTime);
     }
 }
 </script>
@@ -257,6 +266,7 @@ function handleClick(event: MouseEvent) {
     border-radius: 3px;
     overflow: hidden;
     border: 1px solid #333;
+    cursor: pointer;
 }
 
 .timeline-track.draggable {
