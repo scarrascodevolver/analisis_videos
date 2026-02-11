@@ -62,7 +62,11 @@ function handleVideoClick(event: MouseEvent) {
 </script>
 
 <template>
-    <div class="video-container" style="position: relative; background: #000; border-radius: 8px; overflow: hidden;">
+    <div
+        class="video-container"
+        :class="{ 'annotation-mode-active': annotationsStore.annotationMode }"
+        style="position: relative; background: #000; border-radius: 8px;"
+    >
         <!-- Video wrapper for flex layout (doesn't affect canvas positioning) -->
         <div class="video-wrapper" style="position: relative; width: 100%; height: 100%;">
             <video
@@ -148,6 +152,12 @@ function handleVideoClick(event: MouseEvent) {
 .video-container {
     min-height: 300px;
     aspect-ratio: 16/9;
+    overflow: hidden;
+}
+
+/* Allow toolbar to overflow when in annotation mode */
+.video-container.annotation-mode-active {
+    overflow: visible;
 }
 
 .video-utility-controls {
