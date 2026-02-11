@@ -298,12 +298,12 @@ function closeAnnotationMode() {
     position: absolute;
     top: 10px;
     left: 10px;
-    width: 140px;
+    width: 125px;
     max-height: calc(100vh - 150px);
     background: rgba(0, 0, 0, 0.95);
     border: 1px solid #00B7B5;
-    border-radius: 6px;
-    padding: 8px;
+    border-radius: 4px;
+    padding: 5px;
     z-index: 20;
     box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
     overflow-y: auto;
@@ -327,57 +327,57 @@ function closeAnnotationMode() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
     border-bottom: 1px solid #333;
 }
 
 .toolbar-title {
     margin: 0;
-    font-size: 11px;
+    font-size: 10px;
     color: #00B7B5;
     font-weight: 600;
 }
 
 .toolbar-title i {
-    margin-right: 4px;
+    margin-right: 3px;
 }
 
 .annotation-count {
     background: #00B7B5;
     color: #000;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 600;
-    padding: 1px 4px;
+    padding: 1px 3px;
     border-radius: 8px;
-    min-width: 16px;
+    min-width: 14px;
     text-align: center;
 }
 
 .toolbar-section {
-    margin-bottom: 8px;
+    margin-bottom: 3px;
 }
 
 .toolbar-label {
-    font-size: 9px;
+    font-size: 8px;
     color: #999;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .tool-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    gap: 3px;
 }
 
 .tool-btn {
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
-    padding: 6px;
+    padding: 4px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
@@ -395,14 +395,14 @@ function closeAnnotationMode() {
 }
 
 .tool-btn i {
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .color-preview {
     width: 100%;
-    height: 30px;
+    height: 24px;
     border: 2px solid #333;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
     transition: border-color 0.2s;
 }
@@ -414,15 +414,15 @@ function closeAnnotationMode() {
 .color-picker {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    margin-top: 6px;
+    gap: 3px;
+    margin-top: 4px;
 }
 
 .color-option {
     width: 100%;
-    height: 24px;
+    height: 20px;
     border: 2px solid transparent;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
     transition: border-color 0.2s;
 }
@@ -437,16 +437,16 @@ function closeAnnotationMode() {
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
-    padding: 5px;
+    padding: 4px;
     border-radius: 3px;
     cursor: pointer;
-    margin-bottom: 3px;
-    font-size: 10px;
+    margin-bottom: 2px;
+    font-size: 9px;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -472,7 +472,7 @@ function closeAnnotationMode() {
 .action-btn.close-btn {
     background: #dc3545;
     border-color: #dc3545;
-    margin-top: 8px;
+    margin-top: 2px;
 }
 
 .action-btn.close-btn:hover {
@@ -482,12 +482,12 @@ function closeAnnotationMode() {
 
 .action-group {
     display: flex;
-    gap: 4px;
-    margin-bottom: 4px;
+    gap: 3px;
+    margin-bottom: 2px;
 }
 
 .action-btn.half {
-    width: calc(50% - 2px);
+    width: calc(50% - 1.5px);
     margin-bottom: 0;
 }
 
@@ -496,9 +496,9 @@ function closeAnnotationMode() {
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
-    padding: 4px 6px;
+    padding: 3px 5px;
     border-radius: 3px;
-    font-size: 10px;
+    font-size: 9px;
     cursor: pointer;
 }
 
@@ -519,13 +519,13 @@ function closeAnnotationMode() {
 .symbol-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
+    gap: 2px;
 }
 
 .symbol-btn {
     background: #1a1a1a;
     border: 1px solid #333;
-    padding: 5px;
+    padding: 3px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
@@ -541,6 +541,6 @@ function closeAnnotationMode() {
 }
 
 .symbol-btn i {
-    font-size: 12px;
+    font-size: 10px;
 }
 </style>
