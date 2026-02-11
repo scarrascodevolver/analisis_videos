@@ -4,9 +4,7 @@
             v-for="slave in slaves"
             :key="slave.id"
             :slave="slave"
-            :sync-status="getSyncStatus(slave.id)"
             @click="handleSwapMaster(slave.id)"
-            @sync="handleSyncSlave"
             @remove="handleRemoveSlave"
         />
     </div>
@@ -18,21 +16,15 @@ import type { SlaveVideo as SlaveVideoType } from '@/types/video-player';
 
 const emit = defineEmits<{
     swapMaster: [slaveId: number];
-    syncSlave: [slaveId: number];
     removeSlave: [slaveId: number];
 }>();
 
 const props = defineProps<{
     slaves: SlaveVideoType[];
-    getSyncStatus: (slaveId: number) => 'synced' | 'syncing' | 'out-of-sync';
 }>();
 
 function handleSwapMaster(slaveId: number) {
     emit('swapMaster', slaveId);
-}
-
-function handleSyncSlave(slaveId: number) {
-    emit('syncSlave', slaveId);
 }
 
 function handleRemoveSlave(slaveId: number) {

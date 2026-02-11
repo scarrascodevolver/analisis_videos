@@ -41,6 +41,12 @@ export const useVideoStore = defineStore('video', () => {
         video.value = v;
     }
 
+    function updateTimelineOffset(offset: number) {
+        if (video.value) {
+            video.value.timeline_offset = offset;
+        }
+    }
+
     function play() {
         videoRef.value?.play();
     }
@@ -159,6 +165,7 @@ export const useVideoStore = defineStore('video', () => {
         // Actions
         setVideoRef,
         setVideo,
+        updateTimelineOffset,
         play,
         pause,
         togglePlay,

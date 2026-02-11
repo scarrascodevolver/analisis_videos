@@ -12,7 +12,7 @@ const emit = defineEmits<{
     addAngle: [];
     toggleComments: [];
     deleteVideo: [];
-    toggleAnnotationMode: [];
+    toggleTimelines: [];
 }>();
 
 const isAnalystOrCoach = computed(() =>
@@ -61,10 +61,10 @@ const canDelete = computed(() => isAnalystOrCoach.value);
             </button>
             <button
                 v-if="isAnalystOrCoach"
-                class="btn btn-sm btn-rugby-outline mr-2 font-weight-bold"
-                @click="$emit('toggleAnnotationMode')"
+                class="btn btn-sm btn-rugby-outline mr-2"
+                @click="$emit('toggleTimelines')"
             >
-                <i class="fas fa-paint-brush"></i> Anotar
+                <i class="fas fa-film"></i> Timelines
             </button>
             <button
                 v-if="user.role === 'jugador'"

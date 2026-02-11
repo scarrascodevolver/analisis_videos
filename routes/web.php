@@ -90,6 +90,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('associate', [MultiCameraController::class, 'associateAngle'])->name('associate');
         Route::delete('remove', [MultiCameraController::class, 'removeAngle'])->name('remove');
         Route::post('sync', [MultiCameraController::class, 'syncAngle'])->name('sync');
+        Route::put('sync', [MultiCameraController::class, 'updateSlaveSync'])->name('sync.update');
         Route::post('reset-sync', [MultiCameraController::class, 'resetSync'])->name('reset-sync');
         Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
     });

@@ -51,7 +51,18 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
             if (!slaveData) return;
 
-            const targetTime = master.currentTime + (slaveData.sync_offset || 0);
+            const offset = Number(slaveData.sync_offset || 0);
+
+            // Check if slave should be active at current master time
+            if (offset > 0 && master.currentTime < offset) {
+                slave.currentTime = 0;
+                slave.pause();
+                return;
+            }
+
+            const targetTime = master.currentTime - offset;
+            if (!isFinite(targetTime) || targetTime < 0) return;
+
             const timeDiff = Math.abs(slave.currentTime - targetTime);
 
             if (timeDiff > SYNC_TOLERANCE) {
@@ -85,13 +96,40 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         if (!master || !slave || !slaveData) return;
         if (isNaN(master.duration) || isNaN(slave.duration)) return;
 
-        const targetTime = master.currentTime + (slaveData.sync_offset || 0);
-        if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) return;
+        const offset = Number(slaveData.sync_offset || 0);
+
+        // CORRECTED SYNC LOGIC:
+        // If offset > 0: slave started AFTER master (should start when master reaches offset time)
+        // If offset < 0: slave started BEFORE master (already playing)
+        // Formula: slave.currentTime = master.currentTime - offset
+
+        if (offset > 0 && master.currentTime < offset) {
+            // Master hasn't reached the slave's start point yet
+            slave.currentTime = 0;
+            if (!slave.paused) {
+                slave.pause();
+            }
+            return;
+        }
+
+        const targetTime = master.currentTime - offset;
+        if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) {
+            // Slave is out of valid range
+            if (!slave.paused) {
+                slave.pause();
+            }
+            return;
+        }
 
         const timeDiff = Math.abs(slave.currentTime - targetTime);
         if (timeDiff > SYNC_TOLERANCE) {
             slave.currentTime = targetTime;
             lastSyncTimes.value.set(slaveId, Date.now());
+        }
+
+        // Resume slave if master is playing and slave should be playing
+        if (!master.paused && slave.paused) {
+            slave.play().catch(() => {});
         }
     }
 
@@ -118,8 +156,21 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
             if (!slaveData || isNaN(slave.duration)) return;
 
-            const targetTime = master.currentTime + (slaveData.sync_offset || 0);
-            if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) return;
+            const offset = Number(slaveData.sync_offset || 0);
+
+            // Check if slave should be active at current master time
+            if (offset > 0 && master.currentTime < offset) {
+                // Master hasn't reached slave start point
+                slave.currentTime = 0;
+                slave.pause();
+                return;
+            }
+
+            const targetTime = master.currentTime - offset;
+            if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) {
+                slave.pause();
+                return;
+            }
 
             // Create promise that resolves when slave is ready
             const promise = new Promise<void>((resolve) => {
@@ -204,7 +255,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                 return;
             }
 
-            // Normal play: sync and play all slaves
+            // Normal play: sync all slaves (only play those that should be active)
             const slavesForPlay = getSlavesMap();
             if (slavesForPlay) {
                 slavesForPlay.forEach((slave, slaveId) => {
@@ -213,8 +264,21 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
                     if (!slaveData) return;
 
-                    const expectedTime = master.currentTime + (slaveData.sync_offset || 0);
-                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.duration) return;
+                    const offset = Number(slaveData.sync_offset || 0);
+
+                    // Check if slave should be active at current master time
+                    if (offset > 0 && master.currentTime < offset) {
+                        // Master hasn't reached slave start point yet
+                        slave.currentTime = 0;
+                        slave.pause();
+                        return;
+                    }
+
+                    const expectedTime = master.currentTime - offset;
+                    if (!isFinite(expectedTime) || expectedTime < 0 || expectedTime > slave.duration) {
+                        slave.pause();
+                        return;
+                    }
 
                     // Sync time if ready
                     const canSync = !slave.seeking && slave.readyState >= 3;
@@ -222,7 +286,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                         slave.currentTime = expectedTime;
                     }
 
-                    // Always play
+                    // Play only if slave should be active
                     slave.play().catch(err => {
                         if (err?.name === 'AbortError') return;
                         console.warn('Slave play failed:', err);
@@ -267,8 +331,19 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             // Re-sync all slaves to master time
             await syncAllSlavesAndWait();
 
-            // Resume playback on all slaves
-            slaves.forEach(slave => {
+            // Resume playback only on slaves that should be active
+            slaves.forEach((slave, slaveId) => {
+                const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
+                if (!slaveData) return;
+
+                const offset = Number(slaveData.sync_offset || 0);
+
+                // Only play if slave should be active at current master time
+                if (offset > 0 && master.currentTime < offset) {
+                    slave.pause();
+                    return;
+                }
+
                 slave.play().catch(err => {
                     if (err?.name === 'AbortError') return;
                     console.warn('Slave play failed after buffering:', err);
@@ -308,8 +383,18 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                 if (master.paused) {
                     slaves.forEach(slave => slave.pause());
                 } else {
-                    slaves.forEach(slave => {
-                        slave.play().catch(() => {});
+                    // Only play slaves that should be active at current master time
+                    slaves.forEach((slave, slaveId) => {
+                        const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
+                        if (!slaveData) return;
+
+                        const offset = Number(slaveData.sync_offset || 0);
+
+                        if (offset > 0 && master.currentTime < offset) {
+                            slave.pause();
+                        } else {
+                            slave.play().catch(() => {});
+                        }
                     });
                 }
             }, 25); // Reduced from 100ms to 25ms for faster response
@@ -332,14 +417,38 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             slaves.forEach((slave, slaveId) => {
                 const lastSync = lastSyncTimes.value.get(slaveId) || 0;
                 if (now - lastSync < adaptiveThrottle) return;
-                if (slave.paused || slave.seeking || slave.readyState < 3) return;
 
-                // Use adaptive tolerance for sync check
                 const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
                 if (!slaveData) return;
 
-                const targetTime = master.currentTime + (slaveData.sync_offset || 0);
-                if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) return;
+                const offset = Number(slaveData.sync_offset || 0);
+
+                // Check if slave should be active at current master time
+                if (offset > 0 && master.currentTime < offset) {
+                    // Master hasn't reached slave start point yet
+                    if (!slave.paused) {
+                        slave.pause();
+                    }
+                    slave.currentTime = 0;
+                    return;
+                }
+
+                // Check if slave should start playing (just crossed the offset threshold)
+                if (offset > 0 && slave.paused && master.currentTime >= offset) {
+                    // Slave should start playing now
+                    slave.currentTime = 0;
+                    slave.play().catch(() => {});
+                    lastSyncTimes.value.set(slaveId, now);
+                    return;
+                }
+
+                if (slave.paused || slave.seeking || slave.readyState < 3) return;
+
+                const targetTime = master.currentTime - offset;
+                if (!isFinite(targetTime) || targetTime < 0 || targetTime > slave.duration) {
+                    slave.pause();
+                    return;
+                }
 
                 const timeDiff = Math.abs(slave.currentTime - targetTime);
                 if (timeDiff > adaptiveTolerance) {
@@ -440,9 +549,8 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         const slaveIndex = safeSlaves.findIndex(s => s.id === slaveId);
         if (slaveIndex !== -1 && Array.isArray(slaveVideos.value)) {
             slaveVideos.value[slaveIndex].sync_offset = newOffset;
-            nextTick(() => {
-                syncSlaveToMaster(slaveId);
-            });
+            // Don't auto-sync/play when adjusting offset from timeline drag
+            // Sync will happen naturally during playback via timeupdate event
         }
     }
 
@@ -515,6 +623,12 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         cleanup();
     });
 
+    // Get current time of a specific slave
+    function getSlaveCurrentTime(slaveId: number): number {
+        const slave = slaveVideoElements.value.get(slaveId);
+        return slave?.currentTime || 0;
+    }
+
     return {
         registerSlaveElement,
         getSyncStatus,
@@ -522,5 +636,6 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         adjustSyncOffset,
         syncAllSlaves,
         syncAllSlavesAndWait,
+        getSlaveCurrentTime,
     };
 }

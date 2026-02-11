@@ -263,6 +263,17 @@ export function useVideoApi(videoId: number) {
         });
     }
 
+    // Route: PUT /videos/{video}/multi-camera/sync
+    async function updateSlaveSync(
+        slaveId: number,
+        data: { sync_offset: number }
+    ): Promise<{ success: boolean }> {
+        return request(`/videos/${videoId}/multi-camera/sync`, {
+            method: 'PUT',
+            body: JSON.stringify({ slave_id: slaveId, ...data }),
+        });
+    }
+
     return {
         // View tracking
         trackView,
@@ -294,5 +305,6 @@ export function useVideoApi(videoId: number) {
         deleteVideo,
         // Multi-Camera
         removeSlaveVideo,
+        updateSlaveSync,
     };
 }

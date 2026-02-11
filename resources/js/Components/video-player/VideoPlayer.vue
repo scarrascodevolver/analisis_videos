@@ -21,6 +21,7 @@ const emit = defineEmits<{
     showStats: [];
     deleteVideo: [];
     addAngle: [];
+    toggleTimelines: [];
 }>();
 
 const videoStore = useVideoStore();
@@ -76,7 +77,7 @@ function handleToggleAnnotationMode() {
                     @show-stats="$emit('showStats')"
                     @add-angle="$emit('addAngle')"
                     @toggle-comments="toggleComments"
-                    @toggle-annotation-mode="handleToggleAnnotationMode"
+                    @toggle-timelines="$emit('toggleTimelines')"
                     @delete-video="$emit('deleteVideo')"
                 />
 
@@ -103,6 +104,7 @@ function handleToggleAnnotationMode() {
                         </div>
                     </div>
 
+                    <slot name="timelines-sync" />
                     <slot name="clip-panel" />
                     <slot name="clip-timeline" />
                     <slot name="comment-timeline" />

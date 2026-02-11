@@ -30,6 +30,7 @@
 
 <script setup lang="ts">
 import { ref, watch, inject } from 'vue';
+import { useVideoStore } from '@/stores/videoStore';
 
 const props = defineProps<{
     videoId: number;
@@ -43,6 +44,7 @@ const emit = defineEmits<{
 
 const api = inject<any>('videoApi');
 const toast = inject<any>('toast');
+const videoStore = useVideoStore();
 
 const tempOffset = ref(props.initialOffset ?? 0);
 const isApplying = ref(false);
@@ -54,12 +56,22 @@ watch(() => props.initialOffset, (newVal) => {
 });
 
 async function applyOffset() {
-    if (!api) return;
+    if (!api) {
+        console.warn('⚠️ videoApi not available');
+        toast?.error('Error: API no disponible');
+        return;
+    }
 
     isApplying.value = true;
     try {
         await api.setTimelineOffset(tempOffset.value);
+
+        // Update videoStore to reflect new offset immediately
+        videoStore.updateTimelineOffset(tempOffset.value);
+
+        // Emit event to parent for additional processing (e.g., reload clips)
         emit('offsetChanged', tempOffset.value);
+
         toast?.success('Offset aplicado exitosamente');
     } catch (error) {
         console.error('Error applying offset:', error);

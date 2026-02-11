@@ -10,6 +10,7 @@ import CommentNotification from '@/Components/video-player/comments/CommentNotif
 import ClipPanel from '@/Components/video-player/clips/ClipPanel.vue';
 import ClipTimeline from '@/Components/video-player/timeline/ClipTimeline.vue';
 import ClipsList from '@/Components/video-player/clips/ClipsList.vue';
+import TimelinesSyncPanel from '@/Components/video-player/timelines/TimelinesSyncPanel.vue';
 import RecordingIndicator from '@/Components/video-player/ui/RecordingIndicator.vue';
 import SidebarPanel from '@/Components/video-player/sidebar/SidebarPanel.vue';
 import CategoryModal from '@/Components/video-player/modals/CategoryModal.vue';
@@ -56,6 +57,21 @@ const notificationsEnabled = ref(true);
 const isAnalystOrCoach = computed(() =>
     ['analista', 'entrenador'].includes(user.value.role)
 );
+
+// Timelines sync panel visibility (expanded by default)
+const showTimelinesSyncPanel = ref(true);
+
+// Show timelines sync toggle if has slaves OR clips
+const canShowTimelinesSync = computed(() => {
+    if (!isAnalystOrCoach.value) return false;
+    const hasSlaves = slaveVideos.value.length > 0;
+    const hasClips = clipsStore.clips.length > 0;
+    return hasSlaves || hasClips;
+});
+
+function toggleTimelinesSync() {
+    showTimelinesSyncPanel.value = !showTimelinesSyncPanel.value;
+}
 
 // Modal state
 const showCategoryModal = ref(false);
@@ -109,6 +125,11 @@ const multiCamera = props.video.is_part_of_group
 // Provide multiCamera and videoLoader to child components
 provide('multiCamera', multiCamera);
 provide('videoLoader', videoLoader);
+
+// Provide videoApi and toast to child components (for TimelineOffset and others)
+const videoApi = useVideoApi(props.video.id);
+provide('videoApi', videoApi);
+provide('toast', toast);
 
 // View tracking
 const viewTracking = useViewTracking(props.video.id);
@@ -219,12 +240,6 @@ function onSwapMaster(slaveId: number) {
     }
 }
 
-function onSyncSlave(slaveId: number) {
-    if (!multiCamera) return;
-    multiCamera.syncAllSlaves();
-    toast.info('Sincronizando cámaras...');
-}
-
 async function onRemoveSlave(slaveId: number) {
     if (!confirm('¿Estás seguro de que deseas eliminar este ángulo?')) return;
 
@@ -252,17 +267,6 @@ function onSyncSaved(offsets: Record<number, number>) {
     }
     toast.success('Sincronización guardada');
 }
-
-// Safe wrapper for getSyncStatus
-function safeGetSyncStatus(slaveId: number): 'synced' | 'syncing' | 'out-of-sync' {
-    if (!multiCamera || !multiCamera.getSyncStatus) return 'out-of-sync';
-    try {
-        return multiCamera.getSyncStatus(slaveId);
-    } catch (error) {
-        console.warn('Error getting sync status:', error);
-        return 'out-of-sync';
-    }
-}
 </script>
 
 <template>
@@ -277,6 +281,7 @@ function safeGetSyncStatus(slaveId: number): 'synced' | 'syncing' | 'out-of-sync
             @show-stats="showStatsModal = true"
             @delete-video="showDeleteModal = true"
             @add-angle="onAddAngle"
+            @toggle-timelines="toggleTimelinesSync"
         >
             <!-- Annotation Canvas (overlay on video) -->
             <template v-if="isAnalystOrCoach" #annotation-canvas>
@@ -297,9 +302,14 @@ function safeGetSyncStatus(slaveId: number): 'synced' | 'syncing' | 'out-of-sync
                 />
             </template>
 
-            <!-- Clip Timeline (visual lanes) -->
+            <!-- Clip Timeline (visual timeline with clips) -->
             <template v-if="isAnalystOrCoach" #clip-timeline>
                 <ClipTimeline :video-id="video.id" />
+            </template>
+
+            <!-- Timelines Sync Panel (multi-camera + clips XML sync) -->
+            <template v-if="canShowTimelinesSync && showTimelinesSyncPanel" #timelines-sync>
+                <TimelinesSyncPanel :slaves="slaveVideos" />
             </template>
 
             <!-- Comment Timeline with notifications -->
@@ -342,9 +352,7 @@ function safeGetSyncStatus(slaveId: number): 'synced' | 'syncing' | 'out-of-sync
                 <MultiCameraLayout
                     v-if="slaveVideos.length > 0"
                     :slaves="slaveVideos"
-                    :get-sync-status="safeGetSyncStatus"
                     @swap-master="onSwapMaster"
-                    @sync-slave="onSyncSlave"
                     @remove-slave="onRemoveSlave"
                 />
                 <div v-else class="text-center p-3 text-muted">
