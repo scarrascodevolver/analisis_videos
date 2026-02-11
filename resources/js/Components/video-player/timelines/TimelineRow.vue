@@ -241,7 +241,7 @@ function handleClick(event: MouseEvent) {
 .timeline-label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     min-width: 200px;
     max-width: 200px;
     padding-right: 8px;
