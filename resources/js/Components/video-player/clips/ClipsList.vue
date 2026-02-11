@@ -203,11 +203,11 @@ safeCategories.forEach((cat) => {
 .clips-accordion {
     flex: 1;
     overflow-y: auto;
-    padding: 0.5rem;
+    padding: 0.25rem;
 }
 
 .category-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.35rem;
     background-color: #1a1a1a;
     border-radius: 3px;
     overflow: hidden;
@@ -267,7 +267,7 @@ safeCategories.forEach((cat) => {
 }
 
 .category-clips {
-    padding: 0.35rem 0.45rem 0.25rem;
+    padding: 0.25rem 0.35rem 0.15rem;
 }
 
 /* Scrollbar styling */

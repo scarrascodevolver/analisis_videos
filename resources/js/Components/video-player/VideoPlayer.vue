@@ -89,7 +89,7 @@ function toggleTheaterMode() {
                 />
 
                 <div class="card-body p-0">
-                    <div :class="hasMultiCamera ? 'multi-cam-wrapper' : ''">
+                    <div :class="[hasMultiCamera ? 'multi-cam-wrapper' : '', { 'theater-mode': isTheaterMode }]">
                         <div :class="hasMultiCamera ? 'master-col' : ''">
                             <VideoElement
                                 :stream-url="video.stream_url"
@@ -142,6 +142,12 @@ function toggleTheaterMode() {
     height: 60vh;
     align-items: center;
     overflow: hidden;
+    transition: height 0.3s ease;
+}
+
+/* Theater mode: more height and better ratio for slaves */
+.multi-cam-wrapper.theater-mode {
+    height: 80vh;
 }
 
 .master-col {
@@ -151,6 +157,13 @@ function toggleTheaterMode() {
     align-items: center;
     justify-content: center;
     height: 100%;
+    transition: flex 0.3s ease, max-width 0.3s ease;
+}
+
+/* Theater mode: reduce master to give more space to slaves */
+.multi-cam-wrapper.theater-mode .master-col {
+    flex: 0 0 55%;
+    max-width: 55%;
 }
 
 .master-col :deep(.video-container) {
@@ -171,6 +184,11 @@ function toggleTheaterMode() {
     max-height: 57vh !important;
 }
 
+/* Theater mode: allow taller video */
+.multi-cam-wrapper.theater-mode .master-col :deep(video) {
+    max-height: 77vh !important;
+}
+
 .slaves-col {
     flex: 0 0 33.333%;
     max-width: 33.333%;
@@ -178,6 +196,14 @@ function toggleTheaterMode() {
     max-height: 60vh;
     display: flex;
     flex-direction: column;
+    transition: flex 0.3s ease, max-width 0.3s ease, max-height 0.3s ease;
+}
+
+/* Theater mode: increase slaves size */
+.multi-cam-wrapper.theater-mode .slaves-col {
+    flex: 0 0 45%;
+    max-width: 45%;
+    max-height: 80vh;
 }
 
 @media (max-width: 991px) {
