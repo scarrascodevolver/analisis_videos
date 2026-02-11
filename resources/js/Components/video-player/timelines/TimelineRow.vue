@@ -5,7 +5,7 @@
             <i :class="iconClass"></i>
             <span class="label-text">{{ label }}</span>
             <span v-if="offset !== 0" class="offset-badge" :class="offsetBadgeClass">
-                {{ offset > 0 ? '+' : '' }}{{ offset.toFixed(1) }}s
+                {{ offsetBadgeText }}
             </span>
         </div>
 
@@ -45,7 +45,7 @@
             <!-- Drag indicator -->
             <div v-if="isDragging" class="drag-indicator">
                 <i class="fas fa-arrows-alt-h"></i>
-                {{ tempOffset.toFixed(1) }}s
+                <span>{{ offsetBadgeText }}</span>
             </div>
         </div>
     </div>
@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { formatTime } from '@/stores/videoStore';
 
 const props = defineProps<{
     type: 'master' | 'slave' | 'clips';
@@ -94,6 +95,22 @@ const offsetBadgeClass = computed(() => ({
     'positive': props.offset > 0,
     'negative': props.offset < 0,
 }));
+
+// Calculate absolute timestamp for better UX (like Hudl/Angles)
+const offsetBadgeText = computed(() => {
+    const offsetValue = isDragging.value ? tempOffset.value : props.offset;
+    const sign = offsetValue > 0 ? '+' : '';
+    const offsetText = `${sign}${offsetValue.toFixed(1)}s`;
+
+    // For slaves, show absolute timestamp where they start
+    if (props.type === 'slave' && offsetValue !== 0) {
+        const absoluteTime = Math.abs(offsetValue);
+        const timestamp = formatTime(absoluteTime);
+        return `${offsetText} (${offsetValue > 0 ? 'empieza' : 'empezó'} en ${timestamp})`;
+    }
+
+    return offsetText;
+});
 
 const offsetPixels = computed(() => {
     if (!trackRef.value) return 0;
@@ -225,8 +242,8 @@ function handleClick(event: MouseEvent) {
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 140px;
-    max-width: 140px;
+    min-width: 200px;
+    max-width: 200px;
     padding-right: 8px;
     font-size: 11px;
 }
@@ -241,11 +258,14 @@ function handleClick(event: MouseEvent) {
 }
 
 .offset-badge {
-    font-size: 9px;
-    padding: 2px 4px;
+    font-size: 8.5px;
+    padding: 2px 6px;
     border-radius: 3px;
     font-weight: bold;
     white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .offset-badge.positive {
