@@ -72,10 +72,10 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 v-if="isAnalystOrCoach"
                 class="btn btn-sm btn-rugby-outline mr-2"
                 @click="$emit('toggleTheater')"
-                :title="isTheaterMode ? 'Modo normal' : 'Modo teatro'"
+                :title="isTheaterMode ? 'Mostrar comentarios y clips' : 'Ocultar comentarios y clips para vista ampliada'"
             >
-                <i :class="isTheaterMode ? 'fas fa-compress' : 'fas fa-expand'"></i>
-                {{ isTheaterMode ? 'Normal' : 'Teatro' }}
+                <i :class="isTheaterMode ? 'fas fa-sidebar' : 'fas fa-expand-alt'"></i>
+                {{ isTheaterMode ? 'Mostrar Sidebar' : 'Ocultar Sidebar' }}
             </button>
             <button
                 v-if="user.role === 'jugador'"
