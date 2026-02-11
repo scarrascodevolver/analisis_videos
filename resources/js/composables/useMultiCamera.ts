@@ -20,6 +20,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     const lastSyncTimes = ref<Map<number, number>>(new Map());
     const abortController = ref<AbortController | null>(null);
     const isBuffering = ref(false);
+    const isSeeking = ref(false);
 
     // Helper to safely get the slaves Map
     function getSlavesMap(): Map<number, HTMLVideoElement> | null {
@@ -367,23 +368,43 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             });
         }, { signal });
 
+        // Seeking event - pause all slaves immediately to prevent race conditions
+        master.addEventListener('seeking', () => {
+            isSeeking.value = true;
+            const slaves = getSlavesMap();
+            if (!slaves) return;
+
+            console.log('🔍 Master seeking - pausing all slaves immediately');
+            slaves.forEach(slave => {
+                if (!slave.paused) {
+                    slave.pause();
+                }
+            });
+        }, { signal });
+
         // Seeked event - sync all slaves immediately with buffering wait
         let seekDebounce: ReturnType<typeof setTimeout> | null = null;
         master.addEventListener('seeked', async () => {
             // Small debounce (25ms) to handle rapid seeks (like dragging scrubber)
             if (seekDebounce) clearTimeout(seekDebounce);
             seekDebounce = setTimeout(async () => {
+                console.log('✅ Master seeked - syncing all slaves...');
+
                 // Wait for all slaves to buffer and be ready
                 await syncAllSlavesAndWait();
 
                 // Then sync play/pause state
                 const slaves = getSlavesMap();
-                if (!slaves) return;
+                if (!slaves) {
+                    isSeeking.value = false;
+                    return;
+                }
 
                 if (master.paused) {
+                    // Master is paused - ensure all slaves are paused (already paused from 'seeking')
                     slaves.forEach(slave => slave.pause());
                 } else {
-                    // Only play slaves that should be active at current master time
+                    // Master is playing - only play slaves that should be active at current master time
                     slaves.forEach((slave, slaveId) => {
                         const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
                         if (!slaveData) return;
@@ -391,18 +412,25 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                         const offset = Number(slaveData.sync_offset || 0);
 
                         if (offset > 0 && master.currentTime < offset) {
+                            // Slave should not be active yet - keep paused
                             slave.pause();
                         } else {
+                            // Slave should be active - play it
                             slave.play().catch(() => {});
                         }
                     });
                 }
+
+                // Clear seeking flag
+                isSeeking.value = false;
+                console.log('✅ Seek complete - all slaves synced');
             }, 25); // Reduced from 100ms to 25ms for faster response
         }, { signal });
 
         // Timeupdate event - periodic sync check (throttled, adaptive for high speeds)
         master.addEventListener('timeupdate', () => {
-            if (master.paused) return;
+            // Skip if master is paused or currently seeking (prevents race conditions)
+            if (master.paused || isSeeking.value) return;
 
             const slaves = getSlavesMap();
             if (!slaves) return;
