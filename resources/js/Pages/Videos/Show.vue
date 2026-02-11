@@ -15,7 +15,6 @@ import RecordingIndicator from '@/Components/video-player/ui/RecordingIndicator.
 import SidebarPanel from '@/Components/video-player/sidebar/SidebarPanel.vue';
 import CategoryModal from '@/Components/video-player/modals/CategoryModal.vue';
 import ManageCategoriesModal from '@/Components/video-player/modals/ManageCategoriesModal.vue';
-import EditClipModal from '@/Components/video-player/modals/EditClipModal.vue';
 import DeleteVideoModal from '@/Components/video-player/modals/DeleteVideoModal.vue';
 import StatsModal from '@/Components/video-player/modals/StatsModal.vue';
 import AnnotationCanvas from '@/Components/video-player/annotations/AnnotationCanvas.vue';
@@ -77,8 +76,6 @@ function toggleTimelinesSync() {
 const showCategoryModal = ref(false);
 const editingCategory = ref<ClipCategory | undefined>(undefined);
 const showManageCategoriesModal = ref(false);
-const showEditClipModal = ref(false);
-const editingClip = ref<VideoClip | undefined>(undefined);
 const showDeleteModal = ref(false);
 const showStatsModal = ref(false);
 const showAssociateAngleModal = ref(false);
@@ -213,20 +210,6 @@ function onCategorySaved() {
     clipsStore.loadClips(props.video.id);
 }
 
-// Clip modal handlers
-function onEditClip(clipId: number) {
-    const clip = clipsStore.clips.find(c => c.id === clipId);
-    if (clip) {
-        editingClip.value = clip;
-        showEditClipModal.value = true;
-    }
-}
-
-function onClipSaved() {
-    showEditClipModal.value = false;
-    editingClip.value = undefined;
-}
-
 // Multi-camera handlers
 function onAddAngle() {
     showAssociateAngleModal.value = true;
@@ -341,7 +324,6 @@ function onSyncSaved(offsets: Record<number, number>) {
                     <template #clips>
                         <ClipsList
                             :video-id="video.id"
-                            @edit-clip="onEditClip"
                         />
                     </template>
                 </SidebarPanel>
@@ -392,14 +374,6 @@ function onSyncSaved(offsets: Record<number, number>) {
                     @close="showManageCategoriesModal = false"
                     @edit-category="onEditCategory"
                     @delete-category="onDeleteCategory"
-                />
-                <EditClipModal
-                    v-if="editingClip"
-                    :show="showEditClipModal"
-                    :clip="editingClip"
-                    :video-id="video.id"
-                    @close="showEditClipModal = false; editingClip = undefined"
-                    @saved="onClipSaved"
                 />
                 <DeleteVideoModal
                     :show="showDeleteModal"

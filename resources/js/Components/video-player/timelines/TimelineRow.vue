@@ -103,17 +103,14 @@ const offsetPixels = computed(() => {
 const playheadPercent = computed(() => {
     if (!props.duration) return 0;
 
-    // For master and slaves: playhead shows the OFFSET (configuration), NOT playback progress
-    // For clips: playhead shows current playback time (to see XML sync)
-    if (props.type === 'master') {
-        // Master always starts at 0:00 (reference point)
-        return 0;
-    } else if (props.type === 'slave') {
+    // Master and clips: playhead shows current playback progress
+    // Slaves: playhead shows the OFFSET (configuration - where they start)
+    if (props.type === 'slave') {
         // Slave playhead shows where it starts in master timeline (the offset)
         const offsetTime = isDragging.value ? tempOffset.value : props.offset;
         return Math.min(100, Math.max(0, (offsetTime / props.duration) * 100));
     } else {
-        // Clips: show current playback time
+        // Master and Clips: show current playback time
         return Math.min(100, Math.max(0, (props.currentTime / props.duration) * 100));
     }
 });

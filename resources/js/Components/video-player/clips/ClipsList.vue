@@ -4,10 +4,6 @@ import { useClipsStore } from '@/stores/clipsStore';
 import ClipItem from './ClipItem.vue';
 import type { ClipCategory } from '@/types/video-player';
 
-const emit = defineEmits<{
-    editClip: [clipId: number];
-}>();
-
 const clipsStore = useClipsStore();
 const searchQuery = ref('');
 const expandedCategories = ref<Set<number>>(new Set());
@@ -58,10 +54,6 @@ function isCategoryExpanded(categoryId: number) {
 
 function getCategoryClipsCount(category: ClipCategory) {
     return filteredClipsByCategory.value[category.id]?.length || 0;
-}
-
-function handleEditClip(clipId: number) {
-    emit('editClip', clipId);
 }
 
 // Expand all categories by default
@@ -128,7 +120,6 @@ safeCategories.forEach((cat) => {
                         v-for="clip in filteredClipsByCategory[category.id]"
                         :key="clip.id"
                         :clip="clip"
-                        @edit="handleEditClip"
                     />
                 </div>
             </div>
