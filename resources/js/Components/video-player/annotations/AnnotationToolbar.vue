@@ -13,6 +13,11 @@ const canvasComposable = useAnnotationCanvas();
 const isSaving = ref(false);
 const showColorPicker = ref(false);
 
+// Draggable toolbar state
+const isDragging = ref(false);
+const toolbarPosition = ref({ x: 10, y: 10 });
+const dragStart = ref({ x: 0, y: 0 });
+
 const tools: { name: AnnotationTool; icon: string; label: string }[] = [
     { name: 'select', icon: 'fa-mouse-pointer', label: 'Seleccionar' },
     { name: 'arrow', icon: 'fa-arrow-right', label: 'Flecha' },
@@ -158,14 +163,60 @@ function closeAnnotationMode() {
     }
     annotationsStore.exitAnnotationMode();
 }
+
+// Draggable functionality
+function startDrag(event: MouseEvent) {
+    if (event.button !== 0) return; // Only left click
+
+    isDragging.value = true;
+    dragStart.value = {
+        x: event.clientX - toolbarPosition.value.x,
+        y: event.clientY - toolbarPosition.value.y,
+    };
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+
+    // Prevent text selection while dragging
+    document.body.style.userSelect = 'none';
+}
+
+function onDrag(event: MouseEvent) {
+    if (!isDragging.value) return;
+
+    toolbarPosition.value = {
+        x: event.clientX - dragStart.value.x,
+        y: event.clientY - dragStart.value.y,
+    };
+}
+
+function stopDrag() {
+    isDragging.value = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.body.style.userSelect = '';
+}
+
+const toolbarStyle = computed(() => ({
+    left: `${toolbarPosition.value.x}px`,
+    top: `${toolbarPosition.value.y}px`,
+}));
 </script>
 
 <template>
-    <div v-if="annotationsStore.annotationMode" class="annotation-toolbar">
-        <!-- Header -->
-        <div class="toolbar-header">
+    <div
+        v-if="annotationsStore.annotationMode"
+        class="annotation-toolbar"
+        :class="{ 'is-dragging': isDragging }"
+        :style="toolbarStyle"
+    >
+        <!-- Header (draggable) -->
+        <div
+            class="toolbar-header"
+            @mousedown="startDrag"
+        >
             <h6 class="toolbar-title">
-                <i class="fas fa-pencil-alt"></i>
+                <i class="fas fa-grip-vertical drag-handle"></i>
                 Anotaciones
             </h6>
             <span v-if="annotationsStore.annotationCount > 0" class="annotation-count">
@@ -296,8 +347,6 @@ function closeAnnotationMode() {
 <style scoped>
 .annotation-toolbar {
     position: absolute;
-    top: 10px;
-    left: 10px;
     width: 125px;
     max-height: calc(100vh - 150px);
     background: rgba(0, 0, 0, 0.95);
@@ -308,6 +357,12 @@ function closeAnnotationMode() {
     box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
     overflow-y: auto;
     overflow-x: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.annotation-toolbar.is-dragging {
+    box-shadow: 0 6px 20px rgba(0, 183, 181, 0.5);
+    cursor: grabbing;
 }
 
 .annotation-toolbar::-webkit-scrollbar {
@@ -330,6 +385,12 @@ function closeAnnotationMode() {
     margin-bottom: 5px;
     padding-bottom: 4px;
     border-bottom: 1px solid #333;
+    cursor: grab;
+    user-select: none;
+}
+
+.toolbar-header:active {
+    cursor: grabbing;
 }
 
 .toolbar-title {
@@ -337,10 +398,18 @@ function closeAnnotationMode() {
     font-size: 10px;
     color: #00B7B5;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }
 
-.toolbar-title i {
-    margin-right: 3px;
+.drag-handle {
+    opacity: 0.5;
+    font-size: 9px;
+}
+
+.toolbar-header:hover .drag-handle {
+    opacity: 1;
 }
 
 .annotation-count {
