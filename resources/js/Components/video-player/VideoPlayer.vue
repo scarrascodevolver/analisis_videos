@@ -42,6 +42,7 @@ const hasMultiCamera = computed(() =>
 );
 
 const showComments = ref(true);
+const isTheaterMode = ref(false);
 
 onMounted(() => {
     videoStore.setVideo(props.video);
@@ -65,20 +66,26 @@ function handleToggleAnnotationMode() {
         annotationsStore.enterAnnotationMode();
     }
 }
+
+function toggleTheaterMode() {
+    isTheaterMode.value = !isTheaterMode.value;
+}
 </script>
 
 <template>
     <div class="row">
-        <div :class="isAnalystOrCoach ? 'col-lg-10' : 'col-12'" id="videoSection">
+        <div :class="isAnalystOrCoach && !isTheaterMode ? 'col-lg-10' : 'col-12'" id="videoSection">
             <div class="card">
                 <VideoHeader
                     :video="video"
                     :user="user"
+                    :is-theater-mode="isTheaterMode"
                     @show-stats="$emit('showStats')"
                     @add-angle="$emit('addAngle')"
                     @toggle-comments="toggleComments"
                     @toggle-timelines="$emit('toggleTimelines')"
                     @delete-video="$emit('deleteVideo')"
+                    @toggle-theater="toggleTheaterMode"
                 />
 
                 <div class="card-body p-0">
@@ -114,7 +121,7 @@ function handleToggleAnnotationMode() {
             <VideoInfo :video="video" />
         </div>
 
-        <div v-if="isAnalystOrCoach" class="col-lg-2" id="sidebarSection">
+        <div v-if="isAnalystOrCoach && !isTheaterMode" class="col-lg-2" id="sidebarSection">
             <slot name="sidebar" />
         </div>
 

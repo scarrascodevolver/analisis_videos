@@ -5,6 +5,7 @@ import type { Video, User } from '@/types/video-player';
 const props = defineProps<{
     video: Video;
     user: User;
+    isTheaterMode?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -13,6 +14,7 @@ const emit = defineEmits<{
     toggleComments: [];
     deleteVideo: [];
     toggleTimelines: [];
+    toggleTheater: [];
 }>();
 
 const isAnalystOrCoach = computed(() =>
@@ -65,6 +67,15 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 @click="$emit('toggleTimelines')"
             >
                 <i class="fas fa-film"></i> Timelines
+            </button>
+            <button
+                v-if="isAnalystOrCoach"
+                class="btn btn-sm btn-rugby-outline mr-2"
+                @click="$emit('toggleTheater')"
+                :title="isTheaterMode ? 'Modo normal' : 'Modo teatro'"
+            >
+                <i :class="isTheaterMode ? 'fas fa-compress' : 'fas fa-expand'"></i>
+                {{ isTheaterMode ? 'Normal' : 'Teatro' }}
             </button>
             <button
                 v-if="user.role === 'jugador'"
