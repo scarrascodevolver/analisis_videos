@@ -40,6 +40,7 @@
                     :offset="Number(slave.sync_offset || 0)"
                     :draggable="true"
                     @offset-changed="handleSlaveOffsetChanged(slave.id, $event)"
+                    @reset-offset="handleSlaveOffsetChanged(slave.id, 0)"
                     @seek="handleSeek"
                 />
 
@@ -53,6 +54,7 @@
                     :offset="Number(clipsOffset)"
                     :draggable="true"
                     @offset-changed="handleClipsOffsetChanged"
+                    @reset-offset="handleClipsOffsetChanged(0)"
                     @seek="handleSeek"
                 />
 

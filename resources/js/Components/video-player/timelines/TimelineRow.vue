@@ -7,6 +7,15 @@
             <span v-if="offset !== 0" class="offset-badge" :class="offsetBadgeClass">
                 {{ offsetBadgeText }}
             </span>
+            <!-- Reset button (only for draggable slaves) -->
+            <button
+                v-if="draggable && offset !== 0"
+                class="btn-reset-offset"
+                title="Resetear a 0s"
+                @click.stop="handleReset"
+            >
+                <i class="fas fa-redo"></i>
+            </button>
         </div>
 
         <!-- Timeline Track -->
@@ -66,6 +75,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'offset-changed': [newOffset: number];
+    'reset-offset': [];
     'seek': [time: number];
 }>();
 
@@ -206,6 +216,10 @@ function handleClick(event: MouseEvent) {
         // Emitir evento de seek
         emit('seek', seekTime);
     }
+}
+
+function handleReset() {
+    emit('reset-offset');
 }
 </script>
 
@@ -395,5 +409,30 @@ function handleClick(event: MouseEvent) {
 
 .text-warning {
     color: #ffc107 !important;
+}
+
+.btn-reset-offset {
+    margin-left: auto;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-reset-offset:hover {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    transform: scale(1.1);
+}
+
+.btn-reset-offset i {
+    font-size: 10px;
 }
 </style>
