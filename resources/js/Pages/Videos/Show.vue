@@ -141,6 +141,11 @@ onMounted(async () => {
     commentsStore.setComments(props.comments);
     viewTracking.start();
 
+    // Register basic playback shortcuts for ALL users
+    shortcuts.registerHotkey('Space', () => videoStore.togglePlay());
+    shortcuts.registerHotkey('ArrowLeft', () => videoStore.seekRelative(-5));
+    shortcuts.registerHotkey('ArrowRight', () => videoStore.seekRelative(5));
+
     if (isAnalystOrCoach.value) {
         try {
             const api = useVideoApi(props.video.id);
@@ -151,9 +156,6 @@ onMounted(async () => {
             ]);
             annotationsStore.loadAnnotations(loadedAnnotations);
 
-            shortcuts.registerHotkey('Space', () => videoStore.togglePlay());
-            shortcuts.registerHotkey('ArrowLeft', () => videoStore.seekRelative(-5));
-            shortcuts.registerHotkey('ArrowRight', () => videoStore.seekRelative(5));
             shortcuts.registerHotkey('Escape', () => {
                 if (clipsStore.isRecording) {
                     clipsStore.cancelRecording();
@@ -309,6 +311,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <SidebarPanel
                     :comment-count="commentsStore.commentCount"
                     :clip-count="clipsStore.clips.length"
+                    :can-create-clips="isAnalystOrCoach"
                 >
                     <template #comments>
                         <CommentForm

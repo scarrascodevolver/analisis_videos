@@ -7,6 +7,7 @@ const props = defineProps<{
     activeTab: TabType;
     commentCount?: number;
     clipCount?: number;
+    canCreateClips?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -21,7 +22,8 @@ function selectTab(tab: TabType) {
 
 const commentsLabel = computed(() => props.commentCount ?? 0);
 const clipsLabel = computed(() => props.clipCount ?? 0);
-const showClipsTab = computed(() => (props.clipCount ?? 0) > 0);
+// Show clips tab if user can create clips OR if there are clips to view
+const showClipsTab = computed(() => props.canCreateClips || (props.clipCount ?? 0) > 0);
 </script>
 
 <template>

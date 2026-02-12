@@ -9,14 +9,16 @@ const props = withDefaults(
         initialTab?: TabType;
         commentCount?: number;
         clipCount?: number;
+        canCreateClips?: boolean;
     }>(),
     {
         initialTab: 'clips',
     }
 );
 
-// Si no hay clips, siempre empezar en comentarios
-const initialActiveTab = (props.clipCount ?? 0) > 0 ? props.initialTab : 'comments';
+// Si no hay clips Y no puede crear clips, empezar en comentarios
+// Si puede crear clips, empezar en el initialTab aunque no haya clips
+const initialActiveTab = (props.canCreateClips || (props.clipCount ?? 0) > 0) ? props.initialTab : 'comments';
 const activeTab = ref<TabType>(initialActiveTab);
 
 function handleTabChange(tab: TabType) {
@@ -30,6 +32,7 @@ function handleTabChange(tab: TabType) {
             :active-tab="activeTab"
             :comment-count="commentCount"
             :clip-count="clipCount"
+            :can-create-clips="canCreateClips"
             @tab-change="handleTabChange"
         />
 

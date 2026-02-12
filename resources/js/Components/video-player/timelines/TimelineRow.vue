@@ -163,8 +163,8 @@ function handleDrag(event: MouseEvent) {
 
     tempOffset.value = initialOffset.value + deltaSeconds;
 
-    // Limitar offset a rango razonable (-60s a +600s = -1min a +10min)
-    tempOffset.value = Math.max(-60, Math.min(600, tempOffset.value));
+    // Limitar offset: negativo hasta -60s, positivo hasta el final del master
+    tempOffset.value = Math.max(-60, Math.min(props.duration, tempOffset.value));
 }
 
 function endDrag() {
