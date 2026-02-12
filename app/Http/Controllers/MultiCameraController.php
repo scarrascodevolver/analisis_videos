@@ -304,7 +304,7 @@ class MultiCameraController extends Controller
     public function syncAngle(Request $request, Video $video)
     {
         $request->validate([
-            'sync_offset' => 'required|numeric|between:-300,300', // Max ±5 minutes
+            'sync_offset' => 'required|numeric|between:-7200,7200', // Max ±2 hours
             'reference_event' => 'nullable|string|max:255',
             'group_id' => 'nullable|exists:video_groups,id',
         ]);
@@ -439,7 +439,7 @@ class MultiCameraController extends Controller
     {
         $request->validate([
             'slave_id' => 'required|exists:videos,id',
-            'sync_offset' => 'required|numeric|between:-600,600', // Max ±10 minutes
+            'sync_offset' => 'required|numeric|between:-7200,7200', // Max ±2 hours
         ]);
 
         $slaveVideo = Video::findOrFail($request->slave_id);
