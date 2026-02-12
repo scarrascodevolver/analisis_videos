@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, inject, ref } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import { formatTime } from '@/stores/videoStore';
@@ -12,6 +12,7 @@ const props = defineProps<{
 const videoStore = useVideoStore();
 const clipsStore = useClipsStore();
 const toast = inject<any>('toast');
+const isDeleting = ref(false);
 
 const formattedStartTime = computed(() => formatTime(props.clip.start_time));
 const formattedEndTime = computed(() => formatTime(props.clip.end_time));
@@ -26,9 +27,14 @@ function handleSeek() {
 async function handleDelete(event: MouseEvent) {
     event.stopPropagation(); // Prevent seek when clicking delete
 
+    // Prevent multiple clicks
+    if (isDeleting.value) return;
+
     if (!confirm('¿Estás seguro de que deseas eliminar este clip?')) {
         return;
     }
+
+    isDeleting.value = true;
 
     try {
         await clipsStore.removeClip(props.clip.video_id, props.clip.id);
@@ -36,7 +42,9 @@ async function handleDelete(event: MouseEvent) {
     } catch (error) {
         console.error('Error deleting clip:', error);
         toast?.error('Error al eliminar el clip');
+        isDeleting.value = false; // Re-enable only on error
     }
+    // Don't re-enable on success because component will be unmounted
 }
 </script>
 
@@ -48,10 +56,12 @@ async function handleDelete(event: MouseEvent) {
         </div>
         <button
             class="btn-delete-clip"
+            :class="{ deleting: isDeleting }"
+            :disabled="isDeleting"
             title="Eliminar clip"
             @click="handleDelete"
         >
-            <i class="fas fa-trash"></i>
+            <i :class="isDeleting ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
         </button>
     </div>
 </template>
@@ -105,9 +115,18 @@ async function handleDelete(event: MouseEvent) {
     opacity: 1;
 }
 
-.btn-delete-clip:hover {
+.btn-delete-clip:hover:not(:disabled) {
     background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
     transform: scale(1.1);
+}
+
+.btn-delete-clip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-delete-clip.deleting {
+    opacity: 1;
 }
 </style>
