@@ -31,7 +31,7 @@ async function handleDelete(event: MouseEvent) {
     }
 
     try {
-        await clipsStore.deleteClip(props.clip.video_id, props.clip.id);
+        await clipsStore.removeClip(props.clip.video_id, props.clip.id);
         toast?.success('Clip eliminado');
     } catch (error) {
         console.error('Error deleting clip:', error);
