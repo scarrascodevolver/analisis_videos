@@ -15,7 +15,9 @@ const props = withDefaults(
     }
 );
 
-const activeTab = ref<TabType>(props.initialTab);
+// Si no hay clips, siempre empezar en comentarios
+const initialActiveTab = (props.clipCount ?? 0) > 0 ? props.initialTab : 'comments';
+const activeTab = ref<TabType>(initialActiveTab);
 
 function handleTabChange(tab: TabType) {
     activeTab.value = tab;

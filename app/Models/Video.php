@@ -149,11 +149,27 @@ class Video extends Model
     }
 
     /**
-     * Get total view count for this video
+     * Get total view count for this video (all starts)
      */
     public function getViewCountAttribute()
     {
         return $this->views()->count();
+    }
+
+    /**
+     * Get valid view count (meets viewing criteria)
+     */
+    public function getValidViewCountAttribute()
+    {
+        return $this->views()->where('is_valid_view', true)->count();
+    }
+
+    /**
+     * Get completion count (videos watched to the end)
+     */
+    public function getCompletionCountAttribute()
+    {
+        return $this->views()->where('completed', true)->count();
     }
 
     /**
@@ -165,20 +181,50 @@ class Video extends Model
     }
 
     /**
+     * Get unique valid viewers count
+     */
+    public function getUniqueValidViewersAttribute()
+    {
+        return $this->views()
+            ->where('is_valid_view', true)
+            ->distinct('user_id')
+            ->count('user_id');
+    }
+
+    /**
      * Get view statistics for this video
      */
     public function getViewStats()
     {
+        $videoDuration = $this->duration ?? 1; // Avoid division by zero
+
         $stats = $this->views()
-            ->selectRaw('user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed')
+            ->selectRaw('
+                user_id,
+                COUNT(*) as view_count,
+                SUM(CASE WHEN is_valid_view = 1 THEN 1 ELSE 0 END) as valid_view_count,
+                MAX(viewed_at) as last_viewed,
+                SUM(watch_duration) as total_watch_time,
+                MAX(completed) as is_completed,
+                MAX(is_valid_view) as has_valid_view
+            ')
             ->with('user:id,name')
             ->groupBy('user_id')
-            ->orderByDesc('last_viewed') // Ordenar por las más recientes primero
+            ->orderByDesc('last_viewed')
             ->get();
 
-        // Formatear last_viewed como timestamp Unix (segundos) para evitar problemas de timezone
-        return $stats->map(function ($stat) {
+        // Format data and calculate percentages
+        return $stats->map(function ($stat) use ($videoDuration) {
             $stat->last_viewed_timestamp = strtotime($stat->last_viewed);
+            $stat->total_watch_time = $stat->total_watch_time ?? 0;
+            $stat->is_completed = (bool) $stat->is_completed;
+            $stat->has_valid_view = (bool) $stat->has_valid_view;
+            $stat->valid_view_count = (int) $stat->valid_view_count;
+
+            // Calculate watched percentage
+            $stat->watched_percentage = $videoDuration > 0
+                ? min(100, ($stat->total_watch_time / $videoDuration) * 100)
+                : 0;
 
             return $stat;
         });

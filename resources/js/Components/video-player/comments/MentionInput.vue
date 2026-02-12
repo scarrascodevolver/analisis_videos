@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:modelValue': [value: string];
+    'focus': [];
 }>();
 
 const textarea = ref<HTMLTextAreaElement | null>(null);
@@ -119,6 +120,11 @@ function onKeydown(e: KeyboardEvent) {
         if (filteredUsers.value[selectedIndex.value]) {
             selectUser(filteredUsers.value[selectedIndex.value]);
         }
+    } else if (e.key === 'Tab' && showDropdown.value) {
+        e.preventDefault();
+        if (filteredUsers.value[selectedIndex.value]) {
+            selectUser(filteredUsers.value[selectedIndex.value]);
+        }
     } else if (e.key === 'Escape') {
         showDropdown.value = false;
     }
@@ -155,6 +161,7 @@ onBeforeUnmount(() => {
             class="form-control"
             @input="onInput"
             @keydown="onKeydown"
+            @focus="emit('focus')"
         ></textarea>
 
         <Transition name="dropdown">

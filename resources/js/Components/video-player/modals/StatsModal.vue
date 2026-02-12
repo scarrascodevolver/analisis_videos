@@ -29,13 +29,13 @@
                                 <div class="stats-summary">
                                     <div class="stat-card">
                                         <i class="fas fa-eye stat-icon"></i>
-                                        <div class="stat-value">{{ stats.total_views }}</div>
-                                        <div class="stat-label">Visualizaciones</div>
+                                        <div class="stat-value">{{ stats.total_starts }}</div>
+                                        <div class="stat-label">Total Visualizaciones</div>
                                     </div>
                                     <div class="stat-card">
                                         <i class="fas fa-users stat-icon"></i>
                                         <div class="stat-value">{{ stats.unique_viewers }}</div>
-                                        <div class="stat-label">Espectadores Únicos</div>
+                                        <div class="stat-label">Usuarios Únicos</div>
                                     </div>
                                     <div class="stat-card">
                                         <i class="fas fa-clock stat-icon"></i>
@@ -55,13 +55,12 @@
                                             <thead>
                                                 <tr>
                                                     <th>Usuario</th>
-                                                    <th>Visto</th>
+                                                    <th>% Visto</th>
                                                     <th>Tiempo Total</th>
-                                                    <th>Estado</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-for="view in stats.views" :key="view.id">
+                                                <tr v-for="view in stats.views" :key="view.user_id">
                                                     <td>
                                                         <i class="fas fa-user mr-2 text-muted"></i>
                                                         {{ view.user?.name || 'Usuario desconocido' }}
@@ -78,14 +77,8 @@
                                                             <span class="progress-label">{{ (typeof view.watched_percentage === 'number' && isFinite(view.watched_percentage) ? view.watched_percentage : 0).toFixed(1) }}%</span>
                                                         </div>
                                                     </td>
-                                                    <td>{{ formatTime(view.total_watch_time) }}</td>
                                                     <td>
-                                                        <span
-                                                            class="badge"
-                                                            :class="view.is_completed ? 'badge-success' : 'badge-secondary'"
-                                                        >
-                                                            {{ view.is_completed ? 'Completado' : 'En progreso' }}
-                                                        </span>
+                                                        {{ formatTime(view.total_watch_time) }}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -257,7 +250,7 @@ function getProgressBarClass(percentage: number): string {
 
 .stats-summary {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -287,6 +280,7 @@ function getProgressBarClass(percentage: number): string {
     font-size: 0.875rem;
     color: #999;
 }
+
 
 .views-section {
     margin-top: 1.5rem;

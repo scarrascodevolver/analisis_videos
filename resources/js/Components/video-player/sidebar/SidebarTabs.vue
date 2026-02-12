@@ -21,6 +21,7 @@ function selectTab(tab: TabType) {
 
 const commentsLabel = computed(() => props.commentCount ?? 0);
 const clipsLabel = computed(() => props.clipCount ?? 0);
+const showClipsTab = computed(() => (props.clipCount ?? 0) > 0);
 </script>
 
 <template>
@@ -35,6 +36,7 @@ const clipsLabel = computed(() => props.clipCount ?? 0);
         </button>
 
         <button
+            v-if="showClipsTab"
             class="tab-button"
             :class="{ active: activeTab === 'clips' }"
             @click="selectTab('clips')"

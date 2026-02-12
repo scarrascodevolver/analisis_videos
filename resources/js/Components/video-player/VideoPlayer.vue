@@ -74,7 +74,7 @@ function toggleTheaterMode() {
 
 <template>
     <div class="row">
-        <div :class="isAnalystOrCoach && !isTheaterMode ? 'col-lg-10' : 'col-12'" id="videoSection">
+        <div :class="!isTheaterMode ? 'col-lg-10' : 'col-12'" id="videoSection">
             <div class="card">
                 <VideoHeader
                     :video="video"
@@ -121,12 +121,8 @@ function toggleTheaterMode() {
             <VideoInfo :video="video" />
         </div>
 
-        <div v-if="isAnalystOrCoach && !isTheaterMode" class="col-lg-2" id="sidebarSection">
+        <div v-if="!isTheaterMode" class="col-lg-2" id="sidebarSection">
             <slot name="sidebar" />
-        </div>
-
-        <div v-if="user.role === 'jugador' && showComments" class="col-12">
-            <slot name="player-comments" />
         </div>
     </div>
 

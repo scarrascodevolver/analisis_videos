@@ -209,33 +209,35 @@ function seekToMarker(marker: MarkerCluster) {
 
 .timeline-marker {
     position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    top: 0;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 100%;
+    border-radius: 1px;
     cursor: pointer;
     z-index: 3;
-    transition: transform 0.2s;
+    transition: width 0.2s, opacity 0.2s;
+    opacity: 0.9;
 }
 
 .timeline-marker:hover {
-    transform: translate(-50%, -50%) scale(1.4);
+    width: 5px;
+    opacity: 1;
     z-index: 4;
 }
 
 .marker-count {
     position: absolute;
-    top: -18px;
+    top: -16px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 9px;
-    background: #005461;
+    font-size: 8px;
+    background: rgba(0, 84, 97, 0.95);
     color: white;
-    border-radius: 8px;
-    padding: 0 4px;
-    line-height: 14px;
+    border-radius: 6px;
+    padding: 0 3px;
+    line-height: 12px;
     white-space: nowrap;
+    font-weight: 600;
 }
 </style>

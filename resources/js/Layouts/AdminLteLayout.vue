@@ -8,6 +8,7 @@ const auth = computed(() => page.props.auth as any);
 const user = computed(() => auth.value?.user);
 const organization = computed(() => page.props.organization as any);
 const flash = computed(() => page.props.flash as any);
+const notifications = computed(() => page.props.notifications as any);
 
 const props = defineProps<{
     title?: string;
@@ -16,19 +17,62 @@ const props = defineProps<{
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(false);
+const notificationsDropdownOpen = ref(false);
+const userDropdownOpen = ref(false);
 
 function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value;
     document.body.classList.toggle('sidebar-collapse');
 }
 
+function toggleNotificationsDropdown() {
+    notificationsDropdownOpen.value = !notificationsDropdownOpen.value;
+    if (notificationsDropdownOpen.value) {
+        userDropdownOpen.value = false;
+    }
+}
+
+function toggleUserDropdown() {
+    userDropdownOpen.value = !userDropdownOpen.value;
+    if (userDropdownOpen.value) {
+        notificationsDropdownOpen.value = false;
+    }
+}
+
+function closeDropdowns() {
+    notificationsDropdownOpen.value = false;
+    userDropdownOpen.value = false;
+}
+
 onMounted(() => {
     // Initialize AdminLTE body classes
     document.body.classList.add('hold-transition', 'sidebar-mini', 'layout-fixed');
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.dropdown')) {
+            closeDropdowns();
+        }
+    });
 });
 
 function isActive(routeName: string): boolean {
     return window.location.pathname.includes(routeName);
+}
+
+function markNotificationAsRead(notificationId: string) {
+    router.post(`/notifications/${notificationId}/mark-read`, {}, {
+        preserveScroll: true,
+        preserveState: true,
+    });
+}
+
+function markAllNotificationsAsRead() {
+    router.post('/notifications/mark-all-read', {}, {
+        preserveScroll: true,
+        preserveState: true,
+    });
 }
 </script>
 
@@ -51,16 +95,66 @@ function isActive(routeName: string): boolean {
                 <!-- Organization display -->
                 <li v-if="organization" class="nav-item">
                     <span class="nav-link text-light">
-                        <i class="fas fa-building mr-1"></i>
+                        <i class="fas fa-football-ball mr-1"></i>
                         <span class="d-none d-md-inline">{{ organization.name }}</span>
                         <span class="d-inline d-md-none">{{ organization.name.substring(0, 15) }}</span>
                     </span>
                 </li>
 
+                <!-- Notifications Dropdown -->
+                <li v-if="notifications" class="nav-item dropdown">
+                    <a class="nav-link" href="#" @click.prevent="toggleNotificationsDropdown">
+                        <i class="far fa-bell"></i>
+                        <span v-if="notifications.unread_count > 0" class="badge badge-danger navbar-badge">
+                            {{ notifications.unread_count }}
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" :class="{ show: notificationsDropdownOpen }">
+                        <span class="dropdown-item dropdown-header">
+                            {{ notifications.unread_count }} Notificación{{ notifications.unread_count !== 1 ? 'es' : '' }}
+                        </span>
+                        <div class="dropdown-divider"></div>
+
+                        <template v-if="notifications.unread.length > 0">
+                            <a
+                                v-for="notification in notifications.unread"
+                                :key="notification.id"
+                                :href="`/videos/${notification.data.video_id}`"
+                                @click="markNotificationAsRead(notification.id)"
+                                class="dropdown-item"
+                            >
+                                <i class="fas fa-at mr-2 text-primary"></i>
+                                <strong>{{ notification.data.mentioned_by_name }}</strong> te mencionó
+                                <span class="float-right text-muted text-sm">
+                                    {{ notification.created_at }}
+                                </span>
+                                <p class="text-sm text-muted mb-0 mt-1">
+                                    {{ notification.data.comment_text.substring(0, 50) }}{{ notification.data.comment_text.length > 50 ? '...' : '' }}
+                                </p>
+                            </a>
+                        </template>
+                        <template v-else>
+                            <span class="dropdown-item text-center text-muted">
+                                No tienes notificaciones
+                            </span>
+                        </template>
+
+                        <div class="dropdown-divider"></div>
+                        <a
+                            v-if="notifications.unread_count > 0"
+                            href="#"
+                            @click.prevent="markAllNotificationsAsRead"
+                            class="dropdown-item dropdown-footer"
+                        >
+                            Marcar todas como leídas
+                        </a>
+                    </div>
+                </li>
+
                 <!-- User Dropdown -->
                 <li v-if="user" class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
-                       data-toggle="dropdown">
+                       @click.prevent="toggleUserDropdown">
                         <img
                             v-if="user.avatar"
                             :src="user.avatar"
@@ -71,7 +165,7 @@ function isActive(routeName: string): boolean {
                         <i v-else class="fas fa-user"></i>
                         <span class="d-none d-md-inline ml-2">{{ user.name }}</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right">
+                    <div class="dropdown-menu dropdown-menu-right" :class="{ show: userDropdownOpen }">
                         <a class="dropdown-item" href="/profile">
                             <i class="fas fa-user"></i> Perfil
                         </a>
@@ -162,7 +256,7 @@ function isActive(routeName: string): boolean {
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="/evaluations/dashboard" class="nav-link" :class="{ active: isActive('/evaluations') }">
+                                <a href="/evaluacion/resultados" class="nav-link" :class="{ active: isActive('/evaluacion/resultados') }">
                                     <i class="nav-icon fas fa-chart-bar"></i>
                                     <p>Resultados de Evaluaciones</p>
                                 </a>
@@ -180,6 +274,24 @@ function isActive(routeName: string): boolean {
                                     <p>Invitar Jugadores</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="/jugadas" class="nav-link" :class="{ active: isActive('/jugadas') }">
+                                    <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                                    <p>
+                                        Crear Jugadas <span class="badge badge-info" style="font-size: 0.55rem; padding: 1px 4px; margin-left: 2px; vertical-align: middle;">β</span>
+                                    </p>
+                                </a>
+                            </li>
+                        </template>
+
+                        <!-- Analyst only items -->
+                        <template v-if="user && user.role === 'analista'">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature">
+                                    <i class="nav-icon fas fa-credit-card"></i>
+                                    <p>Gestión de Pagos</p>
+                                </a>
+                            </li>
                         </template>
 
                         <!-- Player items -->
@@ -194,6 +306,30 @@ function isActive(routeName: string): boolean {
                                 <a href="/videos" class="nav-link" :class="{ active: isActive('/videos') && !isActive('/my-videos') }">
                                     <i class="nav-icon fas fa-users"></i>
                                     <p>Videos del Equipo</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/evaluacion" class="nav-link" :class="{ active: isActive('/evaluacion') && !isActive('/evaluacion/resultados') }">
+                                    <i class="nav-icon fas fa-clipboard-check"></i>
+                                    <p>Evaluación de Jugadores</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/evaluacion/resultados" class="nav-link" :class="{ active: isActive('/evaluacion/resultados') }">
+                                    <i class="nav-icon fas fa-chart-line"></i>
+                                    <p>Mis Resultados</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/jugadas" class="nav-link" :class="{ active: isActive('/jugadas') }">
+                                    <i class="nav-icon fas fa-football-ball"></i>
+                                    <p>Jugadas</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link upcoming-feature">
+                                    <i class="nav-icon fas fa-money-bill-wave"></i>
+                                    <p>Cuota Club</p>
                                 </a>
                             </li>
                         </template>

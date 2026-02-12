@@ -342,23 +342,6 @@ function onSyncSaved(offsets: Record<number, number>) {
                 </div>
             </template>
 
-            <!-- Player comments (jugadores) -->
-            <template #player-comments>
-                <div class="card mt-3" style="background: #1a1a1a; border: 1px solid #333;">
-                    <div class="card-header p-2" style="background: #005461; border: none;">
-                        <h6 class="card-title m-0 text-white" style="font-size: 13px;">
-                            <i class="fas fa-comments"></i>
-                            Comentarios ({{ commentsStore.commentCount }})
-                        </h6>
-                    </div>
-                    <CommentList
-                        :video-id="video.id"
-                        :current-user="user"
-                        :all-users="allUsers"
-                    />
-                </div>
-            </template>
-
             <!-- Modals slot -->
             <template #modals>
                 <CategoryModal

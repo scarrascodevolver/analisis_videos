@@ -79,12 +79,12 @@ defineExpose({ focusWithTimestamp });
                     type="button"
                     class="btn btn-sm btn-primary timestamp-set-btn"
                     @click="setCurrentTimestamp"
-                    title="Usar tiempo actual del video"
+                    title="Actualizar al tiempo actual del video"
                 >
                     <i class="fas fa-clock"></i>
                     {{ formatTime(timestampSeconds) }}
                 </button>
-                <small class="text-muted ml-2">Click para actualizar</small>
+                <small class="text-muted ml-2">Se actualiza automáticamente al escribir</small>
             </div>
         </div>
 
@@ -94,6 +94,7 @@ defineExpose({ focusWithTimestamp });
             :users="allUsers"
             placeholder="Escribe tu comentario... Usa @nombre para mencionar"
             :rows="3"
+            @focus="setCurrentTimestamp"
         />
 
         <!-- Category and Priority -->
