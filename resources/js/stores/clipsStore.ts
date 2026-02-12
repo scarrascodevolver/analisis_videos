@@ -82,6 +82,10 @@ export const useClipsStore = defineStore('clips', () => {
         isRecording.value = true;
         recordingCategoryId.value = categoryId;
         recordingStartTime.value = currentTime;
+
+        // Auto-play video if paused when starting recording
+        // This is imported at the top level, so we need to access it through the composable
+        // We'll handle this in the component that calls startRecording
     }
 
     async function stopRecording(videoId: number, currentTime: number) {
@@ -102,6 +106,17 @@ export const useClipsStore = defineStore('clips', () => {
         const adjustedEndTime = category?.lag_seconds
             ? endTime + category.lag_seconds
             : endTime;
+
+        // Validate minimum duration (0.5 seconds)
+        const duration = adjustedEndTime - adjustedStartTime;
+        if (duration < 0.5) {
+            // Reset recording state
+            isRecording.value = false;
+            recordingCategoryId.value = null;
+            recordingStartTime.value = 0;
+
+            throw new Error('El clip debe durar al menos 0.5 segundos. Graba por más tiempo.');
+        }
 
         // Reset recording state
         isRecording.value = false;

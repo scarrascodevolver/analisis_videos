@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
 import type { ClipCategory } from '@/types/video-player';
@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const clipsStore = useClipsStore();
 const videoStore = useVideoStore();
+const toast = inject<any>('toast');
 
 const isRecording = computed(() => {
     return clipsStore.isRecording && clipsStore.recordingCategoryId === props.category.id;
@@ -23,13 +24,21 @@ async function handleClick() {
     if (!videoStore.video) return;
 
     try {
+        const wasRecording = clipsStore.isRecording && clipsStore.recordingCategoryId === props.category.id;
+
+        // Auto-play video if paused and starting a new recording
+        if (!wasRecording && videoStore.isPaused) {
+            videoStore.play();
+        }
+
         await clipsStore.toggleRecording(
             videoStore.video.id,
             props.category.id,
             videoStore.currentTime
         );
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error toggling clip recording:', error);
+        toast?.error(error.message || 'Error al crear el clip');
     }
 }
 </script>

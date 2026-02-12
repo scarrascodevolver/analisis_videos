@@ -166,10 +166,20 @@ onMounted(async () => {
             for (const cat of clipsStore.activeCategories) {
                 if (cat.hotkey) {
                     shortcuts.registerHotkey(cat.hotkey, async () => {
-                        const result = await clipsStore.toggleRecording(
-                            props.video.id, cat.id, videoStore.currentTime,
-                        );
-                        if (result) toast.success(`Clip creado: ${cat.name}`);
+                        try {
+                            // Auto-play if paused when starting recording
+                            const wasRecording = clipsStore.isRecording && clipsStore.recordingCategoryId === cat.id;
+                            if (!wasRecording && videoStore.isPaused) {
+                                videoStore.play();
+                            }
+
+                            const result = await clipsStore.toggleRecording(
+                                props.video.id, cat.id, videoStore.currentTime,
+                            );
+                            if (result) toast.success(`Clip creado: ${cat.name}`);
+                        } catch (error: any) {
+                            toast.error(error.message || 'Error al crear el clip');
+                        }
                     });
                 }
             }
