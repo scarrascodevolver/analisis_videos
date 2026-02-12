@@ -118,7 +118,7 @@ defineExpose({
 }
 
 .title-text {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -203,7 +203,7 @@ defineExpose({
     }
 
     .title-text {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
     }
 }
 </style>
