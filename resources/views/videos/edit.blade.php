@@ -171,40 +171,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        <!-- Import LongoMatch XML -->
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
-                        <hr class="my-4">
-                        <div class="form-group">
-                            <label>
-                                <i class="fas fa-file-code"></i> Importar Clips desde LongoMatch XML
-                            </label>
-                            <div class="card" style="background: #2d2d2d; border: 1px solid #444;">
-                                <div class="card-body">
-                                    <form action="{{ route('videos.import-xml', $video) }}" method="POST" enctype="multipart/form-data" id="xmlImportForm">
-                                        @csrf
-                                        <div class="form-group">
-                                            <label for="xml_file" class="text-light">
-                                                Seleccionar archivo XML
-                                            </label>
-                                            <div class="custom-file">
-                                                <input type="file" class="custom-file-input" id="xml_file" name="xml_file" accept=".xml" required>
-                                                <label class="custom-file-label" for="xml_file">Elegir archivo XML...</label>
-                                            </div>
-                                            <small class="form-text text-muted mt-2">
-                                                <i class="fas fa-info-circle"></i>
-                                                Sube un archivo XML exportado desde LongoMatch.
-                                                Los clips existentes serán reemplazados.
-                                            </small>
-                                        </div>
-                                        <button type="submit" class="btn btn-sm" style="background: #005461; color: #fff;">
-                                            <i class="fas fa-upload"></i> Importar XML
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                     </div>
 
                     <div class="card-footer">
@@ -222,6 +188,67 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- Import LongoMatch XML (separate form outside main edit form) -->
+                @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
+                <div class="card card-rugby mt-3">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-file-code"></i> Importar Clips desde LongoMatch XML
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        @php
+                            $clipsCount = $video->clips()->count();
+                        @endphp
+
+                        @if($clipsCount > 0)
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            Este video tiene <strong>{{ $clipsCount }} clips</strong> actualmente.
+                        </div>
+                        @endif
+
+                        <form action="{{ route('videos.import-xml', $video) }}" method="POST" enctype="multipart/form-data" id="xmlImportForm">
+                            @csrf
+                            <div class="form-group">
+                                <label for="xml_file" class="text-light">
+                                    Seleccionar archivo XML
+                                </label>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="xml_file" name="xml_file" accept=".xml" required>
+                                    <label class="custom-file-label" for="xml_file">Elegir archivo XML...</label>
+                                </div>
+                                <small class="form-text text-muted mt-2">
+                                    <i class="fas fa-info-circle"></i>
+                                    Sube un archivo XML exportado desde LongoMatch.
+                                    @if($clipsCount > 0)
+                                        Los {{ $clipsCount }} clips existentes serán reemplazados.
+                                    @endif
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-rugby">
+                                <i class="fas fa-upload"></i> Importar XML
+                            </button>
+                        </form>
+
+                        @if($clipsCount > 0)
+                        <hr class="my-3">
+                        <form action="{{ route('videos.delete-all-clips', $video) }}" method="POST" id="deleteClipsForm">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Eliminar todos los clips ({{ $clipsCount }})
+                            </button>
+                            <small class="form-text text-muted mt-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Esta acción eliminará permanentemente todos los clips de este video.
+                            </small>
+                        </form>
+                        @endif
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -277,6 +304,21 @@ $(document).ready(function() {
         const submitBtn = $(this).find('button[type="submit"]');
         submitBtn.prop('disabled', true);
         submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Importando...');
+    });
+
+    // Delete all clips confirmation
+    $('#deleteClipsForm').on('submit', function(e) {
+        e.preventDefault();
+
+        if (confirm('¿Estás seguro de que deseas eliminar TODOS los clips de este video?\n\nEsta acción no se puede deshacer.')) {
+            // Show loading state
+            const submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Eliminando...');
+
+            // Submit form
+            this.submit();
+        }
     });
 });
 </script>

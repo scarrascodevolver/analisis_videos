@@ -84,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
     Route::post('videos/{video}/import-xml', [VideoController::class, 'importXml'])->name('videos.import-xml');
+    Route::delete('videos/{video}/delete-all-clips', [VideoController::class, 'deleteAllClips'])->name('videos.delete-all-clips');
 
     // Multi-Camera / Multi-Angle Routes
     Route::prefix('videos/{video}/multi-camera')->name('videos.multi-camera.')->group(function () {

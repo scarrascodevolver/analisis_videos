@@ -405,6 +405,37 @@ class VideoController extends Controller
         }
     }
 
+    /**
+     * Delete all clips from this video
+     */
+    public function deleteAllClips(Video $video)
+    {
+        try {
+            $clipsCount = $video->clips()->count();
+
+            if ($clipsCount === 0) {
+                return redirect()->route('videos.edit', $video)
+                    ->with('info', 'No hay clips para eliminar.');
+            }
+
+            $video->clips()->delete();
+
+            \Log::info("Deleted all clips from video {$video->id}", [
+                'clips_deleted' => $clipsCount,
+                'user_id' => auth()->id(),
+            ]);
+
+            return redirect()->route('videos.edit', $video)
+                ->with('success', "Se eliminaron {$clipsCount} clips exitosamente.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting clips from video '.$video->id.': '.$e->getMessage());
+
+            return redirect()->route('videos.edit', $video)
+                ->with('error', 'Error al eliminar clips: '.$e->getMessage());
+        }
+    }
+
     public function playerUpload()
     {
         $categories = Category::all();
