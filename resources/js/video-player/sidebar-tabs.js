@@ -68,9 +68,12 @@ async function loadSidebarClips() {
     try {
         // Load categories (needed for visual timeline)
         if (window.sidebarCategoriesData.length === 0) {
-            const catResponse = await fetch(config.routes.clipCategories);
+            const videoId = config.videoId;
+            const catResponse = await fetch(`${config.routes.clipCategories}?video_id=${videoId}`);
             if (catResponse.ok) {
-                window.sidebarCategoriesData = await catResponse.json();
+                const catData = await catResponse.json();
+                // API now returns { categories: [...], grouped: {...} }
+                window.sidebarCategoriesData = catData.categories || catData;
             }
         }
 

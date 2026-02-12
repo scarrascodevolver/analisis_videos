@@ -99,9 +99,10 @@ function initCategoryModals() {
     $('#manageCategoriesModal').on('show.bs.modal', async function() {
         try {
             const response = await fetch(config.routes.clipCategories);
-            const categories = await response.json();
+            const data = await response.json();
+            const categories = data.categories || data;
 
-            if (categories.length === 0) {
+            if (!Array.isArray(categories) || categories.length === 0) {
                 categoriesListModal.innerHTML = '<div class="text-center py-3" style="color: #888;">No hay categorías creadas</div>';
                 return;
             }

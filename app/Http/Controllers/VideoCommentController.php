@@ -119,13 +119,11 @@ class VideoCommentController extends Controller
      */
     protected function processMentions(VideoComment $comment, Video $video, string $commentText)
     {
-        // Regex mejorado: Captura @NombrePalabra hasta encontrar:
-        // - Un espacio seguido de palabra minúscula (ej: "que", "mira", "prueba")
-        // - Doble espacio
-        // - Signos de puntuación (. , ! ? ;)
-        // - Final de línea
-        // Máximo 4 palabras para evitar capturar frases completas
-        preg_match_all('/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúÁÉÍÓÚñÑ]*){0,3})(?=\s+[a-záéíóúñ]|\s{2,}|[.,!?;\n]|$)/u', $commentText, $matches);
+        // Regex simplificado para menciones:
+        // Captura @ seguido de 1-4 palabras (nombre completo)
+        // Acepta cualquier capitalización (mayúsculas o minúsculas)
+        // Palabras separadas por espacios, sin números ni caracteres especiales
+        preg_match_all('/@([\wáéíóúÁÉÍÓÚñÑ]+(?:\s+[\wáéíóúÁÉÍÓÚñÑ]+){0,3})(?=\s|[.,!?;\n]|$)/u', $commentText, $matches);
 
         if (empty($matches[1])) {
             return; // No hay menciones
@@ -140,11 +138,39 @@ class VideoCommentController extends Controller
             return; // No hay organización actual
         }
 
-        $mentionedUsers = User::whereIn('name', $mentionedNames)
-            ->whereHas('organizations', function ($query) use ($currentOrg) {
-                $query->where('organizations.id', $currentOrg->id);
-            })
-            ->get();
+        // Buscar usuarios de forma inteligente:
+        // Intenta buscar el nombre de 4 palabras hacia abajo (4, 3, 2, 1)
+        // hasta encontrar un match en la BD
+        $mentionedUsers = collect();
+
+        foreach ($mentionedNames as $capturedText) {
+            $capturedText = trim($capturedText);
+            $words = explode(' ', $capturedText);
+            $foundUser = null;
+
+            // Intentar de más palabras a menos (4, 3, 2, 1)
+            for ($wordCount = min(4, count($words)); $wordCount >= 1; $wordCount--) {
+                $nameToSearch = implode(' ', array_slice($words, 0, $wordCount));
+
+                // Buscar coincidencia exacta (case-insensitive)
+                $user = User::whereRaw('LOWER(name) = ?', [strtolower($nameToSearch)])
+                    ->whereHas('organizations', function ($query) use ($currentOrg) {
+                        $query->where('organizations.id', $currentOrg->id);
+                    })
+                    ->first();
+
+                if ($user) {
+                    $foundUser = $user;
+                    break; // Encontrado, detener búsqueda
+                }
+            }
+
+            if ($foundUser) {
+                $mentionedUsers->push($foundUser);
+            }
+        }
+
+        $mentionedUsers = $mentionedUsers->unique('id');
 
         if ($mentionedUsers->isEmpty()) {
             return; // Ningún usuario encontrado en la organización

@@ -13,6 +13,7 @@ class VideoView extends Model
         'viewed_at',
         'watch_duration',
         'completed',
+        'is_valid_view',
     ];
 
     protected function casts(): array
@@ -20,6 +21,7 @@ class VideoView extends Model
         return [
             'viewed_at' => 'datetime',
             'completed' => 'boolean',
+            'is_valid_view' => 'boolean',
         ];
     }
 

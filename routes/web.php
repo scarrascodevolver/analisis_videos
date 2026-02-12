@@ -16,6 +16,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoStreamController;
 use App\Http\Controllers\VideoViewController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Landing Page (público)
 Route::view('/', 'landing')->name('landing');
@@ -73,6 +74,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
+    // Vue/Inertia Test Page
+    Route::get('/vue-test', fn () => Inertia::render('Test'))->name('vue.test');
+
     // Multi-Camera search route (must be BEFORE Route::resource to avoid conflict with videos/{video})
     Route::get('videos/search-for-angles', [MultiCameraController::class, 'searchVideos'])->name('videos.search-angles');
 
@@ -87,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('associate', [MultiCameraController::class, 'associateAngle'])->name('associate');
         Route::delete('remove', [MultiCameraController::class, 'removeAngle'])->name('remove');
         Route::post('sync', [MultiCameraController::class, 'syncAngle'])->name('sync');
+        Route::put('sync', [MultiCameraController::class, 'updateSlaveSync'])->name('sync.update');
         Route::post('reset-sync', [MultiCameraController::class, 'resetSync'])->name('reset-sync');
         Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
     });
@@ -221,6 +226,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+        Route::get('/profile/password', [App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('profile.password');
+        Route::put('/profile/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password.update');
     });
 
     // Coach Routes

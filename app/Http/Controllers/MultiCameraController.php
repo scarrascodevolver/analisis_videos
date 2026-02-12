@@ -433,6 +433,66 @@ class MultiCameraController extends Controller
     }
 
     /**
+     * Update slave video sync offset (for draggable timeline UI)
+     */
+    public function updateSlaveSync(Request $request, Video $video)
+    {
+        $request->validate([
+            'slave_id' => 'required|exists:videos,id',
+            'sync_offset' => 'required|numeric|between:-600,600', // Max ±10 minutes
+        ]);
+
+        $slaveVideo = Video::findOrFail($request->slave_id);
+        $groupId = $request->input('group_id'); // Optional
+
+        // Get master's first group if no group specified
+        if (!$groupId) {
+            $group = $video->videoGroups()->first();
+            if (!$group) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Master video is not in any group',
+                ], 400);
+            }
+            $groupId = $group->id;
+        }
+
+        // Verify slave is in this group
+        if (!$slaveVideo->isInGroup($groupId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Slave video is not in the specified group',
+            ], 400);
+        }
+
+        // Verify slave is not master in this group
+        if ($slaveVideo->isMaster($groupId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot sync master video',
+            ], 400);
+        }
+
+        // Update sync offset in pivot table
+        $slaveVideo->videoGroups()->updateExistingPivot($groupId, [
+            'sync_offset' => $request->sync_offset,
+            'is_synced' => true,
+        ]);
+
+        Log::info("Slave video {$slaveVideo->id} sync offset updated to {$request->sync_offset}s in group {$groupId} (via draggable timeline)");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sync offset updated successfully',
+            'slave_video' => [
+                'id' => $slaveVideo->id,
+                'sync_offset' => $request->sync_offset,
+                'is_synced' => true,
+            ],
+        ]);
+    }
+
+    /**
      * Get video stream URL for multi-camera player
      */
     public function getStreamUrl(Video $video)

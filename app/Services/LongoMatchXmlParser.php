@@ -185,6 +185,10 @@ class LongoMatchXmlParser
     /**
      * Import parsed data to a video
      *
+     * Categories from XML are created with scope='video' (video-specific).
+     * If a category with the same name exists as a template (scope='organization'),
+     * it will be reused instead of creating a duplicate.
+     *
      * @param  bool  $replaceExisting  Whether to replace existing clips
      * @return array ['categories_created' => int, 'clips_created' => int]
      */
@@ -221,36 +225,70 @@ class LongoMatchXmlParser
             }
 
             foreach ($usedCategoryCodes as $code) {
-                // Try to find existing category in this organization
-                $existingCategory = ClipCategory::withoutGlobalScopes()
+                // 1. First, try to find an existing TEMPLATE (organization scope) with this name
+                $templateCategory = ClipCategory::withoutGlobalScopes()
                     ->where('organization_id', $organizationId)
+                    ->where('scope', ClipCategory::SCOPE_ORGANIZATION)
                     ->where('name', $code)
                     ->first();
 
-                if ($existingCategory) {
-                    $categoryMap[$code] = $existingCategory->id;
+                if ($templateCategory) {
+                    // Reuse the template
+                    $categoryMap[$code] = $templateCategory->id;
                     $stats['categories_reused']++;
-                } else {
-                    // Create new category
-                    $color = $categoryColors[$code] ?? '#666666';
-
-                    $newCategory = ClipCategory::create([
-                        'organization_id' => $organizationId,
-                        'name' => $code,
-                        'slug' => Str::slug($code),
-                        'color' => $color,
-                        'icon' => $this->guessIcon($code),
-                        'hotkey' => null,
-                        'lead_seconds' => 0,
-                        'lag_seconds' => 0,
-                        'sort_order' => 0,
-                        'is_active' => true,
-                        'created_by' => $userId,
-                    ]);
-
-                    $categoryMap[$code] = $newCategory->id;
-                    $stats['categories_created']++;
+                    continue;
                 }
+
+                // 2. Check if a video-specific category already exists for THIS video
+                $existingVideoCategory = ClipCategory::withoutGlobalScopes()
+                    ->where('video_id', $video->id)
+                    ->where('scope', ClipCategory::SCOPE_VIDEO)
+                    ->where('name', $code)
+                    ->first();
+
+                if ($existingVideoCategory) {
+                    // Reuse the existing video category
+                    $categoryMap[$code] = $existingVideoCategory->id;
+                    $stats['categories_reused']++;
+                    continue;
+                }
+
+                // 3. Create new category with scope='video' (only for this video)
+                $color = $categoryColors[$code] ?? '#666666';
+
+                // Generate unique slug for this video's categories
+                $baseSlug = Str::slug($code);
+                $slug = $baseSlug;
+                $counter = 2;
+
+                while (ClipCategory::withoutGlobalScopes()
+                    ->where('video_id', $video->id)
+                    ->where('scope', ClipCategory::SCOPE_VIDEO)
+                    ->where('slug', $slug)
+                    ->exists()
+                ) {
+                    $slug = $baseSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $newCategory = ClipCategory::create([
+                    'organization_id' => $organizationId,
+                    'scope' => ClipCategory::SCOPE_VIDEO,
+                    'video_id' => $video->id,
+                    'name' => $code,
+                    'slug' => $slug,
+                    'color' => $color,
+                    'icon' => $this->guessIcon($code),
+                    'hotkey' => null,
+                    'lead_seconds' => 0,
+                    'lag_seconds' => 0,
+                    'sort_order' => 0,
+                    'is_active' => true,
+                    'created_by' => $userId,
+                ]);
+
+                $categoryMap[$code] = $newCategory->id;
+                $stats['categories_created']++;
             }
 
             // Create clips

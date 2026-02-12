@@ -94,7 +94,8 @@ class User extends Authenticatable
 
     public function pendingAssignments()
     {
-        return $this->assignedVideos(); // Ya no hay estados, todas las asignaciones están "activas"
+        // Solo contar asignaciones cuyos videos existen (no fueron eliminados)
+        return $this->assignedVideos()->whereHas('video');
     }
 
     public function receivedEvaluations()
