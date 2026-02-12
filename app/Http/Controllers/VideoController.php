@@ -224,6 +224,17 @@ class VideoController extends Controller
     {
         $video->load(['category', 'uploader']);
 
+        // REDIRECT TO MASTER: If viewing a slave video, redirect to its master
+        if ($video->isPartOfGroup()) {
+            $firstGroup = $video->videoGroups()->first();
+            if ($firstGroup && $video->isSlave($firstGroup->id)) {
+                $master = $firstGroup->getMasterVideo();
+                if ($master && $master->id !== $video->id) {
+                    return redirect()->route('videos.show', $master);
+                }
+            }
+        }
+
         // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
             ->whereNull('parent_id')
