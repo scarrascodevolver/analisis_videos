@@ -26,6 +26,7 @@ class Video extends Model
         'rival_team_id',      // FK to rival_teams table
         'rival_team_name',    // Nombre del rival (texto libre - fallback)
         'category_id',
+        'tournament_id',
         'division',
         'rugby_situation_id',
         'match_date',
@@ -109,6 +110,11 @@ class Video extends Model
     public function hasRival(): bool
     {
         return $this->rival_team_id !== null || ! empty($this->rival_team_name);
+    }
+
+    public function tournament()
+    {
+        return $this->belongsTo(Tournament::class);
     }
 
     public function category()

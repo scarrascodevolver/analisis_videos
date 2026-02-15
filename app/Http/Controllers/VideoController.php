@@ -66,13 +66,9 @@ class VideoController extends Controller
             $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
         }
 
-        $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-
-        // El equipo analizado es siempre la organización actual
         $currentOrg = auth()->user()->currentOrganization();
         $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
-        // Obtener jugadores y entrenadores para asignación (incluye staff que puede recibir asignaciones)
         $players = User::where(function ($query) {
             $query->where('role', 'jugador')
                 ->orWhere('role', 'entrenador')
@@ -84,7 +80,7 @@ class VideoController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('videos.create', compact('categories', 'rugbySituations', 'players', 'organizationName'));
+        return view('videos.create', compact('categories', 'players', 'organizationName'));
     }
 
     public function store(Request $request)
@@ -103,8 +99,9 @@ class VideoController extends Controller
                         $query->where('organization_id', $currentOrg->id);
                     }),
                 ],
+                'tournament_id' => 'nullable|exists:tournaments,id',
+                'rival_team_id' => 'nullable|exists:rival_teams,id',
                 'division' => 'nullable|in:primera,intermedia,unica',
-                'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
                 'match_date' => 'required|date',
                 'assigned_players' => 'nullable|array',
                 'assigned_players.*' => 'exists:users,id',
@@ -167,11 +164,12 @@ class VideoController extends Controller
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
             'uploaded_by' => auth()->id(),
-            'analyzed_team_name' => $organizationName, // Siempre es la organización
+            'analyzed_team_name' => $organizationName,
+            'rival_team_id' => $request->rival_team_id,
             'rival_team_name' => $request->rival_team_name,
+            'tournament_id' => $request->tournament_id,
             'category_id' => $request->category_id,
             'division' => $request->division,
-            'rugby_situation_id' => $request->rugby_situation_id,
             'match_date' => $request->match_date,
             'status' => 'pending',
             'visibility_type' => $request->visibility_type,

@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CloudflareUploadController;
 use App\Http\Controllers\CloudflareWebhookController;
 use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JugadasController;
 use App\Http\Controllers\MultiCameraController;
@@ -118,6 +119,10 @@ Route::middleware(['auth'])->group(function () {
     // LongoMatch XML validation
     Route::post('api/xml/validate', [DirectUploadController::class, 'validateXml'])->name('api.xml.validate');
     Route::delete('comments/{comment}', [VideoCommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Tournaments
+    Route::get('api/tournaments/autocomplete', [TournamentController::class, 'autocomplete'])->name('api.tournaments.autocomplete');
+    Route::post('api/tournaments', [TournamentController::class, 'store'])->name('api.tournaments.store');
 
     // Player API Routes (for AJAX search functionality)
     Route::get('api/players/all', [PlayerApiController::class, 'all'])->name('api.players.all');
