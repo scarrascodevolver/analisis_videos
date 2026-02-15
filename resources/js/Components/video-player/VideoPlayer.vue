@@ -96,6 +96,8 @@ function toggleTheaterMode() {
                                 :stream-url="video.stream_url"
                                 :title="video.title"
                                 :can-annotate="isAnalystOrCoach"
+                                :cloudflare-hls-url="video.cloudflare_hls_url"
+                                :cloudflare-status="video.cloudflare_status"
                                 @add-comment="handleAddComment"
                                 @toggle-annotation-mode="handleToggleAnnotationMode"
                             >

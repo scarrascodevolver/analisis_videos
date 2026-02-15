@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, inject, computed } from 'vue';
+import Hls from 'hls.js';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import SpeedControl from './ui/SpeedControl.vue';
@@ -10,7 +11,14 @@ const props = defineProps<{
     streamUrl: string;
     title: string;
     canAnnotate: boolean;
+    cloudflareHlsUrl?: string | null;
+    cloudflareStatus?: string | null;
 }>();
+
+// Usar HLS de Cloudflare si el video está listo
+const isCloudflare = computed(() =>
+    !!props.cloudflareHlsUrl && props.cloudflareStatus === 'ready'
+);
 
 const emit = defineEmits<{
     toggleAnnotationMode: [];
@@ -20,6 +28,7 @@ const emit = defineEmits<{
 const videoStore = useVideoStore();
 const annotationsStore = useAnnotationsStore();
 const videoEl = ref<HTMLVideoElement | null>(null);
+let hlsInstance: Hls | null = null;
 
 // Disable video controls when in annotation mode
 const showControls = computed(() => !annotationsStore.annotationMode);
@@ -28,17 +37,34 @@ const showControls = computed(() => !annotationsStore.annotationMode);
 const videoLoader = inject<ReturnType<typeof useVideoLoader> | null>('videoLoader', null);
 
 onMounted(() => {
-    if (videoEl.value) {
-        videoStore.setVideoRef(videoEl.value);
+    if (!videoEl.value) return;
 
-        // Auto-collapse sidebar on play (AdminLTE behavior)
-        videoEl.value.addEventListener('play', () => {
-            document.body.classList.add('sidebar-collapse');
-        });
+    // Inicializar HLS para videos de Cloudflare Stream
+    if (isCloudflare.value && props.cloudflareHlsUrl) {
+        if (Hls.isSupported()) {
+            hlsInstance = new Hls({ enableWorker: true });
+            hlsInstance.loadSource(props.cloudflareHlsUrl);
+            hlsInstance.attachMedia(videoEl.value);
+        } else if (videoEl.value.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari soporta HLS nativamente
+            videoEl.value.src = props.cloudflareHlsUrl;
+        }
     }
+
+    videoStore.setVideoRef(videoEl.value);
+
+    // Auto-collapse sidebar on play (AdminLTE behavior)
+    videoEl.value.addEventListener('play', () => {
+        document.body.classList.add('sidebar-collapse');
+    });
 });
 
 onBeforeUnmount(() => {
+    // Cleanup hls.js
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
     // Cleanup PiP if active
     if (document.pictureInPictureElement) {
         document.exitPictureInPicture().catch(() => {});
@@ -86,7 +112,10 @@ function handleVideoClick(event: MouseEvent) {
                 @volumechange="videoStore.onVolumeChange"
                 @click="handleVideoClick"
             >
-                <source :src="streamUrl" type="video/mp4">
+                <!-- HLS para Cloudflare Stream (Safari nativo; Chrome/Firefox via hls.js en onMounted) -->
+                <source v-if="isCloudflare" :src="cloudflareHlsUrl!" type="application/x-mpegURL">
+                <!-- Fallback: video directo desde servidor (legacy Spaces o local) -->
+                <source v-else :src="streamUrl" type="video/mp4">
                 Tu navegador no soporta la reproducción de video.
             </video>
 
@@ -118,6 +147,7 @@ function handleVideoClick(event: MouseEvent) {
             </button>
 
             <button
+                v-if="!isCloudflare"
                 class="video-utility-btn"
                 title="Descargar video"
                 @click="downloadVideo"

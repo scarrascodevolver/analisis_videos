@@ -54,6 +54,11 @@ export interface Video {
     // Computed
     stream_url: string;
     edit_url: string;
+    // Cloudflare Stream
+    cloudflare_uid: string | null;
+    cloudflare_status: string | null;
+    cloudflare_hls_url: string | null;
+    cloudflare_embed_url: string | null;
     // Multi-camera
     is_part_of_group: boolean;
     slave_videos: SlaveVideo[];
@@ -64,6 +69,8 @@ export interface SlaveVideo {
     title: string;
     stream_url: string;
     sync_offset: number;
+    cloudflare_hls_url: string | null;
+    cloudflare_status: string | null;
 }
 
 export interface VideoComment {
