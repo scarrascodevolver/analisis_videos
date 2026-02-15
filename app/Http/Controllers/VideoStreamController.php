@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Video;
+use App\Services\CloudflareStreamService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -172,6 +173,12 @@ class VideoStreamController extends Controller
 
     public function stream(Video $video, Request $request)
     {
+        // Cloudflare Stream: redirigir directamente a HLS
+        if ($video->cloudflare_uid && $video->cloudflare_status === 'ready') {
+            $service = app(CloudflareStreamService::class);
+            return redirect($service->getHlsUrl($video->cloudflare_uid));
+        }
+
         // Production: Use Spaces/CDN as primary source
         if (config('app.env') === 'production') {
             // Check if file is in DigitalOcean Spaces (new uploads)

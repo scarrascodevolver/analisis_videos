@@ -260,29 +260,33 @@ class VideoController extends Controller
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
             ->get();
 
+        $cfService = app(\App\Services\CloudflareStreamService::class);
+
+        $videoData = array_merge($video->toArray(), [
+            'stream_url'           => route('videos.stream', $video),
+            'edit_url'             => route('videos.edit', $video),
+            'is_part_of_group'     => $video->isPartOfGroup(),
+            'cloudflare_hls_url'   => $video->cloudflare_uid ? $cfService->getHlsUrl($video->cloudflare_uid) : null,
+            'cloudflare_embed_url' => $video->cloudflare_uid ? $cfService->getEmbedUrl($video->cloudflare_uid) : null,
+            'slave_videos' => $video->isPartOfGroup()
+                ? $video->videoGroups->flatMap(function ($group) use ($video, $cfService) {
+                    return $group->videos
+                        ->filter(fn ($v) => $v->id !== $video->id)
+                        ->map(fn ($v) => [
+                            'id'                  => $v->id,
+                            'title'               => $v->title,
+                            'stream_url'          => route('videos.stream', $v),
+                            'sync_offset'         => $v->pivot->sync_offset ?? 0,
+                            'cloudflare_hls_url'  => $v->cloudflare_uid ? $cfService->getHlsUrl($v->cloudflare_uid) : null,
+                            'cloudflare_status'   => $v->cloudflare_status,
+                        ])
+                        ->values();
+                })->values()->all()
+                : [],
+        ]);
+
         return Inertia::render('Videos/Show', [
-            'video' => array_merge($video->toArray(), [
-                'stream_url' => route('videos.stream', $video),
-                'edit_url' => route('videos.edit', $video),
-                'is_part_of_group' => $video->isPartOfGroup(),
-                'slave_videos' => $video->isPartOfGroup()
-                    ? $video->videoGroups->flatMap(function ($group) use ($video) {
-                        return $group->videos
-                            ->filter(function ($v) use ($video) {
-                                return $v->id !== $video->id;
-                            })
-                            ->map(function ($v) {
-                                return [
-                                    'id' => $v->id,
-                                    'title' => $v->title,
-                                    'stream_url' => route('videos.stream', $v),
-                                    'sync_offset' => $v->pivot->sync_offset ?? 0,
-                                ];
-                            })
-                            ->values();
-                    })->values()->all()
-                    : [],
-            ]),
+            'video' => $videoData,
             'comments' => $comments,
             'allUsers' => $orgUsers,
         ]);

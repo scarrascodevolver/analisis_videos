@@ -39,6 +39,11 @@ class Video extends Model
         'compression_ratio',
         'processing_started_at',
         'processing_completed_at',
+        // Cloudflare Stream
+        'cloudflare_uid',
+        'cloudflare_playback_url',
+        'cloudflare_thumbnail',
+        'cloudflare_status',
     ];
 
     protected function casts(): array

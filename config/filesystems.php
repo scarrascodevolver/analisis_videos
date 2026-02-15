@@ -98,6 +98,14 @@ return [
         'worker_url' => env('CLOUDFLARE_WORKER_URL'),
     ],
 
+    'cloudflare_stream' => [
+        'account_id'          => env('CLOUDFLARE_ACCOUNT_ID'),
+        'api_token'           => env('CLOUDFLARE_STREAM_API_TOKEN'),
+        'customer_subdomain'  => env('CLOUDFLARE_STREAM_CUSTOMER_SUBDOMAIN'),
+        'webhook_secret'      => env('CLOUDFLARE_STREAM_WEBHOOK_SECRET'),
+        'signed_urls'         => env('CLOUDFLARE_STREAM_SIGNED_URLS', false),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Symbolic Links

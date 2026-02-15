@@ -4,6 +4,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CloudflareUploadController;
+use App\Http\Controllers\CloudflareWebhookController;
 use App\Http\Controllers\DirectUploadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JugadasController;
@@ -97,6 +99,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('reset-sync', [MultiCameraController::class, 'resetSync'])->name('reset-sync');
         Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
     });
+
+    // Cloudflare Stream - Upload directo desde browser via TUS
+    Route::post('api/upload/cloudflare/init', [CloudflareUploadController::class, 'init'])->name('api.upload.cf.init');
+    Route::post('api/upload/cloudflare/complete', [CloudflareUploadController::class, 'complete'])->name('api.upload.cf.complete');
+    Route::get('api/upload/cloudflare/{video}/status', [CloudflareUploadController::class, 'status'])->name('api.upload.cf.status');
 
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
@@ -416,6 +423,7 @@ Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->grou
 // Webhooks de pago (sin auth, usan firma)
 Route::post('/webhooks/paypal', [App\Http\Controllers\SubscriptionController::class, 'paypalWebhook'])->name('webhooks.paypal');
 Route::post('/webhooks/mercadopago', [App\Http\Controllers\SubscriptionController::class, 'mercadoPagoWebhook'])->name('webhooks.mercadopago');
+Route::post('/webhooks/cloudflare-stream', [CloudflareWebhookController::class, 'handle'])->name('webhooks.cloudflare-stream');
 
 // ======================================
 // OWNER PANEL ROUTES (Payment System)
