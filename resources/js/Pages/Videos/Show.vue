@@ -273,6 +273,7 @@ function onSyncSaved(offsets: Record<number, number>) {
             :comments="comments"
             :all-users="allUsers"
             :user="user"
+            :has-slaves="slaveVideos.length > 0"
             @show-stats="showStatsModal = true"
             @delete-video="showDeleteModal = true"
             @add-angle="onAddAngle"
@@ -343,16 +344,12 @@ function onSyncSaved(offsets: Record<number, number>) {
             </template>
 
             <!-- Multi-camera layout -->
-            <template v-if="video.is_part_of_group && isAnalystOrCoach" #multi-camera>
+            <template v-if="video.is_part_of_group && isAnalystOrCoach && slaveVideos.length > 0" #multi-camera>
                 <MultiCameraLayout
-                    v-if="slaveVideos.length > 0"
                     :slaves="slaveVideos"
                     @swap-master="onSwapMaster"
                     @remove-slave="onRemoveSlave"
                 />
-                <div v-else class="text-center p-3 text-muted">
-                    <i class="fas fa-video-slash"></i> No hay ángulos adicionales
-                </div>
             </template>
 
             <!-- Modals slot -->

@@ -256,9 +256,9 @@ export function useVideoApi(videoId: number) {
     }
 
     // ====== Multi-Camera ======
-    // Route: DELETE /videos/{video}/multi-camera/remove?slave_id=X
+    // Route: DELETE /videos/{slave}/multi-camera/remove
     async function removeSlaveVideo(slaveId: number): Promise<{ success: boolean }> {
-        return request(`/videos/${videoId}/multi-camera/remove?slave_id=${slaveId}`, {
+        return request(`/videos/${slaveId}/multi-camera/remove`, {
             method: 'DELETE',
         });
     }

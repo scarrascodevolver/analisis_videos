@@ -15,6 +15,7 @@ const props = defineProps<{
     comments: VideoComment[];
     allUsers: Pick<User, 'id' | 'name' | 'role'>[];
     user: User;
+    hasSlaves?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -38,7 +39,7 @@ const isAnalystOrCoach = computed(() =>
 );
 
 const hasMultiCamera = computed(() =>
-    !!props.video.is_part_of_group && isAnalystOrCoach.value
+    !!props.video.is_part_of_group && isAnalystOrCoach.value && !!props.hasSlaves
 );
 
 const showComments = ref(true);
