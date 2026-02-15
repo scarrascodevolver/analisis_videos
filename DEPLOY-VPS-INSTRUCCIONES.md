@@ -1,356 +1,352 @@
-# 🚀 Deploy a VPS - Instrucciones Finales
+# 🚀 Instrucciones de Deployment a VPS
 
-**Fecha:** 2026-01-26
-**Estado:** ✅ TODO MERGEADO A MAIN - Listo para deploy
+**Última actualización:** 2026-02-04
+**VPS Actual:** DigitalOcean (2 vCPU, 4GB RAM)
+**Rama de producción:** `main`
 
 ---
 
-## 📦 Qué Se Incluye en Este Deploy
+## 📋 Deployment Estándar (Cualquier Cambio)
 
-### ✅ Performance Fixes Anteriores (8 fixes)
-1. Consolidar timeupdate listeners (16→4 ops/sec)
-2. Sistema de cleanup automático (memory leaks)
-3. Event delegation timeline markers
-4. Prevenir setTimeout acumulados (notifications)
-5. Índice annotations O(1) lookup
-6. Índice comments O(1) lookup
-7. Prevenir duplicate handlers (comments)
-8. Event delegation clip list
-
-### ✅ Bug Fixes Críticos
-9. Fix timeupdate callback TypeError (video player roto)
-10. Fix anotaciones permanentes (is_permanent handling)
-11. UI: "∞" → "Fija" en selector duración
-
-### 🔥 Virtual Scrolling para 800 Clips (NUEVO)
-12. Virtual scrolling automático (>50 clips)
-13. Fix orden cronológico de clips (timestamp vs ID)
-14. Timeline marker clustering (comentarios agrupados)
-
-**Impacto Total:**
-- Video con 800 clips: 10+ segundos → 1-2 segundos carga (80-90% ↓)
-- DOM elements: 4,000 → 100 (97% ↓)
-- CPU durante playback: -60%
-- Memory leaks: -70%
-- Event listeners: -90%
+Esta guía sirve para deployar cualquier cambio desde `main` al VPS de producción.
 
 ---
 
 ## 🖥️ COMANDOS PARA VPS
 
-### Paso 1: Backup (Seguridad)
+### Paso 0: Pre-verificación Local
 
 ```bash
-# Conectar al VPS
-ssh usuario@rugbyhub.cl
-
-# Navegar al proyecto
-cd /var/www/rugbyhub
-
-# Crear backup de seguridad
-git branch backup-before-final-merge-$(date +%Y%m%d-%H%M%S)
-
-# Verificar rama actual
+# Antes de hacer deploy, asegúrate de que:
+# 1. Los cambios están en main
 git branch
 # Debe mostrar: * main
+
+# 2. Todo está commiteado
+git status
+# Debe mostrar: "nothing to commit, working tree clean"
+
+# 3. Push a GitHub
+git push origin main
 ```
 
 ---
 
-### Paso 2: Pull y Build
+### Paso 1: Conectar y Backup
+
+```bash
+# Conectar al VPS
+ssh root@161.35.108.164
+
+# Navegar al proyecto
+cd /var/www/analisis_videos
+
+# Crear backup de seguridad (opcional pero recomendado)
+git branch backup-$(date +%Y%m%d-%H%M%S)
+
+# Verificar rama actual
+git branch
+# Debe mostrar: * main (u optimize/vps-2cpu-4gb si aún usas esa)
+```
+
+---
+
+### Paso 2: Pull y Actualizar
 
 ```bash
 # Pull de main con todos los cambios
 git pull origin main
 
-# Verificar que se descargaron los archivos
-ls -la resources/js/video-player/virtual-scroll.js
-# Debe existir
+# Si hay cambios en composer.json
+composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias (por si acaso)
+# Si hay cambios en package.json
 npm install
 
-# Build de assets (IMPORTANTE)
+# Si hay cambios en JS/CSS (SIEMPRE recomendado)
 npm run build
-
-# Verificar que el build se generó correctamente
-ls -lh public/build/assets/index-*.js
-# Debe mostrar archivo de ~71KB
 ```
 
 ---
 
-### Paso 3: Limpiar Cache
+### Paso 3: Migraciones y Cache
 
 ```bash
+# Ejecutar migraciones (si hay nuevas)
+php artisan migrate --force
+
 # Limpiar cache de Laravel
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
 
-# Verificar permisos de storage
+# Verificar permisos de storage (si hay errores de permisos)
 sudo chown -R www-data:www-data storage/
 sudo chmod -R 755 storage/
 ```
 
 ---
 
-### Paso 4: Verificar Deployment
+### Paso 4: Reiniciar Servicios (si es necesario)
 
 ```bash
-# Ver últimos commits en main
+# Si hay cambios en queue workers
+sudo supervisorctl restart rugby-queue-worker:*
+
+# Si hay cambios en configuración de Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+# Si hay cambios en PHP-FPM
+sudo systemctl restart php8.2-fpm
+```
+
+---
+
+### Paso 5: Verificar Deployment
+
+```bash
+# Ver últimos commits
 git log --oneline -5
 
-# Debe mostrar commits de:
-# - Virtual scrolling
-# - Performance fixes
-# - Bug fixes
+# Verificar estado de servicios críticos
+sudo supervisorctl status
+
+# Ver logs recientes
+tail -50 storage/logs/laravel.log
 ```
 
 ---
 
 ## ✅ Testing en Producción
 
-### Test Crítico #1: Video con 800 Clips
+### Pruebas Básicas (SIEMPRE)
 
-1. **Abrir:** `https://rugbyhub.cl/videos/[id-del-video-con-800-clips]`
+1. **Login funciona**
+   - https://tu-dominio.com/login
+   - Probar con usuario de prueba
 
-2. **Cronometrar carga:**
-   - ✅ ESPERADO: 1-2 segundos
-   - ❌ ANTES: 10+ segundos
+2. **Dashboard carga**
+   - Sin errores 500
+   - Sin errores en consola (F12)
 
-3. **Verificar consola (F12):**
-   ```
-   ✅ "🚀 Using Virtual Scroll for 800 clips"
-   ✅ "Virtual Scroll: Rendered 19 items (0-19 of 800)"
-   ```
+3. **Funcionalidad principal**
+   - Videos reproducen
+   - Upload funciona
+   - Comentarios funcionan
 
-4. **Verificar interacción:**
-   - ✅ Puedes hacer clic en botones inmediatamente
-   - ✅ Video reproduce sin problemas
-   - ✅ Scroll en lista de clips es fluido
+### Pruebas Específicas (según el cambio)
 
----
+**Si modificaste JS/CSS:**
+- Hard refresh (Ctrl+Shift+R)
+- Verificar que assets nuevos se cargaron
+- Revisar consola por errores
 
-### Test Crítico #2: Dos Ventanas
+**Si modificaste compresión/queue:**
+- Subir video de prueba
+- Verificar logs: `tail -f storage/logs/queue-worker.log`
+- Confirmar que comprime correctamente
 
-1. Abrir video con 800 clips en 2 ventanas
-2. Reproducir ambos simultáneamente
-3. **Verificar:**
-   - ✅ Ambas cargan rápido (1-2 seg)
-   - ✅ Ambas reproducen sin lag
-   - ✅ PC no se congela
-
----
-
-### Test Crítico #3: Funcionalidad General
-
-**Videos con pocos clips (<50):**
-- ✅ Siguen funcionando normal
-- ✅ Consola debe mostrar: "📋 Using Standard Render for X clips"
-
-**Funcionalidad básica:**
-- ✅ Agregar/eliminar comentarios
-- ✅ Crear/eliminar anotaciones con duración correcta
-- ✅ Anotaciones temporales desaparecen después de 2-4s
-- ✅ Anotaciones "Fijas" quedan permanentes
-- ✅ Reproducir clips funciona
-- ✅ Exportar GIF funciona
-- ✅ Eliminar clips funciona
-
----
-
-### Test #4: Orden de Clips
-
-1. Abrir video con clips de XML importado
-2. Ver lista de clips en sidebar
-3. **Verificar:**
-   - ✅ Primer clip = timestamp más temprano (ej: 00:05)
-   - ✅ Último clip = timestamp más tardío (ej: 89:54)
-   - ✅ Clips en orden cronológico del video
+**Si modificaste base de datos:**
+- Verificar migraciones: `php artisan migrate:status`
+- Probar funcionalidad afectada
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Problema: "Virtual scroll not working"
+### Problema: "Cambios no se reflejan en el sitio"
 
-**Síntomas:** Video con 800 clips sigue lento
+**Causas comunes:**
+1. Cache del navegador
+2. Cache de Laravel
+3. Assets no compilados
+4. Cambios no pushed a GitHub
 
 **Solución:**
 ```bash
-# 1. Verificar que el archivo existe
-ls -la resources/js/video-player/virtual-scroll.js
-
-# 2. Verificar que el build es reciente
-ls -lh public/build/assets/index-*.js
-# Debe ser archivo de ~71KB
-
-# 3. Hard refresh en navegador
-# Ctrl+Shift+R (Chrome/Firefox)
-# Cmd+Shift+R (Mac)
-
-# 4. Limpiar cache de nuevo
-php artisan view:clear
-php artisan cache:clear
-
-# 5. Rebuild
-npm run build
-```
-
----
-
-### Problema: "Clips no aparecen al hacer scroll"
-
-**Verificar en consola (F12):**
-```javascript
-// Buscar errores JavaScript
-// No debe haber errores rojos
-
-// Verificar que virtual scroll se inicializó
-console.log(window.virtualScrollManager);
-// Debe mostrar objeto, no null
-```
-
----
-
-### Problema: "Errores en consola"
-
-**Si ves errores tipo:**
-- `TypeError: o is not a function` → Ya está arreglado, hacer hard refresh
-- `Module not found: virtual-scroll` → Rebuild con `npm run build`
-- `undefined is not a function` → Limpiar cache y rebuild
-
----
-
-## 🔄 Rollback (Si Todo Falla)
-
-```bash
-# Volver al estado anterior
-git checkout backup-before-final-merge-[fecha]
-
-# O volver main al commit anterior
-git log --oneline
-# Encontrar commit anterior al merge
-git reset --hard [commit-hash]
-
-# Rebuild y cache
+# En VPS
+git pull origin main
 npm run build
 php artisan config:clear
 php artisan cache:clear
 
-# Force push (solo si es necesario)
-git push origin main --force
+# En navegador
+# Hard refresh: Ctrl+Shift+R (Chrome/Firefox)
 ```
 
 ---
 
-## 📊 Métricas de Éxito
+### Problema: "Error 500 después de deployment"
 
-### Performance Esperada
+**Verificar:**
+```bash
+# Ver logs de error
+tail -50 storage/logs/laravel.log
 
-| Métrica | Antes | Después | Objetivo |
-|---------|-------|---------|----------|
-| Carga (800 clips) | 10+ seg | 1-2 seg | ✅ <3 seg |
-| DOM elements | 4,000 | 100 | ✅ <200 |
-| Event listeners | 500+ | 50 | ✅ <100 |
-| CPU (playback) | 15-25% | 5-10% | ✅ <12% |
-| Memory leaks | 2MB/min | 0 | ✅ 0 |
-| Test 2 windows | Falla ❌ | OK ✅ | ✅ OK |
+# Permisos de storage
+sudo chown -R www-data:www-data storage/
+sudo chmod -R 755 storage/
 
-### Funcionalidad
+# .env configurado correctamente
+cat .env | grep -E "APP_ENV|APP_DEBUG|DB_"
 
-- ✅ Video reproduce
-- ✅ Comentarios funcionan
-- ✅ Anotaciones funcionan (con duración correcta)
-- ✅ Clips en orden cronológico
-- ✅ Eliminar/exportar clips funciona
-- ✅ Sin errores en consola
-
----
-
-## 📁 Archivos Clave del Deploy
-
-```
-✅ resources/js/video-player/virtual-scroll.js (NUEVO)
-   - VirtualScrollManager class
-
-✅ resources/js/video-player/clip-manager.js (MODIFICADO)
-   - Virtual scroll integration
-   - Fix orden cronológico
-
-✅ resources/js/video-player/timeline.js (MODIFICADO)
-   - Marker clustering
-   - Performance improvements
-
-✅ resources/js/video-player/time-manager.js (MODIFICADO)
-   - Fix timeupdate callback bug
-
-✅ resources/js/video-player/annotations.js (MODIFICADO)
-   - Fix is_permanent handling
-   - Debug logs
-
-✅ resources/js/video-player/comments.js (MODIFICADO)
-   - Event handler cleanup
-
-✅ resources/js/video-player/notifications.js (MODIFICADO)
-   - Timeout cleanup
-
-✅ resources/views/videos/show.blade.php (MODIFICADO)
-   - "∞" → "Fija"
+# Caché de configuración corrupta
+php artisan config:clear
 ```
 
 ---
 
-## 🎯 Checklist Final
+### Problema: "Queue workers no procesan jobs"
 
-Antes de dar por completado el deploy:
+**Verificar:**
+```bash
+# Estado de workers
+sudo supervisorctl status
 
-- [ ] Pull de main ejecutado
-- [ ] `npm run build` exitoso
-- [ ] Cache limpiado (config, cache, view)
-- [ ] Video con 800 clips carga en <3 segundos
-- [ ] Scroll en lista de clips es fluido
-- [ ] Clips en orden cronológico
-- [ ] Test 2 ventanas funciona
-- [ ] Funcionalidad básica (comentarios, anotaciones) OK
-- [ ] Sin errores en consola (F12)
-- [ ] Anotaciones temporales desaparecen correctamente
+# Si están detenidos, reiniciar
+sudo supervisorctl restart rugby-queue-worker:*
 
----
+# Ver logs
+sudo supervisorctl tail -f rugby-queue-worker:rugby-queue-worker_00
 
-## 📞 Si Necesitas Ayuda
-
-1. **Verificar logs de Laravel:**
-   ```bash
-   tail -f storage/logs/laravel.log
-   ```
-
-2. **Verificar logs de JavaScript:**
-   - F12 en navegador → Console tab
-
-3. **Verificar estado de git:**
-   ```bash
-   git status
-   git log --oneline -10
-   ```
+# Verificar jobs en BD
+php artisan tinker --execute="DB::table('jobs')->count()"
+```
 
 ---
 
-## ✅ Cuando Todo Funcione
+### Problema: "Migraciones fallan"
 
-1. Probar con usuarios reales
-2. Monitorear performance en DevTools
-3. Verificar que no hay memory leaks (dejar video reproduciendo 5+ min)
-4. Confirmar que videos con muchos clips funcionan bien
+**Verificar:**
+```bash
+# Ver estado de migraciones
+php artisan migrate:status
+
+# Ver error específico
+php artisan migrate --force
+
+# Si necesitas rollback
+php artisan migrate:rollback --step=1
+```
 
 ---
 
-**Éxito del Deploy = Video con 800 clips carga en 1-2 segundos y funciona fluido** 🎉
+## 🔄 Rollback (Si Algo Sale Mal)
+
+### Opción A: Volver a Commit Anterior
+
+```bash
+# Ver commits recientes
+git log --oneline -10
+
+# Volver a commit específico
+git reset --hard [commit-hash-anterior]
+
+# Rebuild
+npm run build
+php artisan config:clear
+php artisan cache:clear
+
+# Reiniciar servicios
+sudo supervisorctl restart rugby-queue-worker:*
+```
+
+### Opción B: Usar Backup de Git
+
+```bash
+# Listar backups
+git branch | grep backup
+
+# Volver a backup
+git checkout backup-[fecha]
+
+# Rebuild y limpiar
+npm run build
+php artisan config:clear
+```
+
+---
+
+## 📋 Checklist de Deployment
+
+Antes de dar por completado:
+
+- [ ] `git pull origin main` ejecutado
+- [ ] Dependencias actualizadas (`composer install`, `npm install`)
+- [ ] `npm run build` ejecutado (si hay cambios JS/CSS)
+- [ ] Migraciones ejecutadas (si hay nuevas)
+- [ ] Cache limpiado
+- [ ] Servicios reiniciados (si es necesario)
+- [ ] Login funciona
+- [ ] Dashboard carga sin errores
+- [ ] Funcionalidad principal probada
+- [ ] Sin errores en logs (`storage/logs/laravel.log`)
+- [ ] Sin errores en consola del navegador (F12)
+
+---
+
+## 📊 Monitoreo Post-Deployment
+
+### Logs a Revisar
+
+```bash
+# Logs de aplicación
+tail -f storage/logs/laravel.log
+
+# Logs de queue workers
+sudo supervisorctl tail -f rugby-queue-worker:rugby-queue-worker_00
+
+# Logs de Nginx
+sudo tail -f /var/log/nginx/error.log
+
+# Logs de PHP-FPM
+sudo tail -f /var/log/php8.2-fpm.log
+```
+
+### Métricas de Sistema
+
+```bash
+# Uso de recursos
+htop
+
+# Espacio en disco
+df -h
+
+# Estado de servicios
+sudo systemctl status nginx
+sudo systemctl status php8.2-fpm
+sudo systemctl status mysql
+sudo supervisorctl status
+```
+
+---
+
+## 📚 Documentación Relacionada
+
+- **Migración a Hetzner:** Ver `MIGRATION_HETZNER.md`
+- **Optimización VPS:** Ver `docs/VPS_OPTIMIZATION.md`
+- **Documentación del proyecto:** Ver `CLAUDE.md`
+- **Archivos históricos:** Ver `docs/archive/`
+
+---
+
+## 🚀 Deployment Rápido (Resumen)
+
+**Comando único para deployment estándar:**
+
+```bash
+ssh root@161.35.108.164 "cd /var/www/analisis_videos && git pull origin main && npm run build && php artisan config:clear && php artisan cache:clear && sudo supervisorctl restart rugby-queue-worker:*"
+```
+
+**Verificación rápida:**
+- Abrir https://tu-dominio.com
+- Login funciona ✅
+- Dashboard carga ✅
+- Sin errores en consola (F12) ✅
 
 ---
 
 **Autor:** Claude Sonnet 4.5
-**Fecha:** 2026-01-26
-**Branch:** main (merged)
+**Última actualización:** 2026-02-04

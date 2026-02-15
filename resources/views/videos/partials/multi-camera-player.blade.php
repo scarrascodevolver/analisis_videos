@@ -208,7 +208,18 @@
                             return;
                         }
 
+                        // ✅ Sync currentTime
                         slave.element.currentTime = expectedTime;
+
+                        // ✅ Sync paused/playing state to prevent desync on timeline clicks
+                        if (masterVideo.paused) {
+                            slave.element.pause();
+                        } else {
+                            slave.element.play().catch(err => {
+                                if (err?.name === 'AbortError') return; // Expected during rapid seeks
+                                console.warn('[Slave] Play failed after seek:', err);
+                            });
+                        }
                     });
                 }, 100); // 100ms debounce
             }, { signal });

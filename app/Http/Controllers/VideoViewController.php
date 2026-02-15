@@ -16,8 +16,8 @@ class VideoViewController extends Controller
     {
         $userId = Auth::id();
 
-        // Check cooldown period (30 minutes)
-        if (VideoView::isWithinCooldown($video->id, $userId, 30)) {
+        // Check cooldown period (5 minutes)
+        if (VideoView::isWithinCooldown($video->id, $userId, 5)) {
             return response()->json([
                 'success' => true,
                 'message' => 'View within cooldown period',
@@ -59,13 +59,24 @@ class VideoViewController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $watchDuration = $validated['duration'];
+        $videoDuration = $video->duration ?? 1;
+        $watchedPercentage = ($watchDuration / $videoDuration) * 100;
+
+        // Calculate if this is a valid view
+        // Criteria: (watched >= 30s AND >= 25%) OR (>= 50%)
+        $isValidView = ($watchDuration >= 30 && $watchedPercentage >= 25)
+                    || ($watchedPercentage >= 50);
+
         $view->update([
-            'watch_duration' => $validated['duration'],
+            'watch_duration' => $watchDuration,
+            'is_valid_view' => $isValidView,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Duration updated',
+            'is_valid_view' => $isValidView,
         ]);
     }
 
@@ -105,13 +116,22 @@ class VideoViewController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $stats = $video->getViewStats();
+        $views = $video->getViewStats();
+
+        // Calculate average watch time
+        $totalWatchTime = $views->sum('total_watch_time');
+        $averageWatchTime = $views->count() > 0 ? $totalWatchTime / $views->count() : 0;
 
         return response()->json([
             'success' => true,
-            'total_views' => $video->view_count,
-            'unique_viewers' => $video->unique_viewers,
-            'stats' => $stats,
+            // New metrics with validation criteria
+            'total_starts' => $video->view_count, // All play button presses
+            'valid_views' => $video->valid_view_count, // Meet criteria (30s+25% OR 50%)
+            'completions' => $video->completion_count, // Finished video
+            'unique_viewers' => $video->unique_viewers, // Unique users (all)
+            'unique_valid_viewers' => $video->unique_valid_viewers, // Unique users (valid)
+            'average_watch_time' => $averageWatchTime,
+            'views' => $views,
         ]);
     }
 }

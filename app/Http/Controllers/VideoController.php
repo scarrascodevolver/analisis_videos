@@ -9,6 +9,7 @@ use App\Models\Video;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class VideoController extends Controller
 {
@@ -219,9 +220,20 @@ class VideoController extends Controller
             ->with('success', $successMessage);
     }
 
-    public function show(Video $video)
+    public function show(Request $request, Video $video)
     {
         $video->load(['category', 'uploader']);
+
+        // REDIRECT TO MASTER: If viewing a slave video, redirect to its master
+        if ($video->isPartOfGroup()) {
+            $firstGroup = $video->videoGroups()->first();
+            if ($firstGroup && $video->isSlave($firstGroup->id)) {
+                $master = $firstGroup->getMasterVideo();
+                if ($master && $master->id !== $video->id) {
+                    return redirect()->route('videos.show', $master);
+                }
+            }
+        }
 
         // Cargar comentarios principales con todas las respuestas anidadas recursivamente + menciones
         $comments = $video->comments()
@@ -237,7 +249,43 @@ class VideoController extends Controller
             ->orderBy('timestamp_seconds')
             ->get();
 
-        return view('videos.show', compact('video', 'comments'));
+        // Blade fallback solo si se solicita explícitamente (para compatibilidad temporal)
+        if ($request->has('blade')) {
+            return view('videos.show', compact('video', 'comments'));
+        }
+
+        // Default: Usar Vue/Inertia (migración a SPA)
+        $currentOrgId = auth()->user()->currentOrganization()?->id;
+        $orgUsers = User::select('id', 'name', 'role')
+            ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
+            ->get();
+
+        return Inertia::render('Videos/Show', [
+            'video' => array_merge($video->toArray(), [
+                'stream_url' => route('videos.stream', $video),
+                'edit_url' => route('videos.edit', $video),
+                'is_part_of_group' => $video->isPartOfGroup(),
+                'slave_videos' => $video->isPartOfGroup()
+                    ? $video->videoGroups->flatMap(function ($group) use ($video) {
+                        return $group->videos
+                            ->filter(function ($v) use ($video) {
+                                return $v->id !== $video->id;
+                            })
+                            ->map(function ($v) {
+                                return [
+                                    'id' => $v->id,
+                                    'title' => $v->title,
+                                    'stream_url' => route('videos.stream', $v),
+                                    'sync_offset' => $v->pivot->sync_offset ?? 0,
+                                ];
+                            })
+                            ->values();
+                    })->values()->all()
+                    : [],
+            ]),
+            'comments' => $comments,
+            'allUsers' => $orgUsers,
+        ]);
     }
 
     public function edit(Video $video)
@@ -339,6 +387,64 @@ class VideoController extends Controller
 
         return redirect()->route('videos.index')
             ->with('success', 'Video eliminado exitosamente');
+    }
+
+    /**
+     * Import LongoMatch XML clips to an existing video
+     */
+    public function importXml(Request $request, Video $video)
+    {
+        $request->validate([
+            'xml_file' => 'required|file|mimes:xml|max:10240', // 10MB max
+        ]);
+
+        try {
+            $xmlContent = file_get_contents($request->file('xml_file')->getRealPath());
+
+            $xmlParser = app(\App\Services\LongoMatchXmlParser::class);
+            $parsedData = $xmlParser->parse($xmlContent);
+            $stats = $xmlParser->importToVideo($video, $parsedData, true);
+
+            return redirect()->route('videos.edit', $video)
+                ->with('success', "XML importado exitosamente: {$stats['clips_created']} clips creados, {$stats['categories_created']} categorías nuevas, {$stats['categories_reused']} categorías reutilizadas.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error importing XML to video '.$video->id.': '.$e->getMessage());
+
+            return redirect()->route('videos.edit', $video)
+                ->with('error', 'Error al importar XML: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Delete all clips from this video
+     */
+    public function deleteAllClips(Video $video)
+    {
+        try {
+            $clipsCount = $video->clips()->count();
+
+            if ($clipsCount === 0) {
+                return redirect()->route('videos.edit', $video)
+                    ->with('info', 'No hay clips para eliminar.');
+            }
+
+            $video->clips()->delete();
+
+            \Log::info("Deleted all clips from video {$video->id}", [
+                'clips_deleted' => $clipsCount,
+                'user_id' => auth()->id(),
+            ]);
+
+            return redirect()->route('videos.edit', $video)
+                ->with('success', "Se eliminaron {$clipsCount} clips exitosamente.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting clips from video '.$video->id.': '.$e->getMessage());
+
+            return redirect()->route('videos.edit', $video)
+                ->with('error', 'Error al eliminar clips: '.$e->getMessage());
+        }
     }
 
     public function playerUpload()

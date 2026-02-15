@@ -19,9 +19,9 @@ class MyVideosController extends Controller
             ->latest()
             ->paginate(12, ['*'], 'assigned');
 
-        // Estadísticas de asignaciones
+        // Estadísticas de asignaciones (solo videos existentes)
         $stats = [
-            'total' => $user->assignedVideos()->count(),
+            'total' => $user->assignedVideos()->whereHas('video')->count(),
             'pending' => $user->pendingAssignments()->count(),
             'completed' => 0, // Ya no hay estados de completado
             'overdue' => 0, // Ya no hay fechas límite

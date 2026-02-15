@@ -30,6 +30,8 @@ class ClipCategoryController extends Controller
             'hotkey' => 'nullable|string|max:1',
             'lead_seconds' => 'nullable|integer|min:0|max:30',
             'lag_seconds' => 'nullable|integer|min:0|max:30',
+            'scope' => 'nullable|in:organization,user,video',
+            'video_id' => 'nullable|integer|exists:videos,id',
         ];
 
         // Para AJAX, manejar errores de validación como JSON
@@ -46,38 +48,56 @@ class ClipCategoryController extends Controller
         }
 
         $orgId = auth()->user()->currentOrganization()->id;
+        $userId = auth()->id();
+        $scope = $request->scope ?? ClipCategory::SCOPE_ORGANIZATION;
+        $videoId = $request->video_id;
 
-        // Verificar hotkey único en la org
+        // Validar scope y video_id
+        if ($scope === ClipCategory::SCOPE_VIDEO && !$videoId) {
+            return $this->errorResponse($request, 'Se requiere video_id para categorías de video');
+        }
+
+        // Verificar hotkey único según el scope
         if ($request->hotkey) {
-            $exists = ClipCategory::where('organization_id', $orgId)
-                ->where('hotkey', strtolower($request->hotkey))
-                ->exists();
+            $hotkeyExists = $this->checkHotkeyExists(
+                strtolower($request->hotkey),
+                $scope,
+                $orgId,
+                $userId,
+                $videoId
+            );
 
-            if ($exists) {
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Esta tecla ya está asignada a otra categoría',
-                    ], 422);
-                }
-
-                return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
+            if ($hotkeyExists) {
+                return $this->errorResponse($request, 'Esta tecla ya está asignada a otra categoría');
             }
         }
 
+        // Generar slug único según el scope
+        $slug = $this->generateUniqueSlug($request->name, $scope, $orgId, $userId, $videoId);
+
         $maxOrder = ClipCategory::where('organization_id', $orgId)->max('sort_order') ?? 0;
 
-        $category = ClipCategory::create([
+        $categoryData = [
             'organization_id' => $orgId,
+            'scope' => $scope,
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'slug' => $slug,
             'color' => $request->color,
             'hotkey' => $request->hotkey ? strtolower($request->hotkey) : null,
             'lead_seconds' => $request->lead_seconds ?? 3,
             'lag_seconds' => $request->lag_seconds ?? 3,
             'sort_order' => $maxOrder + 1,
-            'created_by' => auth()->id(),
-        ]);
+            'created_by' => $userId,
+        ];
+
+        // Agregar user_id o video_id según el scope
+        if ($scope === ClipCategory::SCOPE_USER) {
+            $categoryData['user_id'] = $userId;
+        } elseif ($scope === ClipCategory::SCOPE_VIDEO) {
+            $categoryData['video_id'] = $videoId;
+        }
+
+        $category = ClipCategory::create($categoryData);
 
         // Respuesta JSON para AJAX
         if ($request->wantsJson() || $request->ajax()) {
@@ -122,29 +142,40 @@ class ClipCategoryController extends Controller
         }
 
         $orgId = auth()->user()->currentOrganization()->id;
+        $userId = auth()->id();
 
         // Verificar hotkey único (excluyendo el actual)
         if ($request->hotkey) {
-            $exists = ClipCategory::where('organization_id', $orgId)
-                ->where('hotkey', strtolower($request->hotkey))
-                ->where('id', '!=', $clipCategory->id)
-                ->exists();
+            $hotkeyExists = $this->checkHotkeyExists(
+                strtolower($request->hotkey),
+                $clipCategory->scope,
+                $orgId,
+                $userId,
+                $clipCategory->video_id,
+                $clipCategory->id
+            );
 
-            if ($exists) {
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Esta tecla ya está asignada a otra categoría',
-                    ], 422);
-                }
-
-                return back()->withErrors(['hotkey' => 'Esta tecla ya está asignada a otra categoría']);
+            if ($hotkeyExists) {
+                return $this->errorResponse($request, 'Esta tecla ya está asignada a otra categoría');
             }
+        }
+
+        // Generar slug único si cambió el nombre
+        $slug = $clipCategory->slug;
+        if ($request->name !== $clipCategory->name) {
+            $slug = $this->generateUniqueSlug(
+                $request->name,
+                $clipCategory->scope,
+                $orgId,
+                $clipCategory->user_id,
+                $clipCategory->video_id,
+                $clipCategory->id
+            );
         }
 
         $clipCategory->update([
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'slug' => $slug,
             'color' => $request->color,
             'hotkey' => $request->hotkey ? strtolower($request->hotkey) : null,
             'lead_seconds' => $request->lead_seconds ?? $clipCategory->lead_seconds,
@@ -209,14 +240,143 @@ class ClipCategoryController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // API: Obtener categorías para el player
-    public function apiIndex()
+    /**
+     * API: Obtener categorías para el player
+     * Devuelve categorías agrupadas por scope para el video actual
+     */
+    public function apiIndex(Request $request)
     {
-        $categories = ClipCategory::where('organization_id', auth()->user()->currentOrganization()->id)
+        $orgId = auth()->user()->currentOrganization()->id;
+        $userId = auth()->id();
+        $videoId = $request->query('video_id');
+
+        // Obtener todas las categorías visibles en este contexto
+        $categories = ClipCategory::withoutGlobalScopes()
+            ->forContext($orgId, $userId, $videoId)
             ->active()
             ->ordered()
-            ->get(['id', 'name', 'slug', 'color', 'hotkey', 'lead_seconds', 'lag_seconds']);
+            ->get(['id', 'name', 'slug', 'color', 'hotkey', 'lead_seconds', 'lag_seconds', 'scope']);
 
-        return response()->json($categories);
+        // Agrupar por scope para la UI
+        $grouped = [
+            'templates' => $categories->where('scope', ClipCategory::SCOPE_ORGANIZATION)->values(),
+            'personal' => $categories->where('scope', ClipCategory::SCOPE_USER)->values(),
+            'video' => $categories->where('scope', ClipCategory::SCOPE_VIDEO)->values(),
+        ];
+
+        return response()->json([
+            'categories' => $categories,
+            'grouped' => $grouped,
+        ]);
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Generate a unique slug based on scope
+     */
+    private function generateUniqueSlug(
+        string $name,
+        string $scope,
+        int $orgId,
+        ?int $userId = null,
+        ?int $videoId = null,
+        ?int $excludeId = null
+    ): string {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while ($this->slugExists($slug, $scope, $orgId, $userId, $videoId, $excludeId)) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Check if a slug already exists in the given scope
+     */
+    private function slugExists(
+        string $slug,
+        string $scope,
+        int $orgId,
+        ?int $userId = null,
+        ?int $videoId = null,
+        ?int $excludeId = null
+    ): bool {
+        $query = ClipCategory::withoutGlobalScopes()
+            ->where('slug', $slug)
+            ->where('scope', $scope);
+
+        // Filter by the appropriate ID based on scope
+        switch ($scope) {
+            case ClipCategory::SCOPE_ORGANIZATION:
+                $query->where('organization_id', $orgId);
+                break;
+            case ClipCategory::SCOPE_USER:
+                $query->where('user_id', $userId);
+                break;
+            case ClipCategory::SCOPE_VIDEO:
+                $query->where('video_id', $videoId);
+                break;
+        }
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Check if a hotkey already exists in the given scope
+     */
+    private function checkHotkeyExists(
+        string $hotkey,
+        string $scope,
+        int $orgId,
+        ?int $userId = null,
+        ?int $videoId = null,
+        ?int $excludeId = null
+    ): bool {
+        $query = ClipCategory::withoutGlobalScopes()
+            ->where('hotkey', $hotkey)
+            ->where('scope', $scope);
+
+        // Filter by the appropriate ID based on scope
+        switch ($scope) {
+            case ClipCategory::SCOPE_ORGANIZATION:
+                $query->where('organization_id', $orgId);
+                break;
+            case ClipCategory::SCOPE_USER:
+                $query->where('user_id', $userId);
+                break;
+            case ClipCategory::SCOPE_VIDEO:
+                $query->where('video_id', $videoId);
+                break;
+        }
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Return error response based on request type
+     */
+    private function errorResponse(Request $request, string $message)
+    {
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return back()->withErrors(['error' => $message]);
     }
 }

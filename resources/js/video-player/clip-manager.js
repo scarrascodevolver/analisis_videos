@@ -94,13 +94,20 @@ function togglePanel() {
 
 /**
  * Load clip categories from API
+ * Categories are grouped by scope: templates (org), personal (user), video (from XML)
  */
 async function loadCategories() {
     const config = getConfig();
 
     try {
-        const response = await fetch(config.routes.clipCategories);
-        categories = await response.json();
+        // Pass video_id to get video-specific categories
+        const url = `${config.routes.clipCategories}?video_id=${config.videoId}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Store both flat list and grouped data
+        categories = data.categories || [];
+        window.categoriesGrouped = data.grouped || { templates: [], personal: [], video: [] };
 
         renderCategoryButtons();
     } catch (error) {
@@ -111,12 +118,16 @@ async function loadCategories() {
 
 /**
  * Render category buttons in the panel
+ * Organized by scope: Templates (org), Personal (user), Video (from XML)
  */
 function renderCategoryButtons() {
     const container = document.getElementById('clipButtonsContainer');
     if (!container) return;
 
-    if (categories.length === 0) {
+    const grouped = window.categoriesGrouped || { templates: [], personal: [], video: [] };
+    const hasAnyCategories = categories.length > 0;
+
+    if (!hasAnyCategories) {
         container.innerHTML = `
             <div class="alert alert-warning w-100 mb-0">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -127,18 +138,61 @@ function renderCategoryButtons() {
         return;
     }
 
-    container.innerHTML = categories.map(cat => `
-        <button type="button"
-                class="btn clip-category-btn"
-                data-category-id="${cat.id}"
-                data-lead="${cat.lead_seconds}"
-                data-lag="${cat.lag_seconds}"
-                style="background-color: ${cat.color}; color: white; min-width: 90px;"
-                title="Tecla: ${cat.hotkey ? cat.hotkey.toUpperCase() : 'Sin asignar'}">
-            ${cat.name}
-            ${cat.hotkey ? `<br><small>[${cat.hotkey.toUpperCase()}]</small>` : ''}
-        </button>
-    `).join('');
+    // Build sections HTML
+    let html = '';
+
+    // Templates section (organization-level)
+    if (grouped.templates && grouped.templates.length > 0) {
+        html += `
+            <div class="category-section mb-2">
+                <div class="category-section-label" style="font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px;">
+                    <i class="fas fa-building"></i> Plantillas del club
+                </div>
+                <div class="d-flex flex-wrap" style="gap: 6px;">
+                    ${grouped.templates.map(cat => renderCategoryButton(cat)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Personal section (user-level)
+    if (grouped.personal && grouped.personal.length > 0) {
+        html += `
+            <div class="category-section mb-2">
+                <div class="category-section-label" style="font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px;">
+                    <i class="fas fa-user"></i> Mis categorías
+                </div>
+                <div class="d-flex flex-wrap" style="gap: 6px;">
+                    ${grouped.personal.map(cat => renderCategoryButton(cat)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Video section (from XML import)
+    if (grouped.video && grouped.video.length > 0) {
+        html += `
+            <div class="category-section mb-2">
+                <div class="category-section-label" style="font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px;">
+                    <i class="fas fa-video"></i> De este video
+                </div>
+                <div class="d-flex flex-wrap" style="gap: 6px;">
+                    ${grouped.video.map(cat => renderCategoryButton(cat)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // If no grouped data, fallback to flat list
+    if (!html) {
+        html = `
+            <div class="d-flex flex-wrap" style="gap: 6px;">
+                ${categories.map(cat => renderCategoryButton(cat)).join('')}
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
 
     // Add click handlers (toggle mode - same as hotkeys)
     container.querySelectorAll('.clip-category-btn').forEach(btn => {
@@ -150,6 +204,24 @@ function renderCategoryButtons() {
             }
         });
     });
+}
+
+/**
+ * Render a single category button HTML
+ */
+function renderCategoryButton(cat) {
+    return `
+        <button type="button"
+                class="btn clip-category-btn"
+                data-category-id="${cat.id}"
+                data-lead="${cat.lead_seconds}"
+                data-lag="${cat.lag_seconds}"
+                style="background-color: ${cat.color}; color: white; min-width: 80px; font-size: 12px; padding: 6px 10px;"
+                title="Tecla: ${cat.hotkey ? cat.hotkey.toUpperCase() : 'Sin asignar'}">
+            ${cat.name}
+            ${cat.hotkey ? `<br><small>[${cat.hotkey.toUpperCase()}]</small>` : ''}
+        </button>
+    `;
 }
 
 /**
@@ -608,6 +680,20 @@ function setupHotkeys() {
     document.addEventListener('keydown', (e) => {
         // Skip if typing in input fields
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        // SPACEBAR - Play/Pause video (including all slave videos in multi-camera mode)
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault(); // Prevent page scroll
+            const video = getVideo();
+            if (!video) return;
+
+            if (video.paused) {
+                video.play().catch(err => console.warn('Play failed:', err));
+            } else {
+                video.pause();
+            }
+            return; // Exit early to avoid processing other hotkeys
+        }
 
         // Skip if categories not loaded yet
         if (categories.length === 0) {
