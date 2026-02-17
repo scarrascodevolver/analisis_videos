@@ -128,7 +128,8 @@ class DirectUploadController extends Controller
             'upload_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'rival_team_name' => 'nullable|string|max:255',
+            'rival_team_id' => 'nullable|string|max:255', // Can be numeric ID or "new:RivalName"
+            'rival_team_name' => 'nullable|string|max:255', // Fallback
             'category_id' => 'required|exists:categories,id',
             'division' => 'nullable|in:primera,intermedia,unica',
             'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -138,6 +139,10 @@ class DirectUploadController extends Controller
             'assignment_notes' => 'nullable|string|max:1000',
             'visibility_type' => 'required|in:public,forwards,backs,specific',
             'xml_content' => 'nullable|string', // LongoMatch XML content
+            // Multi-camera fields
+            'is_master' => 'nullable|boolean',
+            'camera_angle' => 'nullable|string|max:255',
+            'group_key' => 'nullable|string|max:255', // Key to group related videos in batch upload
         ]);
 
         // Retrieve upload info from cache
@@ -167,6 +172,9 @@ class DirectUploadController extends Controller
             // Ensure ACL is public-read (fallback in case client header didn't work)
             $this->ensurePublicAcl($uploadInfo['key']);
 
+            // Process rival_team_id (can be numeric ID or "new:RivalName")
+            [$rivalTeamId, $rivalTeamName] = $this->processRivalTeamId($request);
+
             $video = Video::create([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -177,7 +185,8 @@ class DirectUploadController extends Controller
                 'mime_type' => $uploadInfo['content_type'],
                 'uploaded_by' => auth()->id(),
                 'analyzed_team_name' => $uploadInfo['org_name'], // Nombre de la organización
-                'rival_team_name' => $request->rival_team_name,
+                'rival_team_id' => $rivalTeamId,
+                'rival_team_name' => $rivalTeamName,
                 'category_id' => $request->category_id,
                 'division' => $request->division,
                 'rugby_situation_id' => $request->rugby_situation_id,
@@ -215,6 +224,11 @@ class DirectUploadController extends Controller
                     Log::warning("Failed to import LongoMatch XML for video {$video->id}: ".$e->getMessage());
                     // Don't fail the whole upload, just log the error
                 }
+            }
+
+            // Handle multi-camera grouping (batch upload)
+            if ($request->filled('group_key')) {
+                $this->handleMultiCameraGroup($video, $request);
             }
 
             // Clear cache
@@ -499,7 +513,8 @@ class DirectUploadController extends Controller
             'parts.*.ETag' => 'string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'rival_team_name' => 'nullable|string|max:255',
+            'rival_team_id' => 'nullable|string|max:255', // Can be numeric ID or "new:RivalName"
+            'rival_team_name' => 'nullable|string|max:255', // Fallback
             'category_id' => 'required|exists:categories,id',
             'division' => 'nullable|in:primera,intermedia,unica',
             'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
@@ -509,6 +524,10 @@ class DirectUploadController extends Controller
             'assignment_notes' => 'nullable|string|max:1000',
             'visibility_type' => 'required|in:public,forwards,backs,specific',
             'xml_content' => 'nullable|string',
+            // Multi-camera fields
+            'is_master' => 'nullable|boolean',
+            'camera_angle' => 'nullable|string|max:255',
+            'group_key' => 'nullable|string|max:255',
         ]);
 
         $uploadInfo = cache()->get("multipart_upload_{$request->upload_id}");
@@ -650,6 +669,9 @@ class DirectUploadController extends Controller
             // Ensure ACL is public-read
             $this->ensurePublicAcl($uploadInfo['key']);
 
+            // Process rival_team_id (can be numeric ID or "new:RivalName")
+            [$rivalTeamId, $rivalTeamName] = $this->processRivalTeamId($request);
+
             // Create video record
             $video = Video::create([
                 'title' => $request->title,
@@ -661,7 +683,8 @@ class DirectUploadController extends Controller
                 'mime_type' => $uploadInfo['content_type'],
                 'uploaded_by' => auth()->id(),
                 'analyzed_team_name' => $uploadInfo['org_name'],
-                'rival_team_name' => $request->rival_team_name,
+                'rival_team_id' => $rivalTeamId,
+                'rival_team_name' => $rivalTeamName,
                 'category_id' => $request->category_id,
                 'division' => $request->division,
                 'rugby_situation_id' => $request->rugby_situation_id,
@@ -698,6 +721,11 @@ class DirectUploadController extends Controller
                 } catch (\Exception $e) {
                     Log::warning("Failed to import LongoMatch XML for video {$video->id}: ".$e->getMessage());
                 }
+            }
+
+            // Handle multi-camera grouping (batch upload)
+            if ($request->filled('group_key')) {
+                $this->handleMultiCameraGroup($video, $request);
             }
 
             // Clear cache
@@ -808,6 +836,80 @@ class DirectUploadController extends Controller
     }
 
     /**
+     * Handle multi-camera group creation for batch uploads
+     */
+    private function handleMultiCameraGroup(\App\Models\Video $video, $request): void
+    {
+        $groupKey = $request->group_key;
+        $isMaster = $request->boolean('is_master', false);
+        $cameraAngle = $request->camera_angle ?? ($isMaster ? 'Master' : null);
+
+        // Use cache to coordinate multi-camera group creation across concurrent uploads
+        $cacheKey = "batch_upload_group_{$groupKey}";
+        $groupData = cache()->get($cacheKey);
+
+        if ($isMaster) {
+            // This is the master video, create the group
+            $group = \App\Models\VideoGroup::create([
+                'name' => null,
+                'organization_id' => $video->organization_id,
+            ]);
+
+            // Attach master to group
+            $group->videos()->attach($video->id, [
+                'is_master' => true,
+                'camera_angle' => $cameraAngle,
+                'is_synced' => true,
+                'sync_offset' => 0,
+            ]);
+
+            // Store group ID in cache for slave videos
+            cache()->put($cacheKey, [
+                'group_id' => $group->id,
+                'master_video_id' => $video->id,
+            ], now()->addMinutes(30));
+
+            Log::info("Batch upload: Created multi-camera group {$group->id} for master video {$video->id}", [
+                'group_key' => $groupKey,
+            ]);
+        } else {
+            // This is a slave video, wait for master and attach to group
+            $maxAttempts = 60; // Wait up to 60 seconds for master
+            $attempt = 0;
+
+            while (!$groupData && $attempt < $maxAttempts) {
+                sleep(1);
+                $groupData = cache()->get($cacheKey);
+                $attempt++;
+            }
+
+            if ($groupData && isset($groupData['group_id'])) {
+                $group = \App\Models\VideoGroup::find($groupData['group_id']);
+
+                if ($group) {
+                    $group->videos()->attach($video->id, [
+                        'is_master' => false,
+                        'camera_angle' => $cameraAngle ?? 'Angle ' . ($group->videos()->count()),
+                        'is_synced' => false,
+                        'sync_offset' => null,
+                    ]);
+
+                    Log::info("Batch upload: Attached slave video {$video->id} to group {$group->id}", [
+                        'group_key' => $groupKey,
+                        'camera_angle' => $cameraAngle,
+                    ]);
+                } else {
+                    Log::warning("Batch upload: Group {$groupData['group_id']} not found for slave video {$video->id}");
+                }
+            } else {
+                Log::warning("Batch upload: No master found for slave video {$video->id} after {$attempt} seconds", [
+                    'group_key' => $groupKey,
+                ]);
+            }
+        }
+    }
+
+    /**
      * Dispatch compression job based on organization compression strategy
      */
     private function dispatchCompressionJob(\App\Models\Video $video): void
@@ -834,5 +936,57 @@ class DirectUploadController extends Controller
                 }
                 break;
         }
+    }
+
+    /**
+     * Process rival_team_id from request
+     * Handles three cases:
+     * 1. Numeric ID: existing rival team
+     * 2. "new:RivalName": create new rival team
+     * 3. Empty/null: use rival_team_name fallback
+     *
+     * @return array [rivalTeamId, rivalTeamName]
+     */
+    private function processRivalTeamId(Request $request): array
+    {
+        $rivalTeamId = null;
+        $rivalTeamName = $request->rival_team_name;
+
+        if ($request->filled('rival_team_id')) {
+            $rivalTeamIdInput = $request->rival_team_id;
+
+            // Check if it's a "new:RivalName" format
+            if (str_starts_with($rivalTeamIdInput, 'new:')) {
+                // Create new rival team
+                $name = trim(substr($rivalTeamIdInput, 4));
+
+                if (!empty($name)) {
+                    $newRival = \App\Models\RivalTeam::firstOrCreate([
+                        'organization_id' => auth()->user()->currentOrganization()->id,
+                        'name' => $name,
+                    ]);
+
+                    $rivalTeamId = $newRival->id;
+                    $rivalTeamName = $newRival->name;
+
+                    Log::info("Created new rival team during upload", [
+                        'rival_team_id' => $rivalTeamId,
+                        'name' => $name,
+                        'user_id' => auth()->id(),
+                    ]);
+                }
+            } elseif (is_numeric($rivalTeamIdInput)) {
+                // Existing rival team ID
+                $rivalTeamId = (int) $rivalTeamIdInput;
+
+                // Get the name for fallback
+                $rival = \App\Models\RivalTeam::find($rivalTeamId);
+                if ($rival) {
+                    $rivalTeamName = $rival->name;
+                }
+            }
+        }
+
+        return [$rivalTeamId, $rivalTeamName];
     }
 }

@@ -54,6 +54,11 @@ export interface Video {
     // Computed
     stream_url: string;
     edit_url: string;
+    // Bunny Stream
+    bunny_video_id: string | null;
+    bunny_status: string | null;
+    bunny_hls_url: string | null;
+    bunny_mp4_url: string | null;
     // Multi-camera
     is_part_of_group: boolean;
     slave_videos: SlaveVideo[];
@@ -64,6 +69,9 @@ export interface SlaveVideo {
     title: string;
     stream_url: string;
     sync_offset: number;
+    bunny_hls_url: string | null;
+    bunny_status: string | null;
+    bunny_mp4_url: string | null;
 }
 
 export interface VideoComment {

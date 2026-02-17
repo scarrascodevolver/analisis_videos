@@ -7,7 +7,7 @@
             <video
                 ref="videoRef"
                 class="slave-video"
-                :src="slave.stream_url"
+                :src="isHls ? undefined : (slave.bunny_mp4_url ?? slave.stream_url)"
                 :data-video-title="slave.title"
                 muted
                 playsinline
@@ -38,7 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, computed } from 'vue';
+import Hls from 'hls.js';
 import type { SlaveVideo as SlaveVideoType } from '@/types/video-player';
 
 const props = defineProps<{
@@ -51,14 +52,40 @@ const emit = defineEmits<{
 }>();
 
 const videoRef = ref<HTMLVideoElement | null>(null);
+let hlsInstance: Hls | null = null;
+
+const activeHlsUrl = computed(() =>
+    props.slave.bunny_hls_url && props.slave.bunny_status === 'ready' ? props.slave.bunny_hls_url : null
+);
+const isHls = computed(() => !!activeHlsUrl.value);
 
 // Inject the multiCamera composable from parent
 const multiCamera = inject<any>('multiCamera', null);
 
 onMounted(() => {
+    if (!videoRef.value) return;
+
+    // Inicializar HLS (Bunny o Cloudflare legacy)
+    if (isHls.value && activeHlsUrl.value) {
+        if (Hls.isSupported()) {
+            hlsInstance = new Hls({ enableWorker: true });
+            hlsInstance.loadSource(activeHlsUrl.value);
+            hlsInstance.attachMedia(videoRef.value);
+        } else if (videoRef.value.canPlayType('application/vnd.apple.mpegurl')) {
+            videoRef.value.src = activeHlsUrl.value;
+        }
+    }
+
     // Register this slave video element with the multi-camera controller
-    if (videoRef.value && multiCamera) {
+    if (multiCamera) {
         multiCamera.registerSlaveElement(props.slave.id, videoRef.value);
+    }
+});
+
+onBeforeUnmount(() => {
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
     }
 });
 

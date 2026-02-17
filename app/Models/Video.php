@@ -23,8 +23,10 @@ class Video extends Model
         'timeline_offset', // Offset en segundos para sincronizar clips con el video
         'uploaded_by',
         'analyzed_team_name', // Nombre del equipo analizado (= organización)
-        'rival_team_name',    // Nombre del rival (texto libre)
+        'rival_team_id',      // FK to rival_teams table
+        'rival_team_name',    // Nombre del rival (texto libre - fallback)
         'category_id',
+        'tournament_id',
         'division',
         'rugby_situation_id',
         'match_date',
@@ -38,6 +40,12 @@ class Video extends Model
         'compression_ratio',
         'processing_started_at',
         'processing_completed_at',
+        // Bunny Stream
+        'bunny_video_id',
+        'bunny_hls_url',
+        'bunny_thumbnail',
+        'bunny_status',
+        'bunny_mp4_url',
     ];
 
     protected function casts(): array
@@ -81,11 +89,20 @@ class Video extends Model
     }
 
     /**
-     * Obtener nombre del rival
+     * Relationship to RivalTeam
+     */
+    public function rivalTeam()
+    {
+        return $this->belongsTo(RivalTeam::class);
+    }
+
+    /**
+     * Obtener nombre del rival (usa RivalTeam si existe, sino fallback a rival_team_name)
      */
     public function getRivalNameAttribute(): ?string
     {
-        return $this->rival_team_name;
+        // Priority: rival_team relationship > rival_team_name fallback
+        return $this->rivalTeam?->name ?? $this->rival_team_name;
     }
 
     /**
@@ -93,7 +110,12 @@ class Video extends Model
      */
     public function hasRival(): bool
     {
-        return ! empty($this->rival_team_name);
+        return $this->rival_team_id !== null || ! empty($this->rival_team_name);
+    }
+
+    public function tournament()
+    {
+        return $this->belongsTo(Tournament::class);
     }
 
     public function category()

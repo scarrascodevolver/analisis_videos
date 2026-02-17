@@ -773,6 +773,13 @@
                                     </p>
                                 </a>
                             </li>
+                            <!-- Gestión de Torneos -->
+                            <li class="nav-item">
+                                <a href="{{ route('tournaments.index') }}" class="nav-link {{ request()->routeIs('tournaments.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-trophy"></i>
+                                    <p>Torneos</p>
+                                </a>
+                            </li>
                         @endif
 
                         @if (Auth::user()->role === 'analista')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Video;
+use App\Services\BunnyStreamService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -172,6 +173,13 @@ class VideoStreamController extends Controller
 
     public function stream(Video $video, Request $request)
     {
+        // Bunny Stream: redirigir directamente a HLS
+        if ($video->bunny_video_id && $video->bunny_status === 'ready') {
+            $service = app(BunnyStreamService::class);
+            return redirect($service->getHlsUrl($video->bunny_video_id));
+        }
+
+
         // Production: Use Spaces/CDN as primary source
         if (config('app.env') === 'production') {
             // Check if file is in DigitalOcean Spaces (new uploads)

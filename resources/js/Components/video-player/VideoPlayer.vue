@@ -96,6 +96,9 @@ function toggleTheaterMode() {
                                 :stream-url="video.stream_url"
                                 :title="video.title"
                                 :can-annotate="isAnalystOrCoach"
+                                :bunny-hls-url="video.bunny_hls_url"
+                                :bunny-status="video.bunny_status"
+                                :bunny-mp4-url="video.bunny_mp4_url"
                                 @add-comment="handleAddComment"
                                 @toggle-annotation-mode="handleToggleAnnotationMode"
                             >

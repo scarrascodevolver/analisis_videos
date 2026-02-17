@@ -16,6 +16,7 @@ class VideoController extends Controller
     public function index(Request $request)
     {
         $query = Video::with(['category', 'uploader', 'rugbySituation'])
+            ->where('is_master', true)
             ->teamVisible(auth()->user());
 
         // Filter by rugby situation
@@ -66,13 +67,9 @@ class VideoController extends Controller
             $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
         }
 
-        $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-
-        // El equipo analizado es siempre la organización actual
         $currentOrg = auth()->user()->currentOrganization();
         $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
-        // Obtener jugadores y entrenadores para asignación (incluye staff que puede recibir asignaciones)
         $players = User::where(function ($query) {
             $query->where('role', 'jugador')
                 ->orWhere('role', 'entrenador')
@@ -84,7 +81,7 @@ class VideoController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('videos.create', compact('categories', 'rugbySituations', 'players', 'organizationName'));
+        return view('videos.create', compact('categories', 'players', 'organizationName'));
     }
 
     public function store(Request $request)
@@ -103,8 +100,9 @@ class VideoController extends Controller
                         $query->where('organization_id', $currentOrg->id);
                     }),
                 ],
+                'tournament_id' => 'nullable|exists:tournaments,id',
+                'rival_team_id' => 'nullable|exists:rival_teams,id',
                 'division' => 'nullable|in:primera,intermedia,unica',
-                'rugby_situation_id' => 'nullable|exists:rugby_situations,id',
                 'match_date' => 'required|date',
                 'assigned_players' => 'nullable|array',
                 'assigned_players.*' => 'exists:users,id',
@@ -167,11 +165,12 @@ class VideoController extends Controller
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
             'uploaded_by' => auth()->id(),
-            'analyzed_team_name' => $organizationName, // Siempre es la organización
+            'analyzed_team_name' => $organizationName,
+            'rival_team_id' => $request->rival_team_id,
             'rival_team_name' => $request->rival_team_name,
+            'tournament_id' => $request->tournament_id,
             'category_id' => $request->category_id,
             'division' => $request->division,
-            'rugby_situation_id' => $request->rugby_situation_id,
             'match_date' => $request->match_date,
             'status' => 'pending',
             'visibility_type' => $request->visibility_type,
@@ -260,29 +259,38 @@ class VideoController extends Controller
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
             ->get();
 
+        $bunnyService = app(\App\Services\BunnyStreamService::class);
+
+        $videoData = array_merge($video->toArray(), [
+            'stream_url'       => route('videos.stream', $video),
+            'edit_url'         => route('videos.edit', $video),
+            'is_part_of_group' => $video->isPartOfGroup(),
+            'bunny_hls_url'    => $video->bunny_video_id && $video->bunny_status === 'ready'
+                                    ? $bunnyService->getHlsUrl($video->bunny_video_id)
+                                    : ($video->bunny_hls_url ?? null),
+            'bunny_mp4_url'    => $video->bunny_mp4_url,
+            'slave_videos' => $video->isPartOfGroup()
+                ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
+                    return $group->videos
+                        ->filter(fn ($v) => $v->id !== $video->id)
+                        ->map(fn ($v) => [
+                            'id'            => $v->id,
+                            'title'         => $v->title,
+                            'stream_url'    => route('videos.stream', $v),
+                            'sync_offset'   => $v->pivot->sync_offset ?? 0,
+                            'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
+                                                ? $bunnyService->getHlsUrl($v->bunny_video_id)
+                                                : ($v->bunny_hls_url ?? null),
+                            'bunny_status'  => $v->bunny_status,
+                            'bunny_mp4_url' => $v->bunny_mp4_url,
+                        ])
+                        ->values();
+                })->values()->all()
+                : [],
+        ]);
+
         return Inertia::render('Videos/Show', [
-            'video' => array_merge($video->toArray(), [
-                'stream_url' => route('videos.stream', $video),
-                'edit_url' => route('videos.edit', $video),
-                'is_part_of_group' => $video->isPartOfGroup(),
-                'slave_videos' => $video->isPartOfGroup()
-                    ? $video->videoGroups->flatMap(function ($group) use ($video) {
-                        return $group->videos
-                            ->filter(function ($v) use ($video) {
-                                return $v->id !== $video->id;
-                            })
-                            ->map(function ($v) {
-                                return [
-                                    'id' => $v->id,
-                                    'title' => $v->title,
-                                    'stream_url' => route('videos.stream', $v),
-                                    'sync_offset' => $v->pivot->sync_offset ?? 0,
-                                ];
-                            })
-                            ->values();
-                    })->values()->all()
-                    : [],
-            ]),
+            'video' => $videoData,
             'comments' => $comments,
             'allUsers' => $orgUsers,
         ]);
@@ -528,6 +536,29 @@ class VideoController extends Controller
 
         return redirect()->route('player.videos')
             ->with('success', 'Video subido exitosamente. Se está comprimiendo en segundo plano. Un analista lo revisará pronto.');
+    }
+
+    /**
+     * Return recent distinct local team names used by the current user.
+     * GET /api/local-teams/recent?q=...
+     */
+    public function recentLocalTeams(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $q = $request->get('q', '');
+
+        $teams = Video::select('analyzed_team_name')
+            ->where('uploaded_by', auth()->id())
+            ->when($q, fn ($query) => $query->where('analyzed_team_name', 'like', "%{$q}%"))
+            ->whereNotNull('analyzed_team_name')
+            ->where('analyzed_team_name', '!=', '')
+            ->distinct()
+            ->orderByRaw('MAX(created_at) DESC')
+            ->groupBy('analyzed_team_name')
+            ->limit(10)
+            ->pluck('analyzed_team_name')
+            ->map(fn ($name) => ['id' => $name, 'text' => $name]);
+
+        return response()->json($teams);
     }
 
     /**

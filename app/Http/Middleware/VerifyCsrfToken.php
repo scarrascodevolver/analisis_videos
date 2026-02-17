@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         'videos',
         'videos/*',
         'api/upload/*',
+        'webhooks/bunny-stream',
     ];
 }
