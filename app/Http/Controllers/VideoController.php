@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\RugbySituation;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Http\Request;
@@ -15,45 +16,79 @@ class VideoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Video::with(['category', 'uploader', 'rugbySituation'])
+        $user = auth()->user();
+        $isStaff = in_array($user->role, ['analista', 'entrenador']);
+
+        // Jugadores: lista plana de sus videos asignados (sin cambios)
+        if (! $isStaff) {
+            $query = Video::with(['category', 'uploader', 'rugbySituation'])
+                ->where('is_master', true)
+                ->teamVisible($user);
+
+            if ($request->filled('rugby_situation')) {
+                $query->where('rugby_situation_id', $request->rugby_situation);
+            }
+            if ($request->filled('search')) {
+                $query->where('title', 'like', '%'.$request->search.'%');
+            }
+
+            $videos          = $query->latest()->paginate(9);
+            $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
+            $userCategoryId  = $user->profile->user_category_id ?? null;
+            $categories      = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+
+            return view('videos.index', compact('videos', 'rugbySituations', 'categories'))->with('view', 'list');
+        }
+
+        // Analistas/entrenadores: navegación por carpetas
+        $team            = $request->get('team');
+        $tournamentParam = $request->get('tournament'); // id numérico | 'none' | null
+
+        // Nivel 1: carpetas de equipos
+        if (! $team) {
+            $teams = Video::where('is_master', true)
+                ->teamVisible($user)
+                ->whereNotNull('analyzed_team_name')
+                ->where('analyzed_team_name', '!=', '')
+                ->selectRaw('analyzed_team_name, COUNT(*) as videos_count, MAX(match_date) as last_match')
+                ->groupBy('analyzed_team_name')
+                ->orderByRaw('MAX(match_date) DESC')
+                ->get();
+
+            return view('videos.index', compact('teams'))->with('view', 'teams');
+        }
+
+        // Nivel 2: carpetas de torneos dentro de un equipo
+        if ($team && $tournamentParam === null) {
+            $tournaments = Video::where('is_master', true)
+                ->teamVisible($user)
+                ->where('analyzed_team_name', $team)
+                ->with('tournament')
+                ->selectRaw('tournament_id, COUNT(*) as videos_count, MAX(match_date) as last_match')
+                ->groupBy('tournament_id')
+                ->orderByRaw('MAX(match_date) DESC')
+                ->get()
+                ->map(fn ($row) => tap($row, fn ($r) => $r->tournament_name = $r->tournament?->name ?? 'Sin torneo'));
+
+            return view('videos.index', compact('team', 'tournaments'))->with('view', 'tournaments');
+        }
+
+        // Nivel 3: partidos dentro de equipo+torneo
+        $query = Video::with(['category', 'uploader', 'tournament'])
             ->where('is_master', true)
-            ->teamVisible(auth()->user());
+            ->teamVisible($user)
+            ->where('analyzed_team_name', $team);
 
-        // Filter by rugby situation
-        if ($request->filled('rugby_situation')) {
-            $query->where('rugby_situation_id', $request->rugby_situation);
-        }
-
-        // Filter by category
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
-        }
-
-        // Filter by team name (busca en analyzed_team_name o rival_team_name)
-        if ($request->filled('team')) {
-            $query->byTeamName($request->team);
-        }
-
-        // Search by title
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%'.$request->search.'%');
-        }
-
-        $videos = $query->latest()->paginate(9);
-
-        // Get filter data
-        $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-
-        // Categories: Analysts and coaches see all, staff see only their category
-        if (in_array(auth()->user()->role, ['analista', 'entrenador'])) {
-            $categories = Category::all();
+        if ($tournamentParam === 'none') {
+            $query->whereNull('tournament_id');
         } else {
-            // Staff only see their assigned category
-            $userCategoryId = auth()->user()->profile->user_category_id ?? null;
-            $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+            $query->where('tournament_id', $tournamentParam);
         }
 
-        return view('videos.index', compact('videos', 'rugbySituations', 'categories'));
+        $videos     = $query->orderBy('match_date', 'desc')->paginate(12);
+        $tournament = ($tournamentParam && $tournamentParam !== 'none') ? Tournament::find($tournamentParam) : null;
+
+        return view('videos.index', compact('team', 'tournament', 'tournamentParam', 'videos'))->with('view', 'matches');
     }
 
     public function create()
@@ -68,7 +103,15 @@ class VideoController extends Controller
         }
 
         $currentOrg = auth()->user()->currentOrganization();
-        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
+        $organizationName = $currentOrg?->name ?? 'Mi Equipo';
+
+        // Default equipo local: último equipo subido por este usuario, o nombre de la org
+        $lastTeam    = Video::where('uploaded_by', auth()->id())
+            ->whereNotNull('analyzed_team_name')
+            ->where('analyzed_team_name', '!=', '')
+            ->orderBy('created_at', 'desc')
+            ->value('analyzed_team_name');
+        $defaultTeam = $lastTeam ?? $organizationName;
 
         $players = User::where(function ($query) {
             $query->where('role', 'jugador')
@@ -81,7 +124,7 @@ class VideoController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('videos.create', compact('categories', 'players', 'organizationName'));
+        return view('videos.create', compact('categories', 'players', 'organizationName', 'defaultTeam'));
     }
 
     public function store(Request $request)

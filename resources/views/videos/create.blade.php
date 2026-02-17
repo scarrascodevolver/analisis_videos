@@ -70,7 +70,7 @@
                         </label>
                         <select id="local_team_name" name="local_team_name"
                             class="form-control form-control-sm select2-local-team" style="width:100%">
-                            <option value="{{ $organizationName }}" selected>{{ $organizationName }}</option>
+                            <option value="{{ $defaultTeam }}" selected>{{ $defaultTeam }}</option>
                         </select>
                     </div>
                 </div>

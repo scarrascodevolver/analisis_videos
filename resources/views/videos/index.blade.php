@@ -1,489 +1,398 @@
 @extends('layouts.app')
 
-@section('page_title', 'Videos del Equipo')
+@section('page_title', 'Videos')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a></li>
-    <li class="breadcrumb-item active">Videos del Equipo</li>
+    <li class="breadcrumb-item">
+        <a href="{{ route('videos.index') }}"><i class="fas fa-home"></i></a>
+    </li>
+    @if(isset($team))
+        <li class="breadcrumb-item">
+            <a href="{{ route('videos.index') }}">Videos</a>
+        </li>
+        @if(isset($tournament) || isset($tournamentParam))
+            <li class="breadcrumb-item">
+                <a href="{{ route('videos.index', ['team' => $team]) }}">{{ $team }}</a>
+            </li>
+            <li class="breadcrumb-item active">
+                {{ $tournament?->name ?? 'Sin torneo' }}
+            </li>
+        @else
+            <li class="breadcrumb-item active">{{ $team }}</li>
+        @endif
+    @else
+        <li class="breadcrumb-item active">Videos</li>
+    @endif
 @endsection
 
 @section('main_content')
-    <!-- Filters (only for non-players) -->
-    @if(auth()->user()->role !== 'jugador')
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-filter"></i> Filtros
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form method="GET" action="{{ route('videos.index') }}" class="row" id="filter-form">
-                        <div class="col-md-3 mb-2">
-                            <input type="text" name="search" id="search-input" class="form-control" placeholder="Buscar por título..." value="{{ request('search') }}">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <select name="rugby_situation" id="situation-select" class="form-control">
-                                <option value="">Situación</option>
-                                @foreach($rugbySituations as $categoryName => $situations)
-                                    <optgroup label="{{ $categoryName }}">
-                                        @foreach($situations as $situation)
-                                            <option value="{{ $situation->id }}" {{ request('rugby_situation') == $situation->id ? 'selected' : '' }}>
-                                                {{ $situation->name }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
-                        <div class="col-md-2 mb-2">
-                            <select name="category" id="category-select" class="form-control">
-                                <option value="">Categoría</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
-                        <div class="col-md-2 mb-2">
-                            <input type="text" name="team" id="team-input" class="form-control"
-                                   placeholder="Buscar equipo..."
-                                   value="{{ request('team') }}">
-                        </div>
-                        <div class="col-md-2 mb-2">
-                            <a href="{{ route('videos.index') }}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-times"></i> Limpiar
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+{{-- ═══════════════════════════════════════════════════════════
+     NIVEL 1 — Carpetas de equipos (analistas/entrenadores)
+═══════════════════════════════════════════════════════════ --}}
+@if($view === 'teams')
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 text-muted"><i class="fas fa-folder-open mr-2"></i>Mis equipos</h5>
+    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
+        <i class="fas fa-plus mr-1"></i> Subir Video
+    </a>
+</div>
+
+@if($teams->isEmpty())
+    <div class="card card-rugby">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aún no hay videos subidos</h5>
+            <a href="{{ route('videos.create') }}" class="btn btn-rugby mt-2">
+                <i class="fas fa-plus mr-1"></i> Subir primer video
+            </a>
         </div>
     </div>
-    @endif
+@else
+    <div class="folder-grid">
+        @foreach($teams as $team)
+            <a href="{{ route('videos.index', ['team' => $team->analyzed_team_name]) }}"
+               class="folder-card text-decoration-none">
+                <div class="folder-icon-wrap">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="folder-name">{{ $team->analyzed_team_name }}</div>
+                <div class="folder-meta">
+                    {{ $team->videos_count }} {{ $team->videos_count == 1 ? 'partido' : 'partidos' }}
+                    &middot;
+                    {{ \Carbon\Carbon::parse($team->last_match)->format('M Y') }}
+                </div>
+            </a>
+        @endforeach
+    </div>
+@endif
 
-    <!-- Videos List -->
+
+{{-- ═══════════════════════════════════════════════════════════
+     NIVEL 2 — Carpetas de torneos dentro de un equipo
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'tournaments')
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 text-muted">
+        <i class="fas fa-folder-open mr-2"></i>{{ $team }}
+    </h5>
+    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
+        <i class="fas fa-plus mr-1"></i> Subir Video
+    </a>
+</div>
+
+@if($tournaments->isEmpty())
+    <div class="card card-rugby">
+        <div class="card-body text-center py-4">
+            <p class="text-muted mb-0">No hay partidos para este equipo.</p>
+        </div>
+    </div>
+@else
+    <div class="folder-grid">
+        @foreach($tournaments as $t)
+            @php
+                $tParam = $t->tournament_id ?? 'none';
+            @endphp
+            <a href="{{ route('videos.index', ['team' => $team, 'tournament' => $tParam]) }}"
+               class="folder-card text-decoration-none">
+                <div class="folder-icon-wrap {{ $t->tournament_id ? '' : 'folder-no-tournament' }}">
+                    <i class="fas fa-{{ $t->tournament_id ? 'trophy' : 'folder' }}"></i>
+                </div>
+                <div class="folder-name">{{ $t->tournament_name }}</div>
+                <div class="folder-meta">
+                    {{ $t->videos_count }} {{ $t->videos_count == 1 ? 'partido' : 'partidos' }}
+                    &middot;
+                    {{ \Carbon\Carbon::parse($t->last_match)->format('M Y') }}
+                </div>
+            </a>
+        @endforeach
+    </div>
+@endif
+
+
+{{-- ═══════════════════════════════════════════════════════════
+     NIVEL 3 — Lista de partidos dentro de equipo + torneo
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'matches')
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 text-muted">
+        <i class="fas fa-video mr-2"></i>
+        {{ $tournament?->name ?? 'Sin torneo' }}
+    </h5>
+    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
+        <i class="fas fa-plus mr-1"></i> Subir Video
+    </a>
+</div>
+
+@if($videos->isEmpty())
+    <div class="card card-rugby">
+        <div class="card-body text-center py-4">
+            <p class="text-muted mb-0">No hay partidos en este torneo.</p>
+        </div>
+    </div>
+@else
     <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-video"></i>
-                        Lista de Videos
-                    </h3>
-                    <div class="card-tools">
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']))
-                            <a href="{{ route('videos.create') }}" class="btn btn-rugby">
-                                <i class="fas fa-plus"></i> Subir Video
+        @foreach($videos as $video)
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3" id="video-card-{{ $video->id }}">
+                <div class="card video-card h-100">
+                    <div class="video-thumbnail-container"
+                         onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                        @if($video->bunny_thumbnail)
+                            <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail"
+                                 class="w-100 h-100" style="object-fit:cover">
+                        @else
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark">
+                                <i class="fas fa-film fa-2x text-muted"></i>
+                            </div>
+                        @endif
+                        {{-- Status badge --}}
+                        @if($video->bunny_status && $video->bunny_status !== 'ready')
+                            <span class="status-badge">
+                                <i class="fas fa-spinner fa-spin mr-1"></i>
+                                {{ $video->bunny_status === 'processing' ? 'Procesando' : 'Pendiente' }}
+                            </span>
+                        @endif
+                    </div>
+                    <div class="card-body py-2 px-3">
+                        <h6 class="card-title mb-1 video-title" title="{{ $video->title }}">
+                            {{ $video->title }}
+                        </h6>
+                        <p class="card-text mb-1">
+                            <small class="text-muted">
+                                {{ $video->analyzed_team_name }}
+                                @if($video->rival_name) vs {{ $video->rival_name }} @endif
+                            </small>
+                        </p>
+                        <div class="mb-1">
+                            <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin categoría' }}</span>
+                            @if($video->division && $video->category?->name === 'Adultas')
+                                <span class="badge badge-secondary badge-sm ml-1">{{ ucfirst($video->division) }}</span>
+                            @endif
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                            &nbsp;·&nbsp;
+                            <i class="fas fa-eye mr-1"></i>{{ $video->view_count }}
+                        </small>
+                    </div>
+                    <div class="card-footer py-2 px-3">
+                        <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
+                            <i class="fas fa-play mr-1"></i> Ver
+                        </a>
+                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
+                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm">
+                                <i class="fas fa-edit"></i>
                             </a>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         @endif
                     </div>
                 </div>
-                <div class="card-body">
-                    @if(isset($videos) && $videos->count() > 0)
-                        <div class="row">
-                            @foreach($videos as $video)
-                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2" id="video-card-{{ $video->id }}">
-                                    <div class="card video-card h-100">
-                                        <!-- Video Thumbnail -->
-                                        <div class="card-img-top video-thumbnail-container"
-                                             style="height: 120px; overflow: hidden; position: relative; cursor: pointer;"
-                                             onclick="window.location.href='{{ route('videos.show', $video) }}'">
+            </div>
+        @endforeach
+    </div>
 
-                                            <video class="w-100 h-100"
-                                                   style="object-fit: cover;"
-                                                   preload="metadata"
-                                                   muted>
-                                                <source src="{{ route('videos.stream', $video) }}#t=5" type="video/mp4">
-                                            </video>
-                                        </div>
-                                        <div class="card-body py-1 px-2">
-                                            <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
-                                            <p class="card-text mb-1">
-                                                <small class="text-muted">
-                                                    {{ $video->analyzed_team_name }}
-                                                    @if($video->rival_name)
-                                                        vs {{ $video->rival_name }}
-                                                    @endif
-                                                </small>
-                                            </p>
-                                            <div class="mb-1">
-                                                <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin categoría' }}</span>
-                                                @if($video->division && $video->category && $video->category->name === 'Adultas')
-                                                    <span class="badge badge-secondary badge-sm ml-1">
-                                                        {{ ucfirst($video->division) }}
-                                                    </span>
-                                                @endif
-                                                @if($video->rugbySituation)
-                                                    <span class="badge badge-rugby-light badge-sm ml-1">
-                                                        {{ $video->rugbySituation->name }}
-                                                    </span>
-                                                @endif
-
-                                                {{-- Badge de Visibilidad --}}
-                                                @if($video->visibility_type && $video->visibility_type !== 'public')
-                                                    @if($video->visibility_type === 'forwards')
-                                                        <span class="badge badge-secondary badge-sm ml-1" title="Solo visible para Forwards">
-                                                            <i class="fas fa-shield-alt"></i> Forwards
-                                                        </span>
-                                                    @elseif($video->visibility_type === 'backs')
-                                                        <span class="badge badge-info badge-sm ml-1" title="Solo visible para Backs">
-                                                            <i class="fas fa-running"></i> Backs
-                                                        </span>
-                                                    @elseif($video->visibility_type === 'specific')
-                                                        <span class="badge badge-dark badge-sm ml-1" title="Asignado a jugadores específicos">
-                                                            <i class="fas fa-user-check"></i> Específico
-                                                        </span>
-                                                    @endif
-                                                @endif
-                                            </div>
-                                            <p class="card-text mb-1">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-calendar"></i> {{ $video->match_date->format('d/m/Y') }}
-                                                </small>
-                                            </p>
-                                            <p class="card-text mb-0">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-eye"></i> {{ $video->view_count }} vistas
-                                                </small>
-                                            </p>
-                                        </div>
-                                        <div class="card-footer">
-                                            <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
-                                                <i class="fas fa-play"></i> Ver Video
-                                            </a>
-                                            @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador' || auth()->id() === $video->uploaded_by)
-                                                <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm">
-                                                    <i class="fas fa-edit"></i> Editar
-                                                </a>
-                                            @endif
-                                            @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
-                                                <button type="button" class="btn btn-rugby-dark btn-sm" data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <!-- Modales de Confirmación para Eliminar Videos -->
-                        @if(auth()->user()->role === 'analista' || auth()->user()->role === 'entrenador')
-                            @foreach($videos as $video)
-                                <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel-{{ $video->id }}" aria-hidden="true">
-                                    <div class="modal-dialog" role="document">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-danger text-white">
-                                                <h5 class="modal-title" id="deleteModalLabel-{{ $video->id }}">
-                                                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
-                                                </h5>
-                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="text-center mb-3">
-                                                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem;"></i>
-                                                </div>
-                                                <h5 class="text-center mb-3">¿Estás seguro de eliminar este video?</h5>
-                                                <div class="alert alert-warning">
-                                                    <strong>Video:</strong> {{ $video->title }}<br>
-                                                    <strong>Archivo:</strong> {{ $video->file_name }}<br>
-                                                    <strong>Tamaño:</strong> {{ number_format($video->file_size / 1048576, 2) }} MB<br>
-                                                    <strong>Fecha:</strong> {{ $video->match_date->format('d/m/Y') }}
-                                                </div>
-                                                <p class="text-danger text-center">
-                                                    <strong>⚠️ Esta acción no se puede deshacer.</strong><br>
-                                                    Se eliminará el video, todos sus comentarios y asignaciones.
-                                                </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-rugby-outline" data-dismiss="modal">
-                                                    <i class="fas fa-times"></i> Cancelar
-                                                </button>
-                                                <button type="button" class="btn btn-rugby-dark btn-delete-video"
-                                                        data-video-id="{{ $video->id }}"
-                                                        data-url="{{ route('videos.destroy', $video) }}">
-                                                    <i class="fas fa-trash"></i> Eliminar Video
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @endif
-
-                        @if(method_exists($videos, 'links'))
-                            <div class="d-flex justify-content-center">
-                                {{ $videos->links('custom.pagination') }}
-                            </div>
-                        @endif
-                    @else
-                        <div class="text-center py-5">
-                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No hay videos disponibles</h5>
-                            @if(auth()->user()->role === 'analista')
-                                <p class="text-muted">Comienza subiendo tu primer video de análisis</p>
-                                <a href="{{ route('videos.create') }}" class="btn btn-rugby">
-                                    <i class="fas fa-plus"></i> Subir Primer Video
-                                </a>
-                            @endif
-                        </div>
-                    @endif
+    {{-- Modales de eliminación --}}
+    @foreach($videos as $video)
+        <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar eliminación
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center mb-3">¿Eliminar <strong>{{ $video->title }}</strong>?</p>
+                        <p class="text-danger text-center small mb-0">Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger btn-sm btn-delete-video"
+                                data-video-id="{{ $video->id }}"
+                                data-url="{{ route('videos.destroy', $video) }}">
+                            <i class="fas fa-trash mr-1"></i> Eliminar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+    @endforeach
+
+    <div class="d-flex justify-content-center mt-3">
+        {{ $videos->appends(request()->query())->links('custom.pagination') }}
+    </div>
+@endif
+
+
+{{-- ═══════════════════════════════════════════════════════════
+     VISTA JUGADOR — Lista plana de videos asignados
+═══════════════════════════════════════════════════════════ --}}
+@else
+
+    {{-- Filtros para jugadores --}}
+    <div class="card card-rugby mb-3">
+        <div class="card-body py-2 px-3">
+            <form method="GET" action="{{ route('videos.index') }}" class="d-flex flex-wrap" style="gap:8px">
+                <input type="text" name="search" class="form-control form-control-sm"
+                       style="max-width:220px" placeholder="Buscar..." value="{{ request('search') }}">
+                <button type="submit" class="btn btn-rugby btn-sm">
+                    <i class="fas fa-search mr-1"></i> Buscar
+                </button>
+                @if(request('search'))
+                    <a href="{{ route('videos.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times mr-1"></i> Limpiar
+                    </a>
+                @endif
+            </form>
+        </div>
     </div>
 
+    @if($videos->isEmpty())
+        <div class="card card-rugby">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No tenés videos asignados aún</h5>
+            </div>
+        </div>
+    @else
+        <div class="row">
+            @foreach($videos as $video)
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                    <div class="card video-card h-100">
+                        <div class="video-thumbnail-container"
+                             onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                            @if($video->bunny_thumbnail)
+                                <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail"
+                                     class="w-100 h-100" style="object-fit:cover">
+                            @else
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark">
+                                    <i class="fas fa-film fa-2x text-muted"></i>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="card-body py-2 px-3">
+                            <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                            </small>
+                        </div>
+                        <div class="card-footer py-2 px-3">
+                            <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
+                                <i class="fas fa-play mr-1"></i> Ver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+            {{ $videos->links('custom.pagination') }}
+        </div>
+    @endif
+
+@endif
+
+@endsection
+
+@push('styles')
 <style>
-/* Rugby badges */
-.badge-rugby {
-    background: var(--color-primary, #005461);
-    color: white;
-    font-size: 0.875em;
-    font-weight: 500;
+/* ─── Carpetas ─────────────────────────────────────────── */
+.folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+.folder-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 12px 16px;
+    background: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, transform .15s;
+    color: inherit;
+}
+.folder-card:hover {
+    border-color: #005461;
+    background: #1e2e30;
+    transform: translateY(-3px);
+    color: inherit;
+}
+.folder-icon-wrap {
+    font-size: 3rem;
+    color: #b8860b;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+.folder-no-tournament {
+    color: #555;
+}
+.folder-name {
+    font-size: .88rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    text-align: center;
+    word-break: break-word;
+    margin-bottom: 4px;
+}
+.folder-meta {
+    font-size: .75rem;
+    color: #777;
+    text-align: center;
 }
 
-.badge-rugby-light {
-    background: var(--color-accent, #4B9DA9);
-    color: white;
-    font-size: 0.875em;
-    font-weight: 500;
+/* ─── Tarjetas de video ────────────────────────────────── */
+.video-thumbnail-container {
+    height: 120px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    background: #111;
 }
-
-.badge-sm {
-    font-size: 0.75em;
-    padding: 0.25rem 0.5rem;
+.status-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    background: rgba(0,0,0,.7);
+    color: #fff;
+    font-size: .72rem;
+    padding: 2px 8px;
+    border-radius: 10px;
 }
-
-/* Video title overflow fix */
+.video-card {
+    background: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    transition: border-color .2s, transform .15s;
+}
+.video-card:hover { border-color: #005461; transform: translateY(-3px); }
 .video-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-    max-height: 2.4em;
-    font-size: 0.9rem;
+    font-size: .9rem;
+    line-height: 1.3;
 }
 
-/* Rugby button variations */
-.btn-rugby-light {
-    background: var(--color-accent, #4B9DA9);
-    border: none;
-    color: white;
-    border-radius: 6px;
-    font-weight: 500;
-}
-
-.btn-rugby-light:hover {
-    background: var(--color-primary-hover, #003d4a);
-    color: white;
-}
-
-.btn-rugby-dark {
-    background: var(--color-primary-hover, #003d4a);
-    border: none;
-    color: white;
-    border-radius: 6px;
-    font-weight: 500;
-}
-
-.btn-rugby-dark:hover {
-    background: var(--color-primary, #005461);
-    color: white;
-}
-
-.btn-rugby-outline {
-    background: transparent;
-    border: 2px solid var(--color-primary, #005461);
-    color: var(--color-primary, #005461);
-    border-radius: 6px;
-    font-weight: 500;
-}
-
-.btn-rugby-outline:hover {
-    background: var(--color-primary, #005461);
-    border-color: var(--color-primary, #005461);
-    color: white;
-}
-
-/* Video card improvements */
-.video-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.video-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.video-card .card-img-top {
-    transition: all 0.3s ease;
-}
-
-.video-card .card-img-top:hover {
-    transform: scale(1.02);
-}
-
-.video-card .card-img-top img {
-    transition: opacity 0.3s ease;
-}
-
-.video-card .card-img-top:hover img {
-    opacity: 0.9;
-}
-
-/* Rugby thumbnail placeholder */
-.rugby-thumbnail {
-    background: var(--color-primary, #005461);
-    position: relative;
-}
-
-.play-button-circle {
-    width: 50px;
-    height: 50px;
-    background: var(--color-accent, #4B9DA9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content-center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-}
-
-.rugby-thumbnail:hover .play-button-circle {
-    transform: scale(1.1);
-    background: var(--color-primary-hover, #003d4a);
-}
-
+/* ─── Colores rugby ────────────────────────────────────── */
+.btn-rugby        { background:#005461; border-color:#005461; color:#fff; }
+.btn-rugby:hover  { background:#003d4a; border-color:#003d4a; color:#fff; }
+.btn-rugby-light  { background:#00B7B5; border-color:#00B7B5; color:#fff; }
+.btn-rugby-light:hover { background:#009e9c; color:#fff; }
+.card-rugby       { border-color:#005461; }
+.card-rugby .card-header { background:#005461; }
+.badge-rugby      { background:#005461; color:#fff; font-size:.8em; }
+.badge-sm         { font-size:.75em; padding:.2rem .5rem; }
 </style>
-
-<!-- Toast Container -->
-<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
-
-<script>
-
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('filter-form');
-    if (form) {
-        let filterTimeout;
-        function autoFilter() {
-            clearTimeout(filterTimeout);
-            filterTimeout = setTimeout(() => form.submit(), 500);
-        }
-
-        const on = (id, evt, cb) => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener(evt, cb);
-        };
-
-        on('search-input', 'input', autoFilter);
-        on('situation-select', 'change', () => form.submit());
-        on('category-select', 'change', () => form.submit());
-        on('team-input', 'input', autoFilter);
-    }
-
-    // AJAX Delete Video
-    document.querySelectorAll('.btn-delete-video').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const videoId = this.dataset.videoId;
-            const url = this.dataset.url;
-            const button = this;
-
-            // Disable button and show loading
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-
-            fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Close modal
-                $(`#deleteModal-${videoId}`).modal('hide');
-
-                if (data.success) {
-                    // Show success toast
-                    showToast(data.message, 'success');
-
-                    // Remove video card with animation
-                    const card = document.getElementById(`video-card-${videoId}`);
-                    if (card) {
-                        card.style.transition = 'opacity 0.3s, transform 0.3s';
-                        card.style.opacity = '0';
-                        card.style.transform = 'scale(0.8)';
-                        setTimeout(() => card.remove(), 300);
-                    }
-                } else {
-                    showToast(data.message || 'Error al eliminar', 'error');
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-trash"></i> Eliminar Video';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error al eliminar el video', 'error');
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-trash"></i> Eliminar Video';
-                $(`#deleteModal-${videoId}`).modal('hide');
-            });
-        });
-    });
-});
-
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    const bgColor = type === 'success' ? '#00B7B5' : '#dc3545';
-    const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
-
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.style.cssText = `
-        background: ${bgColor};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: slideIn 0.3s ease;
-        max-width: 350px;
-    `;
-    toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
-
-    container.appendChild(toast);
-
-    // Auto remove after 4 seconds
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
-}
-</script>
-
-<style>
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(100px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-@keyframes slideOut {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(100px); }
-}
-</style>
-
-@endsection
+@endpush
