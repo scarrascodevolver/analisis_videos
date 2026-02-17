@@ -16,6 +16,7 @@ class VideoController extends Controller
     public function index(Request $request)
     {
         $query = Video::with(['category', 'uploader', 'rugbySituation'])
+            ->where('is_master', true)
             ->teamVisible(auth()->user());
 
         // Filter by rugby situation
@@ -258,25 +259,30 @@ class VideoController extends Controller
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
             ->get();
 
-        $cfService = app(\App\Services\CloudflareStreamService::class);
+        $bunnyService = app(\App\Services\BunnyStreamService::class);
 
         $videoData = array_merge($video->toArray(), [
-            'stream_url'           => route('videos.stream', $video),
-            'edit_url'             => route('videos.edit', $video),
-            'is_part_of_group'     => $video->isPartOfGroup(),
-            'cloudflare_hls_url'   => $video->cloudflare_uid ? $cfService->getHlsUrl($video->cloudflare_uid) : null,
-            'cloudflare_embed_url' => $video->cloudflare_uid ? $cfService->getEmbedUrl($video->cloudflare_uid) : null,
+            'stream_url'       => route('videos.stream', $video),
+            'edit_url'         => route('videos.edit', $video),
+            'is_part_of_group' => $video->isPartOfGroup(),
+            'bunny_hls_url'    => $video->bunny_video_id && $video->bunny_status === 'ready'
+                                    ? $bunnyService->getHlsUrl($video->bunny_video_id)
+                                    : ($video->bunny_hls_url ?? null),
+            'bunny_mp4_url'    => $video->bunny_mp4_url,
             'slave_videos' => $video->isPartOfGroup()
-                ? $video->videoGroups->flatMap(function ($group) use ($video, $cfService) {
+                ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
                     return $group->videos
                         ->filter(fn ($v) => $v->id !== $video->id)
                         ->map(fn ($v) => [
-                            'id'                  => $v->id,
-                            'title'               => $v->title,
-                            'stream_url'          => route('videos.stream', $v),
-                            'sync_offset'         => $v->pivot->sync_offset ?? 0,
-                            'cloudflare_hls_url'  => $v->cloudflare_uid ? $cfService->getHlsUrl($v->cloudflare_uid) : null,
-                            'cloudflare_status'   => $v->cloudflare_status,
+                            'id'            => $v->id,
+                            'title'         => $v->title,
+                            'stream_url'    => route('videos.stream', $v),
+                            'sync_offset'   => $v->pivot->sync_offset ?? 0,
+                            'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
+                                                ? $bunnyService->getHlsUrl($v->bunny_video_id)
+                                                : ($v->bunny_hls_url ?? null),
+                            'bunny_status'  => $v->bunny_status,
+                            'bunny_mp4_url' => $v->bunny_mp4_url,
                         ])
                         ->values();
                 })->values()->all()
@@ -530,6 +536,29 @@ class VideoController extends Controller
 
         return redirect()->route('player.videos')
             ->with('success', 'Video subido exitosamente. Se está comprimiendo en segundo plano. Un analista lo revisará pronto.');
+    }
+
+    /**
+     * Return recent distinct local team names used by the current user.
+     * GET /api/local-teams/recent?q=...
+     */
+    public function recentLocalTeams(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $q = $request->get('q', '');
+
+        $teams = Video::select('analyzed_team_name')
+            ->where('uploaded_by', auth()->id())
+            ->when($q, fn ($query) => $query->where('analyzed_team_name', 'like', "%{$q}%"))
+            ->whereNotNull('analyzed_team_name')
+            ->where('analyzed_team_name', '!=', '')
+            ->distinct()
+            ->orderByRaw('MAX(created_at) DESC')
+            ->groupBy('analyzed_team_name')
+            ->limit(10)
+            ->pluck('analyzed_team_name')
+            ->map(fn ($name) => ['id' => $name, 'text' => $name]);
+
+        return response()->json($teams);
     }
 
     /**

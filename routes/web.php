@@ -4,8 +4,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CloudflareUploadController;
-use App\Http\Controllers\CloudflareWebhookController;
+use App\Http\Controllers\BunnyUploadController;
+use App\Http\Controllers\BunnyWebhookController;
 use App\Http\Controllers\DirectUploadController;
 use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\HomeController;
@@ -101,10 +101,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('stream-url', [MultiCameraController::class, 'getStreamUrl'])->name('stream-url');
     });
 
-    // Cloudflare Stream - Upload directo desde browser via TUS
-    Route::post('api/upload/cloudflare/init', [CloudflareUploadController::class, 'init'])->name('api.upload.cf.init');
-    Route::post('api/upload/cloudflare/complete', [CloudflareUploadController::class, 'complete'])->name('api.upload.cf.complete');
-    Route::get('api/upload/cloudflare/{video}/status', [CloudflareUploadController::class, 'status'])->name('api.upload.cf.status');
+    // Bunny Stream - Upload directo desde browser via TUS
+    Route::post('api/upload/bunny/init', [BunnyUploadController::class, 'init'])->name('api.upload.bunny.init');
+    Route::post('api/upload/bunny/complete', [BunnyUploadController::class, 'complete'])->name('api.upload.bunny.complete');
+    Route::get('api/upload/bunny/{video}/status', [BunnyUploadController::class, 'status'])->name('api.upload.bunny.status');
+
 
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
@@ -123,6 +124,12 @@ Route::middleware(['auth'])->group(function () {
     // Tournaments
     Route::get('api/tournaments/autocomplete', [TournamentController::class, 'autocomplete'])->name('api.tournaments.autocomplete');
     Route::post('api/tournaments', [TournamentController::class, 'store'])->name('api.tournaments.store');
+    Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
+    Route::put('/tournaments/{tournament}', [TournamentController::class, 'update'])->name('tournaments.update');
+    Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy'])->name('tournaments.destroy');
+
+    // Local Teams recent (for Select2 autocomplete in upload form)
+    Route::get('/api/local-teams/recent', [VideoController::class, 'recentLocalTeams'])->name('api.local-teams.recent');
 
     // Player API Routes (for AJAX search functionality)
     Route::get('api/players/all', [PlayerApiController::class, 'all'])->name('api.players.all');
@@ -428,7 +435,7 @@ Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->grou
 // Webhooks de pago (sin auth, usan firma)
 Route::post('/webhooks/paypal', [App\Http\Controllers\SubscriptionController::class, 'paypalWebhook'])->name('webhooks.paypal');
 Route::post('/webhooks/mercadopago', [App\Http\Controllers\SubscriptionController::class, 'mercadoPagoWebhook'])->name('webhooks.mercadopago');
-Route::post('/webhooks/cloudflare-stream', [CloudflareWebhookController::class, 'handle'])->name('webhooks.cloudflare-stream');
+Route::post('/webhooks/bunny-stream', [BunnyWebhookController::class, 'handle'])->name('webhooks.bunny-stream');
 
 // ======================================
 // OWNER PANEL ROUTES (Payment System)

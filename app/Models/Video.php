@@ -40,11 +40,12 @@ class Video extends Model
         'compression_ratio',
         'processing_started_at',
         'processing_completed_at',
-        // Cloudflare Stream
-        'cloudflare_uid',
-        'cloudflare_playback_url',
-        'cloudflare_thumbnail',
-        'cloudflare_status',
+        // Bunny Stream
+        'bunny_video_id',
+        'bunny_hls_url',
+        'bunny_thumbnail',
+        'bunny_status',
+        'bunny_mp4_url',
     ];
 
     protected function casts(): array

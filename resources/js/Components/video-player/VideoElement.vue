@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
 import Hls from 'hls.js';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
@@ -11,13 +11,19 @@ const props = defineProps<{
     streamUrl: string;
     title: string;
     canAnnotate: boolean;
-    cloudflareHlsUrl?: string | null;
-    cloudflareStatus?: string | null;
+    bunnyHlsUrl?: string | null;
+    bunnyStatus?: string | null;
+    bunnyMp4Url?: string | null;
 }>();
 
-// Usar HLS de Cloudflare si el video está listo
-const isCloudflare = computed(() =>
-    !!props.cloudflareHlsUrl && props.cloudflareStatus === 'ready'
+const activeHlsUrl = computed(() =>
+    props.bunnyHlsUrl && props.bunnyStatus === 'ready' ? props.bunnyHlsUrl : null
+);
+const isHls = computed(() => !!activeHlsUrl.value);
+
+// URL MP4: Bunny original (disponible inmediatamente) o stream legacy
+const activeMp4Url = computed(() =>
+    !isHls.value ? (props.bunnyMp4Url ?? props.streamUrl) : props.streamUrl
 );
 
 const emit = defineEmits<{
@@ -29,6 +35,7 @@ const videoStore = useVideoStore();
 const annotationsStore = useAnnotationsStore();
 const videoEl = ref<HTMLVideoElement | null>(null);
 let hlsInstance: Hls | null = null;
+let hlsRetryTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Disable video controls when in annotation mode
 const showControls = computed(() => !annotationsStore.annotationMode);
@@ -36,19 +43,75 @@ const showControls = computed(() => !annotationsStore.annotationMode);
 // Inject videoLoader if in multi-camera mode
 const videoLoader = inject<ReturnType<typeof useVideoLoader> | null>('videoLoader', null);
 
+/**
+ * Inicializa hls.js con la URL dada.
+ * Si falla (CDN aún no propagó), vuelve al MP4 original y reintenta en 30s.
+ */
+function initHls(hlsUrl: string, restoreTime?: number, shouldPlay?: boolean) {
+    if (!videoEl.value) return;
+
+    if (Hls.isSupported()) {
+        if (hlsInstance) hlsInstance.destroy();
+        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance.loadSource(hlsUrl);
+        hlsInstance.attachMedia(videoEl.value);
+
+        if (restoreTime !== undefined) {
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                if (videoEl.value) {
+                    videoEl.value.currentTime = restoreTime;
+                    if (shouldPlay) videoEl.value.play();
+                }
+            });
+        }
+
+        // Fallback: si HLS falla (CDN no propagado aún), volver a MP4 y reintentar
+        hlsInstance.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+                console.warn('[VideoElement] HLS error, fallback to MP4, retry in 30s:', data.type);
+                hlsInstance?.destroy();
+                hlsInstance = null;
+
+                // Volver al MP4 original mientras espera
+                if (videoEl.value && props.bunnyMp4Url) {
+                    const savedTime = videoEl.value.currentTime;
+                    videoEl.value.src = props.bunnyMp4Url;
+                    videoEl.value.addEventListener('loadedmetadata', () => {
+                        if (videoEl.value) {
+                            videoEl.value.currentTime = savedTime;
+                            if (shouldPlay) videoEl.value.play();
+                        }
+                    }, { once: true });
+                }
+
+                // Reintentar HLS en 30 segundos
+                if (hlsRetryTimeout) clearTimeout(hlsRetryTimeout);
+                hlsRetryTimeout = setTimeout(() => {
+                    initHls(hlsUrl, videoEl.value?.currentTime, !videoEl.value?.paused);
+                }, 30000);
+            }
+        });
+
+    } else if (videoEl.value.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari: HLS nativo
+        videoEl.value.src = hlsUrl;
+        if (restoreTime !== undefined) {
+            videoEl.value.addEventListener('loadedmetadata', () => {
+                if (videoEl.value) {
+                    videoEl.value.currentTime = restoreTime;
+                    if (shouldPlay) videoEl.value.play();
+                }
+            }, { once: true });
+        }
+    }
+}
+
 onMounted(() => {
     if (!videoEl.value) return;
 
-    // Inicializar HLS para videos de Cloudflare Stream
-    if (isCloudflare.value && props.cloudflareHlsUrl) {
-        if (Hls.isSupported()) {
-            hlsInstance = new Hls({ enableWorker: true });
-            hlsInstance.loadSource(props.cloudflareHlsUrl);
-            hlsInstance.attachMedia(videoEl.value);
-        } else if (videoEl.value.canPlayType('application/vnd.apple.mpegurl')) {
-            // Safari soporta HLS nativamente
-            videoEl.value.src = props.cloudflareHlsUrl;
-        }
+    // Inicializar HLS si ya está disponible (video existente con encoding completo)
+    if (isHls.value && activeHlsUrl.value) {
+        initHls(activeHlsUrl.value);
     }
 
     videoStore.setVideoRef(videoEl.value);
@@ -59,13 +122,25 @@ onMounted(() => {
     });
 });
 
+// Transición silenciosa MP4 → HLS cuando el encoding termina mientras el usuario ve el original
+watch(activeHlsUrl, (newHlsUrl) => {
+    if (!newHlsUrl || !videoEl.value) return;
+
+    const currentTime = videoEl.value.currentTime;
+    const wasPlaying = !videoEl.value.paused;
+
+    initHls(newHlsUrl, currentTime, wasPlaying);
+});
+
 onBeforeUnmount(() => {
-    // Cleanup hls.js
     if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
     }
-    // Cleanup PiP if active
+    if (hlsRetryTimeout) {
+        clearTimeout(hlsRetryTimeout);
+        hlsRetryTimeout = null;
+    }
     if (document.pictureInPictureElement) {
         document.exitPictureInPicture().catch(() => {});
     }
@@ -112,10 +187,10 @@ function handleVideoClick(event: MouseEvent) {
                 @volumechange="videoStore.onVolumeChange"
                 @click="handleVideoClick"
             >
-                <!-- HLS para Cloudflare Stream (Safari nativo; Chrome/Firefox via hls.js en onMounted) -->
-                <source v-if="isCloudflare" :src="cloudflareHlsUrl!" type="application/x-mpegURL">
-                <!-- Fallback: video directo desde servidor (legacy Spaces o local) -->
-                <source v-else :src="streamUrl" type="video/mp4">
+                <!-- Safari native HLS (cuando HLS está listo); Chrome/Firefox usa hls.js vía watch -->
+                <source v-if="isHls" :src="activeHlsUrl!" type="application/vnd.apple.mpegurl">
+                <!-- MP4 de Bunny original (mientras encodea) o stream legacy -->
+                <source v-else :src="activeMp4Url" type="video/mp4">
                 Tu navegador no soporta la reproducción de video.
             </video>
 
@@ -147,7 +222,6 @@ function handleVideoClick(event: MouseEvent) {
             </button>
 
             <button
-                v-if="!isCloudflare"
                 class="video-utility-btn"
                 title="Descargar video"
                 @click="downloadVideo"

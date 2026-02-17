@@ -19,7 +19,7 @@
         </div>
         <div class="card-body p-3">
 
-            {{-- Drop Zone --}}
+            {{-- Drop Zone (se oculta cuando hay archivos) --}}
             <div id="dropZone" class="drop-zone mb-3">
                 <i class="fas fa-film drop-zone-icon"></i>
                 <p class="mb-1 font-weight-bold">Arrastrá los archivos acá</p>
@@ -29,6 +29,14 @@
                     <i class="fas fa-folder-open mr-1"></i> Elegir archivos
                 </button>
                 <p class="text-muted small mt-2 mb-0">MP4, MOV, AVI, WEBM, MKV · Máx. 8GB por archivo</p>
+            </div>
+
+            {{-- Botón compacto para agregar más (visible cuando hay archivos) --}}
+            <div id="addMoreBtn" class="d-none mb-2">
+                <button type="button" class="btn btn-sm btn-rugby-outline"
+                    onclick="document.getElementById('videoFilesInput').click()">
+                    <i class="fas fa-plus mr-1"></i> Agregar más videos
+                </button>
             </div>
 
             {{-- Lista de archivos seleccionados --}}
@@ -60,15 +68,10 @@
                         <label class="small font-weight-bold">
                             <i class="fas fa-shield-alt text-success mr-1"></i>Equipo Local
                         </label>
-                        <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-dark border-secondary">
-                                    <i class="fas fa-home text-success"></i>
-                                </span>
-                            </div>
-                            <input type="text" class="form-control bg-dark border-secondary text-white"
-                                id="local_team_display" value="{{ $organizationName }}" readonly>
-                        </div>
+                        <select id="local_team_name" name="local_team_name"
+                            class="form-control form-control-sm select2-local-team" style="width:100%">
+                            <option value="{{ $organizationName }}" selected>{{ $organizationName }}</option>
+                        </select>
                     </div>
                 </div>
 
@@ -317,19 +320,61 @@
 }
 .btn-remove-file:hover { color: #dc3545; background: rgba(220,53,69,.1); }
 
+/* Radio selector — video principal */
+.file-role-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #444;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .2s, background .2s;
+    position: relative;
+}
+.file-role-radio::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background .2s;
+}
+.file-role-radio.is-principal {
+    border-color: #b8860b;
+    background: #b8860b;
+    cursor: default;
+}
+.file-role-radio.is-principal::after { background: #fff; }
+.file-role-radio:not(.is-principal):hover { border-color: #b8860b; }
+.file-role-radio:not(.is-principal):hover::after { background: rgba(184,134,11,.4); }
+
 /* Progreso por fila */
 .row-progress {
-    height: 3px;
-    background: #333;
-    border-radius: 2px;
-    margin-top: 4px;
+    margin-top: 5px;
+}
+.row-progress-track {
+    height: 5px;
+    background: #2a2a2a;
+    border-radius: 3px;
+    overflow: hidden;
 }
 .row-progress-bar {
     height: 100%;
-    background: #00B7B5;
-    border-radius: 2px;
-    transition: width .3s;
+    background: linear-gradient(90deg, #005461, #00B7B5);
+    border-radius: 3px;
+    transition: width .4s ease;
 }
+.row-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .72rem;
+    color: #888;
+    margin-top: 2px;
+}
+.row-progress-label .pct { color: #00B7B5; font-weight: 600; }
 
 /* Visibilidad */
 .visibility-option {
@@ -348,6 +393,14 @@
 }
 .visibility-option:hover { border-color: #005461; color: #fff; }
 .visibility-option.active { border-color: #00B7B5; color: #00B7B5; background: rgba(0,183,181,.1); }
+
+/* Badge XML en fila */
+.xml-badge {
+    font-size: .7rem;
+    color: #00B7B5;
+    font-weight: 600;
+    margin-left: 6px;
+}
 
 /* Colores rugby */
 .btn-rugby { background: #005461; border-color: #005461; color: #fff; }
@@ -368,12 +421,14 @@
 @endpush
 
 @push('scripts')
+{{-- tus-js-client: upload resumable directo a Cloudflare Stream --}}
+<script src="https://cdn.jsdelivr.net/npm/tus-js-client@3/dist/tus.min.js"></script>
 <script>
 // ─── Estado global ───────────────────────────────────────────
 const uploadState = {
     files: [],       // [{ id, file, title, role, xmlContent, xmlName }]
     isUploading: false,
-    groupKey: null,
+    masterVideoId: null, // video_id del master (para vincular slaves)
 };
 
 // ─── Inicialización ──────────────────────────────────────────
@@ -402,7 +457,22 @@ function initDropZone() {
 }
 
 function initSelect2() {
-    // Rival
+    $('#local_team_name').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Nombre del equipo local...',
+        allowClear: false,
+        tags: true,
+        ajax: {
+            url: '{{ route("api.local-teams.recent") }}',
+            dataType: 'json',
+            delay: 200,
+            data: params => ({ q: params.term || '' }),
+            processResults: data => ({ results: data }),
+            cache: true,
+        },
+        minimumInputLength: 0,
+    });
+
     $('#rival_team_id').select2({
         theme: 'bootstrap4',
         placeholder: 'Buscar o ingresar rival...',
@@ -418,7 +488,6 @@ function initSelect2() {
         createTag: params => ({ id: 'new:' + params.term, text: params.term + ' (nuevo)', newTag: true }),
     });
 
-    // Torneo
     $('#tournament_id').select2({
         theme: 'bootstrap4',
         placeholder: 'Buscar o crear torneo...',
@@ -434,7 +503,6 @@ function initSelect2() {
         createTag: params => ({ id: 'new:' + params.term, text: params.term + ' (nuevo)', newTag: true }),
     });
 
-    // Jugadores
     $('#assigned_players').select2({
         theme: 'bootstrap4',
         placeholder: 'Seleccionar jugadores...',
@@ -463,54 +531,77 @@ function initCategoryListener() {
 }
 
 // ─── Gestión de archivos ─────────────────────────────────────
+const MAX_FILES = 4;
+
 function addFiles(fileList) {
     const videoExts = ['mp4','mov','avi','webm','mkv'];
     Array.from(fileList).forEach(file => {
         const ext = file.name.split('.').pop().toLowerCase();
         if (!videoExts.includes(ext)) return;
-        if (file.size > 8 * 1024 * 1024 * 1024) {
-            alert(`"${file.name}" supera 8GB.`); return;
+        if (file.size > 8 * 1024 * 1024 * 1024) { alert(`"${file.name}" supera 8GB.`); return; }
+        if (uploadState.files.length >= MAX_FILES) {
+            alert(`Máximo ${MAX_FILES} videos por partido (1 master + ${MAX_FILES - 1} ángulos).`);
+            return;
         }
-        if (uploadState.files.length >= 10) { alert('Máximo 10 videos por subida.'); return; }
-
         const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-        const nameWithoutExt = file.name.replace(/\.[^.]+$/, '');
-        uploadState.files.push({
-            id, file,
-            title: nameWithoutExt,
-            role: uploadState.files.length === 0 ? 'master' : 'slave',
-            xmlContent: null,
-            xmlName: null,
-        });
+        const role = uploadState.files.length === 0 ? 'master' : 'slave';
+        uploadState.files.push({ id, file, title: file.name.replace(/\.[^.]+$/, ''), role, xmlContent: null, xmlName: null });
         renderFileRow(uploadState.files[uploadState.files.length - 1]);
     });
     updateUI();
 }
 
+function getAngleLabel(index) {
+    if (index === 0) return { icon: '⭐', text: 'Master', cls: 'badge-master' };
+    return { icon: '📹', text: `Ángulo ${index}`, cls: 'badge-slave' };
+}
+
 function renderFileRow(item) {
     const sizeMB = (item.file.size / 1024 / 1024).toFixed(1);
     const sizeText = sizeMB > 1024 ? (sizeMB / 1024).toFixed(1) + ' GB' : sizeMB + ' MB';
+    const isMaster = item.role === 'master';
+
+    // Radio circle: relleno = principal, vacío+clickable = ángulo adicional
+    const radioHtml = isMaster
+        ? `<div class="file-role-radio is-principal" title="Video principal"></div>`
+        : `<div class="file-role-radio" onclick="setAsMaster('${item.id}')" title="Definir como video principal"></div>`;
+
+    // Botón XML inline — solo visible en el video principal
+    const xmlBtnInline = isMaster ? `
+        <button type="button" class="btn-xml ${item.xmlContent ? 'has-xml' : ''}" id="xmlbtn_${item.id}"
+            onclick="triggerXml('${item.id}')"
+            title="${item.xmlContent ? (item.xmlName || 'XML cargado') : 'Importar clips desde LongoMatch XML'}">
+            ${item.xmlContent
+                ? `<i class="fas fa-check-circle mr-1"></i>${item.xmlClipCount != null ? item.xmlClipCount + ' clips' : 'XML'}`
+                : `<i class="fas fa-file-code mr-1"></i>XML`}
+        </button>
+        <span class="xml-badge ${item.xmlContent ? '' : 'd-none'}" id="xmlbadge_${item.id}">${item.xmlContent ? (item.xmlName?.length > 20 ? item.xmlName.slice(0,20)+'...' : (item.xmlName || '')) : ''}</span>
+        <input type="file" accept=".xml" class="d-none" id="xmlinput_${item.id}" onchange="handleXml('${item.id}', this)">
+    ` : '';
 
     const row = document.createElement('div');
     row.className = 'file-row';
     row.id = 'row_' + item.id;
     row.innerHTML = `
+        ${radioHtml}
         <div class="file-thumb"><i class="fas fa-film"></i></div>
         <div class="file-info">
-            <div class="file-name" title="${item.file.name}">${item.file.name}</div>
+            <div class="d-flex align-items-center flex-wrap" style="gap:10px;margin-bottom:2px">
+                <span class="file-name" title="${item.file.name}">${item.file.name}</span>
+                ${xmlBtnInline}
+            </div>
             <div class="file-size">${sizeText}</div>
-            <div class="row-progress d-none" id="prog_${item.id}"><div class="row-progress-bar" id="progbar_${item.id}" style="width:0%"></div></div>
+            <div class="row-progress d-none" id="prog_${item.id}">
+                <div class="row-progress-track">
+                    <div class="row-progress-bar" id="progbar_${item.id}" style="width:0%"></div>
+                </div>
+                <div class="row-progress-label">
+                    <span id="progstatus_${item.id}">Subiendo...</span>
+                    <span class="pct" id="progpct_${item.id}">0%</span>
+                </div>
+            </div>
         </div>
         <div class="file-actions">
-            <button type="button" class="btn-xml" id="xmlbtn_${item.id}" onclick="triggerXml('${item.id}')">
-                <i class="fas fa-file-code mr-1"></i>XML
-            </button>
-            <input type="file" accept=".xml" class="d-none" id="xmlinput_${item.id}" onchange="handleXml('${item.id}', this)">
-            <select class="role-select" id="role_${item.id}" onchange="changeRole('${item.id}', this.value)">
-                <option value="master" ${item.role === 'master' ? 'selected' : ''}>⭐ Master</option>
-                <option value="slave"  ${item.role === 'slave'  ? 'selected' : ''}>📹 Ángulo</option>
-                <option value="standalone" ${item.role === 'standalone' ? 'selected' : ''}>🎬 Individual</option>
-            </select>
             <button type="button" class="btn-remove-file" onclick="removeFile('${item.id}')" title="Quitar">
                 <i class="fas fa-times"></i>
             </button>
@@ -519,38 +610,64 @@ function renderFileRow(item) {
     document.getElementById('filesRows').appendChild(row);
 }
 
-function changeRole(id, role) {
-    const item = uploadState.files.find(f => f.id === id);
-    if (!item) return;
+/**
+ * Cambia el video principal sin mover las filas de lugar.
+ * Solo intercambia roles y transfiere el XML (que pertenece al partido, no a la camara).
+ */
+function setAsMaster(fileId) {
+    const oldMaster = uploadState.files.find(f => f.role === 'master');
+    const newMaster = uploadState.files.find(f => f.id === fileId);
+    if (!newMaster || !oldMaster || oldMaster.id === newMaster.id) return;
 
-    // Solo puede haber un master
-    if (role === 'master') {
-        uploadState.files.forEach(f => {
-            if (f.role === 'master' && f.id !== id) {
-                f.role = 'slave';
-                const sel = document.getElementById('role_' + f.id);
-                if (sel) sel.value = 'slave';
-            }
-        });
+    // Intercambiar roles (sin mover posiciones)
+    oldMaster.role = 'slave';
+    newMaster.role = 'master';
+
+    // Transferir XML al nuevo principal
+    if (oldMaster.xmlContent) {
+        newMaster.xmlContent   = oldMaster.xmlContent;
+        newMaster.xmlName      = oldMaster.xmlName;
+        newMaster.xmlClipCount = oldMaster.xmlClipCount;
+        oldMaster.xmlContent   = null;
+        oldMaster.xmlName      = null;
+        oldMaster.xmlClipCount = null;
     }
-    item.role = role;
 
-    // XML solo para master
-    const xmlBtn = document.getElementById('xmlbtn_' + id);
-    if (xmlBtn) xmlBtn.style.display = role === 'slave' ? 'none' : '';
+    reRenderAllRows();
+}
+
+/**
+ * Clear and re-render all file rows from scratch.
+ */
+function reRenderAllRows() {
+    document.getElementById('filesRows').innerHTML = '';
+    uploadState.files.forEach(f => renderFileRow(f));
+}
+
+/**
+ * Actualiza el indicador XML del row master despues de cargar un XML exitosamente.
+ */
+function updateXmlIndicator(fileId, xmlName, clipCount) {
+    const btn = document.getElementById('xmlbtn_' + fileId);
+    if (btn) {
+        btn.classList.add('has-xml');
+        btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i>${clipCount} clips`;
+        btn.title = xmlName || 'XML cargado';
+    }
+    const badge = document.getElementById('xmlbadge_' + fileId);
+    if (badge) {
+        const display = xmlName?.length > 20 ? xmlName.slice(0, 20) + '...' : (xmlName || 'XML');
+        badge.textContent = display;
+        badge.classList.remove('d-none');
+    }
+    const item = uploadState.files.find(f => f.id === fileId);
+    if (item) item.xmlClipCount = clipCount;
 }
 
 function removeFile(id) {
     uploadState.files = uploadState.files.filter(f => f.id !== id);
-    const row = document.getElementById('row_' + id);
-    if (row) row.remove();
-
-    // Si no queda master, el primero pasa a serlo
-    if (uploadState.files.length > 0 && !uploadState.files.find(f => f.role === 'master')) {
-        uploadState.files[0].role = 'master';
-        const sel = document.getElementById('role_' + uploadState.files[0].id);
-        if (sel) sel.value = 'master';
-    }
+    uploadState.files.forEach((f, i) => { f.role = i === 0 ? 'master' : 'slave'; });
+    reRenderAllRows();
     updateUI();
 }
 
@@ -562,13 +679,29 @@ function clearAllFiles() {
 
 function updateUI() {
     const hasFiles = uploadState.files.length > 0;
+    const isFull   = uploadState.files.length >= MAX_FILES;
+    const count    = uploadState.files.length;
+
     document.getElementById('filesList').classList.toggle('d-none', !hasFiles);
+    document.getElementById('dropZone').classList.toggle('d-none', hasFiles);
 
-    const count = uploadState.files.length;
+    const addBtn = document.getElementById('addMoreBtn');
+    addBtn.classList.toggle('d-none', !hasFiles || isFull);
+
+    let limitMsg = document.getElementById('limitMsg');
+    if (!limitMsg) {
+        limitMsg = document.createElement('p');
+        limitMsg.id = 'limitMsg';
+        limitMsg.className = 'small text-warning mb-2';
+        limitMsg.innerHTML = `<i class="fas fa-info-circle mr-1"></i>Límite alcanzado (${MAX_FILES} videos). Para otro partido, completá esta subida primero.`;
+        addBtn.parentNode.insertBefore(limitMsg, addBtn.nextSibling);
+    }
+    limitMsg.classList.toggle('d-none', !isFull);
+
     document.getElementById('filesCount').textContent =
-        count === 1 ? '1 archivo seleccionado' : `${count} archivos seleccionados`;
+        count === 1 ? '1 archivo · 1 Master' :
+        `${count} archivos · 1 Master + ${count - 1} Ángulo${count > 2 ? 's' : ''}`;
 
-    // Mostrar/ocultar cards de detalles y upload
     document.getElementById('detailsCard').style.removeProperty('display');
     document.getElementById('uploadCard').style.removeProperty('display');
     if (!hasFiles) {
@@ -576,9 +709,8 @@ function updateUI() {
         document.getElementById('uploadCard').style.display = 'none';
     }
 
-    // Texto del botón
     document.getElementById('uploadBtnText').textContent =
-        count > 1 ? `Subir ${count} Videos` : 'Subir Video';
+        count > 1 ? `Subir Partido (${count} videos)` : 'Subir Video';
 }
 
 // ─── XML por archivo ─────────────────────────────────────────
@@ -591,12 +723,11 @@ function handleXml(id, input) {
     const file = input.files[0];
     const reader = new FileReader();
     reader.onload = function (e) {
-        // Validar XML via API
-        const formData = new FormData();
-        formData.append('xml_file', file);
-        formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
-
-        fetch('{{ route("api.xml.validate") }}', { method: 'POST', body: formData })
+        fetch('{{ route("api.xml.validate") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+            body: JSON.stringify({ xml_content: e.target.result }),
+        })
             .then(r => r.json())
             .then(data => {
                 const item = uploadState.files.find(f => f.id === id);
@@ -604,9 +735,7 @@ function handleXml(id, input) {
                 if (data.valid) {
                     item.xmlContent = e.target.result;
                     item.xmlName = file.name;
-                    const btn = document.getElementById('xmlbtn_' + id);
-                    btn.classList.add('has-xml');
-                    btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i>${data.clips_count} clips`;
+                    updateXmlIndicator(id, file.name, data.preview?.clips_count ?? 0);
                 } else {
                     alert('XML inválido: ' + (data.message || 'Error desconocido'));
                 }
@@ -616,25 +745,26 @@ function handleXml(id, input) {
     reader.readAsText(file);
 }
 
-// ─── Subida ───────────────────────────────────────────────────
+// ─── Subida principal ────────────────────────────────────────
 async function startUpload() {
     if (uploadState.isUploading) return;
 
     const categoryId = document.getElementById('category_id').value;
     const matchDate  = document.getElementById('match_date').value;
-
     if (!categoryId) { alert('Seleccioná una categoría.'); return; }
     if (!matchDate)  { alert('Ingresá la fecha del partido.'); return; }
     if (uploadState.files.length === 0) { alert('Seleccioná al menos un video.'); return; }
 
     uploadState.isUploading = true;
-    uploadState.groupKey = `batch_${Date.now()}`;
+    uploadState.masterVideoId = null;
 
     document.getElementById('uploadBtn').disabled = true;
     document.getElementById('uploadProgress').classList.remove('d-none');
 
-    const commonData = getCommonData();
-    let success = 0, failed = 0;
+    // Resolver rival y torneo una sola vez antes de iterar archivos
+    const commonData = await resolveCommonData();
+
+    let success = 0, failed = 0, lastVideoId = null;
 
     for (let i = 0; i < uploadState.files.length; i++) {
         const item = uploadState.files[i];
@@ -642,19 +772,25 @@ async function startUpload() {
         showRowProgress(item.id);
 
         try {
-            await uploadFile(item, commonData, (pct) => updateRowProgress(item.id, pct));
+            const result = await uploadToCloudflare(item, commonData, pct => updateRowProgress(item.id, pct));
+            if (item.role === 'master') uploadState.masterVideoId = result.video_id;
+            lastVideoId = result.video_id;
             success++;
-        } catch(e) {
-            console.error(e);
+        } catch (e) {
+            console.error('Upload failed for', item.file.name, e);
             failed++;
-            markRowFailed(item.id);
+            markRowFailed(item.id, e.message);
         }
     }
 
-    const total = uploadState.files.length;
     if (failed === 0) {
-        setStatus(`✅ ${success} video${success > 1 ? 's' : ''} subido${success > 1 ? 's' : ''} correctamente`);
-        setTimeout(() => window.location.href = '{{ route("videos.index") }}', 1500);
+        setStatus(`${success} video${success > 1 ? 's' : ''} enviado${success > 1 ? 's' : ''} correctamente`);
+        const redirectId = uploadState.masterVideoId || lastVideoId;
+        setTimeout(() => {
+            window.location.href = redirectId
+                ? '{{ url("videos") }}/' + redirectId
+                : '{{ route("videos.index") }}';
+        }, 1500);
     } else {
         setStatus(`⚠️ ${success} exitosos, ${failed} fallidos`);
         document.getElementById('uploadBtn').disabled = false;
@@ -662,12 +798,59 @@ async function startUpload() {
     }
 }
 
-function getCommonData() {
-    const rivalSelect = document.getElementById('rival_team_id');
+// ─── Resolver rival/torneo nuevos antes de subir ─────────────
+async function resolveCommonData() {
+    const rivalSelect      = document.getElementById('rival_team_id');
     const tournamentSelect = document.getElementById('tournament_id');
-    const visibilityEl = document.querySelector('input[name=visibility_type]:checked');
+    const visibilityEl     = document.querySelector('input[name=visibility_type]:checked');
+
+    let rivalTeamId   = null;
+    let rivalTeamName = null;
+    let tournamentId  = null;
+
+    const rivalVal      = rivalSelect.value;
+    const tournamentVal = tournamentSelect.value;
+
+    // Rival
+    if (rivalVal && !rivalVal.startsWith('new:')) {
+        rivalTeamId = rivalVal;
+    } else if (rivalVal && rivalVal.startsWith('new:')) {
+        const name = rivalVal.replace('new:', '');
+        try {
+            const res  = await fetch('{{ route("admin.rival-teams.store") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+                body: JSON.stringify({ name }),
+            });
+            const data = await res.json();
+            rivalTeamId = data.id;
+        } catch (e) {
+            rivalTeamName = name; // fallback texto libre
+        }
+    } else if (rivalSelect.options[rivalSelect.selectedIndex]?.text) {
+        rivalTeamName = rivalSelect.options[rivalSelect.selectedIndex].text;
+    }
+
+    // Torneo
+    if (tournamentVal && !tournamentVal.startsWith('new:')) {
+        tournamentId = tournamentVal;
+    } else if (tournamentVal && tournamentVal.startsWith('new:')) {
+        const name = tournamentVal.replace('new:', '');
+        try {
+            const res  = await fetch('{{ route("api.tournaments.store") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+                body: JSON.stringify({ name }),
+            });
+            const data = await res.json();
+            tournamentId = data.id;
+        } catch (e) {
+            console.warn('Could not create tournament', e);
+        }
+    }
 
     return {
+        local_team_name:  document.getElementById('local_team_name').value,
         category_id:      document.getElementById('category_id').value,
         match_date:       document.getElementById('match_date').value,
         division:         document.getElementById('division').value,
@@ -675,163 +858,134 @@ function getCommonData() {
         visibility_type:  visibilityEl ? visibilityEl.value : 'public',
         assignment_notes: document.getElementById('assignment_notes').value,
         assigned_players: Array.from(document.getElementById('assigned_players').selectedOptions).map(o => o.value),
-        rival_team_id:    rivalSelect.value && !rivalSelect.value.startsWith('new:') ? rivalSelect.value : null,
-        rival_team_name:  rivalSelect.value && rivalSelect.value.startsWith('new:') ? rivalSelect.value.replace('new:', '') : (rivalSelect.options[rivalSelect.selectedIndex]?.text || null),
-        tournament_id:    tournamentSelect.value && !tournamentSelect.value.startsWith('new:') ? tournamentSelect.value : null,
-        tournament_name:  tournamentSelect.value && tournamentSelect.value.startsWith('new:') ? tournamentSelect.value.replace('new:', '') : null,
+        rival_team_id:    rivalTeamId,
+        rival_team_name:  rivalTeamName,
+        tournament_id:    tournamentId,
     };
 }
 
-async function uploadFile(item, commonData, onProgress) {
-    const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB
+// ─── Upload a Cloudflare Stream (TUS) ────────────────────────
+async function uploadToCloudflare(item, commonData, onProgress) {
+    // 1. Pedir endpoint TUS al servidor
+    const initPayload = {
+        title:            item.title,
+        filename:         item.file.name,
+        file_size:        item.file.size,
+        mime_type:        item.file.type || 'video/mp4',
+        category_id:      commonData.category_id,
+        match_date:       commonData.match_date,
+        visibility_type:  commonData.visibility_type,
+        description:      commonData.description || '',
+        local_team_name:  commonData.local_team_name || '',
+        rival_team_id:    commonData.rival_team_id || null,
+        rival_team_name:  commonData.rival_team_name || null,
+        tournament_id:    commonData.tournament_id || null,
+        division:         commonData.division || null,
+        assignment_notes: commonData.assignment_notes || '',
+        assigned_players: commonData.assigned_players,
+        is_master:        item.role === 'master',
+        master_video_id:  item.role !== 'master' ? (uploadState.masterVideoId || null) : null,
+        camera_angle:     item.role !== 'master' ? (item.title || item.file.name) : null,
+    };
 
-    // Crear torneo si es nuevo
-    let tournamentId = commonData.tournament_id;
-    if (!tournamentId && commonData.tournament_name) {
-        const res = await fetch('{{ route("api.tournaments.store") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-            body: JSON.stringify({ name: commonData.tournament_name }),
-        });
-        const data = await res.json();
-        tournamentId = data.id;
-    }
-
-    // Crear rival si es nuevo
-    let rivalTeamId = commonData.rival_team_id;
-    if (!rivalTeamId && commonData.rival_team_name) {
-        const res = await fetch('{{ route("api.rival-teams.store") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-            body: JSON.stringify({ name: commonData.rival_team_name }),
-        });
-        const data = await res.json();
-        rivalTeamId = data.id;
-    }
-
-    const isMaster = item.role === 'master';
-    const isGrouped = item.role !== 'standalone';
-
-    const formData = new FormData();
-    formData.append('video_file', item.file);
-    formData.append('title', item.title || item.file.name.replace(/\.[^.]+$/, ''));
-    formData.append('category_id', commonData.category_id);
-    formData.append('match_date', commonData.match_date);
-    formData.append('division', commonData.division || '');
-    formData.append('description', commonData.description || '');
-    formData.append('visibility_type', commonData.visibility_type);
-    formData.append('assignment_notes', commonData.assignment_notes || '');
-    formData.append('rival_team_id', rivalTeamId || '');
-    formData.append('rival_team_name', commonData.rival_team_name || '');
-    formData.append('tournament_id', tournamentId || '');
-    formData.append('_token', getCsrf());
-
-    if (isGrouped) {
-        formData.append('is_master', isMaster ? '1' : '0');
-        formData.append('group_key', uploadState.groupKey);
-        if (!isMaster) formData.append('camera_angle', item.title || item.file.name);
-    }
-
-    commonData.assigned_players.forEach(p => formData.append('assigned_players[]', p));
-
-    if (isMaster && item.xmlContent) {
-        const xmlBlob = new Blob([item.xmlContent], { type: 'text/xml' });
-        formData.append('xml_file', xmlBlob, item.xmlName || 'import.xml');
-    }
-
-    if (item.file.size >= MULTIPART_THRESHOLD) {
-        return uploadMultipart(item.file, formData, onProgress);
-    } else {
-        return uploadSimple(formData, onProgress);
-    }
-}
-
-function uploadSimple(formData, onProgress) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
-        xhr.onload = () => {
-            try {
-                const res = JSON.parse(xhr.responseText);
-                if (res.success !== false) resolve(res); else reject(new Error(res.message));
-            } catch(e) { if (xhr.status < 400) resolve({}); else reject(new Error('Error ' + xhr.status)); }
-        };
-        xhr.onerror = () => reject(new Error('Error de red'));
-        xhr.open('POST', '{{ route("videos.store") }}');
-        xhr.send(formData);
+    // 1. Crear video en Bunny y obtener credenciales TUS
+    const initRes = await fetch('{{ route("api.upload.bunny.init") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+        body: JSON.stringify(initPayload),
     });
-}
 
-async function uploadMultipart(file, baseFormData, onProgress) {
-    const CHUNK = 100 * 1024 * 1024;
-    const totalParts = Math.ceil(file.size / CHUNK);
-
-    // Initiate
-    const initData = new FormData();
-    initData.append('file_name', file.name);
-    initData.append('file_size', file.size);
-    initData.append('content_type', file.type || 'video/mp4');
-    initData.append('total_parts', totalParts);
-    initData.append('_token', getCsrf());
-    const initRes = await fetch('{{ route("api.upload.multipart.initiate") }}', { method: 'POST', body: initData });
-    const { upload_id, key } = await initRes.json();
-
-    // Get part URLs
-    const urlData = new FormData();
-    urlData.append('upload_id', upload_id);
-    urlData.append('key', key);
-    urlData.append('total_parts', totalParts);
-    urlData.append('_token', getCsrf());
-    const urlRes = await fetch('{{ route("api.upload.multipart.part-urls") }}', { method: 'POST', body: urlData });
-    const { part_urls } = await urlRes.json();
-
-    // Upload parts
-    const parts = [];
-    let uploaded = 0;
-    for (let i = 0; i < totalParts; i++) {
-        const start = i * CHUNK;
-        const end = Math.min(start + CHUNK, file.size);
-        const chunk = file.slice(start, end);
-
-        const res = await fetch(part_urls[i], { method: 'PUT', body: chunk });
-        const etag = res.headers.get('ETag');
-        parts.push({ PartNumber: i + 1, ETag: etag });
-        uploaded += (end - start);
-        onProgress(Math.round(uploaded / file.size * 100));
+    if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({}));
+        throw new Error(err.message || `Init falló (HTTP ${initRes.status})`);
     }
 
-    // Complete
-    const completeData = new FormData();
-    completeData.append('upload_id', upload_id);
-    completeData.append('key', key);
-    completeData.append('parts', JSON.stringify(parts));
-    completeData.append('_token', getCsrf());
-    for (const [k, v] of baseFormData.entries()) completeData.append(k, v);
-    completeData.delete('video_file');
+    const { video_id, bunny_guid, upload_url, signature, expire, library_id } = await initRes.json();
 
-    const completeRes = await fetch('{{ route("api.upload.multipart.complete") }}', { method: 'POST', body: completeData });
-    return completeRes.json();
+    // 2. Subir el archivo directo a Bunny via TUS
+    await new Promise((resolve, reject) => {
+        const upload = new tus.Upload(item.file, {
+            endpoint: upload_url,
+            retryDelays: [0, 3000, 5000, 10000, 20000],
+            chunkSize: 50 * 1024 * 1024, // 50MB por chunk
+            headers: {
+                AuthorizationSignature: signature,
+                AuthorizationExpire:    String(expire),
+                VideoId:                bunny_guid,
+                LibraryId:              String(library_id),
+            },
+            metadata: {
+                filename: item.file.name,
+                filetype: item.file.type || 'video/mp4',
+            },
+            onProgress(bytesUploaded, bytesTotal) {
+                onProgress(Math.round(bytesUploaded / bytesTotal * 100));
+            },
+            onSuccess() { resolve(); },
+            onError(err) { reject(new Error('TUS error: ' + err.message)); },
+        });
+        upload.start();
+    });
+
+    onProgress(100);
+
+    // 3. Notificar al servidor que terminó
+    const completeRes = await fetch('{{ route("api.upload.bunny.complete") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+        body: JSON.stringify({ video_id, bunny_guid }),
+    });
+
+    const completeData = await completeRes.json().catch(() => ({}));
+
+    // 4. Si el master tiene XML, importarlo
+    if (item.role === 'master' && item.xmlContent) {
+        await importXml(video_id, item.xmlContent, item.xmlName);
+    }
+
+    return { video_id, ...completeData };
+}
+
+// ─── Importar XML post-upload ─────────────────────────────────
+async function importXml(videoId, xmlContent, xmlName) {
+    try {
+        const formData = new FormData();
+        const xmlBlob = new Blob([xmlContent], { type: 'text/xml' });
+        formData.append('xml_file', xmlBlob, xmlName || 'import.xml');
+        formData.append('_token', getCsrf());
+        await fetch(`/videos/${videoId}/import-xml`, { method: 'POST', body: formData });
+    } catch (e) {
+        console.warn('XML import failed (non-critical):', e);
+    }
 }
 
 // ─── UI helpers ───────────────────────────────────────────────
-function setStatus(msg) {
-    document.getElementById('uploadStatusText').textContent = msg;
-}
+function setStatus(msg) { document.getElementById('uploadStatusText').textContent = msg; }
+
 function showRowProgress(id) {
     document.getElementById('prog_' + id)?.classList.remove('d-none');
 }
+
 function updateRowProgress(id, pct) {
     const bar = document.getElementById('progbar_' + id);
     if (bar) bar.style.width = pct + '%';
+    const pctEl = document.getElementById('progpct_' + id);
+    if (pctEl) pctEl.textContent = pct + '%';
+    const statusEl = document.getElementById('progstatus_' + id);
+    if (statusEl) statusEl.textContent = pct >= 100 ? 'Procesando en Cloudflare...' : 'Subiendo...';
     document.getElementById('uploadPercent').textContent = pct + '%';
     document.getElementById('uploadProgressBar').style.width = pct + '%';
 }
-function markRowFailed(id) {
+
+function markRowFailed(id, msg) {
     const row = document.getElementById('row_' + id);
     if (row) row.style.borderColor = '#dc3545';
+    const statusEl = document.getElementById('progstatus_' + id);
+    if (statusEl) { statusEl.textContent = msg || 'Error'; statusEl.style.color = '#dc3545'; }
+    const bar = document.getElementById('progbar_' + id);
+    if (bar) bar.style.background = '#dc3545';
 }
-function getCsrf() {
-    return document.querySelector('meta[name=csrf-token]')?.content || '';
-}
+
+function getCsrf() { return document.querySelector('meta[name=csrf-token]')?.content || ''; }
 </script>
 @endpush

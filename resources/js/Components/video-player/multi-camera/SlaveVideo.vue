@@ -7,7 +7,7 @@
             <video
                 ref="videoRef"
                 class="slave-video"
-                :src="isCloudflare ? undefined : slave.stream_url"
+                :src="isHls ? undefined : (slave.bunny_mp4_url ?? slave.stream_url)"
                 :data-video-title="slave.title"
                 muted
                 playsinline
@@ -54,9 +54,10 @@ const emit = defineEmits<{
 const videoRef = ref<HTMLVideoElement | null>(null);
 let hlsInstance: Hls | null = null;
 
-const isCloudflare = computed(() =>
-    !!props.slave.cloudflare_hls_url && props.slave.cloudflare_status === 'ready'
+const activeHlsUrl = computed(() =>
+    props.slave.bunny_hls_url && props.slave.bunny_status === 'ready' ? props.slave.bunny_hls_url : null
 );
+const isHls = computed(() => !!activeHlsUrl.value);
 
 // Inject the multiCamera composable from parent
 const multiCamera = inject<any>('multiCamera', null);
@@ -64,14 +65,14 @@ const multiCamera = inject<any>('multiCamera', null);
 onMounted(() => {
     if (!videoRef.value) return;
 
-    // Inicializar HLS para slaves de Cloudflare Stream
-    if (isCloudflare.value && props.slave.cloudflare_hls_url) {
+    // Inicializar HLS (Bunny o Cloudflare legacy)
+    if (isHls.value && activeHlsUrl.value) {
         if (Hls.isSupported()) {
             hlsInstance = new Hls({ enableWorker: true });
-            hlsInstance.loadSource(props.slave.cloudflare_hls_url);
+            hlsInstance.loadSource(activeHlsUrl.value);
             hlsInstance.attachMedia(videoRef.value);
         } else if (videoRef.value.canPlayType('application/vnd.apple.mpegurl')) {
-            videoRef.value.src = props.slave.cloudflare_hls_url;
+            videoRef.value.src = activeHlsUrl.value;
         }
     }
 

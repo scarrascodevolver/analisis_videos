@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, provide, watch, shallowRef } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, provide, watch, shallowRef } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import AdminLteLayout from '@/Layouts/AdminLteLayout.vue';
 import VideoPlayer from '@/Components/video-player/VideoPlayer.vue';
@@ -81,7 +81,70 @@ const showStatsModal = ref(false);
 const showAssociateAngleModal = ref(false);
 const showSyncModal = ref(false);
 
-// Multi-camera - already filtered in controller
+// ─── Polling de encoding Bunny ────────────────────────────────
+const videoStatus     = ref(props.video.bunny_status ?? null);
+const videoHlsUrl     = ref(props.video.bunny_hls_url ?? null);
+const videoMp4Url     = ref(props.video.bunny_mp4_url ?? null);
+// URL HLS lista pero pendiente de aplicar (usuario viendo MP4, no interrumpir)
+const pendingHlsUrl   = ref<string | null>(null);
+// Muestra pantalla de encoding solo si no hay NI HLS NI MP4 original disponible
+const isProcessing    = computed(() => !videoHlsUrl.value && !videoMp4Url.value);
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+async function pollStatus() {
+    if (!props.video.bunny_video_id) return;
+    try {
+        const res = await fetch(`/api/upload/bunny/${props.video.id}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.success) return;
+
+        videoStatus.value = data.status;
+
+        if (data.ready && data.playback_url) {
+            stopPolling();
+
+            if (isProcessing.value) {
+                // Usuario en pantalla de encoding → mostrar player inmediatamente
+                videoHlsUrl.value = data.playback_url;
+            } else if (videoStore.isPlaying) {
+                // Usuario ya está viendo (MP4) → NO interrumpir, guardar URL pendiente
+                pendingHlsUrl.value = data.playback_url;
+                toast.info('Video HD listo. Cambiará automáticamente al pausar.', { duration: 8000 } as any);
+            } else {
+                // Video pausado/detenido → cambiar fuente silenciosamente
+                videoHlsUrl.value = data.playback_url;
+                pendingHlsUrl.value = null;
+            }
+        }
+    } catch (e) {
+        console.warn('Polling error:', e);
+    }
+}
+
+// Cuando el usuario pausa y hay HLS pendiente → aplicar sin interrumpir
+watch(() => videoStore.isPlaying, (playing) => {
+    if (!playing && pendingHlsUrl.value) {
+        videoHlsUrl.value = pendingHlsUrl.value;
+        pendingHlsUrl.value = null;
+    }
+});
+
+function startPolling() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(pollStatus, 10000); // cada 10s
+    pollStatus(); // primera consulta inmediata
+}
+
+function stopPolling() {
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+}
+
+// Inicia polling si no hay HLS listo aún (sea que tenga MP4 o no)
+onMounted(() => { if (!videoHlsUrl.value && props.video.bunny_video_id) startPolling(); });
+onBeforeUnmount(() => stopPolling());
+
+// ─── Multi-camera - already filtered in controller
 // Ensure slave_videos is ALWAYS an array (defensive programming)
 const rawSlaveVideos = props.video.slave_videos;
 const safeSlaveVideos = Array.isArray(rawSlaveVideos) ? rawSlaveVideos : [];
@@ -227,6 +290,31 @@ function onAddAngle() {
     showAssociateAngleModal.value = true;
 }
 
+async function onAngleAssociated() {
+    showAssociateAngleModal.value = false;
+    // Reload slave videos from the API
+    try {
+        const res = await fetch(`/videos/${props.video.id}/multi-camera/angles`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.angles)) {
+            slaveVideos.value = data.angles.map((a: any) => ({
+                id: a.id,
+                title: a.title,
+                stream_url: `/videos/${a.id}/stream`,
+                camera_angle: a.camera_angle,
+                sync_offset: a.sync_offset ?? 0,
+                is_synced: a.is_synced ?? false,
+                duration: a.duration,
+                file_size: a.file_size,
+            }));
+        }
+    } catch (e) {
+        console.error('Failed to reload slave videos', e);
+    }
+}
+
 function onSwapMaster(slaveId: number) {
     if (!multiCamera) return;
     const result = multiCamera.swapMaster(slaveId);
@@ -268,8 +356,39 @@ function onSyncSaved(offsets: Record<number, number>) {
     <Head :title="video.title" />
 
     <AdminLteLayout>
+
+        <!-- Pantalla de encoding en progreso -->
+        <div v-if="isProcessing" class="card card-rugby text-center py-5 mx-auto" style="max-width:600px;margin-top:40px">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-film fa-3x" style="color:#00B7B5;opacity:.6"></i>
+                </div>
+                <h4 class="font-weight-bold mb-1">{{ video.title }}</h4>
+                <p class="text-muted mb-3">
+                    El video se subió correctamente y está siendo procesado por Bunny Stream.
+                </p>
+                <div class="d-flex align-items-center justify-content-center mb-3" style="gap:10px">
+                    <div class="spinner-border spinner-border-sm" style="color:#00B7B5" role="status"></div>
+                    <span class="text-muted small">
+                        Verificando estado cada 10 segundos...
+                        <span v-if="videoStatus" class="badge badge-secondary ml-1">{{ videoStatus }}</span>
+                    </span>
+                </div>
+                <div class="progress" style="height:6px;background:#2a2a2a;border-radius:3px">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                        style="background:linear-gradient(90deg,#005461,#00B7B5);width:100%"></div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Videos de 40 min tardan aprox. 5-10 min en estar listos. Esta página se actualizará automáticamente.
+                </p>
+            </div>
+        </div>
+
+        <!-- Player normal cuando el video está listo (tiene HLS o MP4 original) -->
         <VideoPlayer
-            :video="video"
+            v-if="!isProcessing"
+            :video="{ ...video, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url }"
             :comments="comments"
             :all-users="allUsers"
             :user="user"
@@ -381,8 +500,9 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <AssociateAngleModal
                     :show="showAssociateAngleModal"
                     :video-id="video.id"
+                    :excluded-ids="[video.id, ...slaveVideos.map(s => s.id)]"
                     @close="showAssociateAngleModal = false"
-                    @associated="showAssociateAngleModal = false"
+                    @associated="onAngleAssociated"
                 />
                 <SyncModal
                     :show="showSyncModal"

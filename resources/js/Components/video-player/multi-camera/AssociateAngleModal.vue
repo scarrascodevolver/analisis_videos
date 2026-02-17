@@ -143,6 +143,7 @@ import type { Video } from '@/types/video-player';
 const props = defineProps<{
     show: boolean;
     videoId: number;
+    excludedIds?: number[];
 }>();
 
 const emit = defineEmits<{
@@ -162,23 +163,25 @@ const errorMessage = ref('');
 // Computed
 const filteredVideos = computed(() => {
     if (!searchQuery.value) return availableVideos.value;
-
     const query = searchQuery.value.toLowerCase();
-    return availableVideos.value.filter(video =>
+    return availableVideos.value.filter((video: any) =>
         video.title.toLowerCase().includes(query)
     );
 });
 
+function filterVideos(videos: any[]) {
+    const excluded = new Set([props.videoId, ...(props.excludedIds ?? [])]);
+    return videos.filter((v: any) => !excluded.has(v.id));
+}
+
 // Methods
 async function loadAvailableVideos() {
     try {
-        // TODO: Implement API call to fetch available videos
-        // This would be a new endpoint in useVideoApi
-        // const response = await api.getAvailableVideosForMultiCamera();
-        // availableVideos.value = response.videos;
-
-        // Placeholder for now
-        availableVideos.value = [];
+        const res = await fetch(`/videos/search-for-angles?query=`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json();
+        availableVideos.value = filterVideos(data.videos ?? []);
     } catch (error) {
         console.error('Failed to load available videos:', error);
         errorMessage.value = 'Error al cargar los videos disponibles';
@@ -192,13 +195,26 @@ async function handleSubmit() {
     errorMessage.value = '';
 
     try {
-        // TODO: Implement API call to associate the video
-        // This would be a new endpoint in useVideoApi
-        // await api.associateCameraAngle(props.videoId, {
-        //     slave_video_id: selectedVideoId.value,
-        //     camera_angle_name: cameraAngleName.value,
-        //     sync_offset: syncOffset.value
-        // });
+        const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+        const res = await fetch(`/videos/${props.videoId}/multi-camera/associate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                slave_video_id: selectedVideoId.value,
+                camera_angle: cameraAngleName.value || 'Ángulo adicional',
+                sync_offset: syncOffset.value,
+            }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Error al asociar el ángulo');
+        }
 
         emit('associated', selectedVideoId.value, cameraAngleName.value, syncOffset.value);
         resetForm();
@@ -245,6 +261,18 @@ function formatDuration(seconds: number | null): string {
 watch(() => props.show, (newValue) => {
     if (newValue) {
         loadAvailableVideos();
+    }
+});
+
+watch(searchQuery, async (q) => {
+    try {
+        const res = await fetch(`/videos/search-for-angles?query=${encodeURIComponent(q)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json();
+        availableVideos.value = filterVideos(data.videos ?? []);
+    } catch (e) {
+        // keep existing list on error
     }
 });
 </script>
