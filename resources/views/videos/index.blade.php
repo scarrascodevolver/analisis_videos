@@ -172,14 +172,18 @@
                             </span>
                         @endif
                     </div>
-                    <div class="card-body py-1 px-2">
+                    <div class="card-body py-2 px-2">
                         <h6 class="card-title mb-0 video-title" title="{{ $video->title }}">
                             {{ $video->title }}
                         </h6>
                         <div class="video-meta">
-                            {{ $video->match_date->format('d/m/Y') }}
-                            @if($sizeLabel) · {{ $sizeLabel }} @endif
+                            <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
                         </div>
+                        @if($sizeLabel)
+                            <div class="video-meta">
+                                <i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                            </div>
+                        @endif
                     </div>
                     <div class="card-footer py-1 px-2 d-flex" style="gap:4px">
                         <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm btn-xs flex-grow-1">
@@ -358,13 +362,13 @@
 /* ─── Grid de videos ───────────────────────────────────── */
 .video-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
 }
 
 /* ─── Tarjetas de video ────────────────────────────────── */
 .video-thumbnail-container {
-    height: 62px;
+    height: 85px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -399,21 +403,21 @@
 }
 .video-card:hover { border-color: #005461; transform: translateY(-2px); }
 .video-meta {
-    font-size: .62rem;
+    font-size: .7rem;
     color: #777;
-    margin-top: 2px;
+    margin-top: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.btn-xs { padding: 2px 6px; font-size: .7rem; }
+.btn-xs { padding: 2px 7px; font-size: .72rem; }
 .video-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    font-size: .7rem;
-    line-height: 1.25;
+    font-size: .8rem;
+    line-height: 1.3;
 }
 
 /* ─── Colores rugby ────────────────────────────────────── */
