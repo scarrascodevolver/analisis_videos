@@ -45,40 +45,7 @@
                    data-rename-name="{{ $cat->name }}">
                     <div class="folder-icon-wrap"><i class="fas fa-folder"></i></div>
                     <div class="folder-name">{{ $cat->name }}</div>
-                    <div class="folder-meta">{{ $cat->videos()->count() }} partidos</div>
-                </a>
-            </div>
-        @endforeach
-    </div>
-@endif
-
-{{-- ═══════════════════════════════════════════════════════════
-     CLUB — Nivel 2: Carpetas de torneos dentro de categoría
-═══════════════════════════════════════════════════════════ --}}
-@elseif($view === 'club_tournaments')
-@include('videos.partials.folder-header', ['title' => $category->name, 'icon' => 'layer-group', 'back' => route('videos.index')])
-@if($tournaments->isEmpty())
-    @include('videos.partials.empty-folder', ['msg' => 'No hay partidos en esta categoría.'])
-@else
-    <div class="folder-grid">
-        @foreach($tournaments as $t)
-            @php $tParam = $t->tournament_id ?? 'none'; @endphp
-            <div class="folder-card-wrap">
-                <a href="{{ route('videos.index', ['category' => $category->id, 'tournament' => $tParam]) }}"
-                   class="folder-card text-decoration-none"
-                   @if($t->tournament_id)
-                       data-rename-url="{{ route('api.tournaments.rename', $t->tournament_id) }}"
-                       data-rename-id="{{ $t->tournament_id }}"
-                       data-rename-name="{{ $t->tournament_name }}"
-                   @endif>
-                    <div class="folder-icon-wrap {{ $t->tournament_id ? '' : 'folder-no-tournament' }}">
-                        <i class="fas fa-{{ $t->tournament_id ? 'trophy' : 'folder' }}"></i>
-                    </div>
-                    <div class="folder-name">{{ $t->tournament_name }}</div>
-                    <div class="folder-meta">
-                        {{ $t->videos_count }} {{ $t->videos_count == 1 ? 'partido' : 'partidos' }}
-                        &middot; {{ \Carbon\Carbon::parse($t->last_match)->format('M Y') }}
-                    </div>
+                    <div class="folder-meta">{{ $cat->videos_count }} partidos</div>
                 </a>
             </div>
         @endforeach
@@ -145,8 +112,11 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0 text-muted">
+        <a href="{{ route('videos.index') }}" class="text-muted mr-2" title="Volver">
+            <i class="fas fa-arrow-left"></i>
+        </a>
         <i class="fas fa-video mr-2"></i>
-        {{ $tournament?->name ?? 'Sin torneo' }}
+        {{ $category->name ?? $tournament?->name ?? $club->name ?? 'Videos' }}
     </h5>
     <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
         <i class="fas fa-plus mr-1"></i> Subir Video
