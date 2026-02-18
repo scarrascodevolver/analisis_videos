@@ -75,6 +75,7 @@ class VideoController extends Controller
 
         // Nivel 3: partidos dentro de equipo+torneo
         $query = Video::with(['category', 'uploader', 'tournament'])
+            ->withCount('clips')
             ->where('is_master', true)
             ->teamVisible($user)
             ->where('analyzed_team_name', $team);

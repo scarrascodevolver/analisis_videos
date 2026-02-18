@@ -136,7 +136,17 @@
 @else
     <div class="row">
         @foreach($videos as $video)
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-3" id="video-card-{{ $video->id }}">
+            @php
+                $rawSize = $video->compressed_file_size ?? $video->file_size ?? 0;
+                $sizeLabel = '';
+                if ($rawSize > 0) {
+                    $gb = $rawSize / 1073741824;
+                    $sizeLabel = $gb >= 1
+                        ? number_format($gb, 1) . ' GB'
+                        : number_format($rawSize / 1048576, 0) . ' MB';
+                }
+            @endphp
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3" id="video-card-{{ $video->id }}">
                 <div class="card video-card h-100">
                     <div class="video-thumbnail-container"
                          onclick="window.location.href='{{ route('videos.show', $video) }}'">
@@ -153,6 +163,12 @@
                             <span class="status-badge">
                                 <i class="fas fa-spinner fa-spin mr-1"></i>
                                 {{ $video->bunny_status === 'processing' ? 'Procesando' : 'Pendiente' }}
+                            </span>
+                        @endif
+                        {{-- XML badge --}}
+                        @if($video->clips_count > 0)
+                            <span class="xml-badge" title="{{ $video->clips_count }} clips importados">
+                                <i class="fas fa-list-ul mr-1"></i>XML
                             </span>
                         @endif
                     </div>
@@ -174,8 +190,9 @@
                         </div>
                         <small class="text-muted">
                             <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                            &nbsp;·&nbsp;
-                            <i class="fas fa-eye mr-1"></i>{{ $video->view_count }}
+                            @if($sizeLabel)
+                                &nbsp;·&nbsp;<i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                            @endif
                         </small>
                     </div>
                     <div class="card-footer py-2 px-3">
@@ -354,7 +371,7 @@
 
 /* ─── Tarjetas de video ────────────────────────────────── */
 .video-thumbnail-container {
-    height: 120px;
+    height: 90px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -362,13 +379,25 @@
 }
 .status-badge {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
+    bottom: 5px;
+    left: 5px;
     background: rgba(0,0,0,.7);
     color: #fff;
-    font-size: .72rem;
-    padding: 2px 8px;
+    font-size: .68rem;
+    padding: 2px 7px;
     border-radius: 10px;
+}
+.xml-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 183, 181, .85);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: .03em;
 }
 .video-card {
     background: #1a1a1a;
