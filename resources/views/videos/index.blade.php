@@ -203,7 +203,7 @@
                             <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button type="button" class="btn btn-danger btn-sm"
+                            <button type="button" class="btn btn-delete btn-sm"
                                     data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -219,9 +219,9 @@
         <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
+                    <div class="modal-header modal-header-rugby text-white">
                         <h5 class="modal-title">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar eliminación
+                            <i class="fas fa-trash mr-2"></i>Confirmar eliminación
                         </h5>
                         <button type="button" class="close text-white" data-dismiss="modal">
                             <span>&times;</span>
@@ -229,11 +229,11 @@
                     </div>
                     <div class="modal-body">
                         <p class="text-center mb-3">¿Eliminar <strong>{{ $video->title }}</strong>?</p>
-                        <p class="text-danger text-center small mb-0">Esta acción no se puede deshacer.</p>
+                        <p class="text-muted text-center small mb-0">Esta acción no se puede deshacer.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-danger btn-sm btn-delete-video"
+                        <button type="button" class="btn btn-delete btn-sm btn-delete-video"
                                 data-video-id="{{ $video->id }}"
                                 data-url="{{ route('videos.destroy', $video) }}">
                             <i class="fas fa-trash mr-1"></i> Eliminar
@@ -419,6 +419,9 @@
 .btn-rugby:hover  { background:#003d4a; border-color:#003d4a; color:#fff; }
 .btn-rugby-light  { background:#00B7B5; border-color:#00B7B5; color:#fff; }
 .btn-rugby-light:hover { background:#009e9c; color:#fff; }
+.btn-delete       { background:transparent; border-color:#2d4a4e; color:#6a9a9e; }
+.btn-delete:hover { background:#1a2e30; border-color:#005461; color:#00B7B5; }
+.modal-header-rugby { background:#005461; }
 .card-rugby       { border-color:#005461; }
 .card-rugby .card-header { background:#005461; }
 .badge-rugby      { background:#005461; color:#fff; font-size:.8em; }
