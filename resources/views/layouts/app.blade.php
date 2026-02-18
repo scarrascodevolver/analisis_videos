@@ -7,11 +7,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
         $currentOrganization = auth()->check() ? auth()->user()->currentOrganization() : null;
-        $orgName = $currentOrganization ? $currentOrganization->name : 'RugbyHub';
+        $orgName = $currentOrganization ? $currentOrganization->name : 'Rugby Key Performance';
         $orgLogo =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
-                : asset('logohub.png');
+                : asset('logo.png');
         $orgFavicon =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
@@ -854,7 +854,7 @@
 
         <!-- Footer -->
         <footer class="main-footer">
-            RugbyHub - Sistema de Análisis de Video
+            Rugby Key Performance - Sistema de Análisis de Video
             <div class="float-right d-none d-sm-inline-block">
                 <b>Versión</b> 1.0.0
             </div>

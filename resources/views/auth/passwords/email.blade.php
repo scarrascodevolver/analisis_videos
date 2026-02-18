@@ -1,15 +1,15 @@
 @extends('layouts.auth')
 
-@section('title', 'Recuperar Contraseña - RugbyHub')
+@section('title', 'Recuperar Contraseña - Rugby Key Performance')
 
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
             <div class="logo-icon">
-                <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo" style="width: 130px; height: 130px; object-fit: contain;">
+                <img src="{{ asset('logo.png') }}" alt="Rugby Key Performance Logo" style="width: 130px; height: 130px; object-fit: contain;">
             </div>
-            <h3>RugbyHub</h3>
+            <h3>Rugby Key Performance</h3>
             <p>Sistema de Análisis de Video para Rugby</p>
         </div>
 

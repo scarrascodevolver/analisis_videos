@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="RugbyHub - Plataforma profesional de análisis de video y creación de jugadas para equipos de rugby. Mejora el rendimiento de tu equipo con herramientas avanzadas.">
+    <meta name="description" content="Rugby Key Performance - Plataforma profesional de análisis de video y creación de jugadas para equipos de rugby. Mejora el rendimiento de tu equipo con herramientas avanzadas.">
     <meta name="keywords" content="rugby, análisis de video, jugadas, táctica, entrenamiento, equipo">
-    <title>RugbyHub - Análisis de Video y Jugadas para Rugby</title>
+    <title>Rugby Key Performance - Análisis de Video y Jugadas para Rugby</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
     <!-- Fonts -->
@@ -1217,7 +1217,7 @@
         <div class="navbar-container">
             <a href="#" class="logo">
                 <div class="logo-icon">
-                    <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo">
+                    <img src="{{ asset('logo.png') }}" alt="Rugby Key Performance Logo">
                 </div>
             </a>
 
@@ -1467,7 +1467,7 @@
                 </div>
                 <h2 class="section-title">Hablemos de tu proyecto</h2>
                 <p class="section-description">
-                    Contáctanos por WhatsApp y te mostraremos cómo RugbyHub puede ayudar a tu club.
+                    Contáctanos por WhatsApp y te mostraremos cómo Rugby Key Performance puede ayudar a tu club.
                 </p>
             </div>
 
@@ -1482,7 +1482,7 @@
                     <div class="pricing-price">
                         <span class="price-amount" style="font-size: 1.8rem;">+34 614 065 223</span>
                     </div>
-                    <a href="https://wa.me/34614065223?text=Hola,%20quiero%20información%20sobre%20RugbyHub" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
+                    <a href="https://wa.me/34614065223?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
                         <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                     </a>
                 </div>
@@ -1497,7 +1497,7 @@
                     <div class="pricing-price">
                         <span class="price-amount" style="font-size: 1.8rem;">+56 9 8544 4418</span>
                     </div>
-                    <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20RugbyHub" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
+                    <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
                         <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                     </a>
                 </div>
@@ -1515,7 +1515,7 @@
                 </div>
                 <h2 class="section-title">Preguntas frecuentes</h2>
                 <p class="section-description">
-                    Respuestas a las dudas mas comunes sobre RugbyHub.
+                    Respuestas a las dudas mas comunes sobre Rugby Key Performance.
                 </p>
             </div>
 
@@ -1534,7 +1534,7 @@
 
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)">
-                        <span>Puedo usar RugbyHub en el celular?</span>
+                        <span>Puedo usar Rugby Key Performance en el celular?</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
@@ -1603,11 +1603,11 @@
                 Solicita una demo personalizada y descubre todo lo que podemos hacer por tu club.
             </p>
             <div class="cta-buttons">
-                <a href="https://wa.me/34614065223?text=Hola,%20quiero%20una%20demo%20de%20RugbyHub" target="_blank" class="btn btn-primary btn-large" style="background: #25D366;">
+                <a href="https://wa.me/34614065223?text=Hola,%20quiero%20una%20demo%20de%20Rugby Key Performance" target="_blank" class="btn btn-primary btn-large" style="background: #25D366;">
                     <i class="fab fa-whatsapp"></i>
                     WhatsApp España
                 </a>
-                <a href="https://wa.me/56985444418?text=Hola,%20quiero%20una%20demo%20de%20RugbyHub" target="_blank" class="btn btn-outline btn-large">
+                <a href="https://wa.me/56985444418?text=Hola,%20quiero%20una%20demo%20de%20Rugby Key Performance" target="_blank" class="btn btn-outline btn-large">
                     <i class="fab fa-whatsapp"></i>
                     WhatsApp Chile
                 </a>
@@ -1622,7 +1622,7 @@
                 <div class="footer-brand">
                     <a href="#" class="logo">
                         <div class="logo-icon">
-                            <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo">
+                            <img src="{{ asset('logo.png') }}" alt="Rugby Key Performance Logo">
                         </div>
                     </a>
                     <p>
@@ -1660,7 +1660,7 @@
 
             <div class="footer-bottom">
                 <p class="footer-copyright">
-                    &copy; {{ date('Y') }} RugbyHub. Todos los derechos reservados.
+                    &copy; {{ date('Y') }} Rugby Key Performance. Todos los derechos reservados.
                 </p>
                 <div class="footer-social">
                     <a href="#"><i class="fab fa-instagram"></i></a>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'RugbyHub - Sistema de Análisis de Video para Rugby')</title>
+    <title>@yield('title', 'Rugby Key Performance - Sistema de Análisis de Video para Rugby')</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
     <!-- Bootstrap 4 CSS -->

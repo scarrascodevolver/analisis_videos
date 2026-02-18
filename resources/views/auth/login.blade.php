@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Iniciar Sesión - RugbyHub')
+@section('title', 'Iniciar Sesión - Rugby Key Performance')
 
 @section('css')
     <style>
@@ -36,7 +36,7 @@
         <div class="auth-card">
             <div class="auth-header">
                 <div class="logo-icon">
-                    <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo"
+                    <img src="{{ asset('logo.png') }}" alt="Rugby Key Performance Logo"
                         style="width: 234px; height: 150px; object-fit: contain;">
                 </div>
             </div>

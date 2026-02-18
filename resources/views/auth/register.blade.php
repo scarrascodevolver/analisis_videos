@@ -13,7 +13,7 @@
                             <img src="{{ asset('storage/' . $organization->logo_path) }}" alt="{{ $organization->name }}"
                                 style="width: 234px; height: 150px; object-fit: contain;">
                         @else
-                            <img src="{{ asset('logohub.png') }}" alt="{{ $organization->name }}"
+                            <img src="{{ asset('logo.png') }}" alt="{{ $organization->name }}"
                                 style="width: 234px; height: 150px; object-fit: contain;">
                         @endif
                     </div>
@@ -22,7 +22,7 @@
                 @else
                     {{-- Sin código: mostrar logo genérico --}}
                     <div class="logo-icon">
-                        <img src="{{ asset('logohub.png') }}" alt="RugbyHub Logo"
+                        <img src="{{ asset('logo.png') }}" alt="Rugby Key Performance Logo"
                             style="width: 234px; height: 150px; object-fit: contain;">
                     </div>
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Contraseña - RugbyHub</title>
+    <title>Recuperar Contraseña - Rugby Key Performance</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -152,7 +152,7 @@
 
             <p>¡Hola!</p>
 
-            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>RugbyHub</strong>.</p>
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>Rugby Key Performance</strong>.</p>
 
             <p>Si solicitaste este cambio, haz clic en el botón de abajo para crear una nueva contraseña:</p>
 
@@ -173,15 +173,15 @@
 
             <p>Si no solicitaste este restablecimiento de contraseña, no es necesario que hagas nada. Tu contraseña actual seguirá siendo válida.</p>
 
-            <p><strong>Saludos,<br>El equipo de RugbyHub</strong></p>
+            <p><strong>Saludos,<br>El equipo de Rugby Key Performance</strong></p>
         </div>
 
         <!-- Footer -->
         <div class="email-footer">
-            <p><strong>RugbyHub</strong></p>
+            <p><strong>Rugby Key Performance</strong></p>
             <p>Sistema de Análisis de Video</p>
             <p>Este es un email automático, por favor no respondas a este mensaje.</p>
-            <p>© {{ date('Y') }} RugbyHub. Todos los derechos reservados.</p>
+            <p>© {{ date('Y') }} Rugby Key Performance. Todos los derechos reservados.</p>
         </div>
     </div>
 </body>
