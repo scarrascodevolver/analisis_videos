@@ -650,7 +650,7 @@
                                 <a href="{{ route('videos.index') }}"
                                     class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-video"></i>
-                                    <p>Videos del Equipo</p>
+                                    <p>{{ auth()->user()->currentOrganization()?->isClub() ? 'Videos del Equipo' : 'Videos' }}</p>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -671,7 +671,7 @@
                                 <a href="{{ route('videos.index') }}"
                                     class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-video"></i>
-                                    <p>Videos del Equipo</p>
+                                    <p>{{ auth()->user()->currentOrganization()?->isClub() ? 'Videos del Equipo' : 'Videos' }}</p>
                                 </a>
                             </li>
                         @endif
@@ -688,7 +688,7 @@
                                 <a href="{{ route('videos.index') }}"
                                     class="nav-link {{ request()->routeIs('videos.index') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-users"></i>
-                                    <p>Videos del Equipo</p>
+                                    <p>{{ auth()->user()->currentOrganization()?->isClub() ? 'Videos del Equipo' : 'Videos' }}</p>
                                 </a>
                             </li>
                             <!-- Ver Jugadas (acceso para jugadores) -->
