@@ -134,7 +134,7 @@
         </div>
     </div>
 @else
-    <div class="row">
+    <div class="video-grid">
         @foreach($videos as $video)
             @php
                 $rawSize = $video->compressed_file_size ?? $video->file_size ?? 0;
@@ -146,7 +146,7 @@
                         : number_format($rawSize / 1048576, 0) . ' MB';
                 }
             @endphp
-            <div class="col-lg-2 col-md-3 col-sm-4 mb-3" id="video-card-{{ $video->id }}">
+            <div id="video-card-{{ $video->id }}">
                 <div class="card video-card h-100">
                     <div class="video-thumbnail-container"
                          onclick="window.location.href='{{ route('videos.show', $video) }}'">
@@ -172,38 +172,24 @@
                             </span>
                         @endif
                     </div>
-                    <div class="card-body py-2 px-3">
-                        <h6 class="card-title mb-1 video-title" title="{{ $video->title }}">
+                    <div class="card-body py-1 px-2">
+                        <h6 class="card-title mb-0 video-title" title="{{ $video->title }}">
                             {{ $video->title }}
                         </h6>
-                        <p class="card-text mb-1">
-                            <small class="text-muted">
-                                {{ $video->analyzed_team_name }}
-                                @if($video->rival_name) vs {{ $video->rival_name }} @endif
-                            </small>
-                        </p>
-                        <div class="mb-1">
-                            <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin categoría' }}</span>
-                            @if($video->division && $video->category?->name === 'Adultas')
-                                <span class="badge badge-secondary badge-sm ml-1">{{ ucfirst($video->division) }}</span>
-                            @endif
+                        <div class="video-meta">
+                            {{ $video->match_date->format('d/m/Y') }}
+                            @if($sizeLabel) · {{ $sizeLabel }} @endif
                         </div>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                            @if($sizeLabel)
-                                &nbsp;·&nbsp;<i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
-                            @endif
-                        </small>
                     </div>
-                    <div class="card-footer py-2 px-3">
-                        <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
-                            <i class="fas fa-play mr-1"></i> Ver
+                    <div class="card-footer py-1 px-2 d-flex" style="gap:4px">
+                        <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm btn-xs flex-grow-1">
+                            <i class="fas fa-play"></i>
                         </a>
                         @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
-                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm">
+                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm btn-xs">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button type="button" class="btn btn-delete btn-sm"
+                            <button type="button" class="btn btn-delete btn-sm btn-xs"
                                     data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -369,9 +355,16 @@
     text-align: center;
 }
 
+/* ─── Grid de videos ───────────────────────────────────── */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+}
+
 /* ─── Tarjetas de video ────────────────────────────────── */
 .video-thumbnail-container {
-    height: 70px;
+    height: 62px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -379,24 +372,24 @@
 }
 .status-badge {
     position: absolute;
-    bottom: 5px;
-    left: 5px;
-    background: rgba(0,0,0,.7);
+    bottom: 3px;
+    left: 3px;
+    background: rgba(0,0,0,.75);
     color: #fff;
-    font-size: .68rem;
-    padding: 2px 7px;
-    border-radius: 10px;
+    font-size: .6rem;
+    padding: 1px 5px;
+    border-radius: 8px;
 }
 .xml-badge {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 3px;
+    right: 3px;
     background: rgba(0, 183, 181, .85);
     color: #fff;
-    font-size: .65rem;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 6px;
+    font-size: .58rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 5px;
     letter-spacing: .03em;
 }
 .video-card {
@@ -404,14 +397,23 @@
     border: 1px solid #2d2d2d;
     transition: border-color .2s, transform .15s;
 }
-.video-card:hover { border-color: #005461; transform: translateY(-3px); }
+.video-card:hover { border-color: #005461; transform: translateY(-2px); }
+.video-meta {
+    font-size: .62rem;
+    color: #777;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.btn-xs { padding: 2px 6px; font-size: .7rem; }
 .video-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    font-size: .78rem;
-    line-height: 1.3;
+    font-size: .7rem;
+    line-height: 1.25;
 }
 
 /* ─── Colores rugby ────────────────────────────────────── */
