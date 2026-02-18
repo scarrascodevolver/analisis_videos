@@ -146,7 +146,7 @@
                         : number_format($rawSize / 1048576, 0) . ' MB';
                 }
             @endphp
-            <div class="col-lg-3 col-md-4 col-sm-6 mb-3" id="video-card-{{ $video->id }}">
+            <div class="col-lg-2 col-md-3 col-sm-4 mb-3" id="video-card-{{ $video->id }}">
                 <div class="card video-card h-100">
                     <div class="video-thumbnail-container"
                          onclick="window.location.href='{{ route('videos.show', $video) }}'">
@@ -371,7 +371,7 @@
 
 /* ─── Tarjetas de video ────────────────────────────────── */
 .video-thumbnail-container {
-    height: 90px;
+    height: 70px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -410,7 +410,7 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    font-size: .9rem;
+    font-size: .78rem;
     line-height: 1.3;
 }
 
