@@ -33,23 +33,4 @@ class Setting extends Model
         );
     }
 
-    /**
-     * Verificar si las evaluaciones están habilitadas
-     */
-    public static function areEvaluationsEnabled()
-    {
-        return (bool) self::get('evaluations_enabled', true);
-    }
-
-    /**
-     * Alternar estado de evaluaciones
-     */
-    public static function toggleEvaluations()
-    {
-        $currentStatus = self::get('evaluations_enabled', '1');
-        $newStatus = $currentStatus === '1' ? '0' : '1';
-        self::set('evaluations_enabled', $newStatus);
-
-        return $newStatus === '1';
-    }
 }

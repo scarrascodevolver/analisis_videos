@@ -98,16 +98,6 @@ class User extends Authenticatable
         return $this->assignedVideos()->whereHas('video');
     }
 
-    public function receivedEvaluations()
-    {
-        return $this->hasMany(PlayerEvaluation::class, 'evaluated_player_id');
-    }
-
-    public function givenEvaluations()
-    {
-        return $this->hasMany(PlayerEvaluation::class, 'evaluator_id');
-    }
-
     public function isAnalyst()
     {
         return $this->role === 'analista';

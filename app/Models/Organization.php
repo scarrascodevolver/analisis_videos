@@ -137,22 +137,6 @@ class Organization extends Model
     }
 
     /**
-     * Evaluaciones de jugadores de esta organización
-     */
-    public function playerEvaluations(): HasMany
-    {
-        return $this->hasMany(PlayerEvaluation::class);
-    }
-
-    /**
-     * Períodos de evaluación de esta organización
-     */
-    public function evaluationPeriods(): HasMany
-    {
-        return $this->hasMany(EvaluationPeriod::class);
-    }
-
-    /**
      * Configuraciones de esta organización
      */
     public function settings(): HasMany

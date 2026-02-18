@@ -319,34 +319,6 @@ Route::get('/debug-stream/{video}', function (App\Models\Video $video) {
     }
 });
 
-// ======================================
-// EVALUACIÓN DE COMPAÑEROS
-// ======================================
-Route::middleware('auth')->group(function () {
-    Route::get('/evaluacion', [App\Http\Controllers\EvaluationController::class, 'index'])->name('evaluations.index');
-    Route::get('/evaluacion/wizard/{player}', [App\Http\Controllers\EvaluationController::class, 'wizard'])->name('evaluations.wizard');
-    Route::post('/evaluacion/store', [App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
-    Route::get('/evaluacion/resultados', [App\Http\Controllers\EvaluationController::class, 'dashboard'])->name('evaluations.dashboard');
-    Route::get('/evaluacion/jugador/{player}', [App\Http\Controllers\EvaluationController::class, 'show'])->name('evaluations.show');
-
-    // Toggle de evaluaciones (entrenadores/analistas)
-    Route::match(['get', 'post'], '/evaluacion/toggle', [App\Http\Controllers\EvaluationController::class, 'toggleEvaluations'])
-        ->middleware('role:entrenador,analista')
-        ->name('evaluations.toggle');
-
-    // Gestión de períodos de evaluación (entrenadores/analistas)
-    Route::middleware('role:entrenador,analista')->group(function () {
-        Route::get('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'listPeriods'])->name('evaluations.periods.list');
-        Route::post('/evaluacion/periodos', [App\Http\Controllers\EvaluationController::class, 'createPeriod'])->name('evaluations.periods.create');
-        Route::post('/evaluacion/periodos/{period}/activar', [App\Http\Controllers\EvaluationController::class, 'activatePeriod'])->name('evaluations.periods.activate');
-        Route::post('/evaluacion/periodos/{period}/cerrar', [App\Http\Controllers\EvaluationController::class, 'closePeriod'])->name('evaluations.periods.close');
-    });
-
-    Route::get('/evaluacion/completada', function () {
-        return view('evaluations.success');
-    })->name('evaluations.success');
-});
-
 // API para búsqueda de jugadores (solo de la misma categoría)
 Route::middleware('auth')->get('/api/search-players', function (Illuminate\Http\Request $request) {
     $query = $request->input('q', '');
