@@ -172,18 +172,24 @@
                             </span>
                         @endif
                     </div>
-                    <div class="card-body py-2 px-2">
-                        <h6 class="card-title mb-0 video-title" title="{{ $video->title }}">
+                    <div class="card-body py-2 px-2 d-flex flex-column">
+                        <h6 class="card-title mb-1 video-title" title="{{ $video->title }}">
                             {{ $video->title }}
                         </h6>
-                        <div class="video-meta">
-                            <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                        </div>
-                        @if($sizeLabel)
-                            <div class="video-meta">
-                                <i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                        <div class="mt-auto">
+                            <div class="mb-1">
+                                <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin cat.' }}</span>
+                                @if($video->rival_name)
+                                    <span class="video-meta d-inline ml-1">vs {{ $video->rival_name }}</span>
+                                @endif
                             </div>
-                        @endif
+                            <div class="video-meta">
+                                <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                                @if($sizeLabel)
+                                    &nbsp;·&nbsp;<i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                                @endif
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer py-1 px-2 d-flex" style="gap:4px">
                         <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm btn-xs flex-grow-1">
@@ -402,6 +408,7 @@
     transition: border-color .2s, transform .15s;
 }
 .video-card:hover { border-color: #005461; transform: translateY(-2px); }
+.video-card .card-body { min-height: 80px; }
 .video-meta {
     font-size: .7rem;
     color: #777;
