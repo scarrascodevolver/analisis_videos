@@ -70,7 +70,9 @@
                         </label>
                         <select id="local_team_name" name="local_team_name"
                             class="form-control form-control-sm select2-local-team" style="width:100%">
-                            <option value="{{ $defaultTeam }}" selected>{{ $defaultTeam }}</option>
+                            @if($isClub && $defaultTeam)
+                                <option value="{{ $defaultTeam }}" selected>{{ $defaultTeam }}</option>
+                            @endif
                         </select>
                     </div>
                 </div>
@@ -459,8 +461,8 @@ function initDropZone() {
 function initSelect2() {
     $('#local_team_name').select2({
         theme: 'bootstrap4',
-        placeholder: 'Nombre del equipo local...',
-        allowClear: false,
+        placeholder: 'Buscar o ingresar equipo local...',
+        allowClear: {{ $isClub ? 'false' : 'true' }},
         tags: true,
         ajax: {
             url: '{{ route("api.local-teams.recent") }}',
@@ -470,7 +472,7 @@ function initSelect2() {
             processResults: data => ({ results: data }),
             cache: true,
         },
-        minimumInputLength: 0,
+        minimumInputLength: {{ $isClub ? '0' : '1' }},
     });
 
     $('#rival_team_id').select2({
