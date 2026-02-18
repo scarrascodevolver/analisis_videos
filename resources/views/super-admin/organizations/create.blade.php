@@ -31,6 +31,30 @@
                         @csrf
 
                         <div class="form-group">
+                            <label>Tipo de Organización <span class="text-danger">*</span></label>
+                            <div class="d-flex" style="gap:12px">
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="type_club" name="type" value="club"
+                                           class="custom-control-input"
+                                           {{ old('type', 'club') === 'club' ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="type_club">
+                                        <strong>Club</strong>
+                                        <small class="d-block text-muted">Un solo club con categorías (Adultos, M18…)</small>
+                                    </label>
+                                </div>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="type_asoc" name="type" value="asociacion"
+                                           class="custom-control-input"
+                                           {{ old('type') === 'asociacion' ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="type_asoc">
+                                        <strong>Asociación</strong>
+                                        <small class="d-block text-muted">Analiza varios clubes en distintos torneos</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label for="name">Nombre de la Organización <span class="text-danger">*</span></label>
                             <input type="text"
                                    class="form-control @error('name') is-invalid @enderror"

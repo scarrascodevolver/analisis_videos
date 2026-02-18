@@ -68,6 +68,7 @@ class SuperAdminController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
+            'type' => 'required|in:club,asociacion',
             'slug' => 'nullable|string|max:255|unique:organizations,slug',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'is_active' => 'boolean',
@@ -100,8 +101,9 @@ class SuperAdminController extends Controller
         }
 
         $organization = Organization::create([
-            'name' => $validated['name'],
-            'slug' => $slug,
+            'name'      => $validated['name'],
+            'type'      => $validated['type'],
+            'slug'      => $slug,
             'logo_path' => $logoPath,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -156,14 +158,14 @@ class SuperAdminController extends Controller
     public function updateOrganization(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => ['nullable', 'string', 'max:255', Rule::unique('organizations')->ignore($organization->id)],
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'name'      => 'required|string|max:255',
+            'type'      => 'required|in:club,asociacion',
+            'slug'      => ['nullable', 'string', 'max:255', Rule::unique('organizations')->ignore($organization->id)],
+            'logo'      => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'is_active' => 'boolean',
         ]);
 
         if ($request->hasFile('logo')) {
-            // Eliminar logo anterior si existe
             if ($organization->logo_path) {
                 \Storage::disk('public')->delete($organization->logo_path);
             }
@@ -171,6 +173,7 @@ class SuperAdminController extends Controller
         }
 
         $organization->name = $validated['name'];
+        $organization->type = $validated['type'];
         if (! empty($validated['slug'])) {
             $organization->slug = $validated['slug'];
         }
