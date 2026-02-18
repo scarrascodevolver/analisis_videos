@@ -746,22 +746,6 @@
                                     </p>
                                 </a>
                             </li>
-                            @if(auth()->user()->currentOrganization()?->isAsociacion())
-                            <!-- Torneos (solo asociaciones) -->
-                            <li class="nav-item">
-                                <a href="{{ route('tournaments.index') }}" class="nav-link {{ request()->routeIs('tournaments.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-trophy"></i>
-                                    <p>Torneos</p>
-                                </a>
-                            </li>
-                            <!-- Clubes (solo asociaciones) -->
-                            <li class="nav-item">
-                                <a href="{{ route('videos.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-shield-alt"></i>
-                                    <p>Clubes</p>
-                                </a>
-                            </li>
-                            @endif
                         @endif
 
                         @if (Auth::user()->role === 'analista')

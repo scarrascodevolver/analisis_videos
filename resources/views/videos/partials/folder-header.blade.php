@@ -5,7 +5,15 @@
         @endisset
         <i class="fas fa-{{ $icon }} mr-2"></i>{{ $title }}
     </h5>
-    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
-        <i class="fas fa-plus mr-1"></i> Subir Video
-    </a>
+    <div class="d-flex" style="gap:8px">
+        @isset($extraBtn)
+            <button type="button" class="btn btn-outline-accent btn-sm"
+                data-toggle="modal" data-target="{{ $extraBtn['modal'] }}">
+                <i class="fas fa-{{ $extraBtn['icon'] }} mr-1"></i> {{ $extraBtn['label'] }}
+            </button>
+        @endisset
+        <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
+            <i class="fas fa-plus mr-1"></i> Subir Video
+        </a>
+    </div>
 </div>

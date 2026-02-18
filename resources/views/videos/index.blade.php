@@ -56,7 +56,11 @@
      ASOCIACIÓN — Nivel 1: Carpetas de torneos
 ═══════════════════════════════════════════════════════════ --}}
 @elseif($view === 'asoc_tournaments')
-@include('videos.partials.folder-header', ['title' => 'Torneos', 'icon' => 'trophy'])
+@include('videos.partials.folder-header', [
+    'title' => 'Torneos',
+    'icon' => 'trophy',
+    'extraBtn' => ['label' => 'Nuevo Torneo', 'icon' => 'plus', 'modal' => '#createTournamentModal']
+])
 @if($tournaments->isEmpty())
     @include('videos.partials.empty-folder', ['msg' => 'No hay torneos creados aún.'])
 @else
@@ -308,6 +312,58 @@
         </div>
     @endif
 
+@endif
+
+{{-- Modal: Crear Torneo (solo asociaciones) --}}
+@if(isset($view) && $view === 'asoc_tournaments')
+<div class="modal fade" id="createTournamentModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary py-2">
+                <h6 class="modal-title"><i class="fas fa-trophy mr-2 text-warning"></i>Nuevo Torneo</h6>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body py-2">
+                <div class="form-group mb-0">
+                    <input type="text" id="newTournamentName" class="form-control form-control-sm bg-dark border-secondary text-white"
+                        placeholder="Nombre del torneo..." maxlength="255">
+                    <div id="tournamentError" class="text-danger small mt-1 d-none"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-rugby btn-sm" id="saveTournamentBtn">
+                    <i class="fas fa-save mr-1"></i> Crear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@push('scripts')
+<script>
+document.getElementById('saveTournamentBtn').addEventListener('click', function() {
+    const name = document.getElementById('newTournamentName').value.trim();
+    const errEl = document.getElementById('tournamentError');
+    if (!name) { errEl.textContent = 'Ingresa un nombre.'; errEl.classList.remove('d-none'); return; }
+    errEl.classList.add('d-none');
+    this.disabled = true;
+    fetch('{{ route("api.tournaments.store") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.id) { window.location.reload(); }
+        else { errEl.textContent = data.message || 'Error al crear.'; errEl.classList.remove('d-none'); this.disabled = false; }
+    })
+    .catch(() => { errEl.textContent = 'Error de red.'; errEl.classList.remove('d-none'); this.disabled = false; });
+});
+document.getElementById('newTournamentName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('saveTournamentBtn').click();
+});
+</script>
+@endpush
 @endif
 
 @endsection
