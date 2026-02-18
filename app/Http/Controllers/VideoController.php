@@ -50,7 +50,7 @@ class VideoController extends Controller
 
             // Nivel 1: carpetas de categorías
             if (! $categoryParam) {
-                $categories = Category::withCount(['videos' => fn ($q) => $q->where('is_master', true)])
+                $categories = Category::withCount('videos')
                     ->orderBy('name')
                     ->get();
 
