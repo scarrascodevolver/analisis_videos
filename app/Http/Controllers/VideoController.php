@@ -40,56 +40,101 @@ class VideoController extends Controller
             return view('videos.index', compact('videos', 'rugbySituations', 'categories'))->with('view', 'list');
         }
 
-        // Analistas/entrenadores: navegación por carpetas
-        $team            = $request->get('team');
-        $tournamentParam = $request->get('tournament'); // id numérico | 'none' | null
+        // Analistas/entrenadores: navegación por carpetas (adaptativa según tipo de org)
+        $org  = $user->currentOrganization();
+        $orgType = $org?->type ?? 'club';
 
-        // Nivel 1: carpetas de equipos
-        if (! $team) {
-            $teams = Video::where('is_master', true)
+        // ── CLUB: Categoría → Torneo → Videos ──────────────────────────────
+        if ($orgType === 'club') {
+            $categoryParam   = $request->get('category');   // id | null
+            $tournamentParam = $request->get('tournament'); // id | 'none' | null
+
+            // Nivel 1: carpetas de categorías
+            if (! $categoryParam) {
+                $categories = Category::orderBy('name')->get();
+                return view('videos.index', compact('categories'))->with('view', 'club_categories');
+            }
+
+            $category = Category::findOrFail($categoryParam);
+
+            // Nivel 2: carpetas de torneos dentro de la categoría
+            if ($tournamentParam === null) {
+                $tournaments = Video::where('is_master', true)
+                    ->teamVisible($user)
+                    ->where('category_id', $categoryParam)
+                    ->with('tournament')
+                    ->selectRaw('tournament_id, COUNT(*) as videos_count, MAX(match_date) as last_match')
+                    ->groupBy('tournament_id')
+                    ->orderByRaw('MAX(match_date) DESC')
+                    ->get()
+                    ->map(fn ($row) => tap($row, fn ($r) => $r->tournament_name = $r->tournament?->name ?? 'Sin torneo'));
+
+                return view('videos.index', compact('category', 'tournaments'))->with('view', 'club_tournaments');
+            }
+
+            // Nivel 3: videos
+            $query = Video::with(['category', 'uploader', 'tournament'])
+                ->withCount('clips')
+                ->where('is_master', true)
                 ->teamVisible($user)
-                ->whereNotNull('analyzed_team_name')
-                ->where('analyzed_team_name', '!=', '')
-                ->selectRaw('analyzed_team_name, COUNT(*) as videos_count, MAX(match_date) as last_match')
-                ->groupBy('analyzed_team_name')
-                ->orderByRaw('MAX(match_date) DESC')
+                ->where('category_id', $categoryParam);
+
+            if ($tournamentParam === 'none') {
+                $query->whereNull('tournament_id');
+            } else {
+                $query->where('tournament_id', $tournamentParam);
+            }
+
+            $videos     = $query->orderBy('match_date', 'desc')->paginate(24);
+            $tournament = ($tournamentParam && $tournamentParam !== 'none') ? Tournament::find($tournamentParam) : null;
+
+            return view('videos.index', compact('category', 'tournament', 'tournamentParam', 'videos'))->with('view', 'matches');
+        }
+
+        // ── ASOCIACIÓN: Torneo → Club → Videos ─────────────────────────────
+        $tournamentParam = $request->get('tournament'); // id | null
+        $clubParam       = $request->get('club');       // id | null
+
+        // Nivel 1: carpetas de torneos
+        if (! $tournamentParam) {
+            $tournaments = Tournament::withCount('videos')
+                ->orderByDesc('updated_at')
                 ->get();
 
-            return view('videos.index', compact('teams'))->with('view', 'teams');
+            return view('videos.index', compact('tournaments'))->with('view', 'asoc_tournaments');
         }
 
-        // Nivel 2: carpetas de torneos dentro de un equipo
-        if ($team && $tournamentParam === null) {
-            $tournaments = Video::where('is_master', true)
+        $tournament = Tournament::findOrFail($tournamentParam);
+
+        // Nivel 2: carpetas de clubes dentro del torneo
+        if (! $clubParam) {
+            $clubs = Video::where('is_master', true)
                 ->teamVisible($user)
-                ->where('analyzed_team_name', $team)
-                ->with('tournament')
-                ->selectRaw('tournament_id, COUNT(*) as videos_count, MAX(match_date) as last_match')
-                ->groupBy('tournament_id')
+                ->where('tournament_id', $tournamentParam)
+                ->whereNotNull('club_id')
+                ->with('club')
+                ->selectRaw('club_id, COUNT(*) as videos_count, MAX(match_date) as last_match')
+                ->groupBy('club_id')
                 ->orderByRaw('MAX(match_date) DESC')
                 ->get()
-                ->map(fn ($row) => tap($row, fn ($r) => $r->tournament_name = $r->tournament?->name ?? 'Sin torneo'));
+                ->map(fn ($row) => tap($row, fn ($r) => $r->club_name = $r->club?->name ?? 'Sin club'));
 
-            return view('videos.index', compact('team', 'tournaments'))->with('view', 'tournaments');
+            return view('videos.index', compact('tournament', 'clubs'))->with('view', 'asoc_clubs');
         }
 
-        // Nivel 3: partidos dentro de equipo+torneo
-        $query = Video::with(['category', 'uploader', 'tournament'])
+        $club = \App\Models\Club::findOrFail($clubParam);
+
+        // Nivel 3: videos
+        $videos = Video::with(['category', 'uploader', 'tournament'])
             ->withCount('clips')
             ->where('is_master', true)
             ->teamVisible($user)
-            ->where('analyzed_team_name', $team);
+            ->where('tournament_id', $tournamentParam)
+            ->where('club_id', $clubParam)
+            ->orderBy('match_date', 'desc')
+            ->paginate(24);
 
-        if ($tournamentParam === 'none') {
-            $query->whereNull('tournament_id');
-        } else {
-            $query->where('tournament_id', $tournamentParam);
-        }
-
-        $videos     = $query->orderBy('match_date', 'desc')->paginate(12);
-        $tournament = ($tournamentParam && $tournamentParam !== 'none') ? Tournament::find($tournamentParam) : null;
-
-        return view('videos.index', compact('team', 'tournament', 'tournamentParam', 'videos'))->with('view', 'matches');
+        return view('videos.index', compact('tournament', 'club', 'videos'))->with('view', 'matches');
     }
 
     public function create()

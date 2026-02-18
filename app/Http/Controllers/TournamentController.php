@@ -22,6 +22,14 @@ class TournamentController extends Controller
      * Update a tournament's name and season inline.
      * PUT /tournaments/{tournament}
      */
+    public function rename(Request $request, Tournament $tournament): \Illuminate\Http\JsonResponse
+    {
+        $request->validate(['name' => 'required|string|max:255']);
+        $tournament->update(['name' => $request->name]);
+
+        return response()->json(['ok' => true, 'name' => $tournament->name]);
+    }
+
     public function update(Request $request, Tournament $tournament): \Illuminate\Http\JsonResponse
     {
         $request->validate([

@@ -9,9 +9,13 @@ use Illuminate\Support\Str;
 
 class Organization extends Model
 {
+    const TYPE_CLUB       = 'club';
+    const TYPE_ASOCIACION = 'asociacion';
+
     protected $fillable = [
         'name',
         'slug',
+        'type',
         'logo_path',
         'is_active',
         'invitation_code',
@@ -104,6 +108,24 @@ class Organization extends Model
     public function videos(): HasMany
     {
         return $this->hasMany(Video::class);
+    }
+
+    /**
+     * Clubes de esta organización (solo asociaciones)
+     */
+    public function clubs(): HasMany
+    {
+        return $this->hasMany(Club::class);
+    }
+
+    public function isClub(): bool
+    {
+        return $this->type === self::TYPE_CLUB;
+    }
+
+    public function isAsociacion(): bool
+    {
+        return $this->type === self::TYPE_ASOCIACION;
     }
 
     /**

@@ -94,4 +94,12 @@ class AdminController extends Controller
 
         return back()->with('success', "Nuevo código generado: {$newCode}");
     }
+
+    public function renameCategory(Request $request, Category $category)
+    {
+        $request->validate(['name' => 'required|string|max:100']);
+        $category->update(['name' => $request->name]);
+
+        return response()->json(['ok' => true, 'name' => $category->name]);
+    }
 }

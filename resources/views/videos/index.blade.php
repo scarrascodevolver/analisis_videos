@@ -28,92 +28,118 @@
 @section('main_content')
 
 {{-- ═══════════════════════════════════════════════════════════
-     NIVEL 1 — Carpetas de equipos (analistas/entrenadores)
+     CLUB — Nivel 1: Carpetas de categorías
 ═══════════════════════════════════════════════════════════ --}}
-@if($view === 'teams')
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0 text-muted"><i class="fas fa-folder-open mr-2"></i>Mis equipos</h5>
-    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
-        <i class="fas fa-plus mr-1"></i> Subir Video
-    </a>
-</div>
-
-@if($teams->isEmpty())
-    <div class="card card-rugby">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-            <h5 class="text-muted">Aún no hay videos subidos</h5>
-            <a href="{{ route('videos.create') }}" class="btn btn-rugby mt-2">
-                <i class="fas fa-plus mr-1"></i> Subir primer video
-            </a>
-        </div>
-    </div>
+@if($view === 'club_categories')
+@include('videos.partials.folder-header', ['title' => 'Categorías', 'icon' => 'layer-group'])
+@if($categories->isEmpty())
+    @include('videos.partials.empty-folder', ['msg' => 'No hay categorías creadas aún. Creá una desde Mantenedor.'])
 @else
     <div class="folder-grid">
-        @foreach($teams as $team)
-            <a href="{{ route('videos.index', ['team' => $team->analyzed_team_name]) }}"
-               class="folder-card text-decoration-none">
-                <div class="folder-icon-wrap">
-                    <i class="fas fa-folder"></i>
-                </div>
-                <div class="folder-name">{{ $team->analyzed_team_name }}</div>
-                <div class="folder-meta">
-                    {{ $team->videos_count }} {{ $team->videos_count == 1 ? 'partido' : 'partidos' }}
-                    &middot;
-                    {{ \Carbon\Carbon::parse($team->last_match)->format('M Y') }}
-                </div>
-            </a>
+        @foreach($categories as $cat)
+            <div class="folder-card-wrap">
+                <a href="{{ route('videos.index', ['category' => $cat->id]) }}"
+                   class="folder-card text-decoration-none"
+                   data-rename-url="{{ route('api.categories.rename', $cat) }}"
+                   data-rename-id="{{ $cat->id }}"
+                   data-rename-name="{{ $cat->name }}">
+                    <div class="folder-icon-wrap"><i class="fas fa-folder"></i></div>
+                    <div class="folder-name">{{ $cat->name }}</div>
+                    <div class="folder-meta">{{ $cat->videos()->count() }} partidos</div>
+                </a>
+            </div>
         @endforeach
     </div>
 @endif
 
-
 {{-- ═══════════════════════════════════════════════════════════
-     NIVEL 2 — Carpetas de torneos dentro de un equipo
+     CLUB — Nivel 2: Carpetas de torneos dentro de categoría
 ═══════════════════════════════════════════════════════════ --}}
-@elseif($view === 'tournaments')
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0 text-muted">
-        <i class="fas fa-folder-open mr-2"></i>{{ $team }}
-    </h5>
-    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
-        <i class="fas fa-plus mr-1"></i> Subir Video
-    </a>
-</div>
-
+@elseif($view === 'club_tournaments')
+@include('videos.partials.folder-header', ['title' => $category->name, 'icon' => 'layer-group', 'back' => route('videos.index')])
 @if($tournaments->isEmpty())
-    <div class="card card-rugby">
-        <div class="card-body text-center py-4">
-            <p class="text-muted mb-0">No hay partidos para este equipo.</p>
-        </div>
-    </div>
+    @include('videos.partials.empty-folder', ['msg' => 'No hay partidos en esta categoría.'])
 @else
     <div class="folder-grid">
         @foreach($tournaments as $t)
-            @php
-                $tParam = $t->tournament_id ?? 'none';
-            @endphp
-            <a href="{{ route('videos.index', ['team' => $team, 'tournament' => $tParam]) }}"
-               class="folder-card text-decoration-none">
-                <div class="folder-icon-wrap {{ $t->tournament_id ? '' : 'folder-no-tournament' }}">
-                    <i class="fas fa-{{ $t->tournament_id ? 'trophy' : 'folder' }}"></i>
-                </div>
-                <div class="folder-name">{{ $t->tournament_name }}</div>
-                <div class="folder-meta">
-                    {{ $t->videos_count }} {{ $t->videos_count == 1 ? 'partido' : 'partidos' }}
-                    &middot;
-                    {{ \Carbon\Carbon::parse($t->last_match)->format('M Y') }}
-                </div>
-            </a>
+            @php $tParam = $t->tournament_id ?? 'none'; @endphp
+            <div class="folder-card-wrap">
+                <a href="{{ route('videos.index', ['category' => $category->id, 'tournament' => $tParam]) }}"
+                   class="folder-card text-decoration-none"
+                   @if($t->tournament_id)
+                       data-rename-url="{{ route('api.tournaments.rename', $t->tournament_id) }}"
+                       data-rename-id="{{ $t->tournament_id }}"
+                       data-rename-name="{{ $t->tournament_name }}"
+                   @endif>
+                    <div class="folder-icon-wrap {{ $t->tournament_id ? '' : 'folder-no-tournament' }}">
+                        <i class="fas fa-{{ $t->tournament_id ? 'trophy' : 'folder' }}"></i>
+                    </div>
+                    <div class="folder-name">{{ $t->tournament_name }}</div>
+                    <div class="folder-meta">
+                        {{ $t->videos_count }} {{ $t->videos_count == 1 ? 'partido' : 'partidos' }}
+                        &middot; {{ \Carbon\Carbon::parse($t->last_match)->format('M Y') }}
+                    </div>
+                </a>
+            </div>
         @endforeach
     </div>
 @endif
 
+{{-- ═══════════════════════════════════════════════════════════
+     ASOCIACIÓN — Nivel 1: Carpetas de torneos
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'asoc_tournaments')
+@include('videos.partials.folder-header', ['title' => 'Torneos', 'icon' => 'trophy'])
+@if($tournaments->isEmpty())
+    @include('videos.partials.empty-folder', ['msg' => 'No hay torneos creados aún.'])
+@else
+    <div class="folder-grid">
+        @foreach($tournaments as $t)
+            <div class="folder-card-wrap">
+                <a href="{{ route('videos.index', ['tournament' => $t->id]) }}"
+                   class="folder-card text-decoration-none"
+                   data-rename-url="{{ route('api.tournaments.rename', $t) }}"
+                   data-rename-id="{{ $t->id }}"
+                   data-rename-name="{{ $t->name }}">
+                    <div class="folder-icon-wrap"><i class="fas fa-trophy"></i></div>
+                    <div class="folder-name">{{ $t->name }}</div>
+                    <div class="folder-meta">{{ $t->videos_count }} videos</div>
+                </a>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 {{-- ═══════════════════════════════════════════════════════════
-     NIVEL 3 — Lista de partidos dentro de equipo + torneo
+     ASOCIACIÓN — Nivel 2: Carpetas de clubes dentro de torneo
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'asoc_clubs')
+@include('videos.partials.folder-header', ['title' => $tournament->name, 'icon' => 'trophy', 'back' => route('videos.index')])
+@if($clubs->isEmpty())
+    @include('videos.partials.empty-folder', ['msg' => 'No hay clubes con videos en este torneo.'])
+@else
+    <div class="folder-grid">
+        @foreach($clubs as $c)
+            <div class="folder-card-wrap">
+                <a href="{{ route('videos.index', ['tournament' => $tournament->id, 'club' => $c->club_id]) }}"
+                   class="folder-card text-decoration-none"
+                   data-rename-url="{{ route('api.clubs.rename', $c->club_id) }}"
+                   data-rename-id="{{ $c->club_id }}"
+                   data-rename-name="{{ $c->club_name }}">
+                    <div class="folder-icon-wrap"><i class="fas fa-shield-alt"></i></div>
+                    <div class="folder-name">{{ $c->club_name }}</div>
+                    <div class="folder-meta">
+                        {{ $c->videos_count }} {{ $c->videos_count == 1 ? 'partido' : 'partidos' }}
+                        &middot; {{ \Carbon\Carbon::parse($c->last_match)->format('M Y') }}
+                    </div>
+                </a>
+            </div>
+        @endforeach
+    </div>
+@endif
+
+{{-- ═══════════════════════════════════════════════════════════
+     NIVEL FINAL — Lista de videos (ambos tipos de org)
 ═══════════════════════════════════════════════════════════ --}}
 @elseif($view === 'matches')
 
@@ -439,5 +465,92 @@
 .card-rugby .card-header { background:#005461; }
 .badge-rugby      { background:#005461; color:#fff; font-size:.8em; }
 .badge-sm         { font-size:.75em; padding:.2rem .5rem; }
+
+/* ─── Context menu ─────────────────────────────────────── */
+#folder-context-menu {
+    position: fixed;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 4px 0;
+    min-width: 160px;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    display: none;
+}
+#folder-context-menu li {
+    list-style: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: .85rem;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .15s;
+}
+#folder-context-menu li:hover { background: #005461; color: #fff; }
 </style>
+@endpush
+
+{{-- Context menu HTML --}}
+<ul id="folder-context-menu">
+    <li id="ctx-rename"><i class="fas fa-pencil-alt"></i> Renombrar</li>
+</ul>
+
+@push('scripts')
+<script>
+(function () {
+    const menu    = document.getElementById('folder-context-menu');
+    let activeEl  = null;
+
+    // Abrir menú con click derecho en carpetas que tengan data-rename-url
+    document.addEventListener('contextmenu', function (e) {
+        const card = e.target.closest('[data-rename-url]');
+        if (!card) { menu.style.display = 'none'; return; }
+
+        e.preventDefault();
+        activeEl = card;
+
+        menu.style.display = 'block';
+        menu.style.left    = Math.min(e.clientX, window.innerWidth  - 180) + 'px';
+        menu.style.top     = Math.min(e.clientY, window.innerHeight - 80)  + 'px';
+    });
+
+    // Cerrar al hacer click en cualquier otro lado
+    document.addEventListener('click', () => menu.style.display = 'none');
+
+    // Renombrar
+    document.getElementById('ctx-rename').addEventListener('click', async function () {
+        if (!activeEl) return;
+
+        const url     = activeEl.dataset.renameUrl;
+        const current = activeEl.dataset.renameName;
+        const newName = prompt('Nuevo nombre:', current);
+
+        if (!newName || newName.trim() === current.trim()) return;
+
+        try {
+            const res = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ name: newName.trim() }),
+            });
+
+            const data = await res.json();
+            if (data.ok) {
+                // Actualizar el texto visible sin recargar
+                activeEl.dataset.renameName = data.name;
+                const nameEl = activeEl.querySelector('.folder-name');
+                if (nameEl) nameEl.textContent = data.name;
+            }
+        } catch (err) {
+            alert('Error al renombrar. Intente nuevamente.');
+        }
+    });
+})();
+</script>
 @endpush

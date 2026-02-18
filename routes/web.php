@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BunnyUploadController;
 use App\Http\Controllers\BunnyWebhookController;
 use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\ClubController;
 use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JugadasController;
@@ -127,6 +128,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
     Route::put('/tournaments/{tournament}', [TournamentController::class, 'update'])->name('tournaments.update');
     Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy'])->name('tournaments.destroy');
+
+    // Clubs (asociaciones)
+    Route::post('api/clubs', [ClubController::class, 'store'])->name('api.clubs.store');
+    Route::patch('api/clubs/{club}/rename', [ClubController::class, 'rename'])->name('api.clubs.rename');
+    Route::delete('api/clubs/{club}', [ClubController::class, 'destroy'])->name('api.clubs.destroy');
+    Route::get('api/clubs/autocomplete', [ClubController::class, 'autocomplete'])->name('api.clubs.autocomplete');
+
+    // Rename de carpetas (categorías y torneos) via AJAX
+    Route::patch('api/categories/{category}/rename', [AdminController::class, 'renameCategory'])->name('api.categories.rename');
+    Route::patch('api/tournaments/{tournament}/rename', [TournamentController::class, 'rename'])->name('api.tournaments.rename');
 
     // Local Teams recent (for Select2 autocomplete in upload form)
     Route::get('/api/local-teams/recent', [VideoController::class, 'recentLocalTeams'])->name('api.local-teams.recent');

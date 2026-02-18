@@ -27,6 +27,7 @@ class Video extends Model
         'rival_team_name',    // Nombre del rival (texto libre - fallback)
         'category_id',
         'tournament_id',
+        'club_id',
         'division',
         'rugby_situation_id',
         'match_date',
