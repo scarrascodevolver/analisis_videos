@@ -8,7 +8,6 @@ use App\Models\VideoClip;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class LongoMatchXmlParser
 {
@@ -185,12 +184,11 @@ class LongoMatchXmlParser
     /**
      * Import parsed data to a video
      *
-     * Categories from XML are created with scope='video' (video-specific).
-     * If a category with the same name exists as a template (scope='organization'),
-     * it will be reused instead of creating a duplicate.
+     * Clips are created and assigned to existing organization-scope categories
+     * (case-insensitive match by name). No new categories/buttons are created.
      *
      * @param  bool  $replaceExisting  Whether to replace existing clips
-     * @return array ['categories_created' => int, 'clips_created' => int]
+     * @return array ['clips_created' => int, 'clips_replaced' => int]
      */
     public function importToVideo(Video $video, array $parsedData, bool $replaceExisting = true): array
     {
@@ -198,8 +196,6 @@ class LongoMatchXmlParser
         $userId = Auth::id();
 
         $stats = [
-            'categories_created' => 0,
-            'categories_reused' => 0,
             'clips_created' => 0,
             'clips_replaced' => 0,
         ];
@@ -216,88 +212,24 @@ class LongoMatchXmlParser
             // Get unique categories used in clips
             $usedCategoryCodes = array_unique(array_column($parsedData['clips'], 'code'));
 
-            // Build category map (code => category_id)
-            $categoryMap = [];
-            $categoryColors = [];
+            // Load all org-scope categories for this organization (case-insensitive match)
+            $orgCategories = ClipCategory::withoutGlobalScopes()
+                ->where('organization_id', $organizationId)
+                ->where('scope', ClipCategory::SCOPE_ORGANIZATION)
+                ->get()
+                ->keyBy(fn ($cat) => strtolower($cat->name));
 
-            foreach ($parsedData['categories'] as $cat) {
-                $categoryColors[$cat['code']] = $cat['color'];
-            }
+            // Build category map (code => category_id or null)
+            $categoryMap = [];
 
             foreach ($usedCategoryCodes as $code) {
-                // 1. First, try to find an existing TEMPLATE (organization scope) with this name
-                $templateCategory = ClipCategory::withoutGlobalScopes()
-                    ->where('organization_id', $organizationId)
-                    ->where('scope', ClipCategory::SCOPE_ORGANIZATION)
-                    ->where('name', $code)
-                    ->first();
-
-                if ($templateCategory) {
-                    // Reuse the template
-                    $categoryMap[$code] = $templateCategory->id;
-                    $stats['categories_reused']++;
-                    continue;
-                }
-
-                // 2. Check if a video-specific category already exists for THIS video
-                $existingVideoCategory = ClipCategory::withoutGlobalScopes()
-                    ->where('video_id', $video->id)
-                    ->where('scope', ClipCategory::SCOPE_VIDEO)
-                    ->where('name', $code)
-                    ->first();
-
-                if ($existingVideoCategory) {
-                    // Reuse the existing video category
-                    $categoryMap[$code] = $existingVideoCategory->id;
-                    $stats['categories_reused']++;
-                    continue;
-                }
-
-                // 3. Create new category with scope='video' (only for this video)
-                $color = $categoryColors[$code] ?? '#666666';
-
-                // Generate unique slug for this video's categories
-                $baseSlug = Str::slug($code);
-                $slug = $baseSlug;
-                $counter = 2;
-
-                while (ClipCategory::withoutGlobalScopes()
-                    ->where('video_id', $video->id)
-                    ->where('scope', ClipCategory::SCOPE_VIDEO)
-                    ->where('slug', $slug)
-                    ->exists()
-                ) {
-                    $slug = $baseSlug . '-' . $counter;
-                    $counter++;
-                }
-
-                $newCategory = ClipCategory::create([
-                    'organization_id' => $organizationId,
-                    'scope' => ClipCategory::SCOPE_VIDEO,
-                    'video_id' => $video->id,
-                    'name' => $code,
-                    'slug' => $slug,
-                    'color' => $color,
-                    'icon' => $this->guessIcon($code),
-                    'hotkey' => null,
-                    'lead_seconds' => 0,
-                    'lag_seconds' => 0,
-                    'sort_order' => 0,
-                    'is_active' => true,
-                    'created_by' => $userId,
-                ]);
-
-                $categoryMap[$code] = $newCategory->id;
-                $stats['categories_created']++;
+                $match = $orgCategories->get(strtolower($code));
+                $categoryMap[$code] = $match ? $match->id : null;
             }
 
             // Create clips
             foreach ($parsedData['clips'] as $clipData) {
                 $categoryId = $categoryMap[$clipData['code']] ?? null;
-
-                if (! $categoryId) {
-                    continue;
-                }
 
                 // Build tags from labels
                 $tags = [];
@@ -347,43 +279,6 @@ class LongoMatchXmlParser
             ]);
             throw $e;
         }
-    }
-
-    /**
-     * Guess an appropriate icon based on category name
-     */
-    private function guessIcon(string $code): ?string
-    {
-        $code = strtoupper($code);
-
-        $iconMap = [
-            'TACKLE' => 'fas fa-hand-rock',
-            'RUCK' => 'fas fa-users',
-            'PASE' => 'fas fa-exchange-alt',
-            'KICK' => 'fas fa-futbol',
-            'TRY' => 'fas fa-trophy',
-            'SCRUM' => 'fas fa-compress-arrows-alt',
-            'LINE' => 'fas fa-arrows-alt-v',
-            'DUELO' => 'fas fa-fist-raised',
-            'QUIEBRE' => 'fas fa-bolt',
-            'AEREO' => 'fas fa-cloud',
-            'MANEJO' => 'fas fa-hands',
-            'OUT' => 'fas fa-sign-out-alt',
-            'SECUENCIA' => 'fas fa-list-ol',
-            'ZONA' => 'fas fa-map-marker-alt',
-            'POS' => 'fas fa-football-ball',
-            'CONV' => 'fas fa-bullseye',
-            'DROP' => 'fas fa-arrow-down',
-            'PALOS' => 'fas fa-columns',
-        ];
-
-        foreach ($iconMap as $key => $icon) {
-            if (str_contains($code, $key)) {
-                return $icon;
-            }
-        }
-
-        return 'fas fa-tag';
     }
 
     /**

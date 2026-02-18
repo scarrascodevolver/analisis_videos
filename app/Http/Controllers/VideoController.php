@@ -457,7 +457,7 @@ class VideoController extends Controller
             $stats = $xmlParser->importToVideo($video, $parsedData, true);
 
             return redirect()->route('videos.edit', $video)
-                ->with('success', "XML importado exitosamente: {$stats['clips_created']} clips creados, {$stats['categories_created']} categorías nuevas, {$stats['categories_reused']} categorías reutilizadas.");
+                ->with('success', "XML importado exitosamente: {$stats['clips_created']} clips creados.");
 
         } catch (\Exception $e) {
             \Log::error('Error importing XML to video '.$video->id.': '.$e->getMessage());
