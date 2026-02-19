@@ -2,19 +2,19 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnotationController;
-use App\Http\Controllers\ClipCategoryController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BunnyUploadController;
 use App\Http\Controllers\BunnyWebhookController;
-use App\Http\Controllers\DirectUploadController;
+use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\ClubController;
-use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DirectUploadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JugadasController;
 use App\Http\Controllers\MultiCameraController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\RivalTeamController;
+use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\VideoController;
@@ -79,6 +79,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
+    // Onboarding
+    Route::post('/onboarding/complete', [App\Http\Controllers\OnboardingController::class, 'complete'])->name('onboarding.complete');
+
     // Vue/Inertia Test Page
     Route::get('/vue-test', fn () => Inertia::render('Test'))->name('vue.test');
 
@@ -106,7 +109,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('api/upload/bunny/init', [BunnyUploadController::class, 'init'])->name('api.upload.bunny.init');
     Route::post('api/upload/bunny/complete', [BunnyUploadController::class, 'complete'])->name('api.upload.bunny.complete');
     Route::get('api/upload/bunny/{video}/status', [BunnyUploadController::class, 'status'])->name('api.upload.bunny.status');
-
 
     // Direct Upload to Spaces (pre-signed URLs)
     Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');

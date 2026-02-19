@@ -19,6 +19,7 @@ class Organization extends Model
         'type',
         'logo_path',
         'is_active',
+        'onboarding_completed',
         'invitation_code',
         'timezone',
         'compression_strategy',
@@ -34,6 +35,7 @@ class Organization extends Model
     {
         return [
             'is_active' => 'boolean',
+            'onboarding_completed' => 'boolean',
             'compression_start_hour' => 'integer',
             'compression_end_hour' => 'integer',
             'compression_hybrid_threshold' => 'integer',

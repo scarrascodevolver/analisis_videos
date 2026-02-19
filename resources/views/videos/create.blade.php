@@ -68,12 +68,15 @@
                         <label class="small font-weight-bold">
                             <i class="fas fa-shield-alt text-success mr-1"></i>Equipo Local
                         </label>
-                        <select id="local_team_name" name="local_team_name"
-                            class="form-control form-control-sm select2-local-team" style="width:100%">
-                            @if($isClub && $defaultTeam)
-                                <option value="{{ $defaultTeam }}" selected>{{ $defaultTeam }}</option>
-                            @endif
-                        </select>
+                        <input type="text"
+                               id="local_team_name"
+                               name="local_team_name"
+                               class="form-control form-control-sm"
+                               placeholder="Equipo local..."
+                               value="{{ $isClub && $defaultTeam ? $defaultTeam : '' }}"
+                               list="local-teams-list"
+                               autocomplete="off">
+                        <datalist id="local-teams-list"></datalist>
                     </div>
                 </div>
 
@@ -88,9 +91,15 @@
                         <label class="small font-weight-bold">
                             <i class="fas fa-shield-alt text-danger mr-1"></i>Equipo Visitante
                         </label>
-                        <select id="rival_team_id" name="rival_team_id" class="form-control form-control-sm select2-rival"
-                            style="width:100%">
-                        </select>
+                        <input type="text"
+                               id="rival_team_input"
+                               name="rival_team_name"
+                               class="form-control form-control-sm"
+                               placeholder="Equipo visitante..."
+                               list="rival-teams-list"
+                               autocomplete="off">
+                        <input type="hidden" id="rival_team_id" name="rival_team_id">
+                        <datalist id="rival-teams-list"></datalist>
                     </div>
                 </div>
             </div>
@@ -100,9 +109,15 @@
                 <div class="col-md-4">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold"><i class="fas fa-trophy text-warning mr-1"></i>Torneo</label>
-                        <select id="tournament_id" name="tournament_id" class="form-control form-control-sm select2-tournament"
-                            style="width:100%">
-                        </select>
+                        <input type="text"
+                               id="tournament_input"
+                               name="tournament_name_input"
+                               class="form-control form-control-sm"
+                               placeholder="Torneo (opcional)..."
+                               list="tournaments-list"
+                               autocomplete="off">
+                        <input type="hidden" id="tournament_id" name="tournament_id">
+                        <datalist id="tournaments-list"></datalist>
                     </div>
                 </div>
 
@@ -413,12 +428,24 @@
 .card-rugby { border-color: #005461; }
 .card-rugby .card-header { background: #005461; border-color: #005461; }
 
-/* Select2 dark */
+/* Select2 dark — only used for assigned_players field */
 .select2-container--bootstrap4 .select2-selection { background: #1a1a1a !important; border-color: #444 !important; color: #fff !important; }
 .select2-container--bootstrap4 .select2-selection__rendered { color: #fff !important; }
 .select2-dropdown { background: #1a1a1a !important; border-color: #444 !important; }
 .select2-results__option { color: #ccc !important; }
 .select2-results__option--highlighted { background: #005461 !important; color: #fff !important; }
+
+/* Native datalist input dark styling */
+input[list] {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #fff;
+}
+input[list]:focus {
+    background-color: #1a1a1a;
+    border-color: #00B7B5;
+    color: #fff;
+}
 </style>
 @endpush
 
@@ -459,58 +486,106 @@ function initDropZone() {
 }
 
 function initSelect2() {
-    $('#local_team_name').select2({
-        theme: 'bootstrap4',
-        placeholder: 'Buscar o ingresar equipo local...',
-        allowClear: {{ $isClub ? 'false' : 'true' }},
-        tags: true,
-        ajax: {
-            url: '{{ route("api.local-teams.recent") }}',
-            dataType: 'json',
-            delay: 200,
-            data: params => ({ q: params.term || '' }),
-            processResults: data => ({ results: data }),
-            cache: true,
-        },
-        minimumInputLength: {{ $isClub ? '0' : '1' }},
-    });
-
-    $('#rival_team_id').select2({
-        theme: 'bootstrap4',
-        placeholder: 'Buscar o ingresar rival...',
-        allowClear: true,
-        tags: true,
-        ajax: {
-            url: '{{ route("api.rival-teams.autocomplete") }}',
-            dataType: 'json',
-            delay: 250,
-            data: params => ({ q: params.term }),
-            processResults: data => ({ results: data.results }),
-        },
-        createTag: params => ({ id: 'new:' + params.term, text: params.term + ' (nuevo)', newTag: true }),
-    });
-
-    $('#tournament_id').select2({
-        theme: 'bootstrap4',
-        placeholder: 'Buscar o crear torneo...',
-        allowClear: true,
-        tags: true,
-        ajax: {
-            url: '{{ route("api.tournaments.autocomplete") }}',
-            dataType: 'json',
-            delay: 250,
-            data: params => ({ q: params.term }),
-            processResults: data => ({ results: data.results }),
-        },
-        createTag: params => ({ id: 'new:' + params.term, text: params.term + ' (nuevo)', newTag: true }),
-    });
-
+    // Select2 solo para jugadores (los tres campos de partido usan autocomplete nativo)
     $('#assigned_players').select2({
         theme: 'bootstrap4',
         placeholder: 'Seleccionar jugadores...',
         allowClear: true,
     });
 }
+
+// ─── Autocomplete nativo: Equipo Local ───────────────────────
+(function() {
+    var input = document.getElementById('local_team_name');
+    var datalist = document.getElementById('local-teams-list');
+    if (!input) return;
+
+    function loadLocalTeams(q) {
+        fetch('{{ route("api.local-teams.recent") }}?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                datalist.innerHTML = '';
+                data.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.text || item.id;
+                    datalist.appendChild(opt);
+                });
+            }).catch(function() {});
+    }
+
+    input.addEventListener('focus', function() { loadLocalTeams(''); });
+    input.addEventListener('input', function() { loadLocalTeams(this.value); });
+})();
+
+// ─── Autocomplete nativo: Equipo Rival ───────────────────────
+(function() {
+    var input = document.getElementById('rival_team_input');
+    var datalist = document.getElementById('rival-teams-list');
+    var hiddenId = document.getElementById('rival_team_id');
+    if (!input) return;
+
+    var rivalMap = {};
+
+    function loadRivals(q) {
+        fetch('{{ route("api.rival-teams.autocomplete") }}?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                datalist.innerHTML = '';
+                var results = data.results || data;
+                results.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.text;
+                    opt.dataset.id = item.id;
+                    datalist.appendChild(opt);
+                    rivalMap[item.text] = item.id;
+                });
+            }).catch(function() {});
+    }
+
+    input.addEventListener('focus', function() { loadRivals(''); });
+    input.addEventListener('input', function() {
+        loadRivals(this.value);
+        hiddenId.value = rivalMap[this.value] || '';
+    });
+    input.addEventListener('change', function() {
+        hiddenId.value = rivalMap[this.value] || '';
+    });
+})();
+
+// ─── Autocomplete nativo: Torneo ─────────────────────────────
+(function() {
+    var input = document.getElementById('tournament_input');
+    var datalist = document.getElementById('tournaments-list');
+    var hiddenId = document.getElementById('tournament_id');
+    if (!input) return;
+
+    var tournamentMap = {};
+
+    function loadTournaments(q) {
+        fetch('{{ route("api.tournaments.autocomplete") }}?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                datalist.innerHTML = '';
+                var results = data.results || data;
+                results.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.text;
+                    opt.dataset.id = item.id;
+                    datalist.appendChild(opt);
+                    tournamentMap[item.text] = item.id;
+                });
+            }).catch(function() {});
+    }
+
+    input.addEventListener('focus', function() { loadTournaments(''); });
+    input.addEventListener('input', function() {
+        loadTournaments(this.value);
+        hiddenId.value = tournamentMap[this.value] || '';
+    });
+    input.addEventListener('change', function() {
+        hiddenId.value = tournamentMap[this.value] || '';
+    });
+})();
 
 function initVisibility() {
     document.querySelectorAll('.visibility-option').forEach(label => {
@@ -802,47 +877,49 @@ async function startUpload() {
 
 // ─── Resolver rival/torneo nuevos antes de subir ─────────────
 async function resolveCommonData() {
-    const rivalSelect      = document.getElementById('rival_team_id');
-    const tournamentSelect = document.getElementById('tournament_id');
+    const rivalIdInput     = document.getElementById('rival_team_id');
+    const rivalTextInput   = document.getElementById('rival_team_input');
+    const tournamentIdInput= document.getElementById('tournament_id');
+    const tournamentInput  = document.getElementById('tournament_input');
     const visibilityEl     = document.querySelector('input[name=visibility_type]:checked');
 
     let rivalTeamId   = null;
     let rivalTeamName = null;
     let tournamentId  = null;
 
-    const rivalVal      = rivalSelect.value;
-    const tournamentVal = tournamentSelect.value;
+    const rivalId   = rivalIdInput ? rivalIdInput.value.trim() : '';
+    const rivalText = rivalTextInput ? rivalTextInput.value.trim() : '';
+    const tournId   = tournamentIdInput ? tournamentIdInput.value.trim() : '';
+    const tournText = tournamentInput ? tournamentInput.value.trim() : '';
 
-    // Rival
-    if (rivalVal && !rivalVal.startsWith('new:')) {
-        rivalTeamId = rivalVal;
-    } else if (rivalVal && rivalVal.startsWith('new:')) {
-        const name = rivalVal.replace('new:', '');
+    // Rival: si hay ID en el campo hidden, es un rival existente
+    if (rivalId) {
+        rivalTeamId = rivalId;
+    } else if (rivalText) {
+        // Es un rival nuevo — intentar crearlo en el servidor
         try {
             const res  = await fetch('{{ route("admin.rival-teams.store") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name: rivalText }),
             });
             const data = await res.json();
             rivalTeamId = data.id;
         } catch (e) {
-            rivalTeamName = name; // fallback texto libre
+            rivalTeamName = rivalText; // fallback texto libre
         }
-    } else if (rivalSelect.options[rivalSelect.selectedIndex]?.text) {
-        rivalTeamName = rivalSelect.options[rivalSelect.selectedIndex].text;
     }
 
-    // Torneo
-    if (tournamentVal && !tournamentVal.startsWith('new:')) {
-        tournamentId = tournamentVal;
-    } else if (tournamentVal && tournamentVal.startsWith('new:')) {
-        const name = tournamentVal.replace('new:', '');
+    // Torneo: si hay ID en el campo hidden, es un torneo existente
+    if (tournId) {
+        tournamentId = tournId;
+    } else if (tournText) {
+        // Es un torneo nuevo — intentar crearlo
         try {
             const res  = await fetch('{{ route("api.tournaments.store") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name: tournText }),
             });
             const data = await res.json();
             tournamentId = data.id;

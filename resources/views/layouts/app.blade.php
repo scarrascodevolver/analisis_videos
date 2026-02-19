@@ -1074,6 +1074,95 @@
             @endif
         });
     </script>
+@auth
+@php
+    $currentOrg = auth()->user()->currentOrganization();
+    $showOnboarding = $currentOrg
+        && !$currentOrg->onboarding_completed
+        && auth()->user()->organizations()
+            ->wherePivot('is_org_admin', true)
+            ->where('organizations.id', $currentOrg->id)
+            ->exists();
+@endphp
+
+@if($showOnboarding)
+<div class="modal fade" id="onboardingModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#005461;color:white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-rocket mr-2"></i>
+                    ¡Bienvenido a RugbyKP! Configurá {{ $currentOrg->name }} en 1 minuto
+                </h5>
+            </div>
+            <div class="modal-body">
+                <form id="onboardingForm" action="{{ route('onboarding.complete') }}" method="POST">
+                    @csrf
+                    @if($currentOrg->isClub())
+                        <p class="text-muted mb-3">Seleccioná las categorías de tu club. Podés agregar más después.</p>
+                        <div class="row">
+                            @foreach(['Adulta', 'Juveniles', 'Femenino', 'M20', 'M18', 'M16'] as $cat)
+                            <div class="col-md-4 mb-3">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input"
+                                           id="cat_{{ Str::slug($cat) }}"
+                                           name="categories[]"
+                                           value="{{ $cat }}"
+                                           {{ in_array($cat, ['Adulta', 'Juveniles', 'Femenino']) ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="cat_{{ Str::slug($cat) }}">
+                                        {{ $cat }}
+                                    </label>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        <div class="form-group mt-2">
+                            <label class="small text-muted">¿Otra categoría?</label>
+                            <input type="text" id="extraCategory" class="form-control form-control-sm"
+                                   placeholder="Ej: M14, Seven, etc." style="max-width:250px;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addExtraCategory()">
+                                <i class="fas fa-plus mr-1"></i> Agregar
+                            </button>
+                            <div id="extraCategories"></div>
+                        </div>
+                    @else
+                        <p class="text-muted mb-3">¿Qué torneo o liga vas a analizar primero?</p>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Nombre del torneo / liga</label>
+                            <input type="text" name="tournament_name" class="form-control"
+                                   placeholder="Ej: Torneo de la URBA, Liga Nacional 2026..."
+                                   required>
+                            <small class="text-muted">Podés crear más torneos después desde el menú.</small>
+                        </div>
+                    @endif
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="onboardingForm" class="btn btn-success btn-lg">
+                    <i class="fas fa-check mr-2"></i>Guardar y empezar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() { $('#onboardingModal').modal('show'); });
+
+function addExtraCategory() {
+    var val = document.getElementById('extraCategory').value.trim();
+    if (!val) return;
+    var slug = val.toLowerCase().replace(/\s+/g, '-');
+    var html = '<div class="custom-control custom-checkbox mt-1" id="extra_' + slug + '">' +
+        '<input type="checkbox" class="custom-control-input" id="chk_' + slug + '" name="categories[]" value="' + val + '" checked>' +
+        '<label class="custom-control-label" for="chk_' + slug + '">' + val + '</label>' +
+        '</div>';
+    document.getElementById('extraCategories').insertAdjacentHTML('beforeend', html);
+    document.getElementById('extraCategory').value = '';
+}
+</script>
+@endif
+@endauth
 </body>
 
 </html>

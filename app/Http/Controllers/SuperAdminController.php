@@ -19,10 +19,10 @@ class SuperAdminController extends Controller
     public function dashboard()
     {
         // Métricas principales
-        $totalClubs        = Organization::where('type', 'club')->count();
+        $totalClubs = Organization::where('type', 'club')->count();
         $totalAsociaciones = Organization::where('type', 'asociacion')->count();
-        $totalUsers        = User::count();
-        $totalVideos       = Video::withoutGlobalScope('organization')->count();
+        $totalUsers = User::count();
+        $totalVideos = Video::withoutGlobalScope('organization')->count();
         $totalStorageBytes = Video::withoutGlobalScope('organization')->sum('file_size');
 
         // Desglose de usuarios por rol
@@ -33,10 +33,10 @@ class SuperAdminController extends Controller
         // Orgs con estadísticas (para la tabla principal)
         $orgStats = Organization::withCount([
             'users',
-            'videos' => fn($q) => $q->withoutGlobalScope('organization'),
+            'videos' => fn ($q) => $q->withoutGlobalScope('organization'),
         ])
-        ->orderByDesc('created_at')
-        ->get();
+            ->orderByDesc('created_at')
+            ->get();
 
         // Últimas 5 organizaciones creadas
         $recentOrgs = Organization::latest()->take(5)->get();
@@ -115,9 +115,9 @@ class SuperAdminController extends Controller
         }
 
         $organization = Organization::create([
-            'name'      => $validated['name'],
-            'type'      => $validated['type'],
-            'slug'      => $slug,
+            'name' => $validated['name'],
+            'type' => $validated['type'],
+            'slug' => $slug,
             'logo_path' => $logoPath,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -125,19 +125,30 @@ class SuperAdminController extends Controller
         // Crear library en Bunny Stream automáticamente
         $bunnyWarning = null;
         try {
-            $libraryName = ucfirst($organization->type) . ' - ' . $organization->name;
-            $bunnyData   = BunnyStreamService::createLibrary($libraryName);
+            $libraryName = ucfirst($organization->type).' - '.$organization->name;
+            $bunnyData = BunnyStreamService::createLibrary($libraryName);
 
             $organization->update([
-                'bunny_library_id'   => $bunnyData['library_id'],
-                'bunny_api_key'      => $bunnyData['api_key'],
+                'bunny_library_id' => $bunnyData['library_id'],
+                'bunny_api_key' => $bunnyData['api_key'],
                 'bunny_cdn_hostname' => $bunnyData['cdn_hostname'],
             ]);
         } catch (\Throwable $e) {
-            Log::error('No se pudo crear la library en Bunny para org ' . $organization->id, [
+            Log::error('No se pudo crear la library en Bunny para org '.$organization->id, [
                 'error' => $e->getMessage(),
             ]);
             $bunnyWarning = 'La organización fue creada pero no se pudo crear la library en Bunny Stream. Configurá las credenciales manualmente.';
+        }
+
+        // Crear categorías por defecto según tipo de organización
+        if ($organization->type === Organization::TYPE_CLUB) {
+            $defaultCategories = ['Adulta', 'Juveniles', 'Femenino'];
+            foreach ($defaultCategories as $catName) {
+                \App\Models\Category::create([
+                    'name' => $catName,
+                    'organization_id' => $organization->id,
+                ]);
+            }
         }
 
         $message = "Organización '{$organization->name}' creada exitosamente.";
@@ -195,10 +206,10 @@ class SuperAdminController extends Controller
     public function updateOrganization(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'name'      => 'required|string|max:255',
-            'type'      => 'required|in:club,asociacion',
-            'slug'      => ['nullable', 'string', 'max:255', Rule::unique('organizations')->ignore($organization->id)],
-            'logo'      => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:club,asociacion',
+            'slug' => ['nullable', 'string', 'max:255', Rule::unique('organizations')->ignore($organization->id)],
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'is_active' => 'boolean',
         ]);
 
@@ -232,9 +243,9 @@ class SuperAdminController extends Controller
             return back()->with('error', 'El nombre ingresado no coincide. La organización NO fue eliminada.');
         }
 
-        $name        = $organization->name;
+        $name = $organization->name;
         $videosCount = $organization->videos()->withoutGlobalScope('organization')->count();
-        $usersCount  = $organization->users()->count();
+        $usersCount = $organization->users()->count();
 
         // 1. Eliminar cada video de Bunny Stream
         $bunnyService = BunnyStreamService::forOrganization($organization);
@@ -246,7 +257,7 @@ class SuperAdminController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('No se pudo eliminar video de Bunny', [
                         'bunny_video_id' => $video->bunny_video_id,
-                        'error'          => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
                 }
             });
@@ -267,9 +278,9 @@ class SuperAdminController extends Controller
             try {
                 BunnyStreamService::deleteLibrary($organization->bunny_library_id);
             } catch (\Throwable $e) {
-                Log::error('No se pudo eliminar la library en Bunny para org ' . $organization->id, [
+                Log::error('No se pudo eliminar la library en Bunny para org '.$organization->id, [
                     'library_id' => $organization->bunny_library_id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -277,11 +288,11 @@ class SuperAdminController extends Controller
         // 6. Eliminar la organización
         $organization->delete();
 
-        Log::info("Organización eliminada por super admin", [
-            'name'        => $name,
+        Log::info('Organización eliminada por super admin', [
+            'name' => $name,
             'users_count' => $usersCount,
-            'videos_count'=> $videosCount,
-            'deleted_by'  => auth()->id(),
+            'videos_count' => $videosCount,
+            'deleted_by' => auth()->id(),
         ]);
 
         return redirect()->route('super-admin.organizations')
