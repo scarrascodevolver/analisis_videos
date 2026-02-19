@@ -86,24 +86,39 @@ class BunnyStreamService
 
         $data = $response->json();
 
-        // The Bunny API returns the pull-zone hostname nested under PullZone.
-        // Field names observed in the API:
-        //   $data['Id']                       — integer library ID
-        //   $data['ApiKey']                   — library-level API key
-        //   $data['PullZone']['Hostname']      — CDN hostname (may not exist immediately)
-        //   $data['PullZoneHostname']          — alternative flat field on some responses
-        $cdnHostname = $data['PullZone']['Hostname']
-            ?? $data['PullZoneHostname']
-            ?? null;
+        $libraryId  = $data['Id'];
+        $apiKey     = $data['ApiKey'];
+        $pullZoneId = $data['PullZoneId'] ?? null;
+
+        // Bunny no devuelve el hostname directamente al crear la library.
+        // Hay que consultarlo desde el Pull Zone asociado.
+        $cdnHostname = null;
+        if ($pullZoneId) {
+            try {
+                $pzResponse = Http::withHeaders(['AccessKey' => $accountApiKey])
+                    ->get("https://api.bunny.net/pullzone/{$pullZoneId}");
+
+                if ($pzResponse->successful()) {
+                    $pzData = $pzResponse->json();
+                    $cdnHostname = $pzData['Hostnames'][0]['Value'] ?? null;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Could not fetch Bunny pull zone hostname', [
+                    'pull_zone_id' => $pullZoneId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         Log::info('Bunny library created', [
-            'library_id' => $data['Id'],
+            'library_id' => $libraryId,
+            'pull_zone_id' => $pullZoneId,
             'cdn_hostname' => $cdnHostname,
         ]);
 
         return [
-            'library_id' => (string) $data['Id'],
-            'api_key' => $data['ApiKey'],
+            'library_id' => (string) $libraryId,
+            'api_key' => $apiKey,
             'cdn_hostname' => $cdnHostname,
         ];
     }
