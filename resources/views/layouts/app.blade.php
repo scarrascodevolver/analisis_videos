@@ -653,17 +653,6 @@
                                     <p>{{ auth()->user()->currentOrganization()?->isClub() ? 'Videos del Equipo' : 'Videos' }}</p>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('my-videos') }}"
-                                    class="nav-link {{ request()->routeIs('my-videos') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-user-circle"></i>
-                                    <p>Mis Videos</p>
-                                    @if (auth()->user()->pendingAssignments()->count() > 0)
-                                        <span
-                                            class="badge badge-warning navbar-badge">{{ auth()->user()->pendingAssignments()->count() }}</span>
-                                    @endif
-                                </a>
-                            </li>
                         @endif
 
                         @if (Auth::user()->role === 'director_club')
