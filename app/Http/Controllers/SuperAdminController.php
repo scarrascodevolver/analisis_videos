@@ -18,24 +18,36 @@ class SuperAdminController extends Controller
      */
     public function dashboard()
     {
-        $stats = [
-            'total_organizations' => Organization::count(),
-            'active_organizations' => Organization::where('is_active', true)->count(),
-            'total_users' => User::count(),
-            'total_videos' => Video::withoutGlobalScope('organization')->count(),
-            'recent_organizations' => Organization::latest()->take(5)->get(),
-            'recent_users' => User::latest()->take(5)->get(),
-        ];
+        // Métricas principales
+        $totalClubs        = Organization::where('type', 'club')->count();
+        $totalAsociaciones = Organization::where('type', 'asociacion')->count();
+        $totalUsers        = User::count();
+        $totalVideos       = Video::withoutGlobalScope('organization')->count();
+        $totalStorageBytes = Video::withoutGlobalScope('organization')->sum('file_size');
 
-        // Estadísticas por organización (sin Global Scope para contar videos de TODAS las orgs)
+        // Desglose de usuarios por rol
+        $usersByRole = User::selectRaw('role, count(*) as total')
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        // Orgs con estadísticas (para la tabla principal)
         $orgStats = Organization::withCount([
             'users',
-            'videos' => function ($query) {
-                $query->withoutGlobalScope('organization');
-            },
-        ])->get();
+            'videos' => fn($q) => $q->withoutGlobalScope('organization'),
+        ])
+        ->orderByDesc('created_at')
+        ->get();
 
-        return view('super-admin.dashboard', compact('stats', 'orgStats'));
+        // Últimas 5 organizaciones creadas
+        $recentOrgs = Organization::latest()->take(5)->get();
+
+        // Orgs sin Bunny library configurada (alerta operacional)
+        $orgsWithoutBunny = Organization::whereNull('bunny_library_id')->count();
+
+        return view('super-admin.dashboard', compact(
+            'totalClubs', 'totalAsociaciones', 'totalUsers', 'totalVideos',
+            'totalStorageBytes', 'usersByRole', 'orgStats', 'recentOrgs', 'orgsWithoutBunny'
+        ));
     }
 
     /**
