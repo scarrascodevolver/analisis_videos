@@ -113,7 +113,7 @@ class SuperAdminController extends Controller
         // Crear library en Bunny Stream automáticamente
         $bunnyWarning = null;
         try {
-            $libraryName = 'RugbyKP - ' . $organization->name;
+            $libraryName = ucfirst($organization->type) . ' - ' . $organization->name;
             $bunnyData   = BunnyStreamService::createLibrary($libraryName);
 
             $organization->update([
