@@ -42,15 +42,17 @@ class BunnyStreamService
      */
     public static function forOrganization(Organization $org): self
     {
-        if ($org->bunny_library_id && $org->bunny_api_key && $org->bunny_cdn_hostname) {
+        // Usar credenciales de la org si tiene library_id + api_key,
+        // aunque cdn_hostname sea null (se resuelve después del upload).
+        if ($org->bunny_library_id && $org->bunny_api_key) {
             return new self(
                 $org->bunny_library_id,
                 $org->bunny_api_key,
-                $org->bunny_cdn_hostname,
+                $org->bunny_cdn_hostname, // puede ser null si aún no está provisionado
             );
         }
 
-        // Fallback: use global config (covers orgs not yet assigned a library).
+        // Fallback: credenciales globales (orgs sin library asignada).
         return new self;
     }
 
