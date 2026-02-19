@@ -7,7 +7,7 @@
     </h5>
     <div class="d-flex" style="gap:8px">
         @isset($extraBtn)
-            <button type="button" class="btn btn-outline-accent btn-sm"
+            <button type="button" class="btn btn-rugby-light btn-sm"
                 data-toggle="modal" data-target="{{ $extraBtn['modal'] }}">
                 <i class="fas fa-{{ $extraBtn['icon'] }} mr-1"></i> {{ $extraBtn['label'] }}
             </button>

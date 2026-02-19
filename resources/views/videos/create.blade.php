@@ -131,7 +131,8 @@
                     </div>
                 </div>
 
-                {{-- Categoría --}}
+                {{-- Categoría (solo clubs) --}}
+                @if($isClub)
                 <div class="col-md-3">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold"><i class="fas fa-tag mr-1"></i>Categoría <span class="text-danger">*</span></label>
@@ -144,7 +145,7 @@
                     </div>
                 </div>
 
-                {{-- División --}}
+                {{-- División (solo clubs) --}}
                 <div class="col-md-2" id="divisionCol" style="display:none">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold">División</label>
@@ -154,9 +155,11 @@
                         </select>
                     </div>
                 </div>
+                @endif
             </div>
 
-            {{-- Visibilidad --}}
+            {{-- Visibilidad (solo clubs) --}}
+            @if($isClub)
             <div class="form-group mb-2">
                 <label class="small font-weight-bold"><i class="fas fa-eye mr-1"></i>¿Quién puede ver este video?</label>
                 <div class="d-flex flex-wrap gap-2" id="visibilityOptions">
@@ -194,6 +197,10 @@
                     class="form-control form-control-sm mt-2 bg-dark border-secondary text-white"
                     placeholder="Instrucciones para los jugadores (opcional)"></textarea>
             </div>
+            @else
+            {{-- Asociación: visibilidad pública por defecto --}}
+            <input type="hidden" name="visibility_type" value="public">
+            @endif
 
             {{-- Descripción --}}
             <div class="form-group mb-0">
@@ -460,12 +467,17 @@ const uploadState = {
     masterVideoId: null, // video_id del master (para vincular slaves)
 };
 
+// ─── Config por tipo de org ───────────────────────────────────
+const isClub = {{ json_encode($isClub) }};
+
 // ─── Inicialización ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     initDropZone();
-    initSelect2();
-    initVisibility();
-    initCategoryListener();
+    if (isClub) {
+        initSelect2();
+        initVisibility();
+        initCategoryListener();
+    }
 });
 
 function initDropZone() {
@@ -826,10 +838,12 @@ function handleXml(id, input) {
 async function startUpload() {
     if (uploadState.isUploading) return;
 
-    const categoryId = document.getElementById('category_id').value;
-    const matchDate  = document.getElementById('match_date').value;
-    if (!categoryId) { alert('Seleccioná una categoría.'); return; }
-    if (!matchDate)  { alert('Ingresá la fecha del partido.'); return; }
+    const matchDate = document.getElementById('match_date').value;
+    if (isClub) {
+        const categoryId = document.getElementById('category_id').value;
+        if (!categoryId) { alert('Seleccioná una categoría.'); return; }
+    }
+    if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
     if (uploadState.files.length === 0) { alert('Seleccioná al menos un video.'); return; }
 
     uploadState.isUploading = true;
@@ -930,13 +944,13 @@ async function resolveCommonData() {
 
     return {
         local_team_name:  document.getElementById('local_team_name').value,
-        category_id:      document.getElementById('category_id').value,
+        category_id:      isClub ? document.getElementById('category_id').value : null,
         match_date:       document.getElementById('match_date').value,
-        division:         document.getElementById('division').value,
+        division:         isClub ? document.getElementById('division').value : null,
         description:      document.getElementById('description').value,
-        visibility_type:  visibilityEl ? visibilityEl.value : 'public',
-        assignment_notes: document.getElementById('assignment_notes').value,
-        assigned_players: Array.from(document.getElementById('assigned_players').selectedOptions).map(o => o.value),
+        visibility_type:  isClub ? (visibilityEl ? visibilityEl.value : 'public') : 'public',
+        assignment_notes: isClub ? document.getElementById('assignment_notes').value : '',
+        assigned_players: isClub ? Array.from(document.getElementById('assigned_players').selectedOptions).map(o => o.value) : [],
         rival_team_id:    rivalTeamId,
         rival_team_name:  rivalTeamName,
         tournament_id:    tournamentId,

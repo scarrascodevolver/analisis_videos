@@ -20,17 +20,19 @@ class BunnyUploadController extends Controller
     {
         $org = auth()->user()->currentOrganization();
 
+        $isClub = $org->isClub();
+
         $request->validate([
             'title' => 'required|string|max:255',
             'filename' => 'required|string|max:255',
             'file_size' => 'required|integer|min:1',
             'mime_type' => 'nullable|string|max:100',
-            'category_id' => [
+            'category_id' => $isClub ? [
                 'required',
                 Rule::exists('categories', 'id')->where(fn ($q) => $q->where('organization_id', $org->id)),
-            ],
+            ] : 'nullable',
             'match_date' => 'required|date',
-            'visibility_type' => 'required|in:public,forwards,backs,specific',
+            'visibility_type' => 'nullable|in:public,forwards,backs,specific',
             'description' => 'nullable|string',
             'local_team_name' => 'nullable|string|max:255',
             'rival_team_id' => 'nullable|exists:rival_teams,id',
@@ -61,7 +63,7 @@ class BunnyUploadController extends Controller
                 'mime_type' => $request->input('mime_type', 'video/mp4'),
                 'category_id' => $request->category_id,
                 'match_date' => $request->match_date,
-                'visibility_type' => $request->visibility_type,
+                'visibility_type' => $request->input('visibility_type', 'public'),
                 'analyzed_team_name' => $request->local_team_name,
                 'rival_team_id' => $request->rival_team_id,
                 'rival_team_name' => $request->rival_team_name,
