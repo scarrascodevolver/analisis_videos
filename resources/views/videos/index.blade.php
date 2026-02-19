@@ -33,7 +33,7 @@
 @if($view === 'club_categories')
 @include('videos.partials.folder-header', ['title' => 'Categorías', 'icon' => 'layer-group'])
 @if($categories->isEmpty())
-    @include('videos.partials.empty-folder', ['msg' => 'No hay categorías creadas aún. Creá una desde Mantenedor.'])
+    @include('videos.partials.empty-folder', ['msg' => 'No hay categorías creadas aún.'])
 @else
     <div class="folder-grid">
         @foreach($categories as $cat)
@@ -87,7 +87,11 @@
 @elseif($view === 'asoc_clubs')
 @include('videos.partials.folder-header', ['title' => $tournament->name, 'icon' => 'trophy', 'back' => route('videos.index')])
 @if($clubs->isEmpty())
-    @include('videos.partials.empty-folder', ['msg' => 'No hay clubes con videos en este torneo.'])
+    @include('videos.partials.empty-folder', [
+        'msg' => 'Todavía no hay partidos en este torneo.',
+        'action' => route('videos.create'),
+        'actionLabel' => 'Subir el primer partido'
+    ])
 @else
     <div class="folder-grid">
         @foreach($clubs as $c)
