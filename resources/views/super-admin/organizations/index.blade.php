@@ -31,6 +31,13 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle mr-2"></i>{{ session('warning') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
@@ -39,6 +46,7 @@
                         <tr>
                             <th style="width: 60px;">Logo</th>
                             <th>Nombre</th>
+                            <th class="text-center">Tipo</th>
                             <th>Slug</th>
                             <th class="text-center">Usuarios</th>
                             <th class="text-center">Videos</th>
@@ -63,6 +71,13 @@
                                 <strong>{{ $org->name }}</strong>
                                 <br>
                                 <small class="text-muted">Creada: {{ $org->created_at->format('d/m/Y') }}</small>
+                            </td>
+                            <td class="text-center">
+                                @if($org->type === 'club')
+                                    <span class="badge badge-primary">Club</span>
+                                @else
+                                    <span class="badge badge-warning text-dark">Asociación</span>
+                                @endif
                             </td>
                             <td><code>{{ $org->slug }}</code></td>
                             <td class="text-center">
@@ -111,7 +126,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="8" class="text-center py-4">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">No hay organizaciones registradas</p>
                                 <a href="{{ route('super-admin.organizations.create') }}" class="btn btn-success">
