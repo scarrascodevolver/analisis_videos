@@ -32,16 +32,16 @@ class VideoController extends Controller
                 $query->where('title', 'like', '%'.$request->search.'%');
             }
 
-            $videos          = $query->latest()->paginate(9);
+            $videos = $query->latest()->paginate(9);
             $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-            $userCategoryId  = $user->profile->user_category_id ?? null;
-            $categories      = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+            $userCategoryId = $user->profile->user_category_id ?? null;
+            $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
 
             return view('videos.index', compact('videos', 'rugbySituations', 'categories'))->with('view', 'list');
         }
 
         // Analistas/entrenadores: navegación por carpetas (adaptativa según tipo de org)
-        $org  = $user->currentOrganization();
+        $org = $user->currentOrganization();
         $orgType = $org?->type ?? 'club';
 
         // ── CLUB: Categoría → Videos ────────────────────────────────────────
@@ -73,7 +73,7 @@ class VideoController extends Controller
 
         // ── ASOCIACIÓN: Torneo → Club → Videos ─────────────────────────────
         $tournamentParam = $request->get('tournament'); // id | null
-        $clubParam       = $request->get('club');       // id | null
+        $clubParam = $request->get('club');       // id | null
 
         // Nivel 1: carpetas de torneos
         if (! $tournamentParam) {
@@ -333,29 +333,29 @@ class VideoController extends Controller
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrgId))
             ->get();
 
-        $bunnyService = app(\App\Services\BunnyStreamService::class);
+        $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
 
         $videoData = array_merge($video->toArray(), [
-            'stream_url'       => route('videos.stream', $video),
-            'edit_url'         => route('videos.edit', $video),
+            'stream_url' => route('videos.stream', $video),
+            'edit_url' => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
-            'bunny_hls_url'    => $video->bunny_video_id && $video->bunny_status === 'ready'
+            'bunny_hls_url' => $video->bunny_video_id && $video->bunny_status === 'ready'
                                     ? $bunnyService->getHlsUrl($video->bunny_video_id)
                                     : ($video->bunny_hls_url ?? null),
-            'bunny_mp4_url'    => $video->bunny_mp4_url,
+            'bunny_mp4_url' => $video->bunny_mp4_url,
             'slave_videos' => $video->isPartOfGroup()
                 ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
                     return $group->videos
                         ->filter(fn ($v) => $v->id !== $video->id)
                         ->map(fn ($v) => [
-                            'id'            => $v->id,
-                            'title'         => $v->title,
-                            'stream_url'    => route('videos.stream', $v),
-                            'sync_offset'   => $v->pivot->sync_offset ?? 0,
+                            'id' => $v->id,
+                            'title' => $v->title,
+                            'stream_url' => route('videos.stream', $v),
+                            'sync_offset' => $v->pivot->sync_offset ?? 0,
                             'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
                                                 ? $bunnyService->getHlsUrl($v->bunny_video_id)
                                                 : ($v->bunny_hls_url ?? null),
-                            'bunny_status'  => $v->bunny_status,
+                            'bunny_status' => $v->bunny_status,
                             'bunny_mp4_url' => $v->bunny_mp4_url,
                         ])
                         ->values();

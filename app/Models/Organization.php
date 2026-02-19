@@ -9,7 +9,8 @@ use Illuminate\Support\Str;
 
 class Organization extends Model
 {
-    const TYPE_CLUB       = 'club';
+    const TYPE_CLUB = 'club';
+
     const TYPE_ASOCIACION = 'asociacion';
 
     protected $fillable = [
@@ -24,6 +25,9 @@ class Organization extends Model
         'compression_start_hour',
         'compression_end_hour',
         'compression_hybrid_threshold',
+        'bunny_library_id',
+        'bunny_api_key',
+        'bunny_cdn_hostname',
     ];
 
     protected function casts(): array

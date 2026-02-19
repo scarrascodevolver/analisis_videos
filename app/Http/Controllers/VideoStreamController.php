@@ -175,10 +175,10 @@ class VideoStreamController extends Controller
     {
         // Bunny Stream: redirigir directamente a HLS
         if ($video->bunny_video_id && $video->bunny_status === 'ready') {
-            $service = app(BunnyStreamService::class);
+            $service = BunnyStreamService::forOrganization($video->organization);
+
             return redirect($service->getHlsUrl($video->bunny_video_id));
         }
-
 
         // Production: Use Spaces/CDN as primary source
         if (config('app.env') === 'production') {

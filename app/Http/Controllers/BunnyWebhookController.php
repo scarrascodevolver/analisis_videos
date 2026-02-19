@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Log;
 
 class BunnyWebhookController extends Controller
 {
-    public function __construct(private BunnyStreamService $bunny) {}
-
     /**
      * Recibe notificaciones de Bunny Stream cuando cambia el estado de un video.
      * POST /webhooks/bunny-stream
@@ -24,32 +22,36 @@ class BunnyWebhookController extends Controller
             $expectedSignature = hash_hmac('sha256', $request->getContent(), $secret);
             if (! hash_equals($expectedSignature, $receivedSignature)) {
                 Log::warning('Bunny webhook: invalid signature');
+
                 return response()->json(['error' => 'Invalid signature'], 401);
             }
         }
 
         $payload = $request->json()->all();
-        $guid    = $payload['VideoGuid'] ?? null;
-        $status  = $payload['Status']    ?? null; // 3 = ready, 4 = failed
+        $guid = $payload['VideoGuid'] ?? null;
+        $status = $payload['Status'] ?? null; // 3 = ready, 4 = failed
 
         if (! $guid) {
             return response()->json(['ok' => true]);
         }
 
-        $video = Video::where('bunny_video_id', $guid)->first();
+        // Eager-load organization so forOrganization() does not trigger an extra query.
+        $video = Video::with('organization')->where('bunny_video_id', $guid)->first();
         if (! $video) {
             Log::warning('Bunny webhook: video not found', ['guid' => $guid]);
+
             return response()->json(['ok' => true]);
         }
 
-        $statusStr = $this->bunny->mapStatus((int) $status);
-        $updates   = ['bunny_status' => $statusStr];
+        $bunny = BunnyStreamService::forOrganization($video->organization);
+        $statusStr = $bunny->mapStatus((int) $status);
+        $updates = ['bunny_status' => $statusStr];
 
         if ($statusStr === 'ready') {
-            $updates['bunny_hls_url']    = $this->bunny->getHlsUrl($guid);
-            $updates['bunny_thumbnail']  = $this->bunny->getThumbnailUrl($guid);
+            $updates['bunny_hls_url'] = $bunny->getHlsUrl($guid);
+            $updates['bunny_thumbnail'] = $bunny->getThumbnailUrl($guid);
             $updates['processing_status'] = 'completed';
-            $updates['status']            = 'active';
+            $updates['status'] = 'active';
         } elseif ($statusStr === 'error') {
             $updates['processing_status'] = 'failed';
         }
@@ -58,8 +60,9 @@ class BunnyWebhookController extends Controller
 
         Log::info('Bunny webhook processed', [
             'video_id' => $video->id,
-            'guid'     => $guid,
-            'status'   => $statusStr,
+            'guid' => $guid,
+            'status' => $statusStr,
+            'org_id' => $video->organization_id,
         ]);
 
         return response()->json(['ok' => true]);

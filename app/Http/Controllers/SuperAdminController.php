@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Models\User;
 use App\Models\Video;
+use App\Services\BunnyStreamService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -108,6 +110,24 @@ class SuperAdminController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        // Crear library en Bunny Stream automáticamente
+        $bunnyWarning = null;
+        try {
+            $libraryName = 'RugbyHub - ' . $organization->name;
+            $bunnyData   = BunnyStreamService::createLibrary($libraryName);
+
+            $organization->update([
+                'bunny_library_id'   => $bunnyData['library_id'],
+                'bunny_api_key'      => $bunnyData['api_key'],
+                'bunny_cdn_hostname' => $bunnyData['cdn_hostname'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo crear la library en Bunny para org ' . $organization->id, [
+                'error' => $e->getMessage(),
+            ]);
+            $bunnyWarning = 'La organización fue creada pero no se pudo crear la library en Bunny Stream. Configurá las credenciales manualmente.';
+        }
+
         $message = "Organización '{$organization->name}' creada exitosamente.";
         $generatedPassword = null;
 
@@ -137,8 +157,13 @@ class SuperAdminController extends Controller
             }
         }
 
-        return redirect()->route('super-admin.organizations')
-            ->with('success', $message);
+        $redirect = redirect()->route('super-admin.organizations')->with('success', $message);
+
+        if ($bunnyWarning) {
+            $redirect = $redirect->with('warning', $bunnyWarning);
+        }
+
+        return $redirect;
     }
 
     /**
@@ -203,6 +228,18 @@ class SuperAdminController extends Controller
         // Eliminar logo si existe
         if ($organization->logo_path) {
             \Storage::disk('public')->delete($organization->logo_path);
+        }
+
+        // Eliminar library en Bunny Stream si tiene una asignada
+        if ($organization->bunny_library_id) {
+            try {
+                BunnyStreamService::deleteLibrary($organization->bunny_library_id);
+            } catch (\Throwable $e) {
+                Log::error('No se pudo eliminar la library en Bunny para org ' . $organization->id, [
+                    'library_id' => $organization->bunny_library_id,
+                    'error'      => $e->getMessage(),
+                ]);
+            }
         }
 
         $organization->delete();

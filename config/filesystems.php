@@ -111,6 +111,7 @@ return [
         'api_key'         => env('BUNNY_STREAM_API_KEY'),
         'cdn_hostname'    => env('BUNNY_STREAM_CDN_HOSTNAME'),
         'webhook_secret'  => env('BUNNY_STREAM_WEBHOOK_SECRET', ''),
+        'account_api_key' => env('BUNNY_ACCOUNT_API_KEY'),
     ],
 
     /*
