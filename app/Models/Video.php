@@ -119,6 +119,11 @@ class Video extends Model
         return $this->belongsTo(Tournament::class);
     }
 
+    public function club()
+    {
+        return $this->belongsTo(\App\Models\Club::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
