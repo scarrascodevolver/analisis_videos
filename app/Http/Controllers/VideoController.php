@@ -132,17 +132,13 @@ class VideoController extends Controller
         $organizationName = $currentOrg?->name ?? 'Mi Equipo';
         $isClub = $currentOrg?->isClub() ?? true;
 
-        // Default equipo local: solo para clubes (último subido o nombre de la org)
-        // Para asociaciones el equipo local se elige manualmente
-        $defaultTeam = null;
-        if ($isClub) {
-            $lastTeam = Video::where('uploaded_by', auth()->id())
-                ->whereNotNull('analyzed_team_name')
-                ->where('analyzed_team_name', '!=', '')
-                ->orderBy('created_at', 'desc')
-                ->value('analyzed_team_name');
-            $defaultTeam = $lastTeam ?? $organizationName;
-        }
+        // Default equipo local: último equipo analizado por este usuario (si existe)
+        // No se pre-rellena con el nombre de la org — el campo es de escritura libre
+        $defaultTeam = Video::where('uploaded_by', auth()->id())
+            ->whereNotNull('analyzed_team_name')
+            ->where('analyzed_team_name', '!=', '')
+            ->orderBy('created_at', 'desc')
+            ->value('analyzed_team_name');
 
         $players = User::where(function ($query) {
             $query->where('role', 'jugador')
