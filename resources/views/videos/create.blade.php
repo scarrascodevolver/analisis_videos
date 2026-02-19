@@ -68,15 +68,16 @@
                         <label class="small font-weight-bold">
                             <i class="fas fa-shield-alt text-success mr-1"></i>Equipo Local
                         </label>
-                        <input type="text"
-                               id="local_team_name"
-                               name="local_team_name"
-                               class="form-control form-control-sm"
-                               placeholder="Equipo local..."
-                               value="{{ $isClub && $defaultTeam ? $defaultTeam : '' }}"
-                               list="local-teams-list"
-                               autocomplete="off">
-                        <datalist id="local-teams-list"></datalist>
+                        <div class="ac-wrap">
+                            <input type="text"
+                                   id="local_team_name"
+                                   name="local_team_name"
+                                   class="form-control form-control-sm"
+                                   placeholder="Equipo local..."
+                                   value="{{ $isClub && $defaultTeam ? $defaultTeam : '' }}"
+                                   autocomplete="off">
+                            <div class="ac-dropdown" id="ac-local"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -91,15 +92,16 @@
                         <label class="small font-weight-bold">
                             <i class="fas fa-shield-alt text-danger mr-1"></i>Equipo Visitante
                         </label>
-                        <input type="text"
-                               id="rival_team_input"
-                               name="rival_team_name"
-                               class="form-control form-control-sm"
-                               placeholder="Equipo visitante..."
-                               list="rival-teams-list"
-                               autocomplete="off">
-                        <input type="hidden" id="rival_team_id" name="rival_team_id">
-                        <datalist id="rival-teams-list"></datalist>
+                        <div class="ac-wrap">
+                            <input type="text"
+                                   id="rival_team_input"
+                                   name="rival_team_name"
+                                   class="form-control form-control-sm"
+                                   placeholder="Equipo visitante..."
+                                   autocomplete="off">
+                            <input type="hidden" id="rival_team_id" name="rival_team_id">
+                            <div class="ac-dropdown" id="ac-rival"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,15 +114,16 @@
                             <i class="fas fa-trophy text-warning mr-1"></i>Torneo
                             @if(!$isClub)<span class="text-danger">*</span>@endif
                         </label>
-                        <input type="text"
-                               id="tournament_input"
-                               name="tournament_name_input"
-                               class="form-control form-control-sm"
-                               placeholder="{{ $isClub ? 'Torneo (opcional)...' : 'Seleccioná o escribí el torneo...' }}"
-                               list="tournaments-list"
-                               autocomplete="off">
-                        <input type="hidden" id="tournament_id" name="tournament_id">
-                        <datalist id="tournaments-list"></datalist>
+                        <div class="ac-wrap">
+                            <input type="text"
+                                   id="tournament_input"
+                                   name="tournament_name_input"
+                                   class="form-control form-control-sm"
+                                   placeholder="{{ $isClub ? 'Torneo (opcional)...' : 'Seleccioná o escribí el torneo...' }}"
+                                   autocomplete="off">
+                            <input type="hidden" id="tournament_id" name="tournament_id">
+                            <div class="ac-dropdown" id="ac-tournament"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -443,15 +446,31 @@
 .select2-results__option { color: #ccc !important; }
 .select2-results__option--highlighted { background: #005461 !important; color: #fff !important; }
 
-/* Native datalist input dark styling */
-input[list] {
-    background-color: #1a1a1a;
-    border-color: #444;
-    color: #fff;
+/* Autocomplete personalizado */
+.ac-wrap { position: relative; }
+.ac-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: #1e1e1e;
+    border: 1px solid #005461;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 9999;
+    box-shadow: 0 6px 16px rgba(0,0,0,.5);
 }
-input[list]:focus {
-    background-color: #1a1a1a;
-    border-color: #00B7B5;
+.ac-item {
+    padding: 8px 12px;
+    font-size: .85rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: background .12s;
+}
+.ac-item:hover, .ac-item-active {
+    background: #005461;
     color: #fff;
 }
 </style>
@@ -507,98 +526,115 @@ function initSelect2() {
     });
 }
 
-// ─── Autocomplete nativo: Equipo Local ───────────────────────
-(function() {
-    var input = document.getElementById('local_team_name');
-    var datalist = document.getElementById('local-teams-list');
-    if (!input) return;
+// ─── Autocomplete personalizado ──────────────────────────────
+/**
+ * initAutocomplete({ inputId, dropdownId, url, hiddenId, labelKey, idKey })
+ * - Muestra dropdown con resultados al enfocar/escribir
+ * - Al clickear una opción: rellena el input y guarda el ID en hiddenId (si aplica)
+ * - Texto libre permitido (no fuerza selección de lista)
+ */
+function initAutocomplete({ inputId, dropdownId, url, hiddenId, labelKey = 'text', idKey = 'id' }) {
+    const input    = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const hidden   = hiddenId ? document.getElementById(hiddenId) : null;
+    if (!input || !dropdown) return;
 
-    function loadLocalTeams(q) {
-        fetch('{{ route("api.local-teams.recent") }}?q=' + encodeURIComponent(q))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                datalist.innerHTML = '';
-                data.forEach(function(item) {
-                    var opt = document.createElement('option');
-                    opt.value = item.text || item.id;
-                    datalist.appendChild(opt);
-                });
-            }).catch(function() {});
+    let cache = {};
+    let active = -1;
+
+    function fetchResults(q) {
+        const key = q.toLowerCase();
+        if (cache[key]) { renderDropdown(cache[key]); return; }
+        fetch(url + '?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+                const results = data.results || data;
+                cache[key] = results;
+                renderDropdown(results);
+            })
+            .catch(() => {});
     }
 
-    input.addEventListener('focus', function() { loadLocalTeams(''); });
-    input.addEventListener('input', function() { loadLocalTeams(this.value); });
-})();
-
-// ─── Autocomplete nativo: Equipo Rival ───────────────────────
-(function() {
-    var input = document.getElementById('rival_team_input');
-    var datalist = document.getElementById('rival-teams-list');
-    var hiddenId = document.getElementById('rival_team_id');
-    if (!input) return;
-
-    var rivalMap = {};
-
-    function loadRivals(q) {
-        fetch('{{ route("api.rival-teams.autocomplete") }}?q=' + encodeURIComponent(q))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                datalist.innerHTML = '';
-                var results = data.results || data;
-                results.forEach(function(item) {
-                    var opt = document.createElement('option');
-                    opt.value = item.text;
-                    opt.dataset.id = item.id;
-                    datalist.appendChild(opt);
-                    rivalMap[item.text] = item.id;
-                });
-            }).catch(function() {});
+    function renderDropdown(results) {
+        active = -1;
+        if (!results.length) { closeDropdown(); return; }
+        dropdown.innerHTML = '';
+        results.forEach((item, i) => {
+            const label = item[labelKey] || item.text || item.id;
+            const id    = item[idKey]    || item.id   || null;
+            const li = document.createElement('div');
+            li.className = 'ac-item';
+            li.textContent = label;
+            li.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // no blur antes de click
+                input.value = label;
+                if (hidden) hidden.value = id || '';
+                closeDropdown();
+            });
+            dropdown.appendChild(li);
+        });
+        dropdown.style.display = 'block';
     }
 
-    input.addEventListener('focus', function() { loadRivals(''); });
+    function closeDropdown() {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+        active = -1;
+    }
+
+    // Navegación con teclado
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.ac-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            active = Math.min(active + 1, items.length - 1);
+            items.forEach((el, i) => el.classList.toggle('ac-item-active', i === active));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            active = Math.max(active - 1, 0);
+            items.forEach((el, i) => el.classList.toggle('ac-item-active', i === active));
+        } else if (e.key === 'Enter' && active >= 0) {
+            e.preventDefault();
+            items[active].dispatchEvent(new MouseEvent('mousedown'));
+        } else if (e.key === 'Escape') {
+            closeDropdown();
+        }
+    });
+
+    input.addEventListener('focus', function() { fetchResults(this.value); });
     input.addEventListener('input', function() {
-        loadRivals(this.value);
-        hiddenId.value = rivalMap[this.value] || '';
+        if (hidden) hidden.value = ''; // limpiar ID si escribe libre
+        fetchResults(this.value);
     });
-    input.addEventListener('change', function() {
-        hiddenId.value = rivalMap[this.value] || '';
+    input.addEventListener('blur', function() {
+        setTimeout(closeDropdown, 150); // delay para permitir click en item
     });
-})();
+}
 
-// ─── Autocomplete nativo: Torneo ─────────────────────────────
-(function() {
-    var input = document.getElementById('tournament_input');
-    var datalist = document.getElementById('tournaments-list');
-    var hiddenId = document.getElementById('tournament_id');
-    if (!input) return;
+// Inicializar los tres campos
+initAutocomplete({
+    inputId: 'local_team_name',
+    dropdownId: 'ac-local',
+    url: '{{ route("api.local-teams.recent") }}',
+    labelKey: 'text',
+});
 
-    var tournamentMap = {};
+initAutocomplete({
+    inputId: 'rival_team_input',
+    dropdownId: 'ac-rival',
+    url: '{{ route("api.rival-teams.autocomplete") }}',
+    hiddenId: 'rival_team_id',
+    labelKey: 'text',
+});
 
-    function loadTournaments(q) {
-        fetch('{{ route("api.tournaments.autocomplete") }}?q=' + encodeURIComponent(q))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                datalist.innerHTML = '';
-                var results = data.results || data;
-                results.forEach(function(item) {
-                    var opt = document.createElement('option');
-                    opt.value = item.text;
-                    opt.dataset.id = item.id;
-                    datalist.appendChild(opt);
-                    tournamentMap[item.text] = item.id;
-                });
-            }).catch(function() {});
-    }
-
-    input.addEventListener('focus', function() { loadTournaments(''); });
-    input.addEventListener('input', function() {
-        loadTournaments(this.value);
-        hiddenId.value = tournamentMap[this.value] || '';
-    });
-    input.addEventListener('change', function() {
-        hiddenId.value = tournamentMap[this.value] || '';
-    });
-})();
+initAutocomplete({
+    inputId: 'tournament_input',
+    dropdownId: 'ac-tournament',
+    url: '{{ route("api.tournaments.autocomplete") }}',
+    hiddenId: 'tournament_id',
+    labelKey: 'text',
+});
 
 function initVisibility() {
     document.querySelectorAll('.visibility-option').forEach(label => {
