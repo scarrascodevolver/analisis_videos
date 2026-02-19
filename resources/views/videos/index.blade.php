@@ -520,7 +520,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 @endpush
 
 {{-- Context menu HTML --}}
-<ul id="folder-context-menu">
+<ul id="folder-context-menu" style="display:none">
     <li id="ctx-rename"><i class="fas fa-pencil-alt"></i> Renombrar</li>
 </ul>
 
