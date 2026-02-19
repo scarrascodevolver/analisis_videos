@@ -106,14 +106,17 @@
 
             <div class="row">
                 {{-- Torneo --}}
-                <div class="col-md-4">
+                <div class="{{ $isClub ? 'col-md-4' : 'col-md-7' }}">
                     <div class="form-group mb-2">
-                        <label class="small font-weight-bold"><i class="fas fa-trophy text-warning mr-1"></i>Torneo</label>
+                        <label class="small font-weight-bold">
+                            <i class="fas fa-trophy text-warning mr-1"></i>Torneo
+                            @if(!$isClub)<span class="text-danger">*</span>@endif
+                        </label>
                         <input type="text"
                                id="tournament_input"
                                name="tournament_name_input"
                                class="form-control form-control-sm"
-                               placeholder="Torneo (opcional)..."
+                               placeholder="{{ $isClub ? 'Torneo (opcional)...' : 'Seleccioná o escribí el torneo...' }}"
                                list="tournaments-list"
                                autocomplete="off">
                         <input type="hidden" id="tournament_id" name="tournament_id">
@@ -122,7 +125,7 @@
                 </div>
 
                 {{-- Fecha --}}
-                <div class="col-md-3">
+                <div class="{{ $isClub ? 'col-md-3' : 'col-md-5' }}">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold"><i class="fas fa-calendar mr-1"></i>Fecha <span class="text-danger">*</span></label>
                         <input type="date" id="match_date" name="match_date"
@@ -131,7 +134,7 @@
                     </div>
                 </div>
 
-                {{-- Categoría (solo clubs) --}}
+                {{-- Categoría + División (solo clubs) --}}
                 @if($isClub)
                 <div class="col-md-3">
                     <div class="form-group mb-2">
@@ -144,8 +147,6 @@
                         </select>
                     </div>
                 </div>
-
-                {{-- División (solo clubs) --}}
                 <div class="col-md-2" id="divisionCol" style="display:none">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold">División</label>
