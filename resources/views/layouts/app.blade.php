@@ -1077,12 +1077,20 @@
 @auth
 @php
     $currentOrg = auth()->user()->currentOrganization();
-    $showOnboarding = $currentOrg
-        && !$currentOrg->onboarding_completed
-        && auth()->user()->organizations()
-            ->wherePivot('is_org_admin', true)
-            ->where('organizations.id', $currentOrg->id)
-            ->exists();
+    $isOrgAdmin  = $currentOrg && auth()->user()->organizations()
+        ->wherePivot('is_org_admin', true)
+        ->where('organizations.id', $currentOrg->id)
+        ->exists();
+
+    $needsOnboarding = false;
+    if ($currentOrg && !$currentOrg->onboarding_completed && $isOrgAdmin) {
+        if ($currentOrg->isClub()) {
+            $needsOnboarding = \App\Models\Category::where('organization_id', $currentOrg->id)->count() === 0;
+        } else {
+            $needsOnboarding = \App\Models\Tournament::where('organization_id', $currentOrg->id)->count() === 0;
+        }
+    }
+    $showOnboarding = $needsOnboarding;
 @endphp
 
 @if($showOnboarding)

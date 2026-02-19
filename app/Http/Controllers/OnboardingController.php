@@ -23,7 +23,7 @@ class OnboardingController extends Controller
             ]);
 
             // Eliminar categorías previas y crear las seleccionadas
-            Category::where('organization_id', $org->id)->delete();
+            Category::withoutGlobalScopes()->where('organization_id', $org->id)->delete();
             foreach ($request->categories as $name) {
                 $name = trim($name);
                 if ($name) {
