@@ -210,27 +210,47 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * Eliminar organización
+     * Eliminar organización con borrado completo en cascada.
+     * Requiere confirmación enviando el nombre exacto de la org.
      */
-    public function destroyOrganization(Organization $organization)
+    public function destroyOrganization(Request $request, Organization $organization)
     {
-        $name = $organization->name;
-
-        // Verificar que no tenga usuarios o videos asociados
-        if ($organization->users()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar una organización con usuarios asociados.');
+        // Confirmación de seguridad: el nombre debe coincidir exactamente
+        if ($request->input('confirm_name') !== $organization->name) {
+            return back()->with('error', 'El nombre ingresado no coincide. La organización NO fue eliminada.');
         }
 
-        if ($organization->videos()->count() > 0) {
-            return back()->with('error', 'No se puede eliminar una organización con videos asociados.');
-        }
+        $name        = $organization->name;
+        $videosCount = $organization->videos()->withoutGlobalScope('organization')->count();
+        $usersCount  = $organization->users()->count();
 
-        // Eliminar logo si existe
+        // 1. Eliminar cada video de Bunny Stream
+        $bunnyService = BunnyStreamService::forOrganization($organization);
+        $organization->videos()->withoutGlobalScope('organization')
+            ->whereNotNull('bunny_video_id')
+            ->each(function ($video) use ($bunnyService) {
+                try {
+                    $bunnyService->deleteVideo($video->bunny_video_id);
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudo eliminar video de Bunny', [
+                        'bunny_video_id' => $video->bunny_video_id,
+                        'error'          => $e->getMessage(),
+                    ]);
+                }
+            });
+
+        // 2. Eliminar todos los videos de la DB
+        $organization->videos()->withoutGlobalScope('organization')->delete();
+
+        // 3. Desasociar usuarios de la org (no se eliminan, pueden pertenecer a otras orgs)
+        $organization->users()->detach();
+
+        // 4. Eliminar logo si existe
         if ($organization->logo_path) {
             \Storage::disk('public')->delete($organization->logo_path);
         }
 
-        // Eliminar library en Bunny Stream si tiene una asignada
+        // 5. Eliminar library completa en Bunny Stream
         if ($organization->bunny_library_id) {
             try {
                 BunnyStreamService::deleteLibrary($organization->bunny_library_id);
@@ -242,10 +262,18 @@ class SuperAdminController extends Controller
             }
         }
 
+        // 6. Eliminar la organización
         $organization->delete();
 
+        Log::info("Organización eliminada por super admin", [
+            'name'        => $name,
+            'users_count' => $usersCount,
+            'videos_count'=> $videosCount,
+            'deleted_by'  => auth()->id(),
+        ]);
+
         return redirect()->route('super-admin.organizations')
-            ->with('success', "Organización '{$name}' eliminada exitosamente.");
+            ->with('success', "Organización '{$name}' eliminada. Se eliminaron {$videosCount} videos y se desasociaron {$usersCount} usuarios.");
     }
 
     /**

@@ -109,18 +109,16 @@
                                        title="Gestionar Usuarios">
                                         <i class="fas fa-users-cog"></i>
                                     </a>
-                                    @if($org->users_count == 0 && $org->videos_count == 0)
-                                    <form action="{{ route('super-admin.organizations.destroy', $org) }}"
-                                          method="POST"
-                                          class="d-inline"
-                                          onsubmit="return confirm('¿Estás seguro de eliminar esta organización?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    @endif
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-delete-org"
+                                            title="Eliminar organización"
+                                            data-org-id="{{ $org->id }}"
+                                            data-org-name="{{ $org->name }}"
+                                            data-users="{{ $org->users_count }}"
+                                            data-videos="{{ $org->videos_count }}"
+                                            data-action="{{ route('super-admin.organizations.destroy', $org) }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -145,4 +143,76 @@
         </div>
     </div>
 </div>
+<!-- Modal confirmación de eliminación -->
+<div class="modal fade" id="deleteOrgModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Eliminar Organización
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Estás a punto de eliminar permanentemente:</p>
+                <ul>
+                    <li><strong id="modal-org-name"></strong></li>
+                    <li><span id="modal-users-count"></span> usuario(s) desasociados</li>
+                    <li><span id="modal-videos-count"></span> video(s) eliminados de Bunny</li>
+                </ul>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Esta acción <strong>no se puede deshacer</strong>. Los videos se eliminarán de Bunny Stream permanentemente.
+                </div>
+                <div class="form-group mb-0">
+                    <label>Escribí el nombre exacto de la organización para confirmar:</label>
+                    <input type="text" id="confirm-name-input" class="form-control" placeholder="Nombre de la organización">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <form id="delete-org-form" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="confirm_name" id="confirm-name-hidden">
+                    <button type="submit" class="btn btn-danger" id="btn-confirm-delete" disabled>
+                        <i class="fas fa-trash mr-1"></i> Eliminar definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.querySelectorAll('.btn-delete-org').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var name   = this.dataset.orgName;
+        var users  = this.dataset.users;
+        var videos = this.dataset.videos;
+        var action = this.dataset.action;
+
+        document.getElementById('modal-org-name').textContent    = name;
+        document.getElementById('modal-users-count').textContent = users;
+        document.getElementById('modal-videos-count').textContent= videos;
+        document.getElementById('delete-org-form').action        = action;
+        document.getElementById('confirm-name-input').value      = '';
+        document.getElementById('btn-confirm-delete').disabled   = true;
+
+        $('#deleteOrgModal').modal('show');
+    });
+});
+
+document.getElementById('confirm-name-input').addEventListener('input', function() {
+    var orgName  = document.getElementById('modal-org-name').textContent;
+    var btnConfirm = document.getElementById('btn-confirm-delete');
+    var hiddenInput = document.getElementById('confirm-name-hidden');
+
+    hiddenInput.value = this.value;
+    btnConfirm.disabled = (this.value !== orgName);
+});
+</script>
+@endpush
+
 @endsection
