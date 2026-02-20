@@ -116,10 +116,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="category_id">
-                                        <i class="fas fa-tags"></i> Categoría *
+                                        <i class="fas fa-tags"></i> Categoría {{ $isClub ? '*' : '' }}
                                     </label>
-                                    <select class="form-control @error('category_id') is-invalid @enderror" 
-                                            id="category_id" name="category_id" required>
+                                    <select class="form-control @error('category_id') is-invalid @enderror"
+                                            id="category_id" name="category_id" {{ $isClub ? 'required' : '' }}>
                                         <option value="">Seleccionar categoría...</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->id }}" 
@@ -262,7 +262,7 @@ $(document).ready(function() {
         let isValid = true;
 
         // Check required fields
-        const requiredFields = ['title', 'category_id', 'match_date'];
+        const requiredFields = ['title', 'match_date'].concat({{ $isClub ? "['category_id']" : '[]' }});
         requiredFields.forEach(function(fieldName) {
             const field = $(`[name="${fieldName}"]`);
             if (!field.val() || field.val().trim() === '') {

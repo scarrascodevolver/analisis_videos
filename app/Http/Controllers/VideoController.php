@@ -364,8 +364,9 @@ class VideoController extends Controller
         $currentOrg = auth()->user()->currentOrganization();
         $categories = Category::where('organization_id', $currentOrg->id)->get();
         $organizationName = $currentOrg->name ?? 'Mi Equipo';
+        $isClub = $currentOrg?->isClub() ?? true;
 
-        return view('videos.edit', compact('video', 'categories', 'organizationName'));
+        return view('videos.edit', compact('video', 'categories', 'organizationName', 'isClub'));
     }
 
     public function update(Request $request, Video $video)
