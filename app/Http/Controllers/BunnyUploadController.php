@@ -169,7 +169,7 @@ class BunnyUploadController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al iniciar la subida: '.$e->getMessage(),
+                'message' => 'Error al iniciar la subida. Por favor intentá de nuevo.',
             ], 500);
         }
     }
@@ -245,7 +245,7 @@ class BunnyUploadController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error al obtener el estado del video.'], 500);
         }
 
         // Persistir cambios en BD (separado del response para no bloquear el frontend)

@@ -487,6 +487,16 @@ const uploadState = {
     masterVideoId: null, // video_id del master (para vincular slaves)
 };
 
+// ─── Utilidad: escapar HTML para evitar XSS en innerHTML ─────
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // ─── Config por tipo de org ───────────────────────────────────
 const isClub = {{ json_encode($isClub) }};
 
@@ -713,7 +723,7 @@ function renderFileRow(item) {
         <div class="file-thumb"><i class="fas fa-film"></i></div>
         <div class="file-info">
             <div class="d-flex align-items-center flex-wrap" style="gap:10px;margin-bottom:2px">
-                <span class="file-name" title="${item.file.name}">${item.file.name}</span>
+                <span class="file-name" title="${escapeHtml(item.file.name)}">${escapeHtml(item.file.name)}</span>
                 ${xmlBtnInline}
             </div>
             <div class="file-size">${sizeText}</div>
