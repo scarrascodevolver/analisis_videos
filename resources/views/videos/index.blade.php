@@ -110,6 +110,19 @@
                         : number_format($totalSize / 1048576, 0) . ' MB';
                 }
                 $anglesCount = $video->angles_count ?? 1;
+
+                // Nombres de ángulos para tooltip del badge
+                $angleNames = [];
+                $firstGroup = $video->videoGroups->first();
+                if ($firstGroup) {
+                    foreach ($firstGroup->videos as $gv) {
+                        $angle = $gv->pivot->camera_angle ?? null;
+                        if ($angle) $angleNames[] = $angle;
+                    }
+                }
+                $anglesTooltip = !empty($angleNames)
+                    ? implode(' · ', $angleNames)
+                    : $anglesCount . ' ángulos';
             @endphp
             <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
                 {{-- Botón editar flotante --}}
@@ -150,7 +163,9 @@
                     @endif
                     {{-- Ángulos --}}
                     @if($anglesCount > 1)
-                        <span class="angles-badge"><i class="fas fa-video mr-1"></i>{{ $anglesCount }}</span>
+                        <span class="angles-badge" title="{{ $anglesTooltip }}">
+                            <i class="fas fa-video mr-1"></i>{{ $anglesCount }}
+                        </span>
                     @endif
                 </div>
 

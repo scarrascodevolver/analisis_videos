@@ -514,13 +514,25 @@ document.addEventListener('DOMContentLoaded', function () {
         banner.className = 'alert alert-info mb-3';
         banner.style.cssText = 'border-left: 4px solid #00B7B5; background: rgba(0,183,181,.1); color: #00B7B5; border-color: #00B7B5;';
         banner.innerHTML = `
-            <i class="fas fa-video mr-2"></i>
-            <strong>Modo ángulo adicional</strong> —
-            El video que subas se vinculará automáticamente como ángulo adicional del video master
-            (ID&nbsp;${escapeHtml(masterVideoId)}).
-            <br><small class="text-muted" style="color:#888!important">
-                Podés ajustar el nombre y la fecha antes de subir. El ángulo quedará sincronizable desde el reproductor multi-cámara.
-            </small>
+            <div class="d-flex align-items-start">
+                <i class="fas fa-video mr-2 mt-1"></i>
+                <div class="flex-grow-1">
+                    <strong>Modo ángulo adicional</strong> —
+                    El video se vinculará automáticamente al video master.
+                    <div class="mt-2">
+                        <label for="cameraAngleInput" style="font-size:.85rem;font-weight:600;color:#00B7B5;margin-bottom:4px;display:block;">
+                            Nombre del ángulo <span style="color:#e74c3c">*</span>
+                        </label>
+                        <input type="text" id="cameraAngleInput"
+                            placeholder="Ej: Tribuna lateral, Drone, Detrás del arco..."
+                            style="width:100%;max-width:420px;background:#1a1a1a;border:1px solid #00B7B5;color:#fff;border-radius:6px;padding:6px 10px;font-size:.85rem;"
+                            maxlength="100">
+                        <small style="color:#888;display:block;margin-top:3px;">
+                            Este nombre aparecerá en el badge de ángulos del partido.
+                        </small>
+                    </div>
+                </div>
+            </div>
         `;
         // Insertar al comienzo del contenido principal
         const mainRow = document.querySelector('.row.justify-content-center .col-lg-10');
@@ -1056,8 +1068,9 @@ async function uploadToCloudflare(item, commonData, onProgress) {
     const effectiveMasterVideoId = isSlaveMode
         ? parseInt(masterVideoId, 10)
         : (item.role !== 'master' ? (uploadState.masterVideoId || null) : null);
+    const cameraAngleInput = document.getElementById('cameraAngleInput');
     const effectiveCameraAngle = effectiveIsSlave
-        ? (item.title || item.file.name || 'Ángulo adicional')
+        ? (cameraAngleInput?.value.trim() || item.title || 'Ángulo adicional')
         : null;
 
     // 1. Pedir endpoint TUS al servidor
