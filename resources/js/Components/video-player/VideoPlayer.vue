@@ -91,7 +91,7 @@ function toggleTheaterMode() {
 
                 <div class="card-body p-0">
                     <div :class="[hasMultiCamera ? 'multi-cam-wrapper' : '', { 'theater-mode': isTheaterMode }]">
-                        <div :class="hasMultiCamera ? 'master-col' : ''">
+                        <div :class="hasMultiCamera ? 'master-col' : 'single-col'">
                             <VideoElement
                                 :stream-url="video.stream_url"
                                 :title="video.title"
@@ -136,6 +136,21 @@ function toggleTheaterMode() {
 </template>
 
 <style scoped>
+/* Video único (sin ángulos adicionales) — limitar altura para que no sea enorme */
+.single-col :deep(.video-container) {
+    max-height: 65vh;
+}
+
+.single-col :deep(video) {
+    max-height: 65vh;
+}
+
+/* En theater mode: permitir más altura */
+.theater-mode .single-col :deep(.video-container),
+.theater-mode .single-col :deep(video) {
+    max-height: 82vh;
+}
+
 /* Multi-camera side-by-side layout (matches Blade's activateSideBySideLayout) */
 .multi-cam-wrapper {
     display: flex;
