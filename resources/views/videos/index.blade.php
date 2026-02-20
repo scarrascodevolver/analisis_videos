@@ -20,6 +20,11 @@
         @else
             <li class="breadcrumb-item active">{{ $team }}</li>
         @endif
+    @elseif(isset($tournament))
+        <li class="breadcrumb-item">
+            <a href="{{ route('videos.index') }}">Videos</a>
+        </li>
+        <li class="breadcrumb-item active">{{ $tournament->name }}</li>
     @else
         <li class="breadcrumb-item active">Videos</li>
     @endif
@@ -82,33 +87,68 @@
 @endif
 
 {{-- ═══════════════════════════════════════════════════════════
-     ASOCIACIÓN — Nivel 2: Carpetas de clubes dentro de torneo
+     ASOCIACIÓN — Nivel 2: Partidos dentro de un torneo
 ═══════════════════════════════════════════════════════════ --}}
-@elseif($view === 'asoc_clubs')
+@elseif($view === 'asoc_matches')
 @include('videos.partials.folder-header', ['title' => $tournament->name, 'icon' => 'trophy', 'back' => route('videos.index')])
-@if($clubs->isEmpty())
+@if($matches->isEmpty())
     @include('videos.partials.empty-folder', [
         'msg' => 'Todavía no hay partidos en este torneo.',
         'action' => route('videos.create'),
         'actionLabel' => 'Subir el primer partido'
     ])
 @else
-    <div class="folder-grid">
-        @foreach($clubs as $c)
-            <div class="folder-card-wrap">
-                <a href="{{ route('videos.index', ['tournament' => $tournament->id, 'club' => $c->club_id]) }}"
-                   class="folder-card text-decoration-none"
-                   data-rename-url="{{ route('api.clubs.rename', $c->club_id) }}"
-                   data-rename-id="{{ $c->club_id }}"
-                   data-rename-name="{{ $c->club_name }}">
-                    <div class="folder-icon-wrap"><i class="fas fa-shield-alt"></i></div>
-                    <div class="folder-name">{{ $c->club_name }}</div>
-                    <div class="folder-meta">
-                        {{ $c->videos_count }} {{ $c->videos_count == 1 ? 'partido' : 'partidos' }}
-                        &middot; {{ \Carbon\Carbon::parse($c->last_match)->format('M Y') }}
+    <div class="match-list">
+        @foreach($matches as $video)
+            <a href="{{ route('videos.show', $video) }}" class="match-row text-decoration-none">
+                <div class="match-thumb">
+                    @if($video->bunny_thumbnail)
+                        <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail">
+                    @else
+                        <div class="match-thumb-empty"><i class="fas fa-film"></i></div>
+                    @endif
+                    @if($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
+                        <span class="match-status-badge
+                            {{ $video->bunny_status === 'error' ? 'match-status-error' : '' }}">
+                            @if($video->bunny_status === 'error')
+                                <i class="fas fa-exclamation-circle"></i>
+                            @else
+                                <i class="fas fa-spinner fa-spin"></i>
+                            @endif
+                        </span>
+                    @endif
+                </div>
+                <div class="match-teams-info">
+                    <div class="match-matchup">
+                        <span class="match-local">{{ $video->analyzed_team_name ?? 'Local' }}</span>
+                        <span class="match-vs-badge">vs</span>
+                        <span class="match-rival">{{ $video->rival_name ?? 'Rival' }}</span>
                     </div>
-                </a>
-            </div>
+                    <div class="match-detail-meta">
+                        <i class="fas fa-calendar-alt mr-1"></i>{{ $video->match_date->format('d M Y') }}
+                        @if($video->division)
+                            <span class="mx-2">·</span>
+                            <span class="badge badge-rugby badge-sm">{{ ucfirst($video->division) }}</span>
+                        @endif
+                        @if($video->clips_count > 0)
+                            <span class="mx-2">·</span>
+                            <span class="badge badge-sm" style="background:#00B7B5;color:#fff">
+                                <i class="fas fa-list-ul mr-1"></i>XML
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                <div class="match-actions-right">
+                    @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
+                        <a href="{{ route('videos.edit', $video) }}"
+                           class="btn btn-rugby-light btn-sm btn-xs mr-1"
+                           onclick="event.preventDefault(); event.stopPropagation(); window.location='{{ route('videos.edit', $video) }}'">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    @endif
+                    <i class="fas fa-play-circle match-play-icon"></i>
+                </div>
+            </a>
         @endforeach
     </div>
 @endif
@@ -501,6 +541,88 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 .card-rugby .card-header { background:#005461; }
 .badge-rugby      { background:#005461; color:#fff; font-size:.8em; }
 .badge-sm         { font-size:.75em; padding:.2rem .5rem; }
+
+/* ─── Match list (asociaciones) ───────────────────────── */
+.match-list { display: flex; flex-direction: column; gap: 8px; }
+.match-row {
+    display: flex;
+    align-items: center;
+    background: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    gap: 16px;
+    transition: border-color .2s, background .2s;
+    color: inherit;
+}
+.match-row:hover {
+    border-color: #005461;
+    background: #1e2e30;
+    color: inherit;
+    text-decoration: none;
+}
+.match-thumb {
+    width: 96px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #111;
+    position: relative;
+}
+.match-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.match-thumb-empty {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: #444; font-size: 1.3rem;
+}
+.match-status-badge {
+    position: absolute; bottom: 3px; left: 3px;
+    background: rgba(0,0,0,.75); color: #aaa;
+    font-size: .6rem; padding: 1px 4px; border-radius: 6px;
+}
+.match-status-badge.match-status-error { color: #dc3545; }
+.match-teams-info { flex: 1; min-width: 0; }
+.match-matchup {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.match-vs-badge {
+    background: #005461;
+    color: #00B7B5;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    letter-spacing: .04em;
+}
+.match-detail-meta {
+    font-size: .75rem;
+    color: #777;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+.match-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.match-play-icon {
+    font-size: 2rem;
+    color: #2d4a4e;
+    transition: color .2s;
+}
+.match-row:hover .match-play-icon { color: #00B7B5; }
 
 /* ─── Context menu ─────────────────────────────────────── */
 #folder-context-menu {

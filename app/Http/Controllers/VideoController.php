@@ -71,9 +71,8 @@ class VideoController extends Controller
             return view('videos.index', compact('category', 'videos'))->with('view', 'matches');
         }
 
-        // ── ASOCIACIÓN: Torneo → Club → Videos ─────────────────────────────
+        // ── ASOCIACIÓN: Torneo → Partidos ─────────────────────────────────
         $tournamentParam = $request->get('tournament'); // id | null
-        $clubParam = $request->get('club');       // id | null
 
         // Nivel 1: carpetas de torneos
         if (! $tournamentParam) {
@@ -86,35 +85,16 @@ class VideoController extends Controller
 
         $tournament = Tournament::findOrFail($tournamentParam);
 
-        // Nivel 2: carpetas de clubes dentro del torneo
-        if (! $clubParam) {
-            $clubs = Video::where('is_master', true)
-                ->teamVisible($user)
-                ->where('tournament_id', $tournamentParam)
-                ->whereNotNull('club_id')
-                ->with('club')
-                ->selectRaw('club_id, COUNT(*) as videos_count, MAX(match_date) as last_match')
-                ->groupBy('club_id')
-                ->orderByRaw('MAX(match_date) DESC')
-                ->get()
-                ->map(fn ($row) => tap($row, fn ($r) => $r->club_name = $r->club?->name ?? 'Sin club'));
-
-            return view('videos.index', compact('tournament', 'clubs'))->with('view', 'asoc_clubs');
-        }
-
-        $club = \App\Models\Club::findOrFail($clubParam);
-
-        // Nivel 3: videos
-        $videos = Video::with(['category', 'uploader', 'tournament', 'rivalTeam'])
+        // Nivel 2: lista de partidos del torneo (cada video master = un partido)
+        $matches = Video::with(['rivalTeam'])
             ->withCount('clips')
             ->where('is_master', true)
             ->teamVisible($user)
             ->where('tournament_id', $tournamentParam)
-            ->where('club_id', $clubParam)
             ->orderBy('match_date', 'desc')
-            ->paginate(24);
+            ->get();
 
-        return view('videos.index', compact('tournament', 'club', 'videos'))->with('view', 'matches');
+        return view('videos.index', compact('tournament', 'matches'))->with('view', 'asoc_matches');
     }
 
     public function create()
