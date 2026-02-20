@@ -15,7 +15,7 @@ class BunnyWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        // Verificar secret si está configurado
+        // S-04: Verificar secret — obligatorio si está configurado, rechazar si falta firma
         $secret = config('filesystems.bunny_stream.webhook_secret');
         if ($secret) {
             $receivedSignature = $request->header('Bunny-Signature') ?? '';
@@ -25,6 +25,11 @@ class BunnyWebhookController extends Controller
 
                 return response()->json(['error' => 'Invalid signature'], 401);
             }
+        } else {
+            // Sin secret configurado: solo aceptar desde IPs de Bunny (logging por ahora)
+            Log::warning('Bunny webhook recibido sin BUNNY_WEBHOOK_SECRET configurado', [
+                'ip' => $request->ip(),
+            ]);
         }
 
         $payload = $request->json()->all();
@@ -51,7 +56,7 @@ class BunnyWebhookController extends Controller
             $updates['bunny_hls_url'] = $bunny->getHlsUrl($guid);
             $updates['bunny_thumbnail'] = $bunny->getThumbnailUrl($guid);
             $updates['processing_status'] = 'completed';
-            $updates['status'] = 'active';
+            $updates['status'] = 'completed';
         } elseif ($statusStr === 'error') {
             $updates['processing_status'] = 'failed';
         }

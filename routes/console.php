@@ -14,6 +14,12 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 
+// Limpiar videos huérfanos en Bunny (pendingupload > 24h sin completar)
+Schedule::command('videos:clean-orphans --hours=24')
+    ->dailyAt('04:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/clean-orphans.log'));
+
 // Limpiar archivos temporales locales (storage/app/temp)
 // Se ejecuta diariamente a las 3:00 AM
 Schedule::command('videos:cleanup-temp --hours=24')

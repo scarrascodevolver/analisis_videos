@@ -21,7 +21,7 @@ class VideoController extends Controller
 
         // Jugadores: lista plana de sus videos asignados (sin cambios)
         if (! $isStaff) {
-            $query = Video::with(['category', 'uploader', 'rugbySituation'])
+            $query = Video::with(['category', 'uploader', 'rugbySituation', 'rivalTeam'])
                 ->where('is_master', true)
                 ->teamVisible($user);
 
@@ -60,7 +60,7 @@ class VideoController extends Controller
             // Nivel 2: videos de la categoría
             $category = Category::findOrFail($categoryParam);
 
-            $videos = Video::with(['category', 'uploader', 'tournament'])
+            $videos = Video::with(['category', 'uploader', 'tournament', 'rivalTeam'])
                 ->withCount('clips')
                 ->where('is_master', true)
                 ->teamVisible($user)
@@ -105,7 +105,7 @@ class VideoController extends Controller
         $club = \App\Models\Club::findOrFail($clubParam);
 
         // Nivel 3: videos
-        $videos = Video::with(['category', 'uploader', 'tournament'])
+        $videos = Video::with(['category', 'uploader', 'tournament', 'rivalTeam'])
             ->withCount('clips')
             ->where('is_master', true)
             ->teamVisible($user)
@@ -140,13 +140,14 @@ class VideoController extends Controller
             ->orderBy('created_at', 'desc')
             ->value('analyzed_team_name');
 
-        $players = User::where(function ($query) {
-            $query->where('role', 'jugador')
-                ->orWhere('role', 'entrenador')
-                ->orWhereHas('profile', function ($q) {
-                    $q->where('can_receive_assignments', true);
-                });
-        })
+        $players = User::whereHas('organizations', fn ($q) => $q->where('organizations.id', $currentOrg->id))
+            ->where(function ($query) {
+                $query->where('role', 'jugador')
+                    ->orWhere('role', 'entrenador')
+                    ->orWhereHas('profile', function ($q) {
+                        $q->where('can_receive_assignments', true);
+                    });
+            })
             ->with('profile')
             ->orderBy('name')
             ->get();
@@ -368,6 +369,8 @@ class VideoController extends Controller
 
     public function edit(Video $video)
     {
+        $this->authorize('update', $video);
+
         $categories = Category::all();
 
         // El equipo analizado es siempre la organización actual
@@ -379,6 +382,8 @@ class VideoController extends Controller
 
     public function update(Request $request, Video $video)
     {
+        $this->authorize('update', $video);
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -401,6 +406,8 @@ class VideoController extends Controller
 
     public function destroy(Request $request, Video $video)
     {
+        $this->authorize('delete', $video);
+
         $videoTitle = $video->title;
 
         // Delete video file from storage - try Spaces first, then local

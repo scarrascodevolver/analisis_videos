@@ -873,6 +873,7 @@ function handleXml(id, input) {
 
 // ─── Subida principal ────────────────────────────────────────
 async function startUpload() {
+    document.getElementById('uploadBtn').disabled = true;
     if (uploadState.isUploading) return;
 
     const matchDate = document.getElementById('match_date').value;
@@ -949,7 +950,7 @@ async function resolveCommonData() {
     } else if (rivalText) {
         // Es un rival nuevo — intentar crearlo en el servidor
         try {
-            const res  = await fetch('{{ route("admin.rival-teams.store") }}', {
+            const res  = await fetch('{{ route("rival-teams.store") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
                 body: JSON.stringify({ name: rivalText }),
@@ -1102,7 +1103,7 @@ function updateRowProgress(id, pct) {
     const pctEl = document.getElementById('progpct_' + id);
     if (pctEl) pctEl.textContent = pct + '%';
     const statusEl = document.getElementById('progstatus_' + id);
-    if (statusEl) statusEl.textContent = pct >= 100 ? 'Procesando en Cloudflare...' : 'Subiendo...';
+    if (statusEl) statusEl.textContent = pct >= 100 ? 'Procesando en Bunny...' : 'Subiendo...';
     document.getElementById('uploadPercent').textContent = pct + '%';
     document.getElementById('uploadProgressBar').style.width = pct + '%';
 }

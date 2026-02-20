@@ -164,10 +164,16 @@
                         @endif
                         {{-- Status badge --}}
                         @if($video->bunny_status && $video->bunny_status !== 'ready')
-                            <span class="status-badge">
-                                <i class="fas fa-spinner fa-spin mr-1"></i>
-                                {{ $video->bunny_status === 'processing' ? 'Procesando' : 'Pendiente' }}
-                            </span>
+                            @if($video->bunny_status === 'error')
+                                <span class="status-badge" style="background:rgba(220,53,69,.85)">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>Error
+                                </span>
+                            @else
+                                <span class="status-badge">
+                                    <i class="fas fa-spinner fa-spin mr-1"></i>
+                                    {{ $video->bunny_status === 'processing' ? 'Procesando' : 'Pendiente' }}
+                                </span>
+                            @endif
                         @endif
                         {{-- XML badge --}}
                         @if($video->clips_count > 0)

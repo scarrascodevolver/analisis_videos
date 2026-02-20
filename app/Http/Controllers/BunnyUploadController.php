@@ -24,9 +24,9 @@ class BunnyUploadController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'filename' => 'required|string|max:255',
-            'file_size' => 'required|integer|min:1',
-            'mime_type' => 'nullable|string|max:100',
+            'filename' => ['required', 'string', 'max:255', 'regex:/\.(mp4|mov|avi|webm|mkv)$/i'],
+            'file_size' => 'required|integer|min:1|max:8589934592',
+            'mime_type' => ['nullable', 'string', 'in:video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,video/mpeg,video/x-m4v'],
             'category_id' => $isClub ? [
                 'required',
                 Rule::exists('categories', 'id')->where(fn ($q) => $q->where('organization_id', $org->id)),
@@ -163,6 +163,14 @@ class BunnyUploadController extends Controller
 
         $video = Video::findOrFail($request->video_id);
 
+        // S-01: Verificar ownership — solo el uploader de la misma org puede completar
+        $org = auth()->user()->currentOrganization();
+        abort_if(
+            $video->organization_id !== $org?->id || $video->uploaded_by !== auth()->id(),
+            403,
+            'No autorizado'
+        );
+
         if ($video->bunny_video_id !== $request->bunny_guid) {
             return response()->json(['success' => false, 'message' => 'GUID no coincide'], 400);
         }
@@ -194,6 +202,9 @@ class BunnyUploadController extends Controller
      */
     public function status(Video $video)
     {
+        // S-02: Verificar que el video pertenece a la org actual
+        abort_if($video->organization_id !== auth()->user()->currentOrganization()?->id, 403, 'No autorizado');
+
         if (! $video->bunny_video_id) {
             return response()->json(['success' => false, 'message' => 'Not a Bunny video'], 400);
         }
