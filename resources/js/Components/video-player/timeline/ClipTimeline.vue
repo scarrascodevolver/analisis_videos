@@ -34,9 +34,11 @@
                             </span>
                         </div>
 
-                        <!-- Lane Track -->
+                        <!-- Lane Track – height is dynamic based on stagger rows -->
                         <div
                             class="lane-track"
+                            :style="{ height: getLaneHeight(category.id) + 'px' }"
+                            :ref="(el) => setTrackRef(el as HTMLElement | null, category.id)"
                             @click="handleLaneClick($event, category.id)"
                         >
                             <!-- Clip Blocks -->
@@ -44,10 +46,23 @@
                                 v-for="clip in getClipsForCategory(category.id)"
                                 :key="clip.id"
                                 class="clip-block"
-                                :style="getClipBlockStyle(clip)"
+                                :class="{ 'is-dragging': dragState?.clip.id === clip.id }"
+                                :style="getClipBlockStyle(clip, category.id)"
                                 :title="getClipTooltip(clip)"
+                                @mousedown.stop="onClipMousedown(clip, 'move', $event, category.id)"
                                 @click.stop="handleClipClick(clip)"
-                            ></div>
+                            >
+                                <!-- Left resize handle -->
+                                <div
+                                    class="resize-handle resize-handle-left"
+                                    @mousedown.stop="onClipMousedown(clip, 'resize-left', $event, category.id)"
+                                ></div>
+                                <!-- Right resize handle -->
+                                <div
+                                    class="resize-handle resize-handle-right"
+                                    @mousedown.stop="onClipMousedown(clip, 'resize-right', $event, category.id)"
+                                ></div>
+                            </div>
                         </div>
                     </div>
 
@@ -55,11 +70,20 @@
                     <div class="playhead" :style="{ left: playheadPosition }"></div>
                 </div>
 
+                <!-- Drag time tooltip -->
+                <div v-if="dragState" class="drag-tooltip">
+                    <i class="fas fa-clock mr-1"></i>
+                    {{ formatTime(dragState.previewStart + currentOffset) }}
+                    –
+                    {{ formatTime(dragState.previewEnd + currentOffset) }}
+                    <span class="drag-duration">
+                        ({{ (dragState.previewEnd - dragState.previewStart).toFixed(1) }}s)
+                    </span>
+                </div>
+
                 <!-- Time Scale -->
                 <div class="time-scale">
-                    <div class="time-scale-label">
-                        <!-- Empty space for lane labels -->
-                    </div>
+                    <div class="time-scale-label"></div>
                     <div class="time-scale-track">
                         <span class="time-marker">0:00</span>
                         <span class="time-marker">{{ formatTime(duration * 0.25) }}</span>
@@ -73,9 +97,10 @@
                 <div class="help-message">
                     <i class="fas fa-lightbulb text-warning"></i>
                     <strong>Cómo usar:</strong><br>
-                    • <strong>Click en un clip</strong> (cuadrado de color) para reproducirlo<br>
-                    • <strong>Click en la barra</strong> para saltar a ese momento del video<br>
-                    • Los clips importados de XML son de solo lectura
+                    • <strong>Click en un clip</strong> para reproducirlo desde ese momento<br>
+                    • <strong>Arrastrá los bordes ◄ ►</strong> para ajustar inicio/fin<br>
+                    • <strong>Arrastrá el centro</strong> para mover el clip en el tiempo<br>
+                    • <strong>Click en la barra</strong> para saltar a ese momento del video
                 </div>
             </div>
         </transition>
@@ -98,25 +123,19 @@ const clipsStore = useClipsStore();
 const isCollapsed = ref(false);
 const timelineContainerRef = ref<HTMLElement | null>(null);
 
-// Computed
+// ─── Basic computed ───────────────────────────────────────────────────────────
 const activeCategories = computed(() => clipsStore.activeCategories);
-const currentTime = computed(() => videoStore.currentTime);
-const duration = computed(() => videoStore.duration || 1);
+const currentTime      = computed(() => videoStore.currentTime);
+const duration         = computed(() => videoStore.duration || 1);
 const formattedDuration = computed(() => videoStore.formattedDuration);
-
-// Timeline offset from video (for syncing imported XML clips)
-// IMPORTANT: Convert to Number because Laravel returns decimals as strings
-const currentOffset = computed(() => Number(videoStore.video?.timeline_offset || 0));
+const currentOffset    = computed(() => Number(videoStore.video?.timeline_offset || 0));
 
 const playheadPosition = computed(() => {
     if (!duration.value) return '0%';
     const percent = (currentTime.value / duration.value) * 100;
-    // Position playhead accounting for lane-label width (110px)
-    // Playhead should be positioned only over the track area, not the labels
     return `calc(110px + (100% - 110px) * ${percent / 100})`;
 });
 
-// Methods
 function toggleCollapsed() {
     isCollapsed.value = !isCollapsed.value;
 }
@@ -125,100 +144,252 @@ function getClipsForCategory(categoryId: number): VideoClip[] {
     return clipsStore.clipsByCategory[categoryId] || [];
 }
 
-function getClipBlockStyle(clip: VideoClip) {
-    // Parse raw clip times from database
-    const rawStartTime = parseFloat(clip.start_time as any) || 0;
-    const rawEndTime = parseFloat(clip.end_time as any) || 0;
+// ─── Stagger rows ─────────────────────────────────────────────────────────────
+// When clips overlap in time, assign them to different vertical sub-rows
+// so all clips are visible and clickable.
 
-    // Apply timeline offset for synchronization (important for XML imported clips)
-    const adjustedStart = Math.max(0, rawStartTime + currentOffset.value);
-    const adjustedEnd = rawEndTime + currentOffset.value;
+const ROW_HEIGHT = 30; // px: visible clip height (26px) + 4px gap
+// Minimum gap in seconds between clips to be in the same row
+const GAP_THRESHOLD = 0.3;
 
-    // Skip clips if duration not loaded yet
+// Compute row index for each clip in a category (clips already sorted by start_time)
+function computeClipRows(categoryId: number): Map<number, number> {
+    const clips = getClipsForCategory(categoryId);
+    const rowEndTimes: number[] = []; // last end_time in each row
+    const result = new Map<number, number>();
+
+    for (const clip of clips) {
+        const start = parseFloat(clip.start_time as any) || 0;
+        const end   = parseFloat(clip.end_time   as any) || 0;
+
+        // Find first row where previous clip ends before this one starts (with gap)
+        let rowIdx = rowEndTimes.findIndex(rowEnd => rowEnd + GAP_THRESHOLD <= start);
+        if (rowIdx === -1) {
+            rowIdx = rowEndTimes.length; // new row needed
+            rowEndTimes.push(end);
+        } else {
+            rowEndTimes[rowIdx] = Math.max(rowEndTimes[rowIdx], end);
+        }
+        result.set(clip.id, rowIdx);
+    }
+
+    return result;
+}
+
+// Cached stagger maps, recomputed when clips change
+const staggerCache = computed(() => {
+    const cache = new Map<number, Map<number, number>>();
+    for (const category of activeCategories.value) {
+        cache.set(category.id, computeClipRows(category.id));
+    }
+    return cache;
+});
+
+function getLaneHeight(categoryId: number): number {
+    const rowMap = staggerCache.value.get(categoryId);
+    if (!rowMap || rowMap.size === 0) return 32;
+    const maxRow = Math.max(...rowMap.values());
+    return Math.max(32, (maxRow + 1) * ROW_HEIGHT + 4);
+}
+
+// ─── Track element refs (needed for pixel→time conversion during drag) ────────
+const trackRefs = new Map<number, HTMLElement>();
+
+function setTrackRef(el: HTMLElement | null, categoryId: number) {
+    if (el) trackRefs.set(categoryId, el);
+    else     trackRefs.delete(categoryId);
+}
+
+// ─── Drag state ───────────────────────────────────────────────────────────────
+type DragType = 'move' | 'resize-left' | 'resize-right';
+
+interface DragState {
+    clip:          VideoClip;
+    type:          DragType;
+    startX:        number;
+    originalStart: number;
+    originalEnd:   number;
+    trackWidth:    number;
+    previewStart:  number;
+    previewEnd:    number;
+    didMove:       boolean;
+}
+
+const dragState  = ref<DragState | null>(null);
+const wasDragging = ref(false); // blocks click handler after a real drag
+
+function onClipMousedown(
+    clip:       VideoClip,
+    type:       DragType,
+    event:      MouseEvent,
+    categoryId: number,
+) {
+    // Avoid triggering 'move' drag when user clicked a resize handle
+    if (
+        type === 'move' &&
+        (event.target as HTMLElement).classList.contains('resize-handle')
+    ) return;
+
+    const track = trackRefs.get(categoryId);
+    if (!track) return;
+
+    const rawStart   = parseFloat(clip.start_time as any) || 0;
+    const rawEnd     = parseFloat(clip.end_time   as any) || 0;
+    const trackWidth = track.getBoundingClientRect().width;
+
+    dragState.value = {
+        clip,
+        type,
+        startX:        event.clientX,
+        originalStart: rawStart,
+        originalEnd:   rawEnd,
+        trackWidth,
+        previewStart:  rawStart,
+        previewEnd:    rawEnd,
+        didMove:       false,
+    };
+
+    document.addEventListener('mousemove', onMousemove);
+    document.addEventListener('mouseup',   onMouseup);
+    document.body.style.cursor     = type === 'move' ? 'grabbing' : 'ew-resize';
+    document.body.style.userSelect = 'none';
+}
+
+function onMousemove(event: MouseEvent) {
+    if (!dragState.value || !duration.value) return;
+
+    const { type, startX, originalStart, originalEnd, trackWidth } = dragState.value;
+    const deltaX       = event.clientX - startX;
+    const secPerPixel  = duration.value / trackWidth;
+    const deltaSeconds = deltaX * secPerPixel;
+    const MIN_DUR      = 0.5; // minimum clip duration in seconds
+
+    if (Math.abs(deltaX) > 3) dragState.value.didMove = true;
+
+    let newStart = originalStart;
+    let newEnd   = originalEnd;
+
+    if (type === 'move') {
+        const clipDur = originalEnd - originalStart;
+        newStart = Math.max(0, Math.min(duration.value - clipDur, originalStart + deltaSeconds));
+        newEnd   = newStart + clipDur;
+    } else if (type === 'resize-left') {
+        newStart = Math.max(0, Math.min(originalEnd - MIN_DUR, originalStart + deltaSeconds));
+    } else {
+        newEnd = Math.max(originalStart + MIN_DUR, Math.min(duration.value, originalEnd + deltaSeconds));
+    }
+
+    dragState.value.previewStart = newStart;
+    dragState.value.previewEnd   = newEnd;
+}
+
+async function onMouseup() {
+    document.removeEventListener('mousemove', onMousemove);
+    document.removeEventListener('mouseup',   onMouseup);
+    document.body.style.cursor     = '';
+    document.body.style.userSelect = '';
+
+    if (!dragState.value) return;
+
+    const { clip, previewStart, previewEnd, didMove } = dragState.value;
+    dragState.value = null;
+
+    if (!didMove) return; // was just a click – handleClipClick will fire
+
+    // Prevent the subsequent click event from seeking after a drag
+    wasDragging.value = true;
+    setTimeout(() => { wasDragging.value = false; }, 50);
+
+    // Persist new times to API + local store
+    try {
+        await clipsStore.updateClip(props.videoId, clip.id, {
+            start_time: parseFloat(previewStart.toFixed(2)) as any,
+            end_time:   parseFloat(previewEnd.toFixed(2))   as any,
+        });
+    } catch (e) {
+        console.error('Failed to save clip times after drag:', e);
+    }
+}
+
+// ─── Clip style (position + stagger row) ─────────────────────────────────────
+function getClipBlockStyle(clip: VideoClip, categoryId: number) {
+    // Use drag-preview times for the clip being dragged
+    let rawStart = parseFloat(clip.start_time as any) || 0;
+    let rawEnd   = parseFloat(clip.end_time   as any) || 0;
+
+    if (dragState.value?.clip.id === clip.id) {
+        rawStart = dragState.value.previewStart;
+        rawEnd   = dragState.value.previewEnd;
+    }
+
+    const adjustedStart = Math.max(0, rawStart + currentOffset.value);
+    const adjustedEnd   = rawEnd + currentOffset.value;
+
     if (!duration.value || duration.value < 1) {
-        return {
-            left: '0%',
-            width: '0%',
-            display: 'none',
-        };
+        return { display: 'none' };
     }
-
-    // Skip clips outside video duration (after offset adjustment)
     if (adjustedStart >= duration.value || adjustedEnd <= 0) {
-        return {
-            left: '0%',
-            width: '0%',
-            display: 'none',
-        };
+        return { display: 'none' };
     }
 
-    // Calculate position percentages with adjusted times
     const startPercent = (adjustedStart / duration.value) * 100;
     const widthPercent = ((adjustedEnd - adjustedStart) / duration.value) * 100;
-    const color = clip.category?.color || '#00B7B5';
+    const color        = clip.category?.color || '#00B7B5';
 
-    // Z-index based on clip ID: newer clips (higher IDs) on top of older ones
-    const zIndex = 5 + (clip.id % 50); // Base 5, can go up to 55
+    // Stagger: which sub-row does this clip belong to?
+    const rowMap = staggerCache.value.get(categoryId);
+    const rowIdx = rowMap?.get(clip.id) ?? 0;
+    const topPx    = rowIdx * ROW_HEIGHT + 2;
+    const heightPx = ROW_HEIGHT - 4; // 2px gap top + 2px gap bottom
+
+    const isDragged = dragState.value?.clip.id === clip.id;
+    const zIndex    = isDragged ? 200 : (5 + (clip.id % 50));
 
     return {
-        left: `${Math.max(0, Math.min(startPercent, 100))}%`,
-        width: `${Math.max(widthPercent, 0.5)}%`,
+        left:            `${Math.max(0, Math.min(startPercent, 100))}%`,
+        width:           `${Math.max(widthPercent, 0.3)}%`,
+        top:             `${topPx}px`,
+        height:          `${heightPx}px`,
+        bottom:          'auto',
         backgroundColor: color,
-        zIndex: zIndex,
+        zIndex,
     };
 }
 
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
 function getClipTooltip(clip: VideoClip): string {
-    // Parse raw clip times
-    const rawStartTime = parseFloat(clip.start_time as any) || 0;
-    const rawEndTime = parseFloat(clip.end_time as any) || 0;
-
-    // Apply timeline offset for synchronization
-    const adjustedStart = rawStartTime + currentOffset.value;
-    const adjustedEnd = rawEndTime + currentOffset.value;
-    const clipDuration = adjustedEnd - adjustedStart;
-    const durationText = isFinite(clipDuration) ? clipDuration.toFixed(1) : '0.0';
-
-    const startTimeStr = formatTime(adjustedStart);
-    const endTimeStr = formatTime(adjustedEnd);
-    const title = clip.title ? `${clip.title}\n` : '';
-    return `${title}${startTimeStr} - ${endTimeStr} (${durationText}s)`;
+    const rawStart    = parseFloat(clip.start_time as any) || 0;
+    const rawEnd      = parseFloat(clip.end_time   as any) || 0;
+    const adjStart    = rawStart + currentOffset.value;
+    const adjEnd      = rawEnd   + currentOffset.value;
+    const clipDur     = adjEnd - adjStart;
+    const durText     = isFinite(clipDur) ? clipDur.toFixed(1) : '0.0';
+    const title       = clip.title ? `${clip.title}\n` : '';
+    return `${title}${formatTime(adjStart)} – ${formatTime(adjEnd)} (${durText}s)`;
 }
 
+// ─── Click to seek ────────────────────────────────────────────────────────────
 function handleClipClick(clip: VideoClip) {
-    // Parse raw clip time and apply offset for synchronization
-    const rawStartTime = parseFloat(clip.start_time as any) || 0;
-    const seekTime = rawStartTime + currentOffset.value;
+    if (wasDragging.value) return; // ignore click that followed a drag
+
+    const rawStart = parseFloat(clip.start_time as any) || 0;
+    const seekTime = rawStart + currentOffset.value;
 
     if (isFinite(seekTime) && seekTime >= 0) {
-        console.log('🎬 Seeking to clip with offset:', {
-            rawTime: rawStartTime,
-            offset: currentOffset.value,
-            seekTime: seekTime,
-        });
         videoStore.seek(seekTime);
-        // Play immediately after seeking
-        if (!videoStore.isPlaying) {
-            videoStore.play();
-        }
-    } else {
-        console.error('Invalid seek time:', { clip, rawStartTime, offset: currentOffset.value, seekTime });
+        if (!videoStore.isPlaying) videoStore.play();
     }
 }
 
-function handleLaneClick(event: MouseEvent, categoryId: number) {
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickPercent = clickX / rect.width;
-    // Click on timeline already accounts for visual offset, so no adjustment needed
-    const seekTime = clickPercent * duration.value;
+function handleLaneClick(event: MouseEvent, _categoryId: number) {
+    if (wasDragging.value) return;
 
-    if (isFinite(seekTime)) {
-        videoStore.seek(seekTime);
-    } else {
-        console.error('Invalid seek time from lane click:', { clickPercent, duration: duration.value, seekTime });
-    }
+    const target      = event.currentTarget as HTMLElement;
+    const rect        = target.getBoundingClientRect();
+    const clickX      = event.clientX - rect.left;
+    const seekTime    = (clickX / rect.width) * duration.value;
+
+    if (isFinite(seekTime)) videoStore.seek(seekTime);
 }
 </script>
 
@@ -231,6 +402,7 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     margin-bottom: 1rem;
 }
 
+/* ── Header ───────────────────────────────────────────────────────────────── */
 .timeline-header {
     display: flex;
     justify-content: space-between;
@@ -243,15 +415,9 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     font-size: 0.68rem !important;
     line-height: 1.1;
 }
+.timeline-header:hover { background: #2a2a2a; }
 
-.timeline-header:hover {
-    background: #2a2a2a;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-}
+.header-content { display: flex; align-items: center; }
 
 .header-title {
     color: #fff;
@@ -265,9 +431,8 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     font-size: 0.72rem !important;
 }
 
-.timeline-content {
-    padding: 0.45rem;
-}
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.timeline-content { padding: 0.45rem; }
 
 .timeline-container {
     position: relative;
@@ -284,21 +449,15 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     margin-bottom: 0.5rem;
 }
 
+/* ── Lane label ───────────────────────────────────────────────────────────── */
 .lane-label {
     width: 110px;
     padding: 0.4rem 0.5rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 6px;
     border-left: 3px solid;
     background: #1a1a1a;
-    flex-shrink: 0;
-}
-
-.color-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-right: 0.5rem;
     flex-shrink: 0;
 }
 
@@ -310,59 +469,99 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     text-overflow: ellipsis;
 }
 
+/* ── Lane track ───────────────────────────────────────────────────────────── */
 .lane-track {
     position: relative;
     flex: 1;
-    height: 32px;
+    /* height is set inline from getLaneHeight() */
     background: #252525;
     cursor: pointer;
     border-radius: 2px;
+    overflow: visible;
 }
+.lane-track:hover { background: #2a2a2a; }
 
-.lane-track:hover {
-    background: #2a2a2a;
-}
-
+/* ── Clip block ───────────────────────────────────────────────────────────── */
 .clip-block {
     position: absolute;
-    top: 2px;
-    bottom: 2px;
-    border-radius: 0;
-    cursor: pointer;
+    /* top / height / left / width come from getClipBlockStyle() inline style */
+    border-radius: 2px;
+    cursor: grab;
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition: all 0.15s ease;
+    overflow: visible;
+    /* Only transition visual properties, NOT position/size (would lag during drag) */
+    transition: filter 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
     min-width: 8px !important;
-    margin-right: 2px;
     opacity: 0.85;
 }
 
 .clip-block:hover {
-    transform: scaleY(1.3);
+    filter: brightness(1.25);
+    opacity: 1;
     z-index: 100 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
-    filter: brightness(1.2);
+}
+
+.clip-block.is-dragging {
+    transition: none;       /* instant follow during drag */
+    opacity: 1;
+    cursor: grabbing;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9) !important;
+    filter: brightness(1.3);
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 1px;
+}
+
+/* ── Resize handles ───────────────────────────────────────────────────────── */
+.resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: ew-resize;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+/* Vertical grip line inside handle */
+.resize-handle::after {
+    content: '';
+    width: 2px;
+    height: 55%;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 1px;
+    pointer-events: none;
+}
+
+.resize-handle-left  { left:  -1px; border-radius: 2px 0 0 2px; }
+.resize-handle-right { right: -1px; border-radius: 0 2px 2px 0; }
+
+.clip-block:hover .resize-handle,
+.clip-block.is-dragging .resize-handle {
     opacity: 1;
 }
 
-.clip-block:active {
-    transform: translateY(0);
+/* ── Drag tooltip ─────────────────────────────────────────────────────────── */
+.drag-tooltip {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 8px;
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #00B7B5;
+    user-select: none;
 }
+.drag-duration { color: #888; margin-left: 4px; }
 
-.clip-label {
-    color: #fff;
-    font-size: 10px;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    padding: 0 0.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
+/* ── Playhead ─────────────────────────────────────────────────────────────── */
 .playhead {
     position: absolute;
     top: 0;
@@ -373,7 +572,6 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     z-index: 10;
     transition: left 0.1s linear;
 }
-
 .playhead::before {
     content: '';
     position: absolute;
@@ -386,28 +584,21 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     border-top: 8px solid #ff0000;
 }
 
+/* ── Time scale ───────────────────────────────────────────────────────────── */
 .time-scale {
     display: flex;
     margin-top: 0.5rem;
 }
-
-.time-scale-label {
-    width: 110px;
-    flex-shrink: 0;
-}
-
-.time-scale-track {
+.time-scale-label  { width: 110px; flex-shrink: 0; }
+.time-scale-track  {
     flex: 1;
     display: flex;
     justify-content: space-between;
     padding: 0 0.25rem;
 }
+.time-marker { color: #999; font-size: 11px; }
 
-.time-marker {
-    color: #999;
-    font-size: 11px;
-}
-
+/* ── Help message ─────────────────────────────────────────────────────────── */
 .help-message {
     background: #1a1a1a;
     border: 1px solid #333;
@@ -418,23 +609,16 @@ function handleLaneClick(event: MouseEvent, categoryId: number) {
     color: #ccc;
     line-height: 1.6;
 }
+.help-message i      { margin-right: 4px; }
+.help-message strong { color: #fff; }
 
-.help-message i {
-    margin-right: 4px;
-}
-
-.help-message strong {
-    color: #fff;
-}
-
-/* Slide down transition */
+/* ── Slide transition ─────────────────────────────────────────────────────── */
 .slide-down-enter-active,
 .slide-down-leave-active {
     transition: all 0.3s ease;
-    max-height: 500px;
+    max-height: 800px;
     overflow: hidden;
 }
-
 .slide-down-enter-from,
 .slide-down-leave-to {
     max-height: 0;
