@@ -74,8 +74,10 @@ class BunnyStreamService
 
         $response = Http::withHeaders(['AccessKey' => $accountApiKey])
             ->post('https://api.bunny.net/videolibrary', [
-                'Name' => $name,
-                'ReplicationRegions' => [],
+                'Name'               => $name,
+                // NY es la región más cercana a LATAM disponible en Bunny storage.
+                // El streaming HLS llega via CDN global (incluye PoPs en LATAM).
+                'ReplicationRegions' => ['NY'],
             ]);
 
         if (! $response->successful()) {
@@ -110,20 +112,26 @@ class BunnyStreamService
             }
         }
 
-        // Configurar webhook automáticamente para esta library
+        // Configurar la library: webhook + resoluciones + archivos originales
         $webhookUrl = config('app.url') . '/webhooks/bunny-stream';
         try {
             Http::withHeaders(['AccessKey' => $accountApiKey])
                 ->post("https://api.bunny.net/videolibrary/{$libraryId}", [
-                    'WebhookUrl' => $webhookUrl,
+                    'WebhookUrl'        => $webhookUrl,
+                    // Solo 480p, 720p y 1080p — evitar 240p/360p (baja calidad)
+                    // y 1440p/2160p (innecesario para análisis de video rugby)
+                    'EnabledResolutions' => '480p,720p,1080p',
+                    // Mantener archivo original para acceso directo post-upload (TUS)
+                    'KeepOriginalFiles'  => true,
                 ]);
 
-            Log::info('Bunny webhook configurado', [
+            Log::info('Bunny library configurada', [
                 'library_id'  => $libraryId,
                 'webhook_url' => $webhookUrl,
+                'resolutions' => '480p,720p,1080p',
             ]);
         } catch (\Throwable $e) {
-            Log::warning('No se pudo configurar el webhook de Bunny', [
+            Log::warning('No se pudo configurar la library de Bunny', [
                 'library_id' => $libraryId,
                 'error'      => $e->getMessage(),
             ]);
