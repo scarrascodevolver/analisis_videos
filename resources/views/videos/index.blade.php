@@ -518,7 +518,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 .xml-badge {
     position: absolute;
     top: 3px;
-    right: 3px;
+    left: 3px;
     background: rgba(0, 183, 181, .85);
     color: #fff;
     font-size: .58rem;

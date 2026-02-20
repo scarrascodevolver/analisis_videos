@@ -47,7 +47,7 @@ class RivalTeamController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        RivalTeam::create([
+        $rival = RivalTeam::create([
             'organization_id' => $orgId,
             'name' => $request->name,
             'code' => $request->code,
@@ -55,7 +55,12 @@ class RivalTeamController extends Controller
             'notes' => $request->notes,
         ]);
 
-        return redirect()->route('rival-teams.index')
+        // AJAX (fetch desde create.blade.php) espera JSON con id
+        if ($request->expectsJson() || $request->wantsJson() || $request->header('Content-Type') === 'application/json') {
+            return response()->json(['id' => $rival->id, 'name' => $rival->name]);
+        }
+
+        return redirect()->route('admin.rival-teams.index')
             ->with('success', 'Equipo rival creado exitosamente');
     }
 

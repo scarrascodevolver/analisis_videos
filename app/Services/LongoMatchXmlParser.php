@@ -219,12 +219,41 @@ class LongoMatchXmlParser
                 ->get()
                 ->keyBy(fn ($cat) => strtolower($cat->name));
 
-            // Build category map (code => category_id or null)
+            // Paleta de colores para categorías auto-creadas desde XML
+            $colorPalette = [
+                '#00B7B5', '#005461', '#e67e22', '#8e44ad', '#27ae60',
+                '#c0392b', '#2980b9', '#f39c12', '#16a085', '#d35400',
+            ];
+            $colorIndex = 0;
+
+            // Build category map (code => category_id), auto-creando si no existe
             $categoryMap = [];
 
             foreach ($usedCategoryCodes as $code) {
                 $match = $orgCategories->get(strtolower($code));
-                $categoryMap[$code] = $match ? $match->id : null;
+
+                if ($match) {
+                    $categoryMap[$code] = $match->id;
+                } else {
+                    // Auto-crear como categoría de org para que sea reutilizable
+                    $newCat = ClipCategory::withoutGlobalScopes()->create([
+                        'organization_id' => $organizationId,
+                        'name'            => strtoupper($code),
+                        'scope'           => ClipCategory::SCOPE_ORGANIZATION,
+                        'color'           => $colorPalette[$colorIndex % count($colorPalette)],
+                        'is_active'       => true,
+                    ]);
+                    $categoryMap[$code] = $newCat->id;
+                    // Agregarlo al mapa en memoria para no re-crearlo si aparece de nuevo
+                    $orgCategories->put(strtolower($code), $newCat);
+                    $colorIndex++;
+
+                    Log::info('ClipCategory auto-creada desde XML', [
+                        'code' => $code,
+                        'category_id' => $newCat->id,
+                        'organization_id' => $organizationId,
+                    ]);
+                }
             }
 
             // Create clips
