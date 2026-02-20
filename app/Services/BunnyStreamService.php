@@ -75,9 +75,9 @@ class BunnyStreamService
         $response = Http::withHeaders(['AccessKey' => $accountApiKey])
             ->post('https://api.bunny.net/videolibrary', [
                 'Name'               => $name,
-                // São Paulo es la zona de almacenamiento más cercana a LATAM.
-                // El streaming HLS llega via CDN global (incluye PoPs en LATAM).
-                'ReplicationRegions' => ['BR'],
+                // BR (São Paulo) + NY para cobertura LATAM + Norteamérica.
+                // El streaming HLS llega via CDN global independientemente del storage.
+                'ReplicationRegions' => ['BR', 'NY'],
             ]);
 
         if (! $response->successful()) {
