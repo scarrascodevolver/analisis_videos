@@ -568,8 +568,8 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 /* ─── Match grid (asociaciones) ───────────────────────── */
 .match-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
 }
 .match-card {
     background: #1a1a1a;
@@ -643,16 +643,16 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     padding: 2px 6px; border-radius: 5px;
 }
 /* Info fixture */
-.match-card-body { padding: 10px 12px 12px; }
+.match-card-body { padding: 8px 10px 10px; }
 .match-fixture {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 5px;
+    margin-bottom: 5px;
 }
 .fixture-team {
-    font-size: .82rem; font-weight: 700; color: #e0e0e0;
+    font-size: .75rem; font-weight: 700; color: #e0e0e0;
     flex: 1; line-height: 1.25;
     overflow: hidden;
     display: -webkit-box;
@@ -662,13 +662,13 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 .fixture-local { text-align: right; }
 .fixture-rival { text-align: left; }
 .fixture-vs {
-    font-size: .65rem; font-weight: 800;
+    font-size: .58rem; font-weight: 800;
     color: #00B7B5; background: #0a3038;
-    padding: 3px 8px; border-radius: 10px;
+    padding: 2px 6px; border-radius: 10px;
     flex-shrink: 0; letter-spacing: .06em;
 }
 .match-card-meta {
-    font-size: .72rem; color: #666; text-align: center;
+    font-size: .67rem; color: #666; text-align: center;
 }
 
 /* ─── Context menu ─────────────────────────────────────── */
