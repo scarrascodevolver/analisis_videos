@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Club;
 use App\Models\Video;
 use App\Models\VideoAssignment;
 use App\Models\VideoGroup;
@@ -53,6 +54,14 @@ class BunnyUploadController extends Controller
             // Crear video en Bunny y obtener credenciales TUS
             $upload = $bunny->createVideo($request->title);
 
+            // Para asociaciones: auto-crear o encontrar el Club por nombre
+            // para que los videos aparezcan en carpetas Torneo > Club
+            $clubId = null;
+            if ($request->filled('local_team_name') && ! $org->isClub()) {
+                $club   = Club::firstOrCreate(['name' => trim($request->local_team_name)]);
+                $clubId = $club->id;
+            }
+
             // Crear registro en BD
             $video = Video::create([
                 'title' => $request->title,
@@ -65,6 +74,7 @@ class BunnyUploadController extends Controller
                 'match_date' => $request->match_date,
                 'visibility_type' => $request->input('visibility_type', 'public'),
                 'analyzed_team_name' => $request->local_team_name,
+                'club_id'           => $clubId,
                 'rival_team_id' => $request->rival_team_id,
                 'rival_team_name' => $request->rival_team_name,
                 'tournament_id' => $request->tournament_id,

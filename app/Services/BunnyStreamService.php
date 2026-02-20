@@ -110,15 +110,34 @@ class BunnyStreamService
             }
         }
 
+        // Configurar webhook automáticamente para esta library
+        $webhookUrl = config('app.url') . '/webhooks/bunny-stream';
+        try {
+            Http::withHeaders(['AccessKey' => $accountApiKey])
+                ->post("https://api.bunny.net/videolibrary/{$libraryId}", [
+                    'WebhookUrl' => $webhookUrl,
+                ]);
+
+            Log::info('Bunny webhook configurado', [
+                'library_id'  => $libraryId,
+                'webhook_url' => $webhookUrl,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo configurar el webhook de Bunny', [
+                'library_id' => $libraryId,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+
         Log::info('Bunny library created', [
-            'library_id' => $libraryId,
+            'library_id'  => $libraryId,
             'pull_zone_id' => $pullZoneId,
             'cdn_hostname' => $cdnHostname,
         ]);
 
         return [
-            'library_id' => (string) $libraryId,
-            'api_key' => $apiKey,
+            'library_id'  => (string) $libraryId,
+            'api_key'     => $apiKey,
             'cdn_hostname' => $cdnHostname,
         ];
     }
