@@ -100,6 +100,17 @@
 @else
     <div class="match-list">
         @foreach($matches as $video)
+            @php
+                $totalSize = $video->total_size ?? 0;
+                $sizeLabel = '';
+                if ($totalSize > 0) {
+                    $gb = $totalSize / 1073741824;
+                    $sizeLabel = $gb >= 1
+                        ? number_format($gb, 1) . ' GB'
+                        : number_format($totalSize / 1048576, 0) . ' MB';
+                }
+                $anglesCount = $video->angles_count ?? 1;
+            @endphp
             <a href="{{ route('videos.show', $video) }}" class="match-row text-decoration-none">
                 <div class="match-thumb">
                     @if($video->bunny_thumbnail)
@@ -107,14 +118,13 @@
                     @else
                         <div class="match-thumb-empty"><i class="fas fa-film"></i></div>
                     @endif
-                    @if($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
-                        <span class="match-status-badge
-                            {{ $video->bunny_status === 'error' ? 'match-status-error' : '' }}">
-                            @if($video->bunny_status === 'error')
-                                <i class="fas fa-exclamation-circle"></i>
-                            @else
-                                <i class="fas fa-spinner fa-spin"></i>
-                            @endif
+                    @if($video->bunny_status && $video->bunny_status === 'error')
+                        <span class="match-status-badge match-status-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                    @elseif($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
+                        <span class="match-status-badge">
+                            <i class="fas fa-spinner fa-spin"></i>
                         </span>
                     @endif
                 </div>
@@ -127,11 +137,19 @@
                     <div class="match-detail-meta">
                         <i class="fas fa-calendar-alt mr-1"></i>{{ $video->match_date->format('d M Y') }}
                         @if($video->division)
-                            <span class="mx-2">·</span>
+                            <span class="match-meta-sep">·</span>
                             <span class="badge badge-rugby badge-sm">{{ ucfirst($video->division) }}</span>
                         @endif
+                        @if($sizeLabel)
+                            <span class="match-meta-sep">·</span>
+                            <i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                            @if($anglesCount > 1)
+                                <span class="match-meta-sep">·</span>
+                                <i class="fas fa-video mr-1"></i>{{ $anglesCount }} ángulos
+                            @endif
+                        @endif
                         @if($video->clips_count > 0)
-                            <span class="mx-2">·</span>
+                            <span class="match-meta-sep">·</span>
                             <span class="badge badge-sm" style="background:#00B7B5;color:#fff">
                                 <i class="fas fa-list-ul mr-1"></i>XML
                             </span>
@@ -609,8 +627,9 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 2px;
+    gap: 4px;
 }
+.match-meta-sep { color: #444; margin: 0 2px; }
 .match-actions-right {
     display: flex;
     align-items: center;

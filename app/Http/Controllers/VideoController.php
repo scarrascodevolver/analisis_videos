@@ -86,13 +86,27 @@ class VideoController extends Controller
         $tournament = Tournament::findOrFail($tournamentParam);
 
         // Nivel 2: lista de partidos del torneo (cada video master = un partido)
-        $matches = Video::with(['rivalTeam'])
+        // Cargamos los ángulos del grupo para calcular peso total y contar cámaras
+        $matches = Video::with([
+                'rivalTeam',
+                'videoGroups.videos' => fn ($q) => $q->select('id', 'file_size', 'compressed_file_size'),
+            ])
             ->withCount('clips')
             ->where('is_master', true)
             ->teamVisible($user)
             ->where('tournament_id', $tournamentParam)
             ->orderBy('match_date', 'desc')
-            ->get();
+            ->get()
+            ->each(function ($video) {
+                $group = $video->videoGroups->first();
+                if ($group && $group->videos->isNotEmpty()) {
+                    $video->total_size    = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->angles_count  = $group->videos->count();
+                } else {
+                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->angles_count = 1;
+                }
+            });
 
         return view('videos.index', compact('tournament', 'matches'))->with('view', 'asoc_matches');
     }
