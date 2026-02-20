@@ -66,8 +66,9 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 v-if="isAnalystOrCoach"
                 class="btn btn-sm btn-rugby-outline mr-2"
                 @click="$emit('toggleTimelines')"
+                title="Sincronizar ángulos de cámara y clips XML"
             >
-                <i class="fas fa-film"></i> Timelines
+                <i class="fas fa-sync-alt"></i> Sincronizar
             </button>
             <button
                 v-if="isAnalystOrCoach"
