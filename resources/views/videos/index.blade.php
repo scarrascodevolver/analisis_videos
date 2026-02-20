@@ -111,70 +111,63 @@
                 }
                 $anglesCount = $video->angles_count ?? 1;
             @endphp
-            <div class="match-card-wrap">
-                <div class="card match-card h-100">
-                    {{-- Thumbnail --}}
-                    <div class="match-card-thumb"
-                         onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                        @if($video->bunny_thumbnail)
-                            <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail"
-                                 class="w-100 h-100" style="object-fit:cover">
-                        @else
-                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark">
-                                <i class="fas fa-film fa-2x text-muted"></i>
-                            </div>
-                        @endif
-                        {{-- Status badge --}}
-                        @if($video->bunny_status === 'error')
-                            <span class="status-badge" style="background:rgba(220,53,69,.85)">
-                                <i class="fas fa-exclamation-circle mr-1"></i>Error
-                            </span>
-                        @elseif($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
-                            <span class="status-badge">
-                                <i class="fas fa-spinner fa-spin mr-1"></i>Procesando
-                            </span>
-                        @endif
-                        {{-- XML badge --}}
-                        @if($video->clips_count > 0)
-                            <span class="xml-badge" title="{{ $video->clips_count }} clips">
-                                <i class="fas fa-list-ul mr-1"></i>XML
-                            </span>
-                        @endif
-                        {{-- Ángulos badge --}}
-                        @if($anglesCount > 1)
-                            <span class="angles-badge">
-                                <i class="fas fa-video mr-1"></i>{{ $anglesCount }}
-                            </span>
-                        @endif
-                    </div>
-                    {{-- Info --}}
-                    <div class="card-body py-2 px-2 d-flex flex-column">
-                        <div class="match-card-teams">
-                            <span class="match-card-local">{{ $video->analyzed_team_name ?? 'Local' }}</span>
-                            <span class="match-card-vs">vs</span>
-                            <span class="match-card-rival">{{ $video->rival_name ?? 'Rival' }}</span>
+            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                {{-- Botón editar flotante --}}
+                @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
+                    <a href="{{ route('videos.edit', $video) }}"
+                       class="match-edit-btn" title="Editar"
+                       onclick="event.stopPropagation()">
+                        <i class="fas fa-pencil-alt"></i>
+                    </a>
+                @endif
+
+                {{-- Thumbnail 16:9 --}}
+                <div class="match-card-thumb">
+                    @if($video->bunny_thumbnail)
+                        <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail">
+                    @else
+                        <div class="match-thumb-placeholder">
+                            <i class="fas fa-film"></i>
                         </div>
-                        <div class="mt-auto">
-                            @if($video->division)
-                                <span class="badge badge-rugby badge-sm mb-1">{{ ucfirst($video->division) }}</span>
-                            @endif
-                            <div class="video-meta">
-                                <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                                @if($sizeLabel)
-                                    &nbsp;·&nbsp;<i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
-                                @endif
-                            </div>
-                        </div>
+                    @endif
+                    {{-- Play overlay al hover --}}
+                    <div class="match-play-overlay">
+                        <i class="fas fa-play-circle"></i>
                     </div>
-                    {{-- Footer --}}
-                    <div class="card-footer py-1 px-2 d-flex" style="gap:4px">
-                        <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm btn-xs flex-grow-1">
-                            <i class="fas fa-play"></i>
-                        </a>
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
-                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm btn-xs">
-                                <i class="fas fa-edit"></i>
-                            </a>
+                    {{-- Status --}}
+                    @if($video->bunny_status === 'error')
+                        <span class="status-badge" style="background:rgba(220,53,69,.85)">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Error
+                        </span>
+                    @elseif($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
+                        <span class="status-badge">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>Procesando
+                        </span>
+                    @endif
+                    {{-- XML --}}
+                    @if($video->clips_count > 0)
+                        <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
+                    @endif
+                    {{-- Ángulos --}}
+                    @if($anglesCount > 1)
+                        <span class="angles-badge"><i class="fas fa-video mr-1"></i>{{ $anglesCount }}</span>
+                    @endif
+                </div>
+
+                {{-- Info fixture --}}
+                <div class="match-card-body">
+                    <div class="match-fixture">
+                        <span class="fixture-team fixture-local">{{ $video->analyzed_team_name ?? 'Local' }}</span>
+                        <span class="fixture-vs">VS</span>
+                        <span class="fixture-team fixture-rival">{{ $video->rival_name ?? 'Rival' }}</span>
+                    </div>
+                    <div class="match-card-meta">
+                        <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                        @if($video->division)
+                            <span class="mx-1">·</span>{{ ucfirst($video->division) }}
+                        @endif
+                        @if($sizeLabel)
+                            <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
                         @endif
                     </div>
                 </div>
@@ -575,56 +568,107 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 /* ─── Match grid (asociaciones) ───────────────────────── */
 .match-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
 }
 .match-card {
     background: #1a1a1a;
     border: 1px solid #2d2d2d;
-    transition: border-color .2s, transform .15s;
-    cursor: pointer;
-}
-.match-card:hover { border-color: #005461; transform: translateY(-2px); }
-.match-card-thumb {
-    height: 100px;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    background: #111;
-}
-.match-card-teams {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-bottom: 4px;
-}
-.match-card-local, .match-card-rival {
-    font-size: .82rem;
-    font-weight: 700;
-    color: #e0e0e0;
-    word-break: break-word;
-}
-.match-card-vs {
-    font-size: .68rem;
-    font-weight: 700;
-    color: #00B7B5;
-    background: #0a3038;
-    padding: 1px 6px;
     border-radius: 10px;
-    flex-shrink: 0;
-    letter-spacing: .04em;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: border-color .2s, transform .15s, box-shadow .2s;
 }
+.match-card:hover {
+    border-color: #005461;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,84,97,.25);
+}
+/* Botón editar flotante */
+.match-edit-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    z-index: 10;
+    width: 28px; height: 28px;
+    background: rgba(0,0,0,.65);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: .7rem;
+    transition: background .2s, color .2s;
+    text-decoration: none;
+}
+.match-edit-btn:hover { background: #00B7B5; color: #fff; text-decoration: none; }
+/* Thumbnail 16:9 */
+.match-card-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    background: #111;
+    overflow: hidden;
+}
+.match-card-thumb img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.match-thumb-placeholder {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: #333; font-size: 2rem;
+}
+/* Play overlay al hover */
+.match-play-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .2s;
+    font-size: 2.8rem;
+    color: rgba(255,255,255,.9);
+}
+.match-card:hover .match-play-overlay { opacity: 1; }
+/* Ángulos badge */
 .angles-badge {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    background: rgba(0,84,97,.9);
+    top: 6px; left: 6px;
+    background: rgba(0,84,97,.92);
     color: #00B7B5;
-    font-size: .58rem;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 5px;
+    font-size: .58rem; font-weight: 700;
+    padding: 2px 6px; border-radius: 5px;
+}
+/* Info fixture */
+.match-card-body { padding: 10px 12px 12px; }
+.match-fixture {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.fixture-team {
+    font-size: .82rem; font-weight: 700; color: #e0e0e0;
+    flex: 1; line-height: 1.25;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.fixture-local { text-align: right; }
+.fixture-rival { text-align: left; }
+.fixture-vs {
+    font-size: .65rem; font-weight: 800;
+    color: #00B7B5; background: #0a3038;
+    padding: 3px 8px; border-radius: 10px;
+    flex-shrink: 0; letter-spacing: .06em;
+}
+.match-card-meta {
+    font-size: .72rem; color: #666; text-align: center;
 }
 
 /* ─── Context menu ─────────────────────────────────────── */
