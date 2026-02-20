@@ -15,7 +15,9 @@ const videoStore = useVideoStore();
 const isExpanded = ref(true);
 
 const sortedCategories = computed(() => {
-    return clipsStore.activeCategories.sort((a, b) => a.sort_order - b.sort_order);
+    return clipsStore.activeCategories
+        .filter((c) => c.scope !== 'video')
+        .sort((a, b) => a.sort_order - b.sort_order);
 });
 
 function togglePanel() {

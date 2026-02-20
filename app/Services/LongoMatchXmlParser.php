@@ -238,8 +238,9 @@ class LongoMatchXmlParser
                     // Auto-crear como categoría de org para que sea reutilizable
                     $newCat = ClipCategory::withoutGlobalScopes()->create([
                         'organization_id' => $organizationId,
+                        'video_id'        => $video->id,
                         'name'            => strtoupper($code),
-                        'scope'           => ClipCategory::SCOPE_ORGANIZATION,
+                        'scope'           => ClipCategory::SCOPE_VIDEO,
                         'color'           => $colorPalette[$colorIndex % count($colorPalette)],
                         'is_active'       => true,
                         'created_by'      => $userId,

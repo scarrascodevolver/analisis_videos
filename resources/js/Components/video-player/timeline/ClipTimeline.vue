@@ -47,11 +47,7 @@
                                 :style="getClipBlockStyle(clip)"
                                 :title="getClipTooltip(clip)"
                                 @click.stop="handleClipClick(clip)"
-                            >
-                                <div class="clip-label">
-                                    {{ clip.title || '' }}
-                                </div>
-                            </div>
+                            ></div>
                         </div>
                     </div>
 
