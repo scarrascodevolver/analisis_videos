@@ -1094,7 +1094,7 @@
 @endphp
 
 @if($showOnboarding)
-<div class="modal fade" id="onboardingModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="onboardingModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background:#005461;color:white;">
@@ -1102,6 +1102,9 @@
                     <i class="fas fa-rocket mr-2"></i>
                     ¡Bienvenido a RugbyKP! Configurá {{ $currentOrg->name }} en 1 minuto
                 </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="onboardingForm" action="{{ route('onboarding.complete') }}" method="POST">
@@ -1146,6 +1149,9 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-link text-muted" data-dismiss="modal">
+                    Ahora no
+                </button>
                 <button type="submit" form="onboardingForm" class="btn btn-success btn-lg">
                     <i class="fas fa-check mr-2"></i>Guardar y empezar
                 </button>
@@ -1155,7 +1161,15 @@
 </div>
 
 <script>
-$(document).ready(function() { $('#onboardingModal').modal('show'); });
+$(document).ready(function() {
+    var key = 'onboarding_dismissed_{{ $currentOrg->id }}_' + new Date().toDateString();
+    if (!localStorage.getItem(key)) {
+        $('#onboardingModal').modal('show');
+    }
+    $('#onboardingModal').on('hide.bs.modal', function() {
+        localStorage.setItem(key, '1');
+    });
+});
 
 function addExtraCategory() {
     var val = document.getElementById('extraCategory').value.trim();

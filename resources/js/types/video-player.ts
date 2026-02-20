@@ -68,10 +68,12 @@ export interface SlaveVideo {
     id: number;
     title: string;
     stream_url: string;
+    camera_angle: string;
     sync_offset: number;
-    bunny_hls_url: string | null;
-    bunny_status: string | null;
-    bunny_mp4_url: string | null;
+    is_synced: boolean;
+    bunny_hls_url?: string | null;
+    bunny_status?: string | null;
+    bunny_mp4_url?: string | null;
 }
 
 export interface VideoComment {

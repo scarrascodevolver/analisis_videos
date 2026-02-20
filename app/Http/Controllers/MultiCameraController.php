@@ -219,6 +219,10 @@ class MultiCameraController extends Controller
         if ($success) {
             Log::info("Video {$slaveVideo->id} associated to master {$masterVideo->id} in group {$group->id}");
 
+            // Force is_master = false on the videos table (bypasses $fillable restriction)
+            \DB::table('videos')->where('id', $slaveVideo->id)->update(['is_master' => false]);
+            Log::info("Slave video {$slaveVideo->id} forced is_master=false on videos table");
+
             // Get all angles in this group
             $slaves = $group->getSlaveVideos();
             $angles = $slaves->map(function ($slave) {

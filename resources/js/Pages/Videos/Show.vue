@@ -21,7 +21,7 @@ import AnnotationCanvas from '@/Components/video-player/annotations/AnnotationCa
 import AnnotationToolbar from '@/Components/video-player/annotations/AnnotationToolbar.vue';
 import AnnotationList from '@/Components/video-player/annotations/AnnotationList.vue';
 import MultiCameraLayout from '@/Components/video-player/multi-camera/MultiCameraLayout.vue';
-import AssociateAngleModal from '@/Components/video-player/multi-camera/AssociateAngleModal.vue';
+import UploadAngleModal from '@/Components/video-player/multi-camera/UploadAngleModal.vue';
 import SyncModal from '@/Components/video-player/multi-camera/SyncModal.vue';
 import MobileFullscreen from '@/Components/video-player/ui/MobileFullscreen.vue';
 import { useMultiCamera } from '@/composables/useMultiCamera';
@@ -78,7 +78,7 @@ const editingCategory = ref<ClipCategory | undefined>(undefined);
 const showManageCategoriesModal = ref(false);
 const showDeleteModal = ref(false);
 const showStatsModal = ref(false);
-const showAssociateAngleModal = ref(false);
+const showUploadAngleModal = ref(false);
 const showSyncModal = ref(false);
 
 // ─── Polling de encoding Bunny ────────────────────────────────
@@ -286,37 +286,12 @@ function onCategorySaved() {
 }
 
 // Multi-camera handlers
-function onAddAngle() {
-    showAssociateAngleModal.value = true;
-}
-
 function onUploadAngle() {
-    window.location.href = `/videos/create?master_video_id=${props.video.id}&is_slave=1`;
+    showUploadAngleModal.value = true;
 }
 
-async function onAngleAssociated() {
-    showAssociateAngleModal.value = false;
-    // Reload slave videos from the API
-    try {
-        const res = await fetch(`/videos/${props.video.id}/multi-camera/angles`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.angles)) {
-            slaveVideos.value = data.angles.map((a: any) => ({
-                id: a.id,
-                title: a.title,
-                stream_url: `/videos/${a.id}/stream`,
-                camera_angle: a.camera_angle,
-                sync_offset: a.sync_offset ?? 0,
-                is_synced: a.is_synced ?? false,
-                duration: a.duration,
-                file_size: a.file_size,
-            }));
-        }
-    } catch (e) {
-        console.error('Failed to reload slave videos', e);
-    }
+function onAngleUploaded(slave: SlaveVideo) {
+    slaveVideos.value = [...slaveVideos.value, slave];
 }
 
 function onSwapMaster(slaveId: number) {
@@ -399,7 +374,6 @@ function onSyncSaved(offsets: Record<number, number>) {
             :has-slaves="slaveVideos.length > 0"
             @show-stats="showStatsModal = true"
             @delete-video="showDeleteModal = true"
-            @add-angle="onAddAngle"
             @upload-angle="onUploadAngle"
             @toggle-timelines="toggleTimelinesSync"
         >
@@ -502,12 +476,12 @@ function onSyncSaved(offsets: Record<number, number>) {
                     :video-id="video.id"
                     @close="showStatsModal = false"
                 />
-                <AssociateAngleModal
-                    :show="showAssociateAngleModal"
-                    :video-id="video.id"
-                    :excluded-ids="[video.id, ...slaveVideos.map(s => s.id)]"
-                    @close="showAssociateAngleModal = false"
-                    @associated="onAngleAssociated"
+                <UploadAngleModal
+                    :show="showUploadAngleModal"
+                    :video="video"
+                    :csrf-token="($page.props as any).csrf_token ?? ''"
+                    @close="showUploadAngleModal = false"
+                    @angle-uploaded="onAngleUploaded"
                 />
                 <SyncModal
                     :show="showSyncModal"

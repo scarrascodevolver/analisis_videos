@@ -10,7 +10,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     showStats: [];
-    addAngle: [];
     uploadAngle: [];
     toggleComments: [];
     deleteVideo: [];
@@ -54,13 +53,6 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 @click="$emit('showStats')"
             >
                 <i class="fas fa-eye"></i> Visualizaciones
-            </button>
-            <button
-                v-if="isAnalystOrCoach"
-                class="btn btn-sm btn-rugby mr-2"
-                @click="$emit('addAngle')"
-            >
-                <i class="fas fa-video"></i> Agregar Ángulo
             </button>
             <button
                 v-if="isAnalystOrCoach"

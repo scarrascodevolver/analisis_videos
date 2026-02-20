@@ -132,16 +132,30 @@ class BunnyUploadController extends Controller
             } elseif ($request->filled('master_video_id')) {
                 $master = Video::find($request->master_video_id);
                 if ($master) {
+                    // Get or create group for master
                     $group = $master->videoGroups()->first();
-                    if ($group) {
-                        $group->videos()->attach($video->id, [
-                            'is_master' => false,
-                            'camera_angle' => $request->input('camera_angle', 'Angulo adicional'),
-                            'is_synced' => false,
-                            'sync_offset' => null,
+                    if (!$group) {
+                        $group = VideoGroup::create([
+                            'name' => null,
+                            'organization_id' => $org->id,
                         ]);
-                        $groupId = $group->id;
+                        $group->videos()->attach($master->id, [
+                            'is_master' => true,
+                            'camera_angle' => 'Master / Tribuna Central',
+                            'is_synced' => true,
+                            'sync_offset' => 0,
+                        ]);
                     }
+                    $group->videos()->attach($video->id, [
+                        'is_master' => false,
+                        'camera_angle' => $request->input('camera_angle', 'Ángulo adicional'),
+                        'is_synced' => false,
+                        'sync_offset' => null,
+                    ]);
+                    $groupId = $group->id;
+
+                    // Force is_master=false on videos table (bypasses $fillable restriction)
+                    \DB::table('videos')->where('id', $video->id)->update(['is_master' => false]);
                 }
             }
 

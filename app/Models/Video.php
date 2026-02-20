@@ -698,15 +698,9 @@ class Video extends Model
             }
         }
 
-        // FALLBACK: Also update old system columns for backward compatibility
-        if (is_null($this->video_group_id)) {
-            $legacyGroupId = $masterVideo->video_group_id ?? Video::generateGroupId();
-            $this->update([
-                'video_group_id' => $legacyGroupId,
-                'is_master' => false,
-                'camera_angle' => $cameraAngle,
-            ]);
-        }
+        // Always mark slave as is_master=false on the videos table.
+        // Uses direct DB query to bypass $fillable mass assignment restriction.
+        \DB::table('videos')->where('id', $this->id)->update(['is_master' => false]);
 
         return true;
     }
