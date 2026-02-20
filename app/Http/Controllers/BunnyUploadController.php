@@ -51,6 +51,17 @@ class BunnyUploadController extends Controller
             'camera_angle' => 'nullable|string|max:100',
         ]);
 
+        // C-02: Limitar uploads simultáneos por usuario
+        $pendingCount = Video::where('uploaded_by', auth()->id())
+            ->where('bunny_status', 'pendingupload')
+            ->count();
+        if ($pendingCount >= 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tenés demasiados uploads pendientes. Esperá a que terminen antes de subir otro.',
+            ], 429);
+        }
+
         try {
             $bunny = BunnyStreamService::forOrganization($org);
 

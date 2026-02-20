@@ -927,6 +927,22 @@ async function startUpload() {
     }
 }
 
+// ─── Advertencia visible de upload ───────────────────────────
+function showUploadWarning(msg) {
+    let warn = document.getElementById('uploadWarning');
+    if (!warn) {
+        warn = document.createElement('div');
+        warn.id = 'uploadWarning';
+        warn.className = 'alert alert-warning alert-sm py-2 px-3 mb-2';
+        warn.style.fontSize = '.8rem';
+        // Insertar antes del área del botón de subida
+        const btn = document.getElementById('uploadBtn');
+        if (btn) btn.closest('.card-body').prepend(warn);
+    }
+    warn.textContent = msg;
+    warn.style.display = 'block';
+}
+
 // ─── Resolver rival/torneo nuevos antes de subir ─────────────
 async function resolveCommonData() {
     const rivalIdInput     = document.getElementById('rival_team_id');
@@ -959,6 +975,7 @@ async function resolveCommonData() {
             rivalTeamId = data.id;
         } catch (e) {
             rivalTeamName = rivalText; // fallback texto libre
+            showUploadWarning('No se pudo registrar el rival en la base de datos. El video se subirá con el nombre como texto libre.');
         }
     }
 
@@ -977,6 +994,7 @@ async function resolveCommonData() {
             tournamentId = data.id;
         } catch (e) {
             console.warn('Could not create tournament', e);
+            showUploadWarning('No se pudo registrar el torneo. El video se subirá sin torneo asociado.');
         }
     }
 

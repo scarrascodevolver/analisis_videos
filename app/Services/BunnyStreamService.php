@@ -12,7 +12,7 @@ class BunnyStreamService
 
     private string $apiKey;
 
-    private string $cdnHostname;
+    private ?string $cdnHostname;
 
     private string $baseUrl;
 
@@ -246,6 +246,7 @@ class BunnyStreamService
      */
     public function getHlsUrl(string $guid): string
     {
+        $this->assertCdnHostname();
         return "https://{$this->cdnHostname}/{$guid}/playlist.m3u8";
     }
 
@@ -254,6 +255,7 @@ class BunnyStreamService
      */
     public function getThumbnailUrl(string $guid): string
     {
+        $this->assertCdnHostname();
         return "https://{$this->cdnHostname}/{$guid}/thumbnail.jpg";
     }
 
@@ -263,7 +265,22 @@ class BunnyStreamService
      */
     public function getOriginalUrl(string $guid): string
     {
+        $this->assertCdnHostname();
         return "https://{$this->cdnHostname}/{$guid}/original";
+    }
+
+    /**
+     * R-01: Garantiza que cdnHostname está configurado antes de construir URLs CDN.
+     * Lanza RuntimeException con instrucciones claras en lugar de generar URLs inválidas.
+     */
+    private function assertCdnHostname(): void
+    {
+        if (! $this->cdnHostname) {
+            throw new \RuntimeException(
+                "CDN hostname not configured for library {$this->libraryId}. " .
+                "Run 'php artisan bunny:sync-webhooks' or check the organization's bunny_cdn_hostname."
+            );
+        }
     }
 
     /**
