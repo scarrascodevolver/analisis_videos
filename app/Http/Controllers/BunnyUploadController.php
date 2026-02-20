@@ -41,7 +41,10 @@ class BunnyUploadController extends Controller
             'tournament_id' => 'nullable|exists:tournaments,id',
             'division' => 'nullable|in:primera,intermedia,unica',
             'assigned_players' => 'nullable|array',
-            'assigned_players.*' => 'exists:users,id',
+            'assigned_players.*' => [
+                'exists:users,id',
+                Rule::exists('organization_user', 'user_id')->where('organization_id', $org->id),
+            ],
             'assignment_notes' => 'nullable|string|max:1000',
             'is_master' => 'nullable|boolean',
             'master_video_id' => 'nullable|exists:videos,id',
@@ -166,9 +169,11 @@ class BunnyUploadController extends Controller
      */
     public function complete(Request $request)
     {
+        $org = auth()->user()->currentOrganization();
+
         $request->validate([
-            'video_id' => 'required|exists:videos,id',
-            'bunny_guid' => 'required|string',
+            'video_id' => ['required', Rule::exists('videos', 'id')->where('organization_id', $org->id)],
+            'bunny_guid' => 'required|string|uuid',
         ]);
 
         $video = Video::findOrFail($request->video_id);

@@ -283,43 +283,6 @@ Route::middleware(['auth'])->group(function () {
     // Removed unused routes (teams, categories, reports)
 });
 
-// DEBUG: Test route to verify routing works
-Route::get('/test-video-route', function () {
-    return 'Video route works!';
-});
-
-// DEBUG: Test route that mimics video structure
-Route::get('/test-video/{id}', function ($id) {
-    return "Test video route works for ID: $id";
-});
-
-// DEBUG: Test video route without model binding
-Route::get('/debug-video/{id}', function ($id) {
-    return 'Video ID: '.$id;
-});
-
-// DEBUG: Test video route with manual model lookup
-Route::get('/debug-video-model/{id}', function ($id) {
-    try {
-        $video = App\Models\Video::findOrFail($id);
-
-        return 'Found video: '.$video->title;
-    } catch (Exception $e) {
-        return 'Error: '.$e->getMessage();
-    }
-});
-
-// DEBUG: Test exact VideoStreamController method call
-Route::get('/debug-stream/{video}', function (App\Models\Video $video) {
-    try {
-        $controller = new App\Http\Controllers\VideoStreamController;
-        $request = request();
-
-        return $controller->stream($video, $request);
-    } catch (Exception $e) {
-        return 'VideoStreamController Error: '.$e->getMessage();
-    }
-});
 
 // API para búsqueda de jugadores (solo de la misma categoría)
 Route::middleware('auth')->get('/api/search-players', function (Illuminate\Http\Request $request) {

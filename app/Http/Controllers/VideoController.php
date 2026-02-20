@@ -361,11 +361,9 @@ class VideoController extends Controller
     {
         $this->authorize('update', $video);
 
-        $categories = Category::all();
-
-        // El equipo analizado es siempre la organización actual
         $currentOrg = auth()->user()->currentOrganization();
-        $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
+        $categories = Category::where('organization_id', $currentOrg->id)->get();
+        $organizationName = $currentOrg->name ?? 'Mi Equipo';
 
         return view('videos.edit', compact('video', 'categories', 'organizationName'));
     }
@@ -374,11 +372,16 @@ class VideoController extends Controller
     {
         $this->authorize('update', $video);
 
+        $currentOrg = auth()->user()->currentOrganization();
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'rival_team_name' => 'nullable|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => [
+                $currentOrg?->isClub() ? 'required' : 'nullable',
+                Rule::exists('categories', 'id')->where('organization_id', $currentOrg?->id),
+            ],
             'match_date' => 'required|date',
         ]);
 
