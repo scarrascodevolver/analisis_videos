@@ -485,7 +485,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
 .clip-block {
     position: absolute;
     /* top / height / left / width come from getClipBlockStyle() inline style */
-    border-radius: 2px;
+    border-radius: 0;
     cursor: grab;
     display: flex;
     align-items: center;
