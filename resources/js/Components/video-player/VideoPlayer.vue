@@ -136,19 +136,33 @@ function toggleTheaterMode() {
 </template>
 
 <style scoped>
-/* Video único (sin ángulos adicionales) — limitar altura para que no sea enorme */
+/* Video único (sin ángulos) — altura fija, video centrado horizontalmente */
 .single-col :deep(.video-container) {
-    max-height: 65vh;
+    aspect-ratio: unset !important;
+    height: 65vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+.single-col :deep(.video-wrapper) {
+    width: auto !important;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .single-col :deep(video) {
-    max-height: 65vh;
+    width: auto !important;
+    height: 100% !important;
+    max-width: 100%;
 }
 
-/* En theater mode: permitir más altura */
-.theater-mode .single-col :deep(.video-container),
-.theater-mode .single-col :deep(video) {
-    max-height: 82vh;
+/* Theater mode: más altura */
+.theater-mode .single-col :deep(.video-container) {
+    height: 82vh;
 }
 
 /* Multi-camera side-by-side layout (matches Blade's activateSideBySideLayout) */
