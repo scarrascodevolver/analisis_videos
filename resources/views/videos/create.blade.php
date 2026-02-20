@@ -950,7 +950,7 @@ async function resolveCommonData() {
     } else if (rivalText) {
         // Es un rival nuevo — intentar crearlo en el servidor
         try {
-            const res  = await fetch('{{ route("rival-teams.store") }}', {
+            const res  = await fetch('{{ route("admin.rival-teams.store") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
                 body: JSON.stringify({ name: rivalText }),
