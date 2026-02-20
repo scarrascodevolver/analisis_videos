@@ -290,6 +290,10 @@ function onAddAngle() {
     showAssociateAngleModal.value = true;
 }
 
+function onUploadAngle() {
+    window.location.href = `/videos/create?master_video_id=${props.video.id}&is_slave=1`;
+}
+
 async function onAngleAssociated() {
     showAssociateAngleModal.value = false;
     // Reload slave videos from the API
@@ -396,6 +400,7 @@ function onSyncSaved(offsets: Record<number, number>) {
             @show-stats="showStatsModal = true"
             @delete-video="showDeleteModal = true"
             @add-angle="onAddAngle"
+            @upload-angle="onUploadAngle"
             @toggle-timelines="toggleTimelinesSync"
         >
             <!-- Annotation Canvas (overlay on video) -->

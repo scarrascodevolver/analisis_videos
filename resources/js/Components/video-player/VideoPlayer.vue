@@ -22,6 +22,7 @@ const emit = defineEmits<{
     showStats: [];
     deleteVideo: [];
     addAngle: [];
+    uploadAngle: [];
     toggleTimelines: [];
 }>();
 
@@ -83,6 +84,7 @@ function toggleTheaterMode() {
                     :is-theater-mode="isTheaterMode"
                     @show-stats="$emit('showStats')"
                     @add-angle="$emit('addAngle')"
+                    @upload-angle="$emit('uploadAngle')"
                     @toggle-comments="toggleComments"
                     @toggle-timelines="$emit('toggleTimelines')"
                     @delete-video="$emit('deleteVideo')"

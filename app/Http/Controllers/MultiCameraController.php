@@ -446,9 +446,9 @@ class MultiCameraController extends Controller
         $groupId = $request->input('group_id'); // Optional
 
         // Get master's first group if no group specified
-        if (!$groupId) {
+        if (! $groupId) {
             $group = $video->videoGroups()->first();
-            if (!$group) {
+            if (! $group) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Master video is not in any group',
@@ -458,7 +458,7 @@ class MultiCameraController extends Controller
         }
 
         // Verify slave is in this group
-        if (!$slaveVideo->isInGroup($groupId)) {
+        if (! $slaveVideo->isInGroup($groupId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Slave video is not in the specified group',

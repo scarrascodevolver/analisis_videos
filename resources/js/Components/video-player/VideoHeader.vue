@@ -11,6 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     showStats: [];
     addAngle: [];
+    uploadAngle: [];
     toggleComments: [];
     deleteVideo: [];
     toggleTimelines: [];
@@ -60,6 +61,14 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 @click="$emit('addAngle')"
             >
                 <i class="fas fa-video"></i> Agregar Ángulo
+            </button>
+            <button
+                v-if="isAnalystOrCoach"
+                class="btn btn-sm btn-rugby-outline mr-2"
+                title="Subir un nuevo video como ángulo adicional de este partido"
+                @click="$emit('uploadAngle')"
+            >
+                <i class="fas fa-cloud-upload-alt"></i> Subir ángulo
             </button>
             <button
                 v-if="isAnalystOrCoach"

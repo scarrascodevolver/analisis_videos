@@ -487,6 +487,11 @@ const uploadState = {
     masterVideoId: null, // video_id del master (para vincular slaves)
 };
 
+// ─── Slave mode (cuando se llega desde Show.vue via "Subir ángulo") ──────────
+const urlParams    = new URLSearchParams(window.location.search);
+const masterVideoId = urlParams.get('master_video_id');
+const isSlaveMode   = urlParams.get('is_slave') === '1' && !!masterVideoId;
+
 // ─── Utilidad: escapar HTML para evitar XSS en innerHTML ─────
 function escapeHtml(str) {
     return String(str)
@@ -502,6 +507,26 @@ const isClub = {{ json_encode($isClub) }};
 
 // ─── Inicialización ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
+    // Slave mode: mostrar banner informativo y ajustar UI
+    if (isSlaveMode) {
+        const banner = document.createElement('div');
+        banner.id = 'slaveModeBanner';
+        banner.className = 'alert alert-info mb-3';
+        banner.style.cssText = 'border-left: 4px solid #00B7B5; background: rgba(0,183,181,.1); color: #00B7B5; border-color: #00B7B5;';
+        banner.innerHTML = `
+            <i class="fas fa-video mr-2"></i>
+            <strong>Modo ángulo adicional</strong> —
+            El video que subas se vinculará automáticamente como ángulo adicional del video master
+            (ID&nbsp;${escapeHtml(masterVideoId)}).
+            <br><small class="text-muted" style="color:#888!important">
+                Podés ajustar el nombre y la fecha antes de subir. El ángulo quedará sincronizable desde el reproductor multi-cámara.
+            </small>
+        `;
+        // Insertar al comienzo del contenido principal
+        const mainRow = document.querySelector('.row.justify-content-center .col-lg-10');
+        if (mainRow) mainRow.prepend(banner);
+    }
+
     initDropZone();
     if (isClub) {
         initSelect2();
@@ -1025,6 +1050,16 @@ async function resolveCommonData() {
 
 // ─── Upload a Cloudflare Stream (TUS) ────────────────────────
 async function uploadToCloudflare(item, commonData, onProgress) {
+    // Determinar rol efectivo del archivo considerando slave mode de URL
+    // En slave mode, TODOS los archivos son slaves del master externo.
+    const effectiveIsSlave = isSlaveMode || item.role !== 'master';
+    const effectiveMasterVideoId = isSlaveMode
+        ? parseInt(masterVideoId, 10)
+        : (item.role !== 'master' ? (uploadState.masterVideoId || null) : null);
+    const effectiveCameraAngle = effectiveIsSlave
+        ? (item.title || item.file.name || 'Ángulo adicional')
+        : null;
+
     // 1. Pedir endpoint TUS al servidor
     const initPayload = {
         title:            item.title,
@@ -1042,9 +1077,9 @@ async function uploadToCloudflare(item, commonData, onProgress) {
         division:         commonData.division || null,
         assignment_notes: commonData.assignment_notes || '',
         assigned_players: commonData.assigned_players,
-        is_master:        item.role === 'master',
-        master_video_id:  item.role !== 'master' ? (uploadState.masterVideoId || null) : null,
-        camera_angle:     item.role !== 'master' ? (item.title || item.file.name) : null,
+        is_master:        !effectiveIsSlave,
+        master_video_id:  effectiveMasterVideoId,
+        camera_angle:     effectiveCameraAngle,
     };
 
     // 1. Crear video en Bunny y obtener credenciales TUS

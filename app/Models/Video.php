@@ -683,6 +683,21 @@ class Video extends Model
 
         \Log::info("associateToMaster() SUCCESS - Slave video {$this->id} associated to group {$group->id}");
 
+        // Limpiar VideoGroups huérfanos del slave:
+        // Si el slave tenía su propio grupo donde era el ÚNICO miembro (era master de sí mismo),
+        // ese grupo queda sin sentido una vez que el slave se asocia a otro master.
+        $orphanGroups = $this->videoGroups()
+            ->wherePivot('is_master', true)
+            ->where('video_groups.id', '!=', $group->id)
+            ->get();
+
+        foreach ($orphanGroups as $orphanGroup) {
+            if ($orphanGroup->videos()->count() === 1) {
+                \Log::info("Deleting orphaned VideoGroup {$orphanGroup->id} (slave video {$this->id} was its only member)");
+                $orphanGroup->delete(); // Cascade elimina el pivot
+            }
+        }
+
         // FALLBACK: Also update old system columns for backward compatibility
         if (is_null($this->video_group_id)) {
             $legacyGroupId = $masterVideo->video_group_id ?? Video::generateGroupId();
