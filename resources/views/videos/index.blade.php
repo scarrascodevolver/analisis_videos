@@ -636,7 +636,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 /* Ángulos badge */
 .angles-badge {
     position: absolute;
-    top: 6px; left: 6px;
+    bottom: 3px; right: 3px;
     background: rgba(0,84,97,.92);
     color: #00B7B5;
     font-size: .58rem; font-weight: 700;
