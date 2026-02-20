@@ -242,6 +242,7 @@ class LongoMatchXmlParser
                         'scope'           => ClipCategory::SCOPE_ORGANIZATION,
                         'color'           => $colorPalette[$colorIndex % count($colorPalette)],
                         'is_active'       => true,
+                        'created_by'      => $userId,
                     ]);
                     $categoryMap[$code] = $newCat->id;
                     // Agregarlo al mapa en memoria para no re-crearlo si aparece de nuevo
