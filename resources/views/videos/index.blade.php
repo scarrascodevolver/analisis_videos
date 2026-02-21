@@ -797,7 +797,8 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
         if (videosCount > 0) {
             confirmed = confirm(
                 '"' + folderName + '" tiene ' + videosCount + ' video(s).\n' +
-                'Al eliminarlo, los videos quedarán sin asignación pero NO se borrarán del servidor.\n\n' +
+                'Al eliminarlo, los videos se eliminarán PERMANENTEMENTE del servidor y de Bunny.\n' +
+                'Esta acción no se puede deshacer.\n\n' +
                 '¿Confirmar eliminación?'
             );
         } else {
@@ -805,6 +806,14 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
         }
 
         if (!confirmed) return;
+
+        // Indicador visual de procesamiento mientras el servidor elimina los archivos
+        const wrap = activeEl.closest('.folder-card-wrap');
+        if (wrap) {
+            wrap.style.opacity  = '0.4';
+            wrap.style.cursor   = 'wait';
+            wrap.style.pointerEvents = 'none';
+        }
 
         try {
             const res = await fetch(deleteUrl, {
@@ -819,16 +828,27 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 
             if (data.ok) {
                 // Fade out y eliminar el wrap del DOM
-                const wrap = activeEl.closest('.folder-card-wrap');
                 if (wrap) {
                     wrap.style.transition = 'opacity .3s ease';
                     wrap.style.opacity    = '0';
                     setTimeout(() => wrap.remove(), 310);
                 }
             } else {
+                // Restaurar el estado visual si el servidor devuelve error
+                if (wrap) {
+                    wrap.style.opacity       = '1';
+                    wrap.style.cursor        = '';
+                    wrap.style.pointerEvents = '';
+                }
                 alert(data.message || 'No se pudo eliminar.');
             }
         } catch (err) {
+            // Restaurar el estado visual ante errores de red
+            if (wrap) {
+                wrap.style.opacity       = '1';
+                wrap.style.cursor        = '';
+                wrap.style.pointerEvents = '';
+            }
             alert('Error de red. Intente nuevamente.');
         }
     });

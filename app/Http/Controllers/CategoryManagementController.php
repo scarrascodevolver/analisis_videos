@@ -90,28 +90,90 @@ class CategoryManagementController extends Controller
 
     /**
      * Delete a category via AJAX from the folder context menu.
-     * Videos are unlinked in PHP (category_id = NULL) before deletion to avoid FK constraint errors,
-     * because the categories FK on videos does not have ON DELETE SET NULL at the DB level.
+     * All associated videos are permanently deleted from Spaces, local storage,
+     * and Bunny Stream before the category row is removed.
      * DELETE /api/categories/{category}
      */
     public function apiDestroy(Category $category): \Illuminate\Http\JsonResponse
     {
-        $videosCount = $category->videos()->count();
+        set_time_limit(120);
 
-        if ($videosCount > 0) {
-            // Null out category_id on related videos before deleting
-            // to avoid FK constraint violation (the FK has no nullOnDelete at DB level).
-            $category->videos()->update(['category_id' => null]);
+        $videos = $category->videos()->with('organization')->get();
+        $deletedCount = 0;
+
+        foreach ($videos as $video) {
+            // Spaces — archivo principal
+            try {
+                if ($video->file_path && \Storage::disk('spaces')->exists($video->file_path)) {
+                    \Storage::disk('spaces')->delete($video->file_path);
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Category delete — Spaces delete failed for video {$video->id}: " . $e->getMessage());
+            }
+
+            // Almacenamiento local — archivo principal
+            try {
+                \Storage::disk('public')->delete($video->file_path);
+            } catch (\Exception $e) {
+                // silencioso
+            }
+
+            // Thumbnail
+            if ($video->thumbnail_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->thumbnail_path)) {
+                        \Storage::disk('spaces')->delete($video->thumbnail_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Spaces thumbnail delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->thumbnail_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Archivo original (antes de compresión), si difiere del principal
+            if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->original_file_path)) {
+                        \Storage::disk('spaces')->delete($video->original_file_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Spaces original delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->original_file_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Bunny Stream
+            if ($video->bunny_video_id) {
+                try {
+                    \App\Services\BunnyStreamService::forOrganization($video->organization)
+                        ->deleteVideo($video->bunny_video_id);
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Bunny delete failed for video {$video->id}: " . $e->getMessage());
+                }
+            }
+
+            // Base de datos (activa el boot method del modelo: cancela jobs pendientes,
+            // elimina asignaciones y demás relaciones en cascada)
+            $video->delete();
+            $deletedCount++;
         }
 
         $category->delete();
 
         return response()->json([
             'ok' => true,
-            'message' => $videosCount > 0
-                ? "Categoría eliminada. {$videosCount} video(s) quedaron sin categoría asignada."
+            'message' => $deletedCount > 0
+                ? "Categoría eliminada con {$deletedCount} video(s) borrados del servidor."
                 : 'Categoría eliminada.',
-            'videos_unlinked' => $videosCount,
+            'videos_deleted' => $deletedCount,
         ]);
     }
 }
