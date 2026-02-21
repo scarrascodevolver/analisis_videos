@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
 Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
 Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
 
+// Clip Share (PUBLIC - no login required)
+Route::get('clips/{clipId}/share', [\App\Http\Controllers\ClipShareController::class, 'show'])->name('clips.share');
+
 // CDN Health Status (for monitoring - protected)
 Route::get('api/cdn-status', [VideoStreamController::class, 'cdnStatus'])->middleware('auth')->name('api.cdn.status');
 

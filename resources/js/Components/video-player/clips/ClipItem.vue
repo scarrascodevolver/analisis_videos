@@ -20,13 +20,7 @@ const dropdownStyle = ref({ top: '0px', left: '0px' });
 const formattedStartTime = computed(() => formatTime(props.clip.start_time));
 const formattedEndTime = computed(() => formatTime(props.clip.end_time));
 
-const bunnyEmbedUrl = computed(() => {
-    const v = videoStore.video;
-    if (!v?.bunny_library_id || !v?.bunny_video_id) return null;
-    const start = Math.floor(props.clip.start_time);
-    const end = Math.ceil(props.clip.end_time);
-    return `https://iframe.mediadelivery.net/embed/${v.bunny_library_id}/${v.bunny_video_id}?start=${start}&end=${end}&autoplay=true&muted=true`;
-});
+const shareUrl = computed(() => `${window.location.origin}/clips/${props.clip.id}/share`);
 
 function handleSeek() {
     videoStore.playClip(props.clip.start_time, props.clip.end_time);
@@ -53,12 +47,8 @@ function playClip(event: MouseEvent) {
 async function copyLink(event: MouseEvent) {
     event.stopPropagation();
     showMenu.value = false;
-    if (!bunnyEmbedUrl.value) {
-        toast?.error('No hay link de Bunny disponible para este video');
-        return;
-    }
     try {
-        await navigator.clipboard.writeText(bunnyEmbedUrl.value);
+        await navigator.clipboard.writeText(shareUrl.value);
         toast?.success('¡Link copiado!');
     } catch {
         toast?.error('No se pudo copiar el link');
@@ -124,7 +114,6 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
                 <i class="fas fa-play"></i> Reproducir
             </button>
             <button
-                v-if="bunnyEmbedUrl"
                 class="clip-dropdown-item"
                 @click="copyLink"
             >
