@@ -60,7 +60,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            padding: 1rem 2rem;
+            padding: 0.4rem 2rem;
             transition: all 0.3s ease;
             background: rgba(10, 10, 10, 0.85);
             backdrop-filter: blur(10px);
