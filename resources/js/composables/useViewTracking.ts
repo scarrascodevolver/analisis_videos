@@ -17,7 +17,11 @@ export function useViewTracking(videoId: number) {
     const COMPLETION_THRESHOLD_PERCENT = 0.9;
     const DURATION_UPDATE_INTERVAL_MS = 10000;
 
+    let started = false;
+
     function start() {
+        if (started) return;
+        started = true;
         timeManager.registerCallback('viewTracking', onTimeUpdate);
     }
 
@@ -88,6 +92,7 @@ export function useViewTracking(videoId: number) {
             durationInterval = null;
         }
         timeManager.unregisterCallback('viewTracking');
+        started = false;
     }
 
     onBeforeUnmount(cleanup);

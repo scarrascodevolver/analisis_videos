@@ -663,6 +663,7 @@ function createAnnotationCanvas() {
         fabricCanvas.value.off('mouse:dblclick');
         fabricCanvas.value.dispose();
         fabricCanvas.value = null;
+        instance = null; // Reset singleton so next mount gets a clean instance
     }
 
     return {

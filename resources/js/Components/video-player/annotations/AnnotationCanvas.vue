@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import { useAnnotationCanvas } from '@/composables/useAnnotationCanvas';
+import { debounce } from '@/utils/timing';
 import AreaToolTip from './AreaToolTip.vue';
 
 const videoStore = useVideoStore();
@@ -28,7 +29,9 @@ const {
 
 let resizeObserver: ResizeObserver | null = null;
 let currentAnnotationId: number | null = null;
+let lastCheckedSecond: number = -1;
 let canvasInitialized = ref(false);
+const debouncedResize = debounce((videoRef: HTMLVideoElement) => resizeCanvas(videoRef), 100);
 
 function enableCanvasInteractionIfReady() {
     if (!fabricCanvas.value) return;
@@ -56,10 +59,10 @@ watch(() => videoStore.videoRef, async (videoRef) => {
         canvasInitialized.value = true;
         enableCanvasInteractionIfReady();
 
-        // Watch for video resize
+        // Watch for video resize — debounced 100ms to avoid Fabric.js renderAll() en cada pixel
         resizeObserver = new ResizeObserver(() => {
             if (videoStore.videoRef) {
-                resizeCanvas(videoStore.videoRef);
+                debouncedResize(videoStore.videoRef);
             }
         });
         resizeObserver.observe(videoRef);
@@ -101,6 +104,7 @@ onMounted(() => {
 
 
 onUnmounted(() => {
+    debouncedResize.cancel();
     if (resizeObserver && videoStore.videoRef) {
         resizeObserver.unobserve(videoStore.videoRef);
     }
@@ -139,6 +143,7 @@ watch(() => annotationsStore.annotationMode, (isActive) => {
         }
         clearCanvas();
         currentAnnotationId = null;
+        lastCheckedSecond = -1; // Force re-evaluation when mode changes
     }
 });
 
@@ -171,8 +176,13 @@ watch(() => annotationsStore.currentColor, (color) => {
 });
 
 // Watch video time to display saved annotations
+// Optimization: annotations are indexed per integer second — skip if second hasn't changed (60x speedup)
 watch(() => videoStore.currentTime, (time) => {
     if (annotationsStore.annotationMode) return; // Don't show saved annotations in edit mode
+
+    const currentSecond = Math.floor(time);
+    if (currentSecond === lastCheckedSecond) return;
+    lastCheckedSecond = currentSecond;
 
     const annotations = annotationsStore.getAnnotationsAtTime(time);
 

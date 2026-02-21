@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import { useVideoStore, formatTime } from '@/stores/videoStore';
 import { useCommentsStore } from '@/stores/commentsStore';
 import type { VideoComment } from '@/types/video-player';
@@ -12,6 +12,25 @@ const videoStore = useVideoStore();
 const commentsStore = useCommentsStore();
 
 const isCollapsed = ref(false);
+
+// rAF-based DOM updates for playhead/progress — decouples from Vue reactive cycle (60fps → rAF)
+const progressFillRef = ref<HTMLElement | null>(null);
+const playheadRef     = ref<HTMLElement | null>(null);
+let playheadRafId: number | null = null;
+
+watch(() => videoStore.currentTime, () => {
+    if (playheadRafId !== null) cancelAnimationFrame(playheadRafId);
+    playheadRafId = requestAnimationFrame(() => {
+        playheadRafId = null;
+        const p = videoStore.progress + '%';
+        if (progressFillRef.value) progressFillRef.value.style.width = p;
+        if (playheadRef.value)     playheadRef.value.style.left = p;
+    });
+});
+
+onUnmounted(() => {
+    if (playheadRafId !== null) cancelAnimationFrame(playheadRafId);
+});
 
 // Clustered markers for rendering
 interface MarkerCluster {
@@ -102,17 +121,11 @@ function seekToMarker(marker: MarkerCluster) {
                 class="timeline-bar position-relative"
                 @click="seekToPosition"
             >
-                <!-- Progress fill -->
-                <div
-                    class="progress-fill"
-                    :style="{ width: videoStore.progress + '%' }"
-                ></div>
+                <!-- Progress fill — updated via rAF, not Vue reactive binding -->
+                <div class="progress-fill" ref="progressFillRef"></div>
 
-                <!-- Playhead indicator -->
-                <div
-                    class="playhead"
-                    :style="{ left: videoStore.progress + '%' }"
-                ></div>
+                <!-- Playhead indicator — updated via rAF -->
+                <div class="playhead" ref="playheadRef"></div>
 
                 <!-- Comment markers -->
                 <div

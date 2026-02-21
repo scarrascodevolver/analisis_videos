@@ -47,7 +47,7 @@
                                 :key="clip.id"
                                 class="clip-block"
                                 :class="{ 'is-dragging': dragState?.clip.id === clip.id }"
-                                :style="getClipBlockStyle(clip, category.id)"
+                                :style="clipBlockStyles.get(clip.id)"
                                 :title="getClipTooltip(clip)"
                                 @mousedown.stop="onClipMousedown(clip, 'move', $event, category.id)"
                                 @click.stop="handleClipClick(clip)"
@@ -112,6 +112,7 @@ import { ref, computed } from 'vue';
 import { useVideoStore, formatTime } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import type { VideoClip } from '@/types/video-player';
+// No external deps needed — rAF throttle inline for drag
 
 const props = defineProps<{
     videoId: number;
@@ -215,8 +216,12 @@ interface DragState {
     didMove:       boolean;
 }
 
-const dragState  = ref<DragState | null>(null);
+const dragState   = ref<DragState | null>(null);
 const wasDragging = ref(false); // blocks click handler after a real drag
+
+// rAF throttle state for mousemove
+let pendingDragEvent: MouseEvent | null = null;
+let dragRafId: number | null = null;
 
 function onClipMousedown(
     clip:       VideoClip,
@@ -255,14 +260,14 @@ function onClipMousedown(
     document.body.style.userSelect = 'none';
 }
 
-function onMousemove(event: MouseEvent) {
+function processDrag(event: MouseEvent) {
     if (!dragState.value || !duration.value) return;
 
     const { type, startX, originalStart, originalEnd, trackWidth } = dragState.value;
     const deltaX       = event.clientX - startX;
     const secPerPixel  = duration.value / trackWidth;
     const deltaSeconds = deltaX * secPerPixel;
-    const MIN_DUR      = 0.5; // minimum clip duration in seconds
+    const MIN_DUR      = 0.5;
 
     if (Math.abs(deltaX) > 3) dragState.value.didMove = true;
 
@@ -283,11 +288,36 @@ function onMousemove(event: MouseEvent) {
     dragState.value.previewEnd   = newEnd;
 }
 
+// rAF-throttled mousemove: accumulate event, process once per browser frame
+function onMousemove(event: MouseEvent) {
+    if (!dragState.value) return;
+    pendingDragEvent = event;
+    if (dragRafId === null) {
+        dragRafId = requestAnimationFrame(() => {
+            dragRafId = null;
+            if (pendingDragEvent) {
+                processDrag(pendingDragEvent);
+                pendingDragEvent = null;
+            }
+        });
+    }
+}
+
 async function onMouseup() {
     document.removeEventListener('mousemove', onMousemove);
     document.removeEventListener('mouseup',   onMouseup);
     document.body.style.cursor     = '';
     document.body.style.userSelect = '';
+
+    // Flush any pending RAF frame so final position is applied before saving
+    if (dragRafId !== null) {
+        cancelAnimationFrame(dragRafId);
+        dragRafId = null;
+    }
+    if (pendingDragEvent && dragState.value) {
+        processDrag(pendingDragEvent);
+        pendingDragEvent = null;
+    }
 
     if (!dragState.value) return;
 
@@ -311,7 +341,57 @@ async function onMouseup() {
     }
 }
 
-// ─── Clip style (position + stagger row) ─────────────────────────────────────
+// ─── Clip styles — memoized computed (recalculates only when clips/duration/drag changes) ─────
+// Replaces getClipBlockStyle() function called per-clip per-frame (O(N*60fps) → O(N) on change)
+const clipBlockStyles = computed(() => {
+    const styleMap = new Map<number, Record<string, string | number>>();
+
+    for (const category of activeCategories.value) {
+        const clips = clipsStore.clipsByCategory[category.id] ?? [];
+        for (const clip of clips) {
+            let rawStart = parseFloat(clip.start_time as any) || 0;
+            let rawEnd   = parseFloat(clip.end_time   as any) || 0;
+
+            if (dragState.value?.clip.id === clip.id) {
+                rawStart = dragState.value.previewStart;
+                rawEnd   = dragState.value.previewEnd;
+            }
+
+            const adjustedStart = Math.max(0, rawStart + currentOffset.value);
+            const adjustedEnd   = rawEnd + currentOffset.value;
+            const dur = duration.value;
+
+            if (!dur || dur < 1 || adjustedStart >= dur || adjustedEnd <= 0) {
+                styleMap.set(clip.id, { display: 'none' });
+                continue;
+            }
+
+            const startPercent = (adjustedStart / dur) * 100;
+            const widthPercent = ((adjustedEnd - adjustedStart) / dur) * 100;
+            const color        = clip.category?.color || '#00B7B5';
+            const rowMap = staggerCache.value.get(category.id);
+            const rowIdx = rowMap?.get(clip.id) ?? 0;
+            const topPx    = rowIdx * ROW_HEIGHT + 2;
+            const heightPx = ROW_HEIGHT - 4;
+            const isDragged = dragState.value?.clip.id === clip.id;
+            const zIdx      = isDragged ? 200 : (5 + (clip.id % 50));
+
+            styleMap.set(clip.id, {
+                left:            `${Math.max(0, Math.min(startPercent, 100))}%`,
+                width:           `${Math.max(widthPercent, 0.3)}%`,
+                top:             `${topPx}px`,
+                height:          `${heightPx}px`,
+                bottom:          'auto',
+                backgroundColor: color,
+                zIndex:          zIdx,
+            });
+        }
+    }
+
+    return styleMap;
+});
+
+// Legacy function kept for tooltip use only — NOT called per-frame
 function getClipBlockStyle(clip: VideoClip, categoryId: number) {
     // Use drag-preview times for the clip being dragged
     let rawStart = parseFloat(clip.start_time as any) || 0;
