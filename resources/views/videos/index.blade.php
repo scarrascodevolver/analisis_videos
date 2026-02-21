@@ -47,7 +47,9 @@
                    class="folder-card text-decoration-none"
                    data-rename-url="{{ route('api.categories.rename', $cat) }}"
                    data-rename-id="{{ $cat->id }}"
-                   data-rename-name="{{ $cat->name }}">
+                   data-rename-name="{{ $cat->name }}"
+                   data-delete-url="{{ route('api.categories.delete', $cat) }}"
+                   data-videos-count="{{ $cat->videos_count }}">
                     <div class="folder-icon-wrap"><i class="fas fa-folder"></i></div>
                     <div class="folder-name">{{ $cat->name }}</div>
                     <div class="folder-meta">{{ $cat->videos_count }} partidos</div>
@@ -76,7 +78,9 @@
                    class="folder-card text-decoration-none"
                    data-rename-url="{{ route('api.tournaments.rename', $t) }}"
                    data-rename-id="{{ $t->id }}"
-                   data-rename-name="{{ $t->name }}">
+                   data-rename-name="{{ $t->name }}"
+                   data-delete-url="{{ route('api.tournaments.delete', $t) }}"
+                   data-videos-count="{{ $t->videos_count }}">
                     <div class="folder-icon-wrap"><i class="fas fa-trophy"></i></div>
                     <div class="folder-name">{{ $t->name }}</div>
                     <div class="folder-meta">{{ $t->videos_count }} videos</div>
@@ -710,12 +714,16 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     transition: background .15s;
 }
 #folder-context-menu li:hover { background: #005461; color: #fff; }
+#folder-context-menu li.ctx-item--danger { color: #e07070; }
+#folder-context-menu li.ctx-item--danger:hover { background: #6b1a1a; color: #fff; }
 </style>
 @endpush
 
 {{-- Context menu HTML --}}
 <ul id="folder-context-menu" style="display:none">
     <li id="ctx-rename"><i class="fas fa-pencil-alt"></i> Renombrar</li>
+    <li class="ctx-divider" style="height:1px;background:#333;margin:4px 0;padding:0;pointer-events:none;"></li>
+    <li id="ctx-delete" class="ctx-item--danger"><i class="fas fa-trash-alt"></i> Eliminar</li>
 </ul>
 
 @push('scripts')
@@ -769,6 +777,59 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
             }
         } catch (err) {
             alert('Error al renombrar. Intente nuevamente.');
+        }
+    });
+
+    // Eliminar
+    document.getElementById('ctx-delete').addEventListener('click', async function () {
+        if (!activeEl) return;
+
+        const deleteUrl   = activeEl.dataset.deleteUrl;
+        const videosCount = parseInt(activeEl.dataset.videosCount || '0', 10);
+        const folderName  = activeEl.dataset.renameName || activeEl.querySelector('.folder-name')?.textContent?.trim() || 'este elemento';
+
+        if (!deleteUrl) {
+            alert('No se puede eliminar este elemento.');
+            return;
+        }
+
+        let confirmed = false;
+        if (videosCount > 0) {
+            confirmed = confirm(
+                '"' + folderName + '" tiene ' + videosCount + ' video(s).\n' +
+                'Al eliminarlo, los videos quedarán sin asignación pero NO se borrarán del servidor.\n\n' +
+                '¿Confirmar eliminación?'
+            );
+        } else {
+            confirmed = confirm('¿Eliminar "' + folderName + '"?');
+        }
+
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+                // Fade out y eliminar el wrap del DOM
+                const wrap = activeEl.closest('.folder-card-wrap');
+                if (wrap) {
+                    wrap.style.transition = 'opacity .3s ease';
+                    wrap.style.opacity    = '0';
+                    setTimeout(() => wrap.remove(), 310);
+                }
+            } else {
+                alert(data.message || 'No se pudo eliminar.');
+            }
+        } catch (err) {
+            alert('Error de red. Intente nuevamente.');
         }
     });
 })();

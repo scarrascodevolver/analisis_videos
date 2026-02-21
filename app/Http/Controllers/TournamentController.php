@@ -33,7 +33,7 @@ class TournamentController extends Controller
     public function update(Request $request, Tournament $tournament): \Illuminate\Http\JsonResponse
     {
         $request->validate([
-            'name'   => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'season' => 'nullable|string|max:20',
         ]);
 
@@ -43,7 +43,8 @@ class TournamentController extends Controller
     }
 
     /**
-     * Delete a tournament. Refuses if it has associated videos.
+     * Delete a tournament via the admin web form (tournaments.destroy).
+     * Refuses if the tournament has videos to avoid accidental data loss.
      * DELETE /tournaments/{tournament}
      */
     public function destroy(Tournament $tournament): \Illuminate\Http\RedirectResponse
@@ -55,6 +56,25 @@ class TournamentController extends Controller
         $tournament->delete();
 
         return back()->with('success', 'Torneo eliminado correctamente.');
+    }
+
+    /**
+     * Delete a tournament via AJAX from the folder context menu.
+     * Videos retain their rows but get tournament_id = NULL (nullOnDelete FK constraint).
+     * DELETE /api/tournaments/{tournament}
+     */
+    public function apiDestroy(Tournament $tournament): \Illuminate\Http\JsonResponse
+    {
+        $videosCount = $tournament->videos()->count();
+        $tournament->delete();
+
+        return response()->json([
+            'ok' => true,
+            'message' => $videosCount > 0
+                ? "Torneo eliminado. {$videosCount} video(s) quedaron sin torneo asignado."
+                : 'Torneo eliminado.',
+            'videos_unlinked' => $videosCount,
+        ]);
     }
 
     /**
@@ -75,7 +95,7 @@ class TournamentController extends Controller
 
         return response()->json([
             'results' => $tournaments->map(fn ($t) => [
-                'id'   => $t->id,
+                'id' => $t->id,
                 'text' => $t->season ? "{$t->name} ({$t->season})" : $t->name,
             ]),
         ]);
@@ -88,7 +108,7 @@ class TournamentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'   => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'season' => 'nullable|string|max:20',
         ]);
 
@@ -97,13 +117,13 @@ class TournamentController extends Controller
         $tournament = Tournament::firstOrCreate(
             [
                 'organization_id' => $org->id,
-                'name'            => $request->name,
-                'season'          => $request->season,
+                'name' => $request->name,
+                'season' => $request->season,
             ]
         );
 
         return response()->json([
-            'id'   => $tournament->id,
+            'id' => $tournament->id,
             'text' => $tournament->season
                 ? "{$tournament->name} ({$tournament->season})"
                 : $tournament->name,

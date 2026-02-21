@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnotationController;
 use App\Http\Controllers\BunnyUploadController;
 use App\Http\Controllers\BunnyWebhookController;
+use App\Http\Controllers\CategoryManagementController;
 use App\Http\Controllers\ClipCategoryController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\DashboardController;
@@ -143,6 +144,10 @@ Route::middleware(['auth'])->group(function () {
     // Rename de carpetas (categorías y torneos) via AJAX
     Route::patch('api/categories/{category}/rename', [AdminController::class, 'renameCategory'])->name('api.categories.rename');
     Route::patch('api/tournaments/{tournament}/rename', [TournamentController::class, 'rename'])->name('api.tournaments.rename');
+
+    // Delete de carpetas (categorías y torneos) via AJAX — context menu
+    Route::delete('api/tournaments/{tournament}', [TournamentController::class, 'apiDestroy'])->name('api.tournaments.delete');
+    Route::delete('api/categories/{category}', [CategoryManagementController::class, 'apiDestroy'])->name('api.categories.delete');
 
     // Local Teams recent (for Select2 autocomplete in upload form)
     Route::get('/api/local-teams/recent', [VideoController::class, 'recentLocalTeams'])->name('api.local-teams.recent');
@@ -285,7 +290,6 @@ Route::middleware(['auth'])->group(function () {
     // General Routes (accessible by all roles)
     // Removed unused routes (teams, categories, reports)
 });
-
 
 // API para búsqueda de jugadores (solo de la misma categoría)
 Route::middleware('auth')->get('/api/search-players', function (Illuminate\Http\Request $request) {

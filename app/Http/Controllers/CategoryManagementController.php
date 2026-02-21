@@ -87,4 +87,31 @@ class CategoryManagementController extends Controller
         return redirect()->route('admin.categories.index')
             ->with('success', 'Categoría eliminada exitosamente.');
     }
+
+    /**
+     * Delete a category via AJAX from the folder context menu.
+     * Videos are unlinked in PHP (category_id = NULL) before deletion to avoid FK constraint errors,
+     * because the categories FK on videos does not have ON DELETE SET NULL at the DB level.
+     * DELETE /api/categories/{category}
+     */
+    public function apiDestroy(Category $category): \Illuminate\Http\JsonResponse
+    {
+        $videosCount = $category->videos()->count();
+
+        if ($videosCount > 0) {
+            // Null out category_id on related videos before deleting
+            // to avoid FK constraint violation (the FK has no nullOnDelete at DB level).
+            $category->videos()->update(['category_id' => null]);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'ok' => true,
+            'message' => $videosCount > 0
+                ? "Categoría eliminada. {$videosCount} video(s) quedaron sin categoría asignada."
+                : 'Categoría eliminada.',
+            'videos_unlinked' => $videosCount,
+        ]);
+    }
 }
