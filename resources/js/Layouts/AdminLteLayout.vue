@@ -196,7 +196,7 @@ function markAllNotificationsAsRead() {
                 >
                 <img
                     v-else
-                    src="/logohub.png"
+                    src="/logo.png"
                     alt="RugbyKP"
                     class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain;"
