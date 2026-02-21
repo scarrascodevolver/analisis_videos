@@ -89,8 +89,8 @@
         }
 
         .logo-icon {
-            width: 240px;
-            height: 100px;
+            width: 320px;
+            height: 133px;
             overflow: hidden;
         }
 
