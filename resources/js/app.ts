@@ -21,7 +21,7 @@ const clickOutside: Directive = {
 };
 
 createInertiaApp({
-    title: (title) => title ? `${title} - RugbyHub` : 'RugbyHub',
+    title: (title) => title ? `${title} - RugbyKP` : 'RugbyKP',
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.vue`,

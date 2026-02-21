@@ -197,7 +197,7 @@ function markAllNotificationsAsRead() {
                 <img
                     v-else
                     src="/logohub.png"
-                    alt="RugbyHub"
+                    alt="RugbyKP"
                     class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain;"
                 >
@@ -404,7 +404,7 @@ function markAllNotificationsAsRead() {
 
         <!-- Footer -->
         <footer class="main-footer">
-            <strong>&copy; {{ new Date().getFullYear() }} RugbyHub</strong>
+            <strong>&copy; {{ new Date().getFullYear() }} RugbyKP</strong>
             <div class="float-right d-none d-sm-inline-block">
                 <small>Plataforma de Análisis de Video para Rugby</small>
             </div>

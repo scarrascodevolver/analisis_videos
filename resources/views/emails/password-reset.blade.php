@@ -142,7 +142,7 @@
             <div style="width: 80px; height: 80px; margin: 0 auto 15px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 48px; color: white;">🏉</span>
             </div>
-            <h1>RUGBYHUB</h1>
+            <h1>RUGBYKP</h1>
             <p>Sistema de Análisis de Video</p>
         </div>
 

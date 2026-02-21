@@ -178,8 +178,8 @@
 <body>
 
     <div class="share-header">
-        <img src="{{ asset('logo.png') }}" alt="RugbyHub" onerror="this.style.display='none'">
-        <span>RugbyHub · Clip compartido</span>
+        <img src="{{ asset('logo.png') }}" alt="RugbyKP" onerror="this.style.display='none'">
+        <span>RugbyKP · Clip compartido</span>
     </div>
 
     <div class="player-wrapper">
@@ -226,7 +226,7 @@
     </div>
 
     <div class="share-footer">
-        <a href="{{ url('/') }}">RugbyKP · Análisis de Video Rugby</a>
+        <a href="{{ url('/') }}">RugbyKP · Rugby Key Performance</a>
     </div>
 
     <script>
