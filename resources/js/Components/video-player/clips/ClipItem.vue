@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import { formatTime } from '@/stores/videoStore';
@@ -13,39 +13,76 @@ const videoStore = useVideoStore();
 const clipsStore = useClipsStore();
 const toast = inject<any>('toast');
 const isDeleting = ref(false);
+const showMenu = ref(false);
+const menuRef = ref<HTMLElement | null>(null);
 
 const formattedStartTime = computed(() => formatTime(props.clip.start_time));
 const formattedEndTime = computed(() => formatTime(props.clip.end_time));
 
+const bunnyEmbedUrl = computed(() => {
+    const v = videoStore.video;
+    if (!v?.bunny_library_id || !v?.bunny_video_id) return null;
+    const start = Math.floor(props.clip.start_time);
+    const end = Math.ceil(props.clip.end_time);
+    return `https://iframe.mediadelivery.net/embed/${v.bunny_library_id}/${v.bunny_video_id}?start=${start}&end=${end}&autoplay=true`;
+});
+
 function handleSeek() {
-    console.log('Seeking to clip from sidebar:', props.clip.start_time);
     videoStore.seek(props.clip.start_time);
-    // Always play after seeking to clip
     videoStore.play();
 }
 
-async function handleDelete(event: MouseEvent) {
-    event.stopPropagation(); // Prevent seek when clicking delete
+function toggleMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = !showMenu.value;
+}
 
-    // Prevent multiple clicks
-    if (isDeleting.value) return;
+function playClip(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = false;
+    handleSeek();
+}
 
-    if (!confirm('¿Estás seguro de que deseas eliminar este clip?')) {
+async function copyLink(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = false;
+    if (!bunnyEmbedUrl.value) {
+        toast?.error('No hay link de Bunny disponible para este video');
         return;
     }
+    try {
+        await navigator.clipboard.writeText(bunnyEmbedUrl.value);
+        toast?.success('¡Link copiado!');
+    } catch {
+        toast?.error('No se pudo copiar el link');
+    }
+}
+
+async function handleDelete(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = false;
+    if (isDeleting.value) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar este clip?')) return;
 
     isDeleting.value = true;
-
     try {
         await clipsStore.removeClip(props.clip.video_id, props.clip.id);
         toast?.success('Clip eliminado');
     } catch (error) {
         console.error('Error deleting clip:', error);
         toast?.error('Error al eliminar el clip');
-        isDeleting.value = false; // Re-enable only on error
+        isDeleting.value = false;
     }
-    // Don't re-enable on success because component will be unmounted
 }
+
+function onClickOutside(event: MouseEvent) {
+    if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
+        showMenu.value = false;
+    }
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside));
 </script>
 
 <template>
@@ -54,15 +91,35 @@ async function handleDelete(event: MouseEvent) {
         <div class="clip-time">
             {{ formattedStartTime }} - {{ formattedEndTime }}
         </div>
-        <button
-            class="btn-delete-clip"
-            :class="{ deleting: isDeleting }"
-            :disabled="isDeleting"
-            title="Eliminar clip"
-            @click="handleDelete"
-        >
-            <i :class="isDeleting ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
-        </button>
+
+        <!-- ⋯ menu button -->
+        <div ref="menuRef" class="clip-menu-wrapper">
+            <button
+                class="btn-clip-menu"
+                :class="{ active: showMenu, deleting: isDeleting }"
+                :disabled="isDeleting"
+                title="Opciones"
+                @click="toggleMenu"
+            >
+                <i :class="isDeleting ? 'fas fa-spinner fa-spin' : 'fas fa-ellipsis-h'"></i>
+            </button>
+
+            <div v-show="showMenu" class="clip-dropdown">
+                <button class="clip-dropdown-item" @click="playClip">
+                    <i class="fas fa-play"></i> Reproducir
+                </button>
+                <button
+                    v-if="bunnyEmbedUrl"
+                    class="clip-dropdown-item"
+                    @click="copyLink"
+                >
+                    <i class="fas fa-link"></i> Copiar link
+                </button>
+                <button class="clip-dropdown-item clip-dropdown-item--danger" @click="handleDelete">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -77,6 +134,7 @@ async function handleDelete(event: MouseEvent) {
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.15s;
+    position: relative;
 }
 
 .clip-item:hover {
@@ -98,7 +156,13 @@ async function handleDelete(event: MouseEvent) {
     flex: 1;
 }
 
-.btn-delete-clip {
+/* ⋯ button */
+.clip-menu-wrapper {
+    position: relative;
+    margin-left: auto;
+}
+
+.btn-clip-menu {
     background: transparent;
     border: none;
     color: #888;
@@ -108,25 +172,84 @@ async function handleDelete(event: MouseEvent) {
     border-radius: 3px;
     transition: all 0.2s;
     opacity: 0;
-    margin-left: auto;
+    line-height: 1;
 }
 
-.clip-item:hover .btn-delete-clip {
+.clip-item:hover .btn-clip-menu,
+.btn-clip-menu.active {
     opacity: 1;
 }
 
-.btn-delete-clip:hover:not(:disabled) {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-    transform: scale(1.1);
+.btn-clip-menu:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
 }
 
-.btn-delete-clip:disabled {
+.btn-clip-menu:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.btn-delete-clip.deleting {
-    opacity: 1;
+/* dropdown */
+.clip-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    border-radius: 4px;
+    min-width: 130px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.clip-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.4rem 0.65rem;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 10.5px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.clip-dropdown-item i {
+    width: 12px;
+    text-align: center;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.clip-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.clip-dropdown-item:hover i {
+    color: #00B7B5;
+}
+
+.clip-dropdown-item--danger {
+    color: #e06c75;
+}
+
+.clip-dropdown-item--danger i {
+    color: #e06c75;
+}
+
+.clip-dropdown-item--danger:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #ff6b6b;
+}
+
+.clip-dropdown-item--danger:hover i {
+    color: #ff6b6b;
 }
 </style>

@@ -56,6 +56,7 @@ export interface Video {
     edit_url: string;
     // Bunny Stream
     bunny_video_id: string | null;
+    bunny_library_id: number | string | null;
     bunny_status: string | null;
     bunny_hls_url: string | null;
     bunny_mp4_url: string | null;
