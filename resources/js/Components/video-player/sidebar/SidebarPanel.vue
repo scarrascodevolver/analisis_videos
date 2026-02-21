@@ -69,21 +69,27 @@ function handleTabChange(tab: TabType) {
     overflow-y: auto;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling — colores RugbyKP */
 .tab-pane::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 .tab-pane::-webkit-scrollbar-track {
-    background: #1a1a1a;
+    background: transparent;
 }
 
 .tab-pane::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 3px;
+    background: rgba(0, 183, 181, 0.35);
+    border-radius: 4px;
 }
 
 .tab-pane::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: rgba(0, 183, 181, 0.75);
+}
+
+/* Firefox */
+.tab-pane {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 183, 181, 0.35) transparent;
 }
 </style>

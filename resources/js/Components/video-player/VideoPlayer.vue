@@ -125,7 +125,7 @@ function toggleTheaterMode() {
             <VideoInfo :video="video" />
         </div>
 
-        <div v-if="!isTheaterMode" class="col-lg-2" id="sidebarSection">
+        <div v-if="!isTheaterMode" class="col-lg-2 sidebar-col" id="sidebarSection">
             <slot name="sidebar" />
         </div>
     </div>
@@ -136,6 +136,15 @@ function toggleTheaterMode() {
 </template>
 
 <style scoped>
+/* Sidebar sticky — queda fijo mientras el contenido principal scrollea */
+.sidebar-col {
+    position: sticky;
+    top: 0.75rem;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+    align-self: flex-start;
+}
+
 /* Video único (sin ángulos) — altura fija, video centrado horizontalmente */
 .single-col :deep(.video-container) {
     aspect-ratio: unset !important;
