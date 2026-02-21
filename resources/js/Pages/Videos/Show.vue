@@ -81,12 +81,14 @@ const showStatsModal = ref(false);
 const showUploadAngleModal = ref(false);
 const showSyncModal = ref(false);
 
+// ─── Master video URL state (reactive so swap can update them) ────────────────
+// These start from the Inertia-provided props and are updated on master/slave swap.
+const videoStreamUrl  = ref(props.video.stream_url);
+
 // ─── Polling de encoding Bunny ────────────────────────────────
 const videoStatus     = ref(props.video.bunny_status ?? null);
 const videoHlsUrl     = ref(props.video.bunny_hls_url ?? null);
 const videoMp4Url     = ref(props.video.bunny_mp4_url ?? null);
-// URL HLS lista pero pendiente de aplicar (usuario viendo MP4, no interrumpir)
-const pendingHlsUrl   = ref<string | null>(null);
 // Muestra pantalla de encoding solo si no hay NI HLS NI MP4 original disponible
 const isProcessing    = computed(() => !videoHlsUrl.value && !videoMp4Url.value);
 let pollingInterval: ReturnType<typeof setInterval> | null = null;
@@ -103,32 +105,15 @@ async function pollStatus() {
 
         if (data.ready && data.playback_url) {
             stopPolling();
-
-            if (isProcessing.value) {
-                // Usuario en pantalla de encoding → mostrar player inmediatamente
-                videoHlsUrl.value = data.playback_url;
-            } else if (videoStore.isPlaying) {
-                // Usuario ya está viendo (MP4) → NO interrumpir, guardar URL pendiente
-                pendingHlsUrl.value = data.playback_url;
-                toast.info('Video HD listo. Cambiará automáticamente al pausar.', { duration: 8000 } as any);
-            } else {
-                // Video pausado/detenido → cambiar fuente silenciosamente
-                videoHlsUrl.value = data.playback_url;
-                pendingHlsUrl.value = null;
-            }
+            // Apply HLS URL immediately in all cases.
+            // VideoElement.vue watch(activeHlsUrl) handles the seamless transition:
+            // it preserves currentTime and play state via initHls(url, currentTime, wasPlaying).
+            videoHlsUrl.value = data.playback_url;
         }
     } catch (e) {
         console.warn('Polling error:', e);
     }
 }
-
-// Cuando el usuario pausa y hay HLS pendiente → aplicar sin interrumpir
-watch(() => videoStore.isPlaying, (playing) => {
-    if (!playing && pendingHlsUrl.value) {
-        videoHlsUrl.value = pendingHlsUrl.value;
-        pendingHlsUrl.value = null;
-    }
-});
 
 function startPolling() {
     if (pollingInterval) return;
@@ -295,11 +280,49 @@ function onAngleUploaded(slave: SlaveVideo) {
 }
 
 function onSwapMaster(slaveId: number) {
-    if (!multiCamera) return;
-    const result = multiCamera.swapMaster(slaveId);
-    if (result) {
-        toast.info('Cámara intercambiada');
-    }
+    // Find the slave to promote to master
+    const slaveIndex = slaveVideos.value.findIndex(s => s.id === slaveId);
+    if (slaveIndex === -1) return;
+
+    const incomingSlave = slaveVideos.value[slaveIndex];
+
+    // Snapshot current master URL data before overwriting
+    const oldMasterStreamUrl = videoStreamUrl.value;
+    const oldMasterHlsUrl    = videoHlsUrl.value;
+    const oldMasterMp4Url    = videoMp4Url.value;
+    const oldMasterStatus    = videoStatus.value;
+
+    // Promote slave's URLs to master refs — Vue watchers in VideoElement.vue
+    // will detect the activeHlsUrl or activeMp4Url change and reload seamlessly,
+    // preserving currentTime and play state.
+    videoStreamUrl.value = incomingSlave.stream_url;
+    videoHlsUrl.value    = (incomingSlave.bunny_hls_url && incomingSlave.bunny_status === 'ready')
+        ? incomingSlave.bunny_hls_url
+        : null;
+    // Use Bunny MP4 if available, fallback to stream_url so isProcessing stays false
+    videoMp4Url.value    = incomingSlave.bunny_mp4_url ?? incomingSlave.stream_url;
+    videoStatus.value    = incomingSlave.bunny_status ?? null;
+
+    // Replace the promoted slave's slot with the old master's data
+    const demotedMaster: SlaveVideo = {
+        id:              props.video.id,
+        title:           props.video.title,
+        stream_url:      oldMasterStreamUrl,
+        camera_angle:    incomingSlave.camera_angle,   // reuse the slot's camera label
+        sync_offset:     0,
+        is_synced:       true,
+        bunny_hls_url:   oldMasterHlsUrl,
+        bunny_status:    oldMasterStatus,
+        bunny_mp4_url:   oldMasterMp4Url,
+    };
+
+    // Build a new array replacing the slave slot with the demoted master
+    const newSlaves = slaveVideos.value.map((s, i) =>
+        i === slaveIndex ? demotedMaster : s
+    );
+    slaveVideos.value = newSlaves;
+
+    toast.info('Cámara intercambiada');
 }
 
 async function onRemoveSlave(slaveId: number) {
@@ -367,7 +390,7 @@ function onSyncSaved(offsets: Record<number, number>) {
         <!-- Player normal cuando el video está listo (tiene HLS o MP4 original) -->
         <VideoPlayer
             v-if="!isProcessing"
-            :video="{ ...video, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url }"
+            :video="{ ...video, stream_url: videoStreamUrl, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url }"
             :comments="comments"
             :all-users="allUsers"
             :user="user"

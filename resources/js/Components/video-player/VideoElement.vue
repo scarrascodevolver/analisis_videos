@@ -122,14 +122,45 @@ onMounted(() => {
     });
 });
 
-// Transición silenciosa MP4 → HLS cuando el encoding termina mientras el usuario ve el original
-watch(activeHlsUrl, (newHlsUrl) => {
+// Transición silenciosa a HLS en dos casos:
+// 1. Bunny terminó de encodear mientras el usuario veía el MP4 original (FIX 2: siempre inmediato)
+// 2. El usuario hizo swap de master/slave y el nuevo master tiene HLS (FIX 1: data-driven)
+watch(activeHlsUrl, (newHlsUrl, oldHlsUrl) => {
     if (!newHlsUrl || !videoEl.value) return;
+    // Skip if same URL (avoid unnecessary reinit)
+    if (newHlsUrl === oldHlsUrl) return;
 
     const currentTime = videoEl.value.currentTime;
     const wasPlaying = !videoEl.value.paused;
 
     initHls(newHlsUrl, currentTime, wasPlaying);
+});
+
+// Transición silenciosa cuando el nuevo master solo tiene MP4 (sin HLS).
+// Aplica en swap master/slave cuando el nuevo master no tiene encoding Bunny listo.
+// Si HLS está activo no intervenir (el watcher de activeHlsUrl lo maneja).
+watch(activeMp4Url, (newMp4Url, oldMp4Url) => {
+    if (!newMp4Url || !videoEl.value) return;
+    if (newMp4Url === oldMp4Url) return;
+    // Only act when we are NOT in HLS mode (HLS watcher handles the other case)
+    if (isHls.value) return;
+
+    const savedTime = videoEl.value.currentTime;
+    const wasPlaying = !videoEl.value.paused;
+
+    // Destroy any lingering HLS instance before switching to MP4
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+
+    videoEl.value.src = newMp4Url;
+    videoEl.value.addEventListener('loadedmetadata', () => {
+        if (!videoEl.value) return;
+        videoEl.value.currentTime = savedTime;
+        if (wasPlaying) videoEl.value.play().catch(() => {});
+    }, { once: true });
+    videoEl.value.load();
 });
 
 onBeforeUnmount(() => {

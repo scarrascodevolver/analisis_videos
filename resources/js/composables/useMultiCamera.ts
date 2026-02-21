@@ -582,54 +582,12 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         }
     }
 
-    // Swap master with slave (client-side only)
-    function swapMaster(slaveId: number): boolean {
-        const master = masterVideoRef.value;
-        const slave = slaveVideoElements.value.get(slaveId);
-        if (!master || !slave) return false;
-
-        // Save states
-        const masterTime = master.currentTime;
-        const masterPaused = master.paused;
-        const masterVolume = master.volume;
-        const masterRate = master.playbackRate;
-
-        const slaveTime = slave.currentTime;
-        const slavePaused = slave.paused;
-
-        // Swap sources
-        const masterSource = master.querySelector('source');
-        const masterUrl = masterSource ? masterSource.src : master.src;
-        const slaveUrl = slave.src;
-
-        if (masterSource) {
-            masterSource.src = slaveUrl;
-        } else {
-            master.src = slaveUrl;
-        }
-        slave.src = masterUrl;
-
-        // Reload both
-        master.load();
-        slave.load();
-
-        // Apply crossed states after load
-        const restoreStates = () => {
-            master.currentTime = slaveTime;
-            slave.currentTime = masterTime;
-            master.volume = masterVolume;
-            master.playbackRate = masterRate;
-
-            if (!slavePaused) {
-                master.play();
-            }
-            if (!masterPaused) {
-                slave.play();
-            }
-        };
-
-        master.addEventListener('loadedmetadata', restoreStates, { once: true });
-
+    // Swap master with slave — now handled entirely by data mutation in Show.vue.
+    // Show.vue's onSwapMaster() updates the reactive slaveVideos array and master
+    // URL refs (videoStreamUrl, videoHlsUrl, videoMp4Url) so Vue re-renders with
+    // the correct URLs without any DOM manipulation or video.load() calls.
+    // This stub is kept for API compatibility but performs no DOM operations.
+    function swapMaster(_slaveId: number): boolean {
         return true;
     }
 
