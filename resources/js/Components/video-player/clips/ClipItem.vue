@@ -29,8 +29,7 @@ const bunnyEmbedUrl = computed(() => {
 });
 
 function handleSeek() {
-    videoStore.seek(props.clip.start_time);
-    videoStore.play();
+    videoStore.playClip(props.clip.start_time, props.clip.end_time);
 }
 
 function toggleMenu(event: MouseEvent) {

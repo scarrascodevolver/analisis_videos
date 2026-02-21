@@ -19,6 +19,9 @@ export const useVideoStore = defineStore('video', () => {
     // UI state
     const isPiPActive = ref(false);
 
+    // Clip playback boundary (null = play freely)
+    const clipEndTime = ref<number | null>(null);
+
     // Computed
     const progress = computed(() => {
         if (!duration.value) return 0;
@@ -69,6 +72,17 @@ export const useVideoStore = defineStore('video', () => {
         const clamped = Math.max(0, Math.min(time, duration.value));
         videoRef.value.currentTime = clamped;
         currentTime.value = clamped;
+        clipEndTime.value = null; // Cancel any active clip boundary on manual seek
+    }
+
+    /** Seek to start, play, and auto-pause when end is reached */
+    function playClip(start: number, end: number) {
+        if (!videoRef.value) return;
+        const clamped = Math.max(0, Math.min(start, duration.value));
+        videoRef.value.currentTime = clamped;
+        currentTime.value = clamped;
+        clipEndTime.value = end;
+        videoRef.value.play();
     }
 
     function seekRelative(delta: number) {
@@ -116,6 +130,10 @@ export const useVideoStore = defineStore('video', () => {
     function onTimeUpdate() {
         if (!videoRef.value) return;
         currentTime.value = videoRef.value.currentTime;
+        if (clipEndTime.value !== null && currentTime.value >= clipEndTime.value) {
+            videoRef.value.pause();
+            clipEndTime.value = null;
+        }
     }
 
     function onDurationChange() {
@@ -129,6 +147,7 @@ export const useVideoStore = defineStore('video', () => {
 
     function onPause() {
         isPlaying.value = false;
+        clipEndTime.value = null; // Cancel boundary on manual pause
     }
 
     function onWaiting() {
@@ -171,6 +190,7 @@ export const useVideoStore = defineStore('video', () => {
         togglePlay,
         seek,
         seekRelative,
+        playClip,
         setPlaybackRate,
         setVolume,
         toggleMute,
