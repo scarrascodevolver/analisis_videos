@@ -25,7 +25,7 @@ const bunnyEmbedUrl = computed(() => {
     if (!v?.bunny_library_id || !v?.bunny_video_id) return null;
     const start = Math.floor(props.clip.start_time);
     const end = Math.ceil(props.clip.end_time);
-    return `https://iframe.mediadelivery.net/embed/${v.bunny_library_id}/${v.bunny_video_id}?start=${start}&end=${end}&autoplay=true`;
+    return `https://iframe.mediadelivery.net/embed/${v.bunny_library_id}/${v.bunny_video_id}?start=${start}&end=${end}&autoplay=true&muted=true`;
 });
 
 function handleSeek() {
