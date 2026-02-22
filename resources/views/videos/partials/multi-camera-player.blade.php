@@ -62,6 +62,60 @@
         background: transparent;
         border: none;
     }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESIZABLE PANEL DIVIDER  (Hudl / Sportscode pattern)
+       Drag left → master grows · Drag right → slaves grow
+       Double-click → reset to 66/34 default
+       ═══════════════════════════════════════════════════════════ */
+    .mc-divider {
+        flex: 0 0 7px;
+        width: 7px;
+        background: #1a1a1a;
+        cursor: ew-resize;
+        position: relative;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-left: 1px solid #111;
+        border-right: 1px solid #111;
+        transition: background 0.15s ease;
+    }
+
+    .mc-divider:hover,
+    .mc-divider.mc-dragging {
+        background: #00B7B5;
+    }
+
+    .mc-divider-handle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        pointer-events: none;
+    }
+
+    .mc-divider-handle span {
+        display: block;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transition: background 0.15s;
+    }
+
+    .mc-divider:hover .mc-divider-handle span,
+    .mc-divider.mc-dragging .mc-divider-handle span {
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    /* Prevent text / video selection while dragging */
+    body.mc-no-select {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+    }
 </style>
 
 {{-- Template for Slave Video --}}
@@ -119,6 +173,7 @@
         let slaveVideos = [];
         let isMultiCameraActive = false;
         let activeGroupId = null; // Track active group for multi-group support
+        let panelResizeController = null; // AbortController for panel resize events
 
         // ═══════════════════════════════════════════════════════════
         // OPTIMIZATION 1 & 2: Single Master Listener with AbortController
@@ -399,12 +454,41 @@
             const mainContainer = $('.video-container').first();
             const slaveContainer = $('#slaveVideosContainer');
 
-            // Create flex container - master 66%, slaves 33% - 60vh (leaves 40vh for header + timeline)
-            // align-items: center makes master vertically centered with slaves (not stretched)
-            if (!mainContainer.parent().hasClass('multi-camera-layout')) {
-                mainContainer.add(slaveContainer).wrapAll('<div class="multi-camera-layout row g-0 m-0" style="align-items: center; height: 60vh;"></div>');
-                mainContainer.wrap('<div class="col-lg-8 col-md-7 p-0" style="display: flex; align-items: center; justify-content: center;"></div>');
-                slaveContainer.wrap('<div class="col-lg-4 col-md-5 p-0" style="overflow-y: auto; max-height: 60vh; display: flex; flex-direction: column;"></div>');
+            // Only build layout once
+            if (!mainContainer.parent().hasClass('mc-master-panel')) {
+                // Read user's saved split (defaults to 66%)
+                let savedMasterPct = 66;
+                try { savedMasterPct = parseFloat(localStorage.getItem('rugbyhub_mc_master_width')) || 66; } catch(e) {}
+                savedMasterPct = Math.max(35, Math.min(88, savedMasterPct));
+                const savedSlavePct = (100 - savedMasterPct).toFixed(1);
+
+                // Step 1: Wrap both elements in the flex layout container
+                mainContainer.add(slaveContainer).wrapAll(
+                    '<div class="multi-camera-layout" style="display:flex;height:60vh;overflow:hidden;"></div>'
+                );
+
+                // Step 2: Wrap master in its resizable panel
+                mainContainer.wrap(
+                    `<div class="mc-master-panel" style="flex:0 0 ${savedMasterPct.toFixed(1)}%;width:${savedMasterPct.toFixed(1)}%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;"></div>`
+                );
+
+                // Step 3: Insert drag divider between master panel and slave container
+                //         (slaveContainer is still a direct child of .multi-camera-layout at this point)
+                const divider = $(
+                    '<div class="mc-divider" title="Arrastrar para redimensionar · Doble clic para restablecer">' +
+                    '<div class="mc-divider-handle">' +
+                    '<span></span><span></span><span></span><span></span><span></span>' +
+                    '</div></div>'
+                );
+                slaveContainer.before(divider);
+
+                // Step 4: Wrap slave in its resizable panel
+                slaveContainer.wrap(
+                    `<div class="mc-slave-panel" style="flex:0 0 ${savedSlavePct}%;width:${savedSlavePct}%;overflow-y:auto;max-height:60vh;display:flex;flex-direction:column;"></div>`
+                );
+
+                // Step 5: Wire drag-to-resize events
+                setupPanelResize();
 
                 // Remove border-radius from video container when in multi-camera
                 mainContainer.css('border-radius', '0');
@@ -416,16 +500,137 @@
         function deactivateSideBySideLayout() {
             $('#slaveVideosContainer').hide().empty();
 
+            // Cleanup resize drag events & body class
+            if (panelResizeController) {
+                panelResizeController.abort();
+                panelResizeController = null;
+            }
+            document.body.classList.remove('mc-no-select');
+
             // Unwrap if needed
             const layout = $('.multi-camera-layout');
             if (layout.length) {
                 const videoContainer = $('.video-container').first();
+
+                // Remove divider before unwrapping (otherwise it lands in the grandparent)
+                $('.mc-divider').remove();
+
+                // Unwrap: mc-master-panel (inner), then multi-camera-layout (outer)
                 videoContainer.unwrap().unwrap();
+
+                // Unwrap: mc-slave-panel
                 $('#slaveVideosContainer').unwrap();
 
                 // Restore border-radius when exiting multi-camera
                 videoContainer.css('border-radius', '8px');
             }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // PANEL RESIZE: Drag divider to resize master ↔ slaves
+        // Pattern: Hudl / Sportscode / Dartfish
+        // ═══════════════════════════════════════════════════════════
+        function setupPanelResize() {
+            // Abort any previous listeners
+            if (panelResizeController) panelResizeController.abort();
+            panelResizeController = new AbortController();
+            const signal = panelResizeController.signal;
+
+            const dividerEl = document.querySelector('.mc-divider');
+            if (!dividerEl) return;
+
+            const MIN_MASTER_PCT = 35;  // Slaves always visible
+            const MAX_MASTER_PCT = 88;  // At least a strip of slaves remains
+            const DIVIDER_W_PX   = 7;   // Must match CSS width
+
+            let isDragging   = false;
+            let startX       = 0;
+            let startMasterPx = 0;
+
+            // ── Start drag ──────────────────────────────────────────
+            function onStart(e) {
+                isDragging = true;
+                startX = e.touches ? e.touches[0].clientX : e.clientX;
+
+                const masterPanel = document.querySelector('.mc-master-panel');
+                startMasterPx = masterPanel ? masterPanel.getBoundingClientRect().width : 0;
+
+                dividerEl.classList.add('mc-dragging');
+                document.body.classList.add('mc-no-select');
+                e.preventDefault();
+            }
+
+            // ── Move drag ───────────────────────────────────────────
+            function onMove(e) {
+                if (!isDragging) return;
+
+                const clientX  = e.touches ? e.touches[0].clientX : e.clientX;
+                const deltaX   = clientX - startX;
+
+                const layout   = document.querySelector('.multi-camera-layout');
+                if (!layout) return;
+
+                const layoutW  = layout.getBoundingClientRect().width - DIVIDER_W_PX;
+                if (layoutW <= 0) return;
+
+                let newMasterPct = ((startMasterPx + deltaX) / layoutW) * 100;
+                newMasterPct = Math.max(MIN_MASTER_PCT, Math.min(MAX_MASTER_PCT, newMasterPct));
+                const newSlavePct = (100 - newMasterPct).toFixed(2);
+                newMasterPct = newMasterPct.toFixed(2);
+
+                const masterPanel = document.querySelector('.mc-master-panel');
+                const slavePanel  = document.querySelector('.mc-slave-panel');
+                if (!masterPanel || !slavePanel) return;
+
+                masterPanel.style.flex  = `0 0 ${newMasterPct}%`;
+                masterPanel.style.width = `${newMasterPct}%`;
+                slavePanel.style.flex   = `0 0 ${newSlavePct}%`;
+                slavePanel.style.width  = `${newSlavePct}%`;
+            }
+
+            // ── End drag ────────────────────────────────────────────
+            function onEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+
+                dividerEl.classList.remove('mc-dragging');
+                document.body.classList.remove('mc-no-select');
+
+                // Persist to localStorage so it survives page reloads
+                const masterPanel = document.querySelector('.mc-master-panel');
+                if (masterPanel) {
+                    const pct = parseFloat(masterPanel.style.width);
+                    if (!isNaN(pct)) {
+                        try { localStorage.setItem('rugbyhub_mc_master_width', pct.toFixed(1)); } catch(err) {}
+                    }
+                }
+            }
+
+            // ── Double-click → reset to 66/34 default ──────────────
+            dividerEl.addEventListener('dblclick', () => {
+                const DEFAULT_PCT = 66;
+                const masterPanel = document.querySelector('.mc-master-panel');
+                const slavePanel  = document.querySelector('.mc-slave-panel');
+                if (!masterPanel || !slavePanel) return;
+
+                masterPanel.style.flex  = `0 0 ${DEFAULT_PCT}%`;
+                masterPanel.style.width = `${DEFAULT_PCT}%`;
+                slavePanel.style.flex   = `0 0 ${100 - DEFAULT_PCT}%`;
+                slavePanel.style.width  = `${100 - DEFAULT_PCT}%`;
+
+                try { localStorage.setItem('rugbyhub_mc_master_width', DEFAULT_PCT); } catch(err) {}
+                if (typeof showToast === 'function') showToast('Tamaño restablecido', 'info');
+            }, { signal });
+
+            // ── Mouse events ────────────────────────────────────────
+            dividerEl.addEventListener('mousedown', onStart, { signal });
+            document.addEventListener('mousemove', onMove, { signal });
+            document.addEventListener('mouseup', onEnd, { signal });
+
+            // ── Touch events (tablets) ──────────────────────────────
+            dividerEl.addEventListener('touchstart', onStart, { passive: false, signal });
+            document.addEventListener('touchmove', onMove, { passive: false, signal });
+            document.addEventListener('touchend', onEnd, { signal });
         }
 
         function renderSlaveVideos(angles) {
