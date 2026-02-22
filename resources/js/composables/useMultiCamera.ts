@@ -88,6 +88,12 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         setupSlaveListeners(slaveId, element);
     }
 
+    // Unregister a slave video element (called on SlaveVideo unmount)
+    function unregisterSlaveElement(slaveId: number) {
+        slaveVideoElements.value.delete(slaveId);
+        lastSyncTimes.value.delete(slaveId);
+    }
+
     // Sync a specific slave to master
     function syncSlaveToMaster(slaveId: number) {
         const master = masterVideoRef.value;
@@ -617,6 +623,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
 
     return {
         registerSlaveElement,
+        unregisterSlaveElement,
         getSyncStatus,
         swapMaster,
         adjustSyncOffset,

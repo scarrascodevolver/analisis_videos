@@ -87,6 +87,9 @@ onBeforeUnmount(() => {
         hlsInstance.destroy();
         hlsInstance = null;
     }
+    if (multiCamera) {
+        multiCamera.unregisterSlaveElement(props.slave.id);
+    }
 });
 
 function handleClick() {

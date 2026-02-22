@@ -84,6 +84,8 @@ const showSyncModal = ref(false);
 // ─── Master video URL state (reactive so swap can update them) ────────────────
 // These start from the Inertia-provided props and are updated on master/slave swap.
 const videoStreamUrl  = ref(props.video.stream_url);
+// Tracks which video ID is currently in the master slot (changes on every swap)
+const currentMasterId = ref(props.video.id);
 
 // ─── Polling de encoding Bunny ────────────────────────────────
 const videoStatus     = ref(props.video.bunny_status ?? null);
@@ -268,8 +270,14 @@ function onCategoriesReordered(reordered: ClipCategory[]) {
     clipsStore.categories = reordered;
 }
 
+function onCategoryModalClose() {
+    showCategoryModal.value = false;
+    editingCategory.value = undefined;
+}
+
 function onCategorySaved() {
     showCategoryModal.value = false;
+    editingCategory.value = undefined;
     clipsStore.loadCategories(props.video.id);
     clipsStore.loadClips(props.video.id);
 }
@@ -307,18 +315,23 @@ function onSwapMaster(slaveId: number) {
     videoMp4Url.value    = incomingSlave.bunny_mp4_url ?? incomingSlave.stream_url;
     videoStatus.value    = incomingSlave.bunny_status ?? null;
 
-    // Replace the promoted slave's slot with the old master's data
+    // Demote the CURRENT master (tracked by currentMasterId, NOT always props.video.id).
+    // This is the root bug: after the first swap currentMasterId differs from props.video.id,
+    // so we must use currentMasterId.value here to keep IDs consistent across multiple swaps.
     const demotedMaster: SlaveVideo = {
-        id:              props.video.id,
+        id:              currentMasterId.value,
         title:           props.video.title,
         stream_url:      oldMasterStreamUrl,
-        camera_angle:    incomingSlave.camera_angle,   // reuse the slot's camera label
+        camera_angle:    incomingSlave.camera_angle,
         sync_offset:     0,
         is_synced:       true,
         bunny_hls_url:   oldMasterHlsUrl,
         bunny_status:    oldMasterStatus,
         bunny_mp4_url:   oldMasterMp4Url,
     };
+
+    // Update currentMasterId to the promoted slave's real ID
+    currentMasterId.value = incomingSlave.id;
 
     // Build a new array replacing the slave slot with the demoted master
     const newSlaves = slaveVideos.value.map((s, i) =>
@@ -482,8 +495,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <CategoryModal
                     :show="showCategoryModal"
                     :category="editingCategory"
-                    :video-id="video.id"
-                    @close="showCategoryModal = false"
+                    @close="onCategoryModalClose"
                     @saved="onCategorySaved"
                 />
                 <ManageCategoriesModal
