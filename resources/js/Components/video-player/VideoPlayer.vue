@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, ref, provide } from 'vue';
+import { onMounted, onUnmounted, computed, ref, provide } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import { useVideoApi } from '@/composables/useVideoApi';
@@ -45,8 +45,89 @@ const hasMultiCamera = computed(() =>
 const showComments = ref(true);
 const isTheaterMode = ref(false);
 
+// ── Panel resize state ────────────────────────────────────────
+const layoutRef = ref<HTMLElement | null>(null);
+const masterWidthPct = ref(66);
+const isDraggingPanel = ref(false);
+const DIVIDER_W_PX = 7;
+const MIN_MASTER_PCT = 35;
+const MAX_MASTER_PCT = 88;
+
+let _startX = 0;
+let _startMasterPx = 0;
+
+const masterPanelStyle = computed(() => ({
+    flex: `0 0 ${masterWidthPct.value.toFixed(1)}%`,
+    maxWidth: `${masterWidthPct.value.toFixed(1)}%`,
+}));
+const slavesPanelStyle = computed(() => ({
+    flex: `0 0 ${(100 - masterWidthPct.value).toFixed(1)}%`,
+    maxWidth: `${(100 - masterWidthPct.value).toFixed(1)}%`,
+}));
+
+function applyResize(clientX: number) {
+    const layout = layoutRef.value;
+    if (!layout) return;
+    const layoutW = layout.getBoundingClientRect().width - DIVIDER_W_PX;
+    if (layoutW <= 0) return;
+    const newPct = Math.max(MIN_MASTER_PCT, Math.min(MAX_MASTER_PCT,
+        ((_startMasterPx + (clientX - _startX)) / layoutW) * 100
+    ));
+    masterWidthPct.value = newPct;
+}
+
+function startResize(clientX: number) {
+    isDraggingPanel.value = true;
+    _startX = clientX;
+    const masterEl = layoutRef.value?.querySelector('.master-col') as HTMLElement | null;
+    _startMasterPx = masterEl?.getBoundingClientRect().width ?? 0;
+    document.body.classList.add('mc-no-select');
+}
+
+function finishResize() {
+    if (!isDraggingPanel.value) return;
+    isDraggingPanel.value = false;
+    document.body.classList.remove('mc-no-select');
+    try { localStorage.setItem('rugbyhub_mc_master_width', masterWidthPct.value.toFixed(1)); } catch (_) {}
+}
+
+function onDividerMousedown(e: MouseEvent) {
+    startResize(e.clientX);
+    e.preventDefault();
+}
+function onDividerTouchstart(e: TouchEvent) {
+    startResize(e.touches[0].clientX);
+}
+function onDocMousemove(e: MouseEvent) {
+    if (isDraggingPanel.value) applyResize(e.clientX);
+}
+function onDocTouchmove(e: TouchEvent) {
+    if (isDraggingPanel.value) { e.preventDefault(); applyResize(e.touches[0].clientX); }
+}
+function onDividerDblclick() {
+    masterWidthPct.value = 66;
+    try { localStorage.setItem('rugbyhub_mc_master_width', '66'); } catch (_) {}
+    toast.info('Tamaño restablecido');
+}
+
 onMounted(() => {
     videoStore.setVideo(props.video);
+    try {
+        const saved = parseFloat(localStorage.getItem('rugbyhub_mc_master_width') ?? '');
+        if (!isNaN(saved)) masterWidthPct.value = Math.max(MIN_MASTER_PCT, Math.min(MAX_MASTER_PCT, saved));
+    } catch (_) {}
+    document.addEventListener('mousemove', onDocMousemove);
+    document.addEventListener('mouseup', finishResize);
+    document.addEventListener('touchmove', onDocTouchmove, { passive: false });
+    document.addEventListener('touchend', finishResize);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousemove', onDocMousemove);
+    document.removeEventListener('mouseup', finishResize);
+    document.removeEventListener('touchmove', onDocTouchmove);
+    document.removeEventListener('touchend', finishResize);
+    document.body.classList.remove('mc-no-select');
 });
 
 function toggleComments() {
@@ -90,8 +171,14 @@ function toggleTheaterMode() {
                 />
 
                 <div class="card-body p-0">
-                    <div :class="[hasMultiCamera ? 'multi-cam-wrapper' : '', { 'theater-mode': isTheaterMode }]">
-                        <div :class="hasMultiCamera ? 'master-col' : 'single-col'">
+                    <div
+                        ref="layoutRef"
+                        :class="[hasMultiCamera ? 'multi-cam-wrapper' : '', { 'theater-mode': isTheaterMode }]"
+                    >
+                        <div
+                            :class="[hasMultiCamera ? 'master-col' : 'single-col', { 'no-transition': isDraggingPanel }]"
+                            :style="hasMultiCamera ? masterPanelStyle : {}"
+                        >
                             <VideoElement
                                 :stream-url="video.stream_url"
                                 :title="video.title"
@@ -110,7 +197,27 @@ function toggleTheaterMode() {
                                 </template>
                             </VideoElement>
                         </div>
-                        <div v-if="hasMultiCamera" class="slaves-col">
+
+                        <!-- Drag divider (Hudl / Sportscode pattern) -->
+                        <div
+                            v-if="hasMultiCamera"
+                            :class="['mc-divider', { 'mc-dragging': isDraggingPanel }]"
+                            title="Arrastrar para redimensionar · Doble clic para restablecer"
+                            @mousedown.prevent="onDividerMousedown"
+                            @touchstart.prevent="onDividerTouchstart"
+                            @dblclick="onDividerDblclick"
+                        >
+                            <div class="mc-divider-handle">
+                                <span class="mc-arrow">&#9664;</span>
+                                <span class="mc-arrow">&#9654;</span>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="hasMultiCamera"
+                            :class="['slaves-col', { 'no-transition': isDraggingPanel }]"
+                            :style="hasMultiCamera ? slavesPanelStyle : {}"
+                        >
                             <slot name="multi-camera" />
                         </div>
                     </div>
@@ -242,6 +349,60 @@ function toggleTheaterMode() {
     flex: 0 0 45%;
     max-width: 45%;
     max-height: 80vh;
+}
+
+/* Drag divider — Hudl / Sportscode pattern */
+.mc-divider {
+    flex: 0 0 7px;
+    width: 7px;
+    background: #1a1a1a;
+    cursor: ew-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid #111;
+    border-right: 1px solid #111;
+    transition: background 0.15s ease;
+    z-index: 20;
+    position: relative;
+    user-select: none;
+}
+
+.mc-divider:hover,
+.mc-divider.mc-dragging {
+    background: #00B7B5;
+}
+
+.mc-divider-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+}
+
+.mc-arrow {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 9px;
+    transition: color 0.15s;
+    display: block;
+    line-height: 1;
+}
+
+.mc-divider:hover .mc-arrow,
+.mc-divider.mc-dragging .mc-arrow {
+    color: #fff;
+}
+
+/* Disable transitions during drag for smooth real-time response */
+.master-col.no-transition,
+.slaves-col.no-transition {
+    transition: none !important;
+}
+
+:global(body.mc-no-select) {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 @media (max-width: 991px) {
