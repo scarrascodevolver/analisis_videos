@@ -49,7 +49,7 @@ const isTheaterMode = ref(false);
 const layoutRef = ref<HTMLElement | null>(null);
 const masterWidthPct = ref(66);
 const isDraggingPanel = ref(false);
-const DIVIDER_W_PX = 7;
+const DIVIDER_W_PX = 12;
 const MIN_MASTER_PCT = 35;
 const MAX_MASTER_PCT = 88;
 
@@ -207,10 +207,7 @@ function toggleTheaterMode() {
                             @touchstart.prevent="onDividerTouchstart"
                             @dblclick="onDividerDblclick"
                         >
-                            <div class="mc-divider-handle">
-                                <span class="mc-arrow">&#9664;</span>
-                                <span class="mc-arrow">&#9654;</span>
-                            </div>
+                            <i class="fas fa-grip-vertical mc-divider-handle"></i>
                         </div>
 
                         <div
@@ -312,26 +309,33 @@ function toggleTheaterMode() {
 }
 
 .master-col :deep(.video-container) {
-    height: 100%;
+    /* Width drives the size: when column grows, video grows */
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
     border-radius: 0;
 }
 
 .master-col :deep(.video-wrapper) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 .master-col :deep(video) {
     width: 100% !important;
     height: auto !important;
-    max-height: 57vh !important;
+    max-height: 60vh !important;
+    display: block;
 }
 
 /* Theater mode: allow taller video */
+.multi-cam-wrapper.theater-mode .master-col :deep(.video-container) {
+    max-height: 80vh;
+}
+
 .multi-cam-wrapper.theater-mode .master-col :deep(video) {
-    max-height: 77vh !important;
+    max-height: 80vh !important;
 }
 
 .slaves-col {
@@ -353,16 +357,16 @@ function toggleTheaterMode() {
 
 /* Drag divider — Hudl / Sportscode pattern */
 .mc-divider {
-    flex: 0 0 7px;
-    width: 7px;
-    background: #1a1a1a;
+    flex: 0 0 12px;
+    width: 12px;
+    background: #2a2a2a;          /* Always visible strip */
+    border-left: 1px solid #444;  /* Visible separator line on master side */
+    border-right: 1px solid #222;
     cursor: ew-resize;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-left: 1px solid #111;
-    border-right: 1px solid #111;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
     z-index: 20;
     position: relative;
     user-select: none;
@@ -370,27 +374,21 @@ function toggleTheaterMode() {
 
 .mc-divider:hover,
 .mc-divider.mc-dragging {
-    background: #00B7B5;
+    background: #005461;
+    border-left-color: #00B7B5;
+    border-right-color: #00B7B5;
 }
 
 .mc-divider-handle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
     pointer-events: none;
-}
-
-.mc-arrow {
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
     transition: color 0.15s;
-    display: block;
     line-height: 1;
 }
 
-.mc-divider:hover .mc-arrow,
-.mc-divider.mc-dragging .mc-arrow {
+.mc-divider:hover .mc-divider-handle,
+.mc-divider.mc-dragging .mc-divider-handle {
     color: #fff;
 }
 
