@@ -20,127 +20,102 @@
                             <form @submit.prevent="handleSubmit">
                                 <!-- Name -->
                                 <div class="form-group">
-                                    <label for="category-name">
-                                        Nombre <span class="text-danger">*</span>
-                                    </label>
+                                    <label>Nombre <span class="text-danger">*</span></label>
                                     <input
-                                        id="category-name"
                                         type="text"
                                         class="form-control"
                                         v-model="formData.name"
                                         required
                                         maxlength="50"
+                                        placeholder="Ej: Scrum, Tackle, Try..."
+                                        autofocus
                                     />
                                 </div>
 
-                                <!-- Color -->
-                                <div class="form-group">
-                                    <label for="category-color">
-                                        Color <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="color-input-group">
-                                        <input
-                                            id="category-color"
-                                            type="color"
-                                            class="form-control-color"
-                                            v-model="formData.color"
-                                            required
-                                        />
+                                <!-- Color + Hotkey en una fila -->
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Color <span class="text-danger">*</span></label>
+                                        <div class="color-input-group">
+                                            <input
+                                                type="color"
+                                                class="form-control-color"
+                                                v-model="formData.color"
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                v-model="formData.color"
+                                                pattern="^#[0-9A-Fa-f]{6}$"
+                                                placeholder="#00B7B5"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Atajo de teclado</label>
                                         <input
                                             type="text"
                                             class="form-control"
-                                            v-model="formData.color"
-                                            pattern="^#[0-9A-Fa-f]{6}$"
+                                            v-model="formData.hotkey"
+                                            maxlength="1"
+                                            placeholder="Ej: A, 1..."
                                         />
+                                        <small class="form-text text-muted">Tecla rápida para grabar</small>
                                     </div>
-                                </div>
-
-                                <!-- Hotkey -->
-                                <div class="form-group">
-                                    <label for="category-hotkey">Atajo de Teclado</label>
-                                    <input
-                                        id="category-hotkey"
-                                        type="text"
-                                        class="form-control"
-                                        v-model="formData.hotkey"
-                                        maxlength="1"
-                                        placeholder="Ej: A, B, 1, 2..."
-                                    />
-                                    <small class="form-text text-muted">
-                                        Presiona una tecla para crear clips rápidos
-                                    </small>
                                 </div>
 
                                 <!-- Scope -->
                                 <div class="form-group">
-                                    <label for="category-scope">
-                                        Ámbito <span class="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        id="category-scope"
-                                        class="form-control"
-                                        v-model="formData.scope"
-                                        required
-                                    >
-                                        <option value="organization">Organización</option>
-                                        <option value="user">Usuario</option>
-                                        <option value="video">Solo este video</option>
+                                    <label>Visibilidad del botón</label>
+                                    <select class="form-control" v-model="formData.scope">
+                                        <option value="organization">Todos en la organización ven este botón</option>
+                                        <option value="user">Solo yo veo este botón</option>
                                     </select>
-                                </div>
-
-                                <!-- Icon -->
-                                <div class="form-group">
-                                    <label for="category-icon">Icono (Font Awesome)</label>
-                                    <input
-                                        id="category-icon"
-                                        type="text"
-                                        class="form-control"
-                                        v-model="formData.icon"
-                                        placeholder="Ej: fas fa-star"
-                                    />
-                                </div>
-
-                                <!-- Lead Seconds -->
-                                <div class="form-group">
-                                    <label for="category-lead">
-                                        Segundos Previos (Lead)
-                                    </label>
-                                    <input
-                                        id="category-lead"
-                                        type="number"
-                                        class="form-control"
-                                        v-model.number="formData.lead_seconds"
-                                        min="0"
-                                        max="30"
-                                        step="0.5"
-                                    />
                                     <small class="form-text text-muted">
-                                        Tiempo antes del inicio del clip
+                                        Controla quién ve el botón para grabar — no afecta la visibilidad de los clips
                                     </small>
                                 </div>
 
-                                <!-- Lag Seconds -->
-                                <div class="form-group">
-                                    <label for="category-lag">
-                                        Segundos Posteriores (Lag)
-                                    </label>
-                                    <input
-                                        id="category-lag"
-                                        type="number"
-                                        class="form-control"
-                                        v-model.number="formData.lag_seconds"
-                                        min="0"
-                                        max="30"
-                                        step="0.5"
-                                    />
-                                    <small class="form-text text-muted">
-                                        Tiempo después del fin del clip
-                                    </small>
+                                <!-- Lead + Lag en una fila -->
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label>Seg. previos (lead)</label>
+                                        <div class="input-with-unit">
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                v-model.number="formData.lead_seconds"
+                                                min="0"
+                                                max="30"
+                                                step="0.5"
+                                            />
+                                            <span class="unit">seg</span>
+                                        </div>
+                                        <small class="form-text text-muted">Antes del inicio</small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Seg. posteriores (lag)</label>
+                                        <div class="input-with-unit">
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                v-model.number="formData.lag_seconds"
+                                                min="0"
+                                                max="30"
+                                                step="0.5"
+                                            />
+                                            <span class="unit">seg</span>
+                                        </div>
+                                        <small class="form-text text-muted">Después del fin</small>
+                                    </div>
                                 </div>
                             </form>
 
                             <!-- Error Message -->
-                            <div v-if="errorMessage" class="alert alert-danger mt-3 mb-0">
+                            <div v-if="errorMessage" class="alert alert-danger mt-2 mb-0">
                                 <i class="fas fa-exclamation-triangle mr-2"></i>
                                 {{ errorMessage }}
                             </div>
@@ -202,7 +177,6 @@ const formData = ref({
     color: '#00B7B5',
     hotkey: '',
     scope: 'organization' as 'organization' | 'user' | 'video',
-    icon: '',
     lead_seconds: 0,
     lag_seconds: 0,
 });
@@ -210,14 +184,12 @@ const formData = ref({
 const isSaving = ref(false);
 const errorMessage = ref('');
 
-// Computed
 const isEditMode = computed(() => !!props.category);
 
 const isFormValid = computed(() => {
     return formData.value.name.trim() !== '' && /^#[0-9A-Fa-f]{6}$/.test(formData.value.color);
 });
 
-// Watch for category changes
 watch(
     () => props.category,
     (newCategory) => {
@@ -227,7 +199,6 @@ watch(
                 color: newCategory.color,
                 hotkey: newCategory.hotkey || '',
                 scope: newCategory.scope,
-                icon: newCategory.icon || '',
                 lead_seconds: newCategory.lead_seconds,
                 lag_seconds: newCategory.lag_seconds,
             };
@@ -238,14 +209,12 @@ watch(
     { immediate: true }
 );
 
-// Methods
 function resetForm() {
     formData.value = {
         name: '',
         color: '#00B7B5',
         hotkey: '',
         scope: 'organization',
-        icon: '',
         lead_seconds: 0,
         lag_seconds: 0,
     };
@@ -272,11 +241,9 @@ async function handleSubmit() {
         const api = useVideoApi(video.id);
 
         if (isEditMode.value && props.category) {
-            // Update existing category
             await api.updateCategory(props.category.id, formData.value);
             emit('saved', { ...props.category, ...formData.value });
         } else {
-            // Create new category
             const response = await api.createCategory(formData.value);
             if (response.success && response.category) {
                 emit('saved', response.category);
@@ -296,10 +263,7 @@ async function handleSubmit() {
 <style scoped>
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.75);
     display: flex;
     align-items: center;
@@ -310,9 +274,7 @@ async function handleSubmit() {
 
 .modal-dialog {
     width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 440px;
 }
 
 .modal-content {
@@ -326,13 +288,13 @@ async function handleSubmit() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.25rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid #333;
 }
 
 .modal-title {
     color: #fff;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
 }
@@ -341,29 +303,34 @@ async function handleSubmit() {
     background: none;
     border: none;
     color: #ccc;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     cursor: pointer;
     padding: 0;
     line-height: 1;
 }
 
-.close:hover {
-    color: #fff;
-}
+.close:hover { color: #fff; }
 
 .modal-body {
-    padding: 1.25rem;
+    padding: 0.9rem 1rem;
 }
 
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .form-group label {
     color: #ccc;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
     display: block;
+}
+
+/* Dos columnas */
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
 }
 
 .form-control {
@@ -371,95 +338,89 @@ async function handleSubmit() {
     border: 1px solid #444;
     color: #fff;
     border-radius: 4px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    width: 100%;
 }
 
 .form-control:focus {
     background: #2a2a2a;
     border-color: #00B7B5;
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+    box-shadow: 0 0 0 0.15rem rgba(0, 183, 181, 0.25);
+}
+
+select.form-control {
+    cursor: pointer;
 }
 
 .color-input-group {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     align-items: center;
 }
 
 .form-control-color {
-    width: 60px;
-    height: 38px;
+    width: 44px;
+    height: 34px;
     border: 1px solid #444;
     border-radius: 4px;
     cursor: pointer;
     background: #252525;
+    flex-shrink: 0;
+    padding: 2px;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.unit {
+    color: #777;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .form-text {
-    font-size: 0.8rem;
-    margin-top: 0.25rem;
+    font-size: 0.73rem;
+    margin-top: 0.2rem;
 }
 
-.text-muted {
-    color: #999 !important;
-}
-
-.text-danger {
-    color: #dc3545 !important;
-}
+.text-muted { color: #888 !important; }
+.text-danger { color: #dc3545 !important; }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-    padding: 1rem 1.25rem;
+    padding: 0.75rem 1rem;
     border-top: 1px solid #333;
 }
 
 .btn {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.9rem;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     border: none;
 }
 
-.btn-primary {
-    background-color: #00B7B5;
-    color: #fff;
-}
+.btn-primary { background-color: #00B7B5; color: #fff; }
+.btn-primary:hover:not(:disabled) { background-color: #009f9d; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.btn-primary:hover:not(:disabled) {
-    background-color: #009f9d;
-}
-
-.btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    color: #fff;
-}
-
-.btn-secondary:hover:not(:disabled) {
-    background-color: #5a6268;
-}
-
-.btn-secondary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+.btn-secondary { background-color: #444; color: #ccc; }
+.btn-secondary:hover:not(:disabled) { background-color: #555; color: #fff; }
+.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .alert {
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.8rem;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .alert-danger {
@@ -468,14 +429,6 @@ async function handleSubmit() {
     color: #f8d7da;
 }
 
-/* Fade transition */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.3s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
