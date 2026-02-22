@@ -26,9 +26,11 @@ export const useClipsStore = defineStore('clips', () => {
             grouped[clip.clip_category_id].push(clip);
         });
 
-        // Sort clips within each category by start_time
+        // Sort clips within each category: más reciente primero
         Object.keys(grouped).forEach((catId) => {
-            grouped[Number(catId)].sort((a, b) => a.start_time - b.start_time);
+            grouped[Number(catId)].sort((a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
         });
 
         return grouped;

@@ -114,7 +114,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             {{ formattedStartTime }} - {{ formattedEndTime }}
         </div>
 
-        <!-- Indicador de visibilidad (solo en clips propios, no XML) -->
+        <!-- Indicador de visibilidad -->
+        <!-- Clip propio: muestra 🔒 privado o 👥 compartido -->
         <span
             v-if="isOwner && !isXmlClip"
             class="clip-visibility-badge"
@@ -122,6 +123,14 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             :title="clip.is_shared ? 'Compartido con el equipo' : 'Solo vos lo ves'"
         >
             <i :class="clip.is_shared ? 'fas fa-users' : 'fas fa-lock'"></i>
+        </span>
+        <!-- Clip de otro analista compartido: muestra quién lo creó -->
+        <span
+            v-else-if="!isOwner && !isXmlClip"
+            class="clip-visibility-badge badge-shared"
+            :title="clip.creator?.name ? 'Creado por: ' + clip.creator.name : 'Compartido'"
+        >
+            <i class="fas fa-users"></i>
         </span>
 
         <!-- ⋯ button -->

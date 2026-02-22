@@ -31,7 +31,7 @@ class VideoClipController extends Controller
     public function apiIndex(Video $video)
     {
         $clips = $video->clips()
-            ->with('category:id,name,slug,color,scope')
+            ->with('category:id,name,slug,color,scope', 'creator:id,name')
             ->visibleTo(auth()->user())
             ->ordered()
             ->get();
