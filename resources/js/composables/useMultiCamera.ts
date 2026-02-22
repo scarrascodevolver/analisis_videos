@@ -21,6 +21,10 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     const abortController = ref<AbortController | null>(null);
     const isBuffering = ref(false);
     const isSeeking = ref(false);
+    // Tracks whether the next "play" event should wait for all slaves to be ready.
+    // Reset to true after every master swap so the new set of slaves gets the
+    // same "wait for ready" treatment the very first play always got.
+    const isFirstPlay = ref(true);
 
     // Helper to safely get the slaves Map
     function getSlavesMap(): Map<number, HTMLVideoElement> | null {
@@ -230,17 +234,17 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         const signal = abortController.value.signal;
 
         // Play event - play all slaves (wait for slaves to be ready first)
-        let isFirstPlay = true;
         master.addEventListener('play', async () => {
             if (isNaN(master.duration) || !isFinite(master.currentTime)) return;
 
             const slaves = getSlavesMap();
             if (!slaves) return;
 
-            // CRITICAL: On first play, wait for all slaves to be ready
-            if (isFirstPlay && slaves.size > 0) {
+            // CRITICAL: On first play after mount or after a master swap,
+            // wait for all slaves to be ready before starting playback.
+            if (isFirstPlay.value && slaves.size > 0) {
                 console.log('🎬 First play - waiting for all slaves to be ready...');
-                isFirstPlay = false;
+                isFirstPlay.value = false;
 
                 // Pause master immediately
                 master.pause();
@@ -597,6 +601,12 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         return true;
     }
 
+    // Called by Show.vue after every master swap so the next play event
+    // waits for the new set of slaves to be ready (same as initial load).
+    function resetForNewMaster() {
+        isFirstPlay.value = true;
+    }
+
     // Cleanup
     function cleanup() {
         abortController.value?.abort();
@@ -624,6 +634,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     return {
         registerSlaveElement,
         unregisterSlaveElement,
+        resetForNewMaster,
         getSyncStatus,
         swapMaster,
         adjustSyncOffset,

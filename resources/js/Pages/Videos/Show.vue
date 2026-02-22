@@ -316,14 +316,16 @@ function onSwapMaster(slaveId: number) {
     videoStatus.value    = incomingSlave.bunny_status ?? null;
 
     // Demote the CURRENT master (tracked by currentMasterId, NOT always props.video.id).
-    // This is the root bug: after the first swap currentMasterId differs from props.video.id,
-    // so we must use currentMasterId.value here to keep IDs consistent across multiple swaps.
+    // sync_offset for demoted master = -(incomingSlave.sync_offset):
+    //   Before swap: slave.currentTime = master.currentTime - slaveOffset
+    //   After swap:  newSlave.currentTime = newMaster.currentTime - newSlaveOffset
+    //   Since both were at the same real-world moment: newSlaveOffset = -slaveOffset
     const demotedMaster: SlaveVideo = {
         id:              currentMasterId.value,
         title:           props.video.title,
         stream_url:      oldMasterStreamUrl,
         camera_angle:    incomingSlave.camera_angle,
-        sync_offset:     0,
+        sync_offset:     -(incomingSlave.sync_offset ?? 0),
         is_synced:       true,
         bunny_hls_url:   oldMasterHlsUrl,
         bunny_status:    oldMasterStatus,
@@ -338,6 +340,10 @@ function onSwapMaster(slaveId: number) {
         i === slaveIndex ? demotedMaster : s
     );
     slaveVideos.value = newSlaves;
+
+    // Reset "first play" flag so the next play waits for the new slave
+    // to be ready before starting — same behavior as on initial load.
+    multiCamera?.resetForNewMaster();
 
     toast.info('Cámara intercambiada');
 }
