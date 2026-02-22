@@ -92,22 +92,21 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
         pointer-events: none;
+        line-height: 1;
     }
 
-    .mc-divider-handle span {
+    .mc-divider-handle .mc-arrow {
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 9px;
+        transition: color 0.15s;
         display: block;
-        width: 2px;
-        height: 2px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transition: background 0.15s;
     }
 
-    .mc-divider:hover .mc-divider-handle span,
-    .mc-divider.mc-dragging .mc-divider-handle span {
-        background: rgba(255, 255, 255, 0.9);
+    .mc-divider:hover .mc-arrow,
+    .mc-divider.mc-dragging .mc-arrow {
+        color: #fff;
     }
 
     /* Prevent text / video selection while dragging */
@@ -477,7 +476,8 @@
                 const divider = $(
                     '<div class="mc-divider" title="Arrastrar para redimensionar · Doble clic para restablecer">' +
                     '<div class="mc-divider-handle">' +
-                    '<span></span><span></span><span></span><span></span><span></span>' +
+                    '<span class="mc-arrow">&#9664;</span>' +
+                    '<span class="mc-arrow">&#9654;</span>' +
                     '</div></div>'
                 );
                 slaveContainer.before(divider);
