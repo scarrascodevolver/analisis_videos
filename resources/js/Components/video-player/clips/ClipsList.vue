@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import ClipItem from './ClipItem.vue';
 import type { ClipCategory } from '@/types/video-player';
@@ -7,6 +7,12 @@ import type { ClipCategory } from '@/types/video-player';
 const clipsStore = useClipsStore();
 const searchQuery = ref('');
 const expandedCategories = ref<Set<number>>(new Set());
+const sharingCategory = ref<number | null>(null);
+
+const currentUserId = inject<number>('currentUserId', 0);
+const toast = inject<any>('toast');
+
+// ── Computed ────────────────────────────────────────────────
 
 const filteredClipsByCategory = computed(() => {
     const query = searchQuery.value.toLowerCase().trim();
@@ -33,12 +39,35 @@ const filteredClipsByCategory = computed(() => {
 });
 
 const categoriesWithClips = computed(() => {
-    // Defensive: ensure categories is always an array
     const safeCategories = Array.isArray(clipsStore.categories) ? clipsStore.categories : [];
     return safeCategories
         .filter((cat) => filteredClipsByCategory.value[cat.id]?.length > 0)
         .sort((a, b) => a.sort_order - b.sort_order);
 });
+
+// Estado de sharing por categoría: 'shared' | 'private' | 'none' (sin clips propios)
+const categoryShareState = computed(() => {
+    const state: Record<number, 'shared' | 'private' | 'none'> = {};
+
+    Object.entries(clipsStore.clipsByCategory).forEach(([catIdStr, clips]) => {
+        const catId = Number(catIdStr);
+        const ownClips = clips.filter(
+            (c) => c.created_by === currentUserId && c.category?.scope !== 'video'
+        );
+
+        if (ownClips.length === 0) {
+            state[catId] = 'none';
+        } else if (ownClips.every((c) => c.is_shared)) {
+            state[catId] = 'shared';
+        } else {
+            state[catId] = 'private';
+        }
+    });
+
+    return state;
+});
+
+// ── Actions ─────────────────────────────────────────────────
 
 function toggleCategory(categoryId: number) {
     if (expandedCategories.value.has(categoryId)) {
@@ -56,8 +85,22 @@ function getCategoryClipsCount(category: ClipCategory) {
     return filteredClipsByCategory.value[category.id]?.length || 0;
 }
 
+async function handleToggleCategoryShare(event: MouseEvent, categoryId: number, videoId: number) {
+    event.stopPropagation(); // No colapsar el acordeón
+    if (sharingCategory.value === categoryId) return;
+
+    sharingCategory.value = categoryId;
+    try {
+        const result = await clipsStore.toggleCategoryShare(videoId, categoryId, currentUserId);
+        toast?.success(result.message);
+    } catch {
+        toast?.error('Error al cambiar visibilidad de la categoría');
+    } finally {
+        sharingCategory.value = null;
+    }
+}
+
 // Expand all categories by default
-// Defensive: ensure categories is always an array
 const safeCategories = Array.isArray(clipsStore.categories) ? clipsStore.categories : [];
 safeCategories.forEach((cat) => {
     if (clipsStore.clipsByCategory[cat.id]?.length > 0) {
@@ -109,10 +152,35 @@ safeCategories.forEach((cat) => {
                         <span class="category-name">{{ category.name }}</span>
                         <span class="clips-count-badge">{{ getCategoryClipsCount(category) }}</span>
                     </div>
-                    <i
-                        :class="['fas', isCategoryExpanded(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"
-                        class="toggle-icon"
-                    ></i>
+
+                    <div class="category-actions">
+                        <!-- Botón compartir/privatizar categoría (solo si tengo clips propios en ella) -->
+                        <button
+                            v-if="categoryShareState[category.id] !== 'none'"
+                            class="btn-share-category"
+                            :class="{
+                                'is-shared': categoryShareState[category.id] === 'shared',
+                                'is-loading': sharingCategory === category.id
+                            }"
+                            :title="categoryShareState[category.id] === 'shared'
+                                ? 'Categoría compartida — clic para privatizar'
+                                : 'Categoría privada — clic para compartir con el equipo'"
+                            @click="handleToggleCategoryShare($event, category.id, clipsStore.clips.find(c => c.clip_category_id === category.id)?.video_id ?? 0)"
+                        >
+                            <i
+                                :class="sharingCategory === category.id
+                                    ? 'fas fa-spinner fa-spin'
+                                    : categoryShareState[category.id] === 'shared'
+                                        ? 'fas fa-users'
+                                        : 'fas fa-lock'"
+                            ></i>
+                        </button>
+
+                        <i
+                            :class="['fas', isCategoryExpanded(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"
+                            class="toggle-icon"
+                        ></i>
+                    </div>
                 </div>
 
                 <div v-show="isCategoryExpanded(category.id)" class="category-clips">
@@ -233,6 +301,15 @@ safeCategories.forEach((cat) => {
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.category-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
 }
 
 .category-icon {
@@ -244,6 +321,9 @@ safeCategories.forEach((cat) => {
     color: #fff;
     font-weight: 600;
     font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .clips-count-badge {
@@ -258,6 +338,35 @@ safeCategories.forEach((cat) => {
     font-size: 0.65rem;
     font-weight: 700;
     color: #0f0f0f;
+    flex-shrink: 0;
+}
+
+/* Botón compartir categoría */
+.btn-share-category {
+    background: transparent;
+    border: none;
+    padding: 0.15rem 0.3rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 9px;
+    line-height: 1;
+    transition: all 0.15s;
+    color: #555;
+}
+
+.btn-share-category:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #aaa;
+}
+
+/* Estado: compartida → teal */
+.btn-share-category.is-shared {
+    color: #00B7B5;
+}
+
+.btn-share-category.is-shared:hover {
+    color: #fff;
+    background: rgba(0, 183, 181, 0.15);
 }
 
 .toggle-icon {

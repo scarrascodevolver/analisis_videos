@@ -176,9 +176,24 @@ export const useClipsStore = defineStore('clips', () => {
         const api = useVideoApi(videoId);
         const result = await api.toggleShare(clipId);
 
-        // Actualizar localmente el flag is_shared
         const clip = clips.value.find((c) => c.id === clipId);
         if (clip) clip.is_shared = result.is_shared;
+
+        return result;
+    }
+
+    async function toggleCategoryShare(
+        videoId: number,
+        categoryId: number,
+        currentUserId: number
+    ): Promise<{ is_shared: boolean; message: string; count: number }> {
+        const api = useVideoApi(videoId);
+        const result = await api.toggleCategoryShare(categoryId);
+
+        // Actualizar todos los clips propios de esa categoría en el store
+        clips.value
+            .filter((c) => c.clip_category_id === categoryId && c.created_by === currentUserId)
+            .forEach((c) => { c.is_shared = result.is_shared; });
 
         return result;
     }
@@ -248,6 +263,7 @@ export const useClipsStore = defineStore('clips', () => {
         cancelRecording,
         toggleRecording,
         toggleShare,
+        toggleCategoryShare,
         removeClip,
         updateClip,
         reset,

@@ -170,6 +170,13 @@ export function useVideoApi(videoId: number) {
         });
     }
 
+    async function toggleCategoryShare(categoryId: number): Promise<{ success: boolean; is_shared: boolean; message: string; count: number }> {
+        return request(`/api/videos/${videoId}/clips/share-category`, {
+            method: 'POST',
+            body: JSON.stringify({ clip_category_id: categoryId }),
+        });
+    }
+
     async function setTimelineOffset(offset: number): Promise<{ success: boolean }> {
         return request(`/api/videos/${videoId}/clips/timeline-offset`, {
             method: 'POST',
@@ -298,6 +305,7 @@ export function useVideoApi(videoId: number) {
         updateClip,
         deleteClip,
         toggleShare,
+        toggleCategoryShare,
         setTimelineOffset,
         // Clip Categories
         getClipCategories,

@@ -81,7 +81,7 @@ php artisan queue:work database --sleep=3 --tries=1 --timeout=14400
 
 # Monitoreo
 tail -f storage/logs/laravel.log | grep CompressVideoJob
-ps aux | grep "queue:work" | grep analisis_videos
+ps aux | grep "queue:work" | grep rugbykp
 ```
 
 ---
@@ -210,7 +210,7 @@ php artisan videos:migrate-to-org-folders
 
 ```bash
 # Deployment rapido (desde VPS)
-cd /var/www/analisis_videos
+cd /var/www/rugbykp
 git pull origin main
 npm run build  # Si hay cambios JS/CSS
 php artisan migrate --force  # Si hay migraciones
@@ -220,7 +220,7 @@ sudo supervisorctl restart rugby-queue-worker:*  # Si hay cambios en workers
 
 **Comando unico (desde tu PC):**
 ```bash
-ssh root@161.35.108.164 "cd /var/www/analisis_videos && git pull origin main && npm run build && php artisan config:clear && php artisan cache:clear && sudo supervisorctl restart rugby-queue-worker:*"
+ssh root@161.35.108.164 "cd /var/www/rugbykp && git pull origin main && npm run build && php artisan config:clear && php artisan cache:clear && sudo supervisorctl restart rugby-queue-worker:*"
 ```
 
 ---

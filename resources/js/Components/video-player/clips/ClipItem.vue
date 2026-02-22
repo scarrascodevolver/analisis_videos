@@ -15,7 +15,6 @@ const toast = inject<any>('toast');
 const currentUserId = inject<number>('currentUserId', 0);
 
 const isDeleting = ref(false);
-const isSharing = ref(false);
 const showMenu = ref(false);
 const btnRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref({ top: '0px', left: '0px' });
@@ -61,22 +60,6 @@ async function copyLink(event: MouseEvent) {
         toast?.success('¡Link copiado!');
     } catch {
         toast?.error('No se pudo copiar el link');
-    }
-}
-
-async function handleToggleShare(event: MouseEvent) {
-    event.stopPropagation();
-    showMenu.value = false;
-    if (isSharing.value) return;
-
-    isSharing.value = true;
-    try {
-        const result = await clipsStore.toggleShare(props.clip.video_id, props.clip.id);
-        toast?.success(result.message);
-    } catch {
-        toast?.error('Error al cambiar visibilidad del clip');
-    } finally {
-        isSharing.value = false;
     }
 }
 
@@ -159,17 +142,6 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             </button>
             <button class="clip-dropdown-item" @click="copyLink">
                 <i class="fas fa-link"></i> Copiar link
-            </button>
-
-            <!-- Compartir/privatizar — solo el dueño del clip, no clips XML -->
-            <button
-                v-if="isOwner && !isXmlClip"
-                class="clip-dropdown-item"
-                :disabled="isSharing"
-                @click="handleToggleShare"
-            >
-                <i :class="isSharing ? 'fas fa-spinner fa-spin' : (clip.is_shared ? 'fas fa-lock' : 'fas fa-users')"></i>
-                {{ clip.is_shared ? 'Privatizar' : 'Compartir' }}
             </button>
 
             <!-- Eliminar — solo el dueño del clip -->

@@ -170,6 +170,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [VideoClipController::class, 'apiIndex'])->name('index');
         Route::post('/quick', [VideoClipController::class, 'quickStore'])->name('quick-store');
         Route::post('/timeline-offset', [VideoClipController::class, 'updateTimelineOffset'])->name('timeline-offset');
+        Route::post('/share-category', [VideoClipController::class, 'toggleCategoryShare'])->name('share-category');
     });
 
     // Clip Categories API

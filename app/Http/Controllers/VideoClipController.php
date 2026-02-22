@@ -148,6 +148,45 @@ class VideoClipController extends Controller
         return back()->with('success', 'Clip eliminado exitosamente');
     }
 
+    // Compartir / privatizar TODOS los clips de una categoría del analista (toggle)
+    public function toggleCategoryShare(Request $request, Video $video)
+    {
+        $request->validate([
+            'clip_category_id' => 'required|integer|exists:clip_categories,id',
+        ]);
+
+        $userId     = auth()->id();
+        $categoryId = $request->clip_category_id;
+
+        // Si queda algún clip sin compartir → compartir todos. Si todos ya están → privatizar.
+        $hasUnshared = VideoClip::where('video_id', $video->id)
+            ->where('clip_category_id', $categoryId)
+            ->where('created_by', $userId)
+            ->where('is_shared', false)
+            ->exists();
+
+        $newState = $hasUnshared; // true = compartir, false = privatizar
+
+        VideoClip::where('video_id', $video->id)
+            ->where('clip_category_id', $categoryId)
+            ->where('created_by', $userId)
+            ->update(['is_shared' => $newState]);
+
+        $count = VideoClip::where('video_id', $video->id)
+            ->where('clip_category_id', $categoryId)
+            ->where('created_by', $userId)
+            ->count();
+
+        return response()->json([
+            'success'   => true,
+            'is_shared' => $newState,
+            'message'   => $newState
+                ? "Categoría compartida ({$count} clips visibles para el equipo)"
+                : "Categoría privatizada ({$count} clips solo visibles para vos)",
+            'count'     => $count,
+        ]);
+    }
+
     // Compartir / privatizar un clip (toggle)
     public function toggleShare(Request $request, VideoClip $clip)
     {
