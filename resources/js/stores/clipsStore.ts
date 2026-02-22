@@ -170,6 +170,17 @@ export const useClipsStore = defineStore('clips', () => {
         }
     }
 
+    async function toggleShare(videoId: number, clipId: number): Promise<{ is_shared: boolean; message: string }> {
+        const api = useVideoApi(videoId);
+        const result = await api.toggleShare(clipId);
+
+        // Actualizar localmente el flag is_shared
+        const clip = clips.value.find((c) => c.id === clipId);
+        if (clip) clip.is_shared = result.is_shared;
+
+        return result;
+    }
+
     async function removeClip(videoId: number, clipId: number) {
         try {
             const api = useVideoApi(videoId);
@@ -234,6 +245,7 @@ export const useClipsStore = defineStore('clips', () => {
         stopRecording,
         cancelRecording,
         toggleRecording,
+        toggleShare,
         removeClip,
         updateClip,
         reset,

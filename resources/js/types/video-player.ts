@@ -112,6 +112,7 @@ export interface VideoClip {
     tags: string[] | null;
     rating: number | null;
     is_highlight: boolean;
+    is_shared: boolean;
     created_at: string;
     updated_at: string;
     // Relationships

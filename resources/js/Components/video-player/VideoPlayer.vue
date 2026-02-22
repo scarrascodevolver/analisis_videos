@@ -33,6 +33,7 @@ const toast = useToast();
 provide('videoApi', api);
 provide('toast', toast);
 provide('allUsers', props.allUsers);
+provide('currentUserId', props.user.id);
 
 const isAnalystOrCoach = computed(() =>
     ['analista', 'entrenador'].includes(props.user.role)

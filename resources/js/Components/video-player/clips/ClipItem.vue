@@ -12,10 +12,19 @@ const props = defineProps<{
 const videoStore = useVideoStore();
 const clipsStore = useClipsStore();
 const toast = inject<any>('toast');
+const currentUserId = inject<number>('currentUserId', 0);
+
 const isDeleting = ref(false);
+const isSharing = ref(false);
 const showMenu = ref(false);
 const btnRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref({ top: '0px', left: '0px' });
+
+// ¿Este clip pertenece al usuario actual?
+const isOwner = computed(() => props.clip.created_by === currentUserId);
+
+// ¿Es un clip de XML (categoría scope='video')? — siempre visible a todos
+const isXmlClip = computed(() => props.clip.category?.scope === 'video');
 
 const formattedStartTime = computed(() => formatTime(props.clip.start_time));
 const formattedEndTime = computed(() => formatTime(props.clip.end_time));
@@ -32,7 +41,7 @@ function toggleMenu(event: MouseEvent) {
         const rect = btnRef.value.getBoundingClientRect();
         dropdownStyle.value = {
             top: `${rect.bottom + 4}px`,
-            left: `${rect.right - 130}px`, // 130 = min-width of dropdown
+            left: `${rect.right - 150}px`,
         };
     }
     showMenu.value = !showMenu.value;
@@ -52,6 +61,22 @@ async function copyLink(event: MouseEvent) {
         toast?.success('¡Link copiado!');
     } catch {
         toast?.error('No se pudo copiar el link');
+    }
+}
+
+async function handleToggleShare(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = false;
+    if (isSharing.value) return;
+
+    isSharing.value = true;
+    try {
+        const result = await clipsStore.toggleShare(props.clip.video_id, props.clip.id);
+        toast?.success(result.message);
+    } catch {
+        toast?.error('Error al cambiar visibilidad del clip');
+    } finally {
+        isSharing.value = false;
     }
 }
 
@@ -89,6 +114,16 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             {{ formattedStartTime }} - {{ formattedEndTime }}
         </div>
 
+        <!-- Indicador de visibilidad (solo en clips propios, no XML) -->
+        <span
+            v-if="isOwner && !isXmlClip"
+            class="clip-visibility-badge"
+            :class="clip.is_shared ? 'badge-shared' : 'badge-private'"
+            :title="clip.is_shared ? 'Compartido con el equipo' : 'Solo vos lo ves'"
+        >
+            <i :class="clip.is_shared ? 'fas fa-users' : 'fas fa-lock'"></i>
+        </span>
+
         <!-- ⋯ button -->
         <button
             ref="btnRef"
@@ -113,13 +148,27 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             <button class="clip-dropdown-item" @click="playClip">
                 <i class="fas fa-play"></i> Reproducir
             </button>
-            <button
-                class="clip-dropdown-item"
-                @click="copyLink"
-            >
+            <button class="clip-dropdown-item" @click="copyLink">
                 <i class="fas fa-link"></i> Copiar link
             </button>
-            <button class="clip-dropdown-item clip-dropdown-item--danger" @click="handleDelete">
+
+            <!-- Compartir/privatizar — solo el dueño del clip, no clips XML -->
+            <button
+                v-if="isOwner && !isXmlClip"
+                class="clip-dropdown-item"
+                :disabled="isSharing"
+                @click="handleToggleShare"
+            >
+                <i :class="isSharing ? 'fas fa-spinner fa-spin' : (clip.is_shared ? 'fas fa-lock' : 'fas fa-users')"></i>
+                {{ clip.is_shared ? 'Privatizar' : 'Compartir' }}
+            </button>
+
+            <!-- Eliminar — solo el dueño del clip -->
+            <button
+                v-if="isOwner"
+                class="clip-dropdown-item clip-dropdown-item--danger"
+                @click="handleDelete"
+            >
                 <i class="fas fa-trash"></i> Eliminar
             </button>
         </div>
@@ -157,6 +206,21 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     white-space: nowrap;
     flex: 1;
 }
+
+/* Indicador de visibilidad del clip */
+.clip-visibility-badge {
+    font-size: 8px;
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.clip-item:hover .clip-visibility-badge {
+    opacity: 1;
+}
+
+.badge-private i  { color: #888; }
+.badge-shared i   { color: #00B7B5; }
 
 /* ⋯ button */
 .btn-clip-menu {
@@ -197,7 +261,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     background-color: #2c2c2c;
     border: 1px solid #444;
     border-radius: 4px;
-    min-width: 130px;
+    min-width: 150px;
     z-index: 9999;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     overflow: hidden;
@@ -219,6 +283,11 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     white-space: nowrap;
 }
 
+.clip-dropdown-teleport .clip-dropdown-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .clip-dropdown-teleport .clip-dropdown-item i {
     width: 12px;
     text-align: center;
@@ -226,12 +295,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     flex-shrink: 0;
 }
 
-.clip-dropdown-teleport .clip-dropdown-item:hover {
+.clip-dropdown-teleport .clip-dropdown-item:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.07);
     color: #fff;
 }
 
-.clip-dropdown-teleport .clip-dropdown-item:hover i {
+.clip-dropdown-teleport .clip-dropdown-item:hover:not(:disabled) i {
     color: #00B7B5;
 }
 
@@ -243,12 +312,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     color: #e06c75;
 }
 
-.clip-dropdown-teleport .clip-dropdown-item--danger:hover {
+.clip-dropdown-teleport .clip-dropdown-item--danger:hover:not(:disabled) {
     background: rgba(220, 53, 69, 0.1);
     color: #ff6b6b;
 }
 
-.clip-dropdown-teleport .clip-dropdown-item--danger:hover i {
+.clip-dropdown-teleport .clip-dropdown-item--danger:hover:not(:disabled) i {
     color: #ff6b6b;
 }
 </style>

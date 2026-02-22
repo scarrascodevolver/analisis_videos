@@ -188,6 +188,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Clip highlight toggle
     Route::post('api/clips/{clip}/toggle-highlight', [VideoClipController::class, 'toggleHighlight'])->name('api.clips.toggle-highlight');
+    // Clip share toggle (compartir/privatizar)
+    Route::post('api/clips/{clip}/toggle-share', [VideoClipController::class, 'toggleShare'])->name('api.clips.toggle-share');
 
     // Video View Tracking API Routes
     Route::prefix('api/videos')->name('api.videos.')->group(function () {

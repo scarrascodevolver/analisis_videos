@@ -164,6 +164,12 @@ export function useVideoApi(videoId: number) {
         });
     }
 
+    async function toggleShare(clipId: number): Promise<{ success: boolean; is_shared: boolean; message: string }> {
+        return request(`/api/clips/${clipId}/toggle-share`, {
+            method: 'POST',
+        });
+    }
+
     async function setTimelineOffset(offset: number): Promise<{ success: boolean }> {
         return request(`/api/videos/${videoId}/clips/timeline-offset`, {
             method: 'POST',
@@ -291,6 +297,7 @@ export function useVideoApi(videoId: number) {
         createClip,
         updateClip,
         deleteClip,
+        toggleShare,
         setTimelineOffset,
         // Clip Categories
         getClipCategories,

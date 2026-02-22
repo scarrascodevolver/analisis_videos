@@ -22,17 +22,19 @@ class VideoClip extends Model
         'tags',
         'rating',
         'is_highlight',
+        'is_shared',
     ];
 
     protected function casts(): array
     {
         return [
-            'start_time' => 'decimal:2',
-            'end_time' => 'decimal:2',
-            'players' => 'array',
-            'tags' => 'array',
-            'rating' => 'integer',
+            'start_time'  => 'decimal:2',
+            'end_time'    => 'decimal:2',
+            'players'     => 'array',
+            'tags'        => 'array',
+            'rating'      => 'integer',
             'is_highlight' => 'boolean',
+            'is_shared'   => 'boolean',
         ];
     }
 
@@ -84,6 +86,22 @@ class VideoClip extends Model
     }
 
     // Scopes
+
+    /**
+     * Clips visibles para un usuario:
+     * - Sus propios clips (created_by = user)
+     * - Clips compartidos por otros (is_shared = true)
+     * - Clips de XML / LongoMatch (categoría con scope='video') — siempre visibles
+     */
+    public function scopeVisibleTo($query, $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where('created_by', $user->id)
+              ->orWhere('is_shared', true)
+              ->orWhereHas('category', fn ($cat) => $cat->where('scope', 'video'));
+        });
+    }
+
     public function scopeForVideo($query, $videoId)
     {
         return $query->where('video_id', $videoId);
