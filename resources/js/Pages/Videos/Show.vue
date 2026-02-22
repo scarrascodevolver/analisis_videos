@@ -432,7 +432,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <ClipPanel
                     :video-id="video.id"
                     @create-category="onCreateCategory"
-                    @manage-categories="onManageCategories"
+                    @edit-categories="onManageCategories"
                 />
             </template>
 
