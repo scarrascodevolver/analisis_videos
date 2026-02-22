@@ -64,6 +64,15 @@ async function handleClick() {
             <i class="fas fa-circle pulse"></i>
             <span>REC</span>
         </div>
+
+        <!-- Indicador de categoría personal (solo yo la veo) -->
+        <div
+            v-if="!isRecording && category.scope === 'user'"
+            class="personal-indicator"
+            title="Categoría personal — solo vos la ves"
+        >
+            <i class="fas fa-user"></i>
+        </div>
     </button>
 </template>
 
@@ -171,6 +180,17 @@ async function handleClick() {
 
 .recording-indicator i {
     font-size: 0.5rem;
+}
+
+/* Indicador categoría personal */
+.personal-indicator {
+    position: absolute;
+    bottom: 0.35rem;
+    right: 0.35rem;
+    font-size: 0.55rem;
+    color: #00B7B5;
+    opacity: 0.7;
+    line-height: 1;
 }
 
 .pulse {

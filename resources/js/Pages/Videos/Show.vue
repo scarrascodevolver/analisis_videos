@@ -264,6 +264,10 @@ async function onDeleteCategory(categoryId: number) {
     }
 }
 
+function onCategoriesReordered(reordered: ClipCategory[]) {
+    clipsStore.categories = reordered;
+}
+
 function onCategorySaved() {
     showCategoryModal.value = false;
     clipsStore.loadCategories(props.video.id);
@@ -488,6 +492,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                     @close="showManageCategoriesModal = false"
                     @edit-category="onEditCategory"
                     @delete-category="onDeleteCategory"
+                    @reordered="onCategoriesReordered"
                 />
                 <DeleteVideoModal
                     :show="showDeleteModal"

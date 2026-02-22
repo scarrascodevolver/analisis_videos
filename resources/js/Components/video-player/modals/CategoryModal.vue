@@ -78,6 +78,22 @@
                                     </small>
                                 </div>
 
+                                <!-- Vista previa del botón -->
+                                <div class="form-group">
+                                    <label>Vista previa</label>
+                                    <div class="btn-preview" :style="{ '--cat-color': formData.color }">
+                                        <span class="preview-name">{{ formData.name || 'Nombre categoría' }}</span>
+                                        <div class="preview-footer">
+                                            <span v-if="formData.hotkey" class="preview-hotkey">
+                                                {{ formData.hotkey.toUpperCase() }}
+                                            </span>
+                                            <span class="preview-scope" :class="formData.scope === 'user' ? 'preview-personal' : 'preview-team'">
+                                                <i :class="formData.scope === 'user' ? 'fas fa-user' : 'fas fa-users'"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Lead + Lag en una fila -->
                                 <div class="form-row-2">
                                     <div class="form-group">
@@ -428,6 +444,57 @@ select.form-control {
     border: 1px solid rgba(220, 53, 69, 0.3);
     color: #f8d7da;
 }
+
+/* Button preview */
+.btn-preview {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+    min-height: 54px;
+    background: #252525;
+    border: 2px solid var(--cat-color, #444);
+    border-radius: 6px;
+    max-width: 130px;
+    transition: border-color 0.2s;
+}
+
+.preview-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.preview-hotkey {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 17px;
+    padding: 0 0.3rem;
+    background: rgba(0, 183, 181, 0.15);
+    border: 1px solid var(--cat-color, #00B7B5);
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--cat-color, #00B7B5);
+}
+
+.preview-scope {
+    font-size: 0.65rem;
+    margin-left: auto;
+}
+.preview-team     { color: #5cb85c; }
+.preview-personal { color: #00B7B5; }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
