@@ -36,14 +36,17 @@
                                             'drag-over': dragOverIndex === index,
                                             'dragging': draggingIndex === index,
                                         }"
-                                        draggable="true"
-                                        @dragstart="onDragStart(index)"
                                         @dragover.prevent="onDragOver(index)"
                                         @drop="onDrop(index)"
                                         @dragend="onDragEnd"
                                     >
-                                        <!-- Drag handle -->
-                                        <span class="drag-handle" title="Arrastrar para reordenar">
+                                        <!-- Drag handle — único elemento draggable del row -->
+                                        <span
+                                            class="drag-handle"
+                                            title="Arrastrar para reordenar"
+                                            draggable="true"
+                                            @dragstart="onDragStart(index)"
+                                        >
                                             <i class="fas fa-grip-vertical"></i>
                                         </span>
 
@@ -84,14 +87,14 @@
                                         <div class="cat-actions">
                                             <button
                                                 class="btn-action btn-edit"
-                                                @click.stop="handleEdit(category)"
+                                                @click="handleEdit(category)"
                                                 title="Editar"
                                             >
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button
                                                 class="btn-action btn-delete"
-                                                @click.stop="handleDelete(category)"
+                                                @click="handleDelete(category)"
                                                 title="Eliminar"
                                             >
                                                 <i class="fas fa-trash"></i>
