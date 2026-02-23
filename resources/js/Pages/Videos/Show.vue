@@ -89,6 +89,11 @@ const showSyncModal = ref(false);
 const isYoutubeVideo  = ref((props.video as any).is_youtube_video ?? false);
 const youtubeVideoId  = ref((props.video as any).youtube_video_id ?? null);
 
+// ─── is_part_of_group reactivo ────────────────────────────────────────────────
+// El prop original es estático (Inertia). Necesitamos actualizarlo cuando se agrega
+// el primer ángulo (antes no había grupo → is_part_of_group = false).
+const isPartOfGroup = ref(props.video.is_part_of_group ?? false);
+
 // ─── Master video URL state (reactive so swap can update them) ────────────────
 // These start from the Inertia-provided props and are updated on master/slave swap.
 const videoStreamUrl  = ref(props.video.stream_url);
@@ -301,6 +306,7 @@ function onUploadAngle() {
 
 function onAngleUploaded(slave: SlaveVideo) {
     slaveVideos.value = [...slaveVideos.value, slave];
+    isPartOfGroup.value = true; // el video ahora pertenece a un grupo
 }
 
 function onSwapMaster(slaveId: number) {
@@ -425,7 +431,7 @@ function onSyncSaved(offsets: Record<number, number>) {
         <!-- Player normal cuando el video está listo (tiene HLS, MP4 original o es YouTube) -->
         <VideoPlayer
             v-if="!isProcessing"
-            :video="{ ...video, stream_url: videoStreamUrl, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url, is_youtube_video: isYoutubeVideo, youtube_video_id: youtubeVideoId }"
+            :video="{ ...video, stream_url: videoStreamUrl, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url, is_youtube_video: isYoutubeVideo, youtube_video_id: youtubeVideoId, is_part_of_group: isPartOfGroup }"
             :comments="comments"
             :all-users="allUsers"
             :user="user"
