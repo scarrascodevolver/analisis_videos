@@ -153,7 +153,7 @@ class VideoController extends Controller
             $isYoutube = $request->filled('youtube_url') || $request->input('video_source') === 'youtube';
 
             $request->validate([
-                'title' => 'required|string|max:255',
+                'title' => $isYoutube ? 'nullable|string|max:255' : 'required|string|max:255',
                 'description' => 'nullable|string',
                 'video_source' => 'nullable|in:upload,youtube',
                 'video_file' => $isYoutube
@@ -210,8 +210,12 @@ class VideoController extends Controller
             $youtubeUrl = $request->input('youtube_url');
             $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
 
+            $autoTitle = $request->title
+                ?: trim(($request->local_team_name ?? '') . ' vs ' . ($request->rival_team_name ?? ''))
+                   ?: "Video YouTube {$request->match_date}";
+
             $video = Video::create([
-                'title' => $request->title,
+                'title' => $autoTitle,
                 'description' => $request->description,
                 'file_path' => null,
                 'thumbnail_path' => "https://img.youtube.com/vi/{$youtubeVideoId}/maxresdefault.jpg",

@@ -1369,8 +1369,19 @@ function submitYoutubeVideo() {
     addField('youtube_url', url);
 
     // Datos del partido desde el formulario
-    addField('local_team_name', document.getElementById('local_team_name')?.value || '');
-    addField('match_date',      document.getElementById('match_date')?.value || '');
+    const localTeam  = document.getElementById('local_team_name')?.value || '';
+    const rivalTeam  = document.getElementById('rival_team_input')?.value || '';
+    const matchDate  = document.getElementById('match_date')?.value || '';
+
+    // Auto-generar título igual que con archivos: "Local vs Rival (YYYY-MM-DD)"
+    let autoTitle = localTeam && rivalTeam
+        ? `${localTeam} vs ${rivalTeam}`
+        : (localTeam || rivalTeam || 'Video YouTube');
+    if (matchDate) autoTitle += ` (${matchDate})`;
+
+    addField('title', autoTitle);
+    addField('local_team_name', localTeam);
+    addField('match_date',      matchDate);
     addField('description',     document.getElementById('description')?.value || '');
     addField('category_id',     document.getElementById('category_id')?.value || '');
     addField('rival_team_name', document.getElementById('rival_team_input')?.value || '');
