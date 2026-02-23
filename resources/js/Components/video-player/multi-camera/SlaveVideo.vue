@@ -13,6 +13,9 @@
                 class="slave-video yt-slave-outer"
             >
                 <div :id="ytContainerId" style="width:100%;height:100%;" />
+                <!-- Overlay transparente: captura clicks antes que el iframe YouTube.
+                     Sin esto el iframe los intercepta y abre YouTube en ventana nueva. -->
+                <div class="yt-click-overlay" @click.stop="handleClick" />
             </div>
 
             <!-- Regular HTML5 video slave -->
@@ -230,6 +233,18 @@ defineExpose({
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+/* Overlay transparente sobre el iframe YouTube para capturar clicks de swap */
+.yt-click-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    cursor: pointer;
+    background: transparent;
 }
 
 /* YouTube: wrapper persiste con la posición, el iframe hereda tamaño */
