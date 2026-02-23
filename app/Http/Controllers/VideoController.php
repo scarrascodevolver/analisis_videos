@@ -150,11 +150,23 @@ class VideoController extends Controller
         try {
             $currentOrg = auth()->user()->currentOrganization();
 
+            $isYoutube = $request->filled('youtube_url') || $request->input('video_source') === 'youtube';
+
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'video_file' => 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608', // 8GB max
-                'rival_team_name' => 'nullable|string|max:255', // Texto libre para rival
+                'video_source' => 'nullable|in:upload,youtube',
+                'video_file' => $isYoutube
+                    ? 'nullable'
+                    : 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608',
+                'youtube_url' => $isYoutube
+                    ? ['required', 'string', 'max:500', function ($attribute, $value, $fail) {
+                        if (!\App\Models\Video::extractYoutubeVideoId($value)) {
+                            $fail('La URL de YouTube no es válida. Usá el formato: youtube.com/watch?v=ID o youtu.be/ID');
+                        }
+                    }]
+                    : 'nullable',
+                'rival_team_name' => 'nullable|string|max:255',
                 'category_id' => [
                     'required',
                     Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
@@ -170,9 +182,11 @@ class VideoController extends Controller
                 'assignment_notes' => 'nullable|string|max:1000',
                 'visibility_type' => 'required|in:public,forwards,backs,specific',
             ], [
+                'video_file.required' => 'Seleccioná un archivo de video o pegá una URL de YouTube.',
                 'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
                 'category_id.exists' => 'La categoría seleccionada no es válida para tu organización.',
+                'youtube_url.required' => 'Ingresá la URL del video de YouTube.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax()) {
@@ -185,61 +199,91 @@ class VideoController extends Controller
             throw $e;
         }
 
-        $file = $request->file('video_file');
-        $originalName = $file->getClientOriginalName();
-
-        // Sanitizar nombre de archivo: remover espacios y caracteres especiales
-        $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
-        $sanitizedName = preg_replace('/_+/', '_', $sanitizedName); // Múltiples _ a uno solo
-
-        $filename = time().'_'.$sanitizedName;
-
-        // Obtener el slug de la organización actual para el path
         $currentOrg = auth()->user()->currentOrganization();
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
         $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
-        // En producción: usar Spaces con fallback a local
-        // En desarrollo: usar storage local directamente (más rápido)
-        if (app()->environment('production')) {
-            try {
-                $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
-                Storage::disk('spaces')->setVisibility($path, 'public');
-            } catch (Exception $e) {
-                \Log::warning('DigitalOcean Spaces upload failed, using local storage: '.$e->getMessage());
+        $isYoutube = $request->filled('youtube_url') || $request->input('video_source') === 'youtube';
+
+        if ($isYoutube) {
+            // ── YouTube: no upload de archivo ────────────────────────────────
+            $youtubeUrl = $request->input('youtube_url');
+            $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
+
+            $video = Video::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'file_path' => null,
+                'thumbnail_path' => "https://img.youtube.com/vi/{$youtubeVideoId}/maxresdefault.jpg",
+                'file_name' => null,
+                'file_size' => 0,
+                'mime_type' => null,
+                'uploaded_by' => auth()->id(),
+                'analyzed_team_name' => $organizationName,
+                'rival_team_id' => $request->rival_team_id,
+                'rival_team_name' => $request->rival_team_name,
+                'tournament_id' => $request->tournament_id,
+                'category_id' => $request->category_id,
+                'division' => $request->division,
+                'match_date' => $request->match_date,
+                'status' => 'ready',
+                'visibility_type' => $request->visibility_type,
+                'processing_status' => 'completed',
+                'is_youtube_video' => true,
+                'youtube_url' => $youtubeUrl,
+                'youtube_video_id' => $youtubeVideoId,
+            ]);
+
+            \Log::info("Video {$video->id} registrado desde YouTube: {$youtubeUrl}");
+        } else {
+            // ── Upload de archivo local/cloud ─────────────────────────────────
+            $file = $request->file('video_file');
+            $originalName = $file->getClientOriginalName();
+
+            $sanitizedName = preg_replace('/[^A-Za-z0-9\-_\.]/', '_', $originalName);
+            $sanitizedName = preg_replace('/_+/', '_', $sanitizedName);
+            $filename = time().'_'.$sanitizedName;
+
+            if (app()->environment('production')) {
+                try {
+                    $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
+                    Storage::disk('spaces')->setVisibility($path, 'public');
+                } catch (Exception $e) {
+                    \Log::warning('DigitalOcean Spaces upload failed, using local storage: '.$e->getMessage());
+                    $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
+                }
+            } else {
                 $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
             }
-        } else {
-            // Desarrollo/local: storage local directo
-            $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
+
+            $thumbnailPath = $this->generateVideoThumbnail($filename);
+
+            $video = Video::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'file_path' => $path,
+                'thumbnail_path' => $thumbnailPath,
+                'file_name' => $filename,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'uploaded_by' => auth()->id(),
+                'analyzed_team_name' => $organizationName,
+                'rival_team_id' => $request->rival_team_id,
+                'rival_team_name' => $request->rival_team_name,
+                'tournament_id' => $request->tournament_id,
+                'category_id' => $request->category_id,
+                'division' => $request->division,
+                'match_date' => $request->match_date,
+                'status' => 'pending',
+                'visibility_type' => $request->visibility_type,
+                'processing_status' => 'pending',
+            ]);
+
+            // Dispatch compression job based on organization strategy
+            $this->dispatchCompressionJob($video);
+
+            \Log::info("Video {$video->id} uploaded successfully, compression decision applied");
         }
-
-        // Generate thumbnail placeholder
-        $thumbnailPath = $this->generateVideoThumbnail($filename);
-
-        $video = Video::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'file_path' => $path,
-            'thumbnail_path' => $thumbnailPath,
-            'file_name' => $filename,
-            'file_size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
-            'uploaded_by' => auth()->id(),
-            'analyzed_team_name' => $organizationName,
-            'rival_team_id' => $request->rival_team_id,
-            'rival_team_name' => $request->rival_team_name,
-            'tournament_id' => $request->tournament_id,
-            'category_id' => $request->category_id,
-            'division' => $request->division,
-            'match_date' => $request->match_date,
-            'status' => 'pending',
-            'visibility_type' => $request->visibility_type,
-            'processing_status' => 'pending',
-        ]);
-
-        // Dispatch compression job based on organization strategy
-        $this->dispatchCompressionJob($video);
 
         \Log::info("Video {$video->id} uploaded successfully, compression decision applied");
 
@@ -255,15 +299,20 @@ class VideoController extends Controller
             }
 
             $assignedCount = count($request->assigned_players);
-            $successMessage = "Video subido exitosamente y asignado a {$assignedCount} jugador(es). Se está comprimiendo en segundo plano para optimizar la reproducción.";
+            $youtubeNote = $isYoutube ? '' : ' Se está comprimiendo en segundo plano para optimizar la reproducción.';
+            $successMessage = "Video guardado exitosamente y asignado a {$assignedCount} jugador(es).{$youtubeNote}";
         } else {
-            $visibilityMessages = [
-                'public' => 'Video subido exitosamente y visible para todo el equipo. Se está comprimiendo en segundo plano.',
-                'forwards' => 'Video subido exitosamente y visible para delanteros. Se está comprimiendo en segundo plano.',
-                'backs' => 'Video subido exitosamente y visible para backs. Se está comprimiendo en segundo plano.',
-                'specific' => 'Video subido exitosamente. Se está comprimiendo en segundo plano.',
-            ];
-            $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente. Se está comprimiendo en segundo plano.';
+            if ($isYoutube) {
+                $successMessage = 'Video de YouTube agregado exitosamente y listo para reproducir.';
+            } else {
+                $visibilityMessages = [
+                    'public' => 'Video subido exitosamente y visible para todo el equipo. Se está comprimiendo en segundo plano.',
+                    'forwards' => 'Video subido exitosamente y visible para delanteros. Se está comprimiendo en segundo plano.',
+                    'backs' => 'Video subido exitosamente y visible para backs. Se está comprimiendo en segundo plano.',
+                    'specific' => 'Video subido exitosamente. Se está comprimiendo en segundo plano.',
+                ];
+                $successMessage = $visibilityMessages[$request->visibility_type] ?? 'Video subido exitosamente. Se está comprimiendo en segundo plano.';
+            }
         }
 
         // Check if request is AJAX
@@ -318,7 +367,7 @@ class VideoController extends Controller
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
 
         $videoData = array_merge($video->toArray(), [
-            'stream_url' => route('videos.stream', $video),
+            'stream_url' => $video->is_youtube_video ? null : route('videos.stream', $video),
             'edit_url' => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
             'bunny_library_id' => $video->organization?->bunny_library_id,
@@ -326,6 +375,9 @@ class VideoController extends Controller
                                     ? $bunnyService->getHlsUrl($video->bunny_video_id)
                                     : ($video->bunny_hls_url ?? null),
             'bunny_mp4_url' => $video->bunny_mp4_url,
+            'is_youtube_video' => (bool) $video->is_youtube_video,
+            'youtube_video_id' => $video->youtube_video_id,
+            'youtube_url' => $video->youtube_url,
             'slave_videos' => $video->isPartOfGroup()
                 ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
                     return $group->videos

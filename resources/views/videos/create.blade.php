@@ -19,35 +19,92 @@
         </div>
         <div class="card-body p-3">
 
-            {{-- Drop Zone (se oculta cuando hay archivos) --}}
-            <div id="dropZone" class="drop-zone mb-3">
-                <i class="fas fa-film drop-zone-icon"></i>
-                <p class="mb-1 font-weight-bold">Arrastrá los archivos acá</p>
-                <p class="text-muted small mb-2">o hacé clic para seleccionar</p>
-                <input type="file" id="videoFilesInput" multiple accept=".mp4,.mov,.avi,.webm,.mkv" class="d-none">
-                <button type="button" class="btn btn-sm btn-rugby-outline" onclick="document.getElementById('videoFilesInput').click()">
-                    <i class="fas fa-folder-open mr-1"></i> Elegir archivos
+            {{-- Toggle: Subir Archivo / YouTube --}}
+            <div class="d-flex mb-3" id="sourceToggle">
+                <button type="button" id="btnSourceUpload"
+                    class="btn btn-sm btn-rugby flex-fill mr-1 source-toggle-btn active"
+                    onclick="setVideoSource('upload')">
+                    <i class="fas fa-upload mr-1"></i> Subir Archivo
                 </button>
-                <p class="text-muted small mt-2 mb-0">MP4, MOV, AVI, WEBM, MKV · Máx. 8GB por archivo</p>
-            </div>
-
-            {{-- Botón compacto para agregar más (visible cuando hay archivos) --}}
-            <div id="addMoreBtn" class="d-none mb-2">
-                <button type="button" class="btn btn-sm btn-rugby-outline"
-                    onclick="document.getElementById('videoFilesInput').click()">
-                    <i class="fas fa-plus mr-1"></i> Agregar más videos
+                <button type="button" id="btnSourceYoutube"
+                    class="btn btn-sm btn-outline-danger flex-fill ml-1 source-toggle-btn"
+                    onclick="setVideoSource('youtube')">
+                    <i class="fab fa-youtube mr-1"></i> Desde YouTube
                 </button>
             </div>
+            <input type="hidden" name="video_source" id="videoSourceInput" value="upload">
 
-            {{-- Lista de archivos seleccionados --}}
-            <div id="filesList" class="d-none">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small" id="filesCount"></span>
-                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="clearAllFiles()">
-                        <i class="fas fa-trash mr-1"></i>Limpiar todo
+            {{-- SECCION: Subir Archivo --}}
+            <div id="sectionUpload">
+                {{-- Drop Zone (se oculta cuando hay archivos) --}}
+                <div id="dropZone" class="drop-zone mb-3">
+                    <i class="fas fa-film drop-zone-icon"></i>
+                    <p class="mb-1 font-weight-bold">Arrastrá los archivos acá</p>
+                    <p class="text-muted small mb-2">o hacé clic para seleccionar</p>
+                    <input type="file" id="videoFilesInput" multiple accept=".mp4,.mov,.avi,.webm,.mkv" class="d-none">
+                    <button type="button" class="btn btn-sm btn-rugby-outline" onclick="document.getElementById('videoFilesInput').click()">
+                        <i class="fas fa-folder-open mr-1"></i> Elegir archivos
+                    </button>
+                    <p class="text-muted small mt-2 mb-0">MP4, MOV, AVI, WEBM, MKV · Máx. 8GB por archivo</p>
+                </div>
+
+                {{-- Botón compacto para agregar más (visible cuando hay archivos) --}}
+                <div id="addMoreBtn" class="d-none mb-2">
+                    <button type="button" class="btn btn-sm btn-rugby-outline"
+                        onclick="document.getElementById('videoFilesInput').click()">
+                        <i class="fas fa-plus mr-1"></i> Agregar más videos
                     </button>
                 </div>
-                <div id="filesRows"></div>
+
+                {{-- Lista de archivos seleccionados --}}
+                <div id="filesList" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small" id="filesCount"></span>
+                        <button type="button" class="btn btn-xs btn-outline-secondary" onclick="clearAllFiles()">
+                            <i class="fas fa-trash mr-1"></i>Limpiar todo
+                        </button>
+                    </div>
+                    <div id="filesRows"></div>
+                </div>
+            </div>
+
+            {{-- SECCION: YouTube URL --}}
+            <div id="sectionYoutube" class="d-none">
+                <div class="form-group mb-2">
+                    <label class="small font-weight-bold">
+                        <i class="fab fa-youtube text-danger mr-1"></i> URL del video de YouTube
+                    </label>
+                    <input type="url" id="youtubeUrlInput" name="youtube_url"
+                        class="form-control form-control-sm"
+                        placeholder="https://www.youtube.com/watch?v=... o https://youtu.be/..."
+                        oninput="onYoutubeUrlChange(this.value)">
+                    <small class="text-muted d-block mt-1">
+                        Formatos válidos: <code>youtube.com/watch?v=ID</code> · <code>youtu.be/ID</code> · <code>youtube.com/embed/ID</code>
+                    </small>
+                </div>
+
+                {{-- Preview del video de YouTube --}}
+                <div id="youtubePreviw" class="d-none mt-2">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <img id="youtubeThumb" src="" alt="Preview"
+                                style="width:120px;border-radius:6px;border:2px solid #00B7B5;">
+                        </div>
+                        <div class="col">
+                            <p class="mb-1 small font-weight-bold text-success">
+                                <i class="fas fa-check-circle mr-1"></i> URL válida — Video encontrado
+                            </p>
+                            <p class="mb-0 text-muted small" id="youtubeVideoIdLabel"></p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Error URL inválida --}}
+                <div id="youtubeError" class="d-none mt-2">
+                    <p class="text-danger small mb-0">
+                        <i class="fas fa-exclamation-circle mr-1"></i> URL no válida. Verificá que sea un link de YouTube correcto.
+                    </p>
+                </div>
             </div>
 
         </div>
@@ -1194,5 +1251,145 @@ function markRowFailed(id, msg) {
 }
 
 function getCsrf() { return document.querySelector('meta[name=csrf-token]')?.content || ''; }
+
+// ── YouTube source toggle ─────────────────────────────────────────────────────
+
+function setVideoSource(source) {
+    document.getElementById('videoSourceInput').value = source;
+
+    const sectionUpload  = document.getElementById('sectionUpload');
+    const sectionYoutube = document.getElementById('sectionYoutube');
+    const btnUpload      = document.getElementById('btnSourceUpload');
+    const btnYoutube     = document.getElementById('btnSourceYoutube');
+
+    if (source === 'youtube') {
+        sectionUpload.classList.add('d-none');
+        sectionYoutube.classList.remove('d-none');
+        btnUpload.classList.remove('btn-rugby');
+        btnUpload.classList.add('btn-outline-secondary');
+        btnYoutube.classList.remove('btn-outline-danger');
+        btnYoutube.classList.add('btn-danger');
+        // Limpiar archivos seleccionados si los hay
+        clearAllFiles && clearAllFiles();
+    } else {
+        sectionYoutube.classList.add('d-none');
+        sectionUpload.classList.remove('d-none');
+        btnYoutube.classList.remove('btn-danger');
+        btnYoutube.classList.add('btn-outline-danger');
+        btnUpload.classList.remove('btn-outline-secondary');
+        btnUpload.classList.add('btn-rugby');
+        // Limpiar campo YouTube
+        document.getElementById('youtubeUrlInput').value = '';
+        document.getElementById('youtubePreviw').classList.add('d-none');
+        document.getElementById('youtubeError').classList.add('d-none');
+    }
+}
+
+function extractYoutubeId(url) {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/watch\?.*&v=([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+function onYoutubeUrlChange(url) {
+    const preview = document.getElementById('youtubePreviw');
+    const error   = document.getElementById('youtubeError');
+    const thumb   = document.getElementById('youtubeThumb');
+    const label   = document.getElementById('youtubeVideoIdLabel');
+
+    if (!url.trim()) {
+        preview.classList.add('d-none');
+        error.classList.add('d-none');
+        return;
+    }
+
+    const videoId = extractYoutubeId(url.trim());
+    if (videoId) {
+        thumb.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        label.textContent = `Video ID: ${videoId}`;
+        preview.classList.remove('d-none');
+        error.classList.add('d-none');
+    } else {
+        preview.classList.add('d-none');
+        error.classList.remove('d-none');
+    }
+}
+
+// Sobreescribir el submit para validar YouTube antes de enviar
+document.addEventListener('DOMContentLoaded', function () {
+    const originalSubmit = window.startAllUploads;
+    // El submit de YouTube va directo al form (no usa TUS/Bunny)
+    const ytForm = document.createElement('form');
+
+    document.addEventListener('submit', function(e) {
+        // Solo aplica si hay un form submit directo (no el de TUS)
+    });
+
+    // Interceptar el botón de submit principal cuando es YouTube
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            const source = document.getElementById('videoSourceInput').value;
+            if (source === 'youtube') {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                submitYoutubeVideo();
+            }
+        }, true);
+    }
+});
+
+function submitYoutubeVideo() {
+    const url = document.getElementById('youtubeUrlInput').value.trim();
+    if (!url) {
+        alert('Ingresá la URL del video de YouTube.');
+        return;
+    }
+    const videoId = extractYoutubeId(url);
+    if (!videoId) {
+        alert('La URL de YouTube no es válida.');
+        return;
+    }
+
+    // Construir y enviar el form con los datos del partido
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("videos.store") }}';
+
+    const addField = (name, value) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value || '';
+        form.appendChild(input);
+    };
+
+    addField('_token', getCsrf());
+    addField('video_source', 'youtube');
+    addField('youtube_url', url);
+
+    // Datos del partido desde el formulario
+    const fields = ['title', 'description', 'match_date', 'category_id',
+                    'rival_team_name', 'rival_team_id', 'tournament_id',
+                    'division', 'visibility_type', 'assignment_notes'];
+    fields.forEach(field => {
+        const el = document.querySelector(`[name="${field}"]`);
+        if (el) addField(field, el.value);
+    });
+
+    // Jugadores asignados (checkboxes/multi-select)
+    document.querySelectorAll('[name="assigned_players[]"]:checked').forEach(el => {
+        addField('assigned_players[]', el.value);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 @endpush

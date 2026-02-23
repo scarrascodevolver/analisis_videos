@@ -85,6 +85,10 @@ const showStatsModal = ref(false);
 const showUploadAngleModal = ref(false);
 const showSyncModal = ref(false);
 
+// ─── YouTube ──────────────────────────────────────────────────────────────────
+const isYoutubeVideo  = ref((props.video as any).is_youtube_video ?? false);
+const youtubeVideoId  = ref((props.video as any).youtube_video_id ?? null);
+
 // ─── Master video URL state (reactive so swap can update them) ────────────────
 // These start from the Inertia-provided props and are updated on master/slave swap.
 const videoStreamUrl  = ref(props.video.stream_url);
@@ -96,7 +100,8 @@ const videoStatus     = ref(props.video.bunny_status ?? null);
 const videoHlsUrl     = ref(props.video.bunny_hls_url ?? null);
 const videoMp4Url     = ref(props.video.bunny_mp4_url ?? null);
 // Muestra pantalla de encoding solo si no hay NI HLS NI MP4 original disponible
-const isProcessing    = computed(() => !videoHlsUrl.value && !videoMp4Url.value);
+// Para YouTube: nunca está procesando (ya está listo en YouTube)
+const isProcessing    = computed(() => !isYoutubeVideo.value && !videoHlsUrl.value && !videoMp4Url.value);
 let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
 async function pollStatus() {
@@ -417,10 +422,10 @@ function onSyncSaved(offsets: Record<number, number>) {
             </div>
         </div>
 
-        <!-- Player normal cuando el video está listo (tiene HLS o MP4 original) -->
+        <!-- Player normal cuando el video está listo (tiene HLS, MP4 original o es YouTube) -->
         <VideoPlayer
             v-if="!isProcessing"
-            :video="{ ...video, stream_url: videoStreamUrl, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url }"
+            :video="{ ...video, stream_url: videoStreamUrl, bunny_hls_url: videoHlsUrl, bunny_status: videoStatus, bunny_mp4_url: videoMp4Url, is_youtube_video: isYoutubeVideo, youtube_video_id: youtubeVideoId }"
             :comments="comments"
             :all-users="allUsers"
             :user="user"

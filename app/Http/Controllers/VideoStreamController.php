@@ -173,6 +173,14 @@ class VideoStreamController extends Controller
 
     public function stream(Video $video, Request $request)
     {
+        // YouTube: no hay archivo local que streamear
+        if ($video->is_youtube_video) {
+            return response()->json([
+                'error' => 'Este video es de YouTube. Usa youtube_video_id para reproducirlo.',
+                'youtube_video_id' => $video->youtube_video_id,
+            ], 422);
+        }
+
         // Bunny Stream: redirigir directamente a HLS
         if ($video->bunny_video_id && $video->bunny_status === 'ready') {
             $service = BunnyStreamService::forOrganization($video->organization);

@@ -189,6 +189,8 @@ function toggleTheaterMode() {
                                 :bunny-hls-url="video.bunny_hls_url"
                                 :bunny-status="video.bunny_status"
                                 :bunny-mp4-url="video.bunny_mp4_url"
+                                :is-youtube-video="(video as any).is_youtube_video ?? false"
+                                :youtube-video-id="(video as any).youtube_video_id ?? null"
                                 @add-comment="handleAddComment"
                                 @toggle-annotation-mode="handleToggleAnnotationMode"
                             >

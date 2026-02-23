@@ -47,6 +47,10 @@ class Video extends Model
         'bunny_thumbnail',
         'bunny_status',
         'bunny_mp4_url',
+        // YouTube
+        'is_youtube_video',
+        'youtube_url',
+        'youtube_video_id',
     ];
 
     protected function casts(): array
@@ -56,7 +60,28 @@ class Video extends Model
             'match_date' => 'date',
             'processing_started_at' => 'datetime',
             'processing_completed_at' => 'datetime',
+            'is_youtube_video' => 'boolean',
         ];
+    }
+
+    /**
+     * Extrae el video ID de una URL de YouTube.
+     * Soporta: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+     */
+    public static function extractYoutubeVideoId(string $url): ?string
+    {
+        $patterns = [
+            '/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/',
+            '/youtube\.com\/watch\?.*&v=([a-zA-Z0-9_-]{11})/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
     }
 
     /**

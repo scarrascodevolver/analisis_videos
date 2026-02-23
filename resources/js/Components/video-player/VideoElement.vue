@@ -8,14 +8,26 @@ import VideoLoadingOverlay from './ui/VideoLoadingOverlay.vue';
 import type { useVideoLoader } from '@/composables/useVideoLoader';
 
 const props = defineProps<{
-    streamUrl: string;
+    streamUrl: string | null;
     title: string;
     canAnnotate: boolean;
     bunnyHlsUrl?: string | null;
     bunnyStatus?: string | null;
     bunnyMp4Url?: string | null;
+    isYoutubeVideo?: boolean;
+    youtubeVideoId?: string | null;
 }>();
 
+// ── YouTube ────────────────────────────────────────────────────────────────────
+const isYoutube = computed(() => !!props.isYoutubeVideo && !!props.youtubeVideoId);
+
+const youtubeEmbedUrl = computed(() => {
+    if (!isYoutube.value) return null;
+    // enablejsapi=1 permite controlar el player con YouTube IFrame API si se necesita en el futuro
+    return `https://www.youtube.com/embed/${props.youtubeVideoId}?enablejsapi=1&rel=0&modestbranding=1`;
+});
+
+// ── HLS / MP4 ─────────────────────────────────────────────────────────────────
 const activeHlsUrl = computed(() =>
     props.bunnyHlsUrl && props.bunnyStatus === 'ready' ? props.bunnyHlsUrl : null
 );
@@ -23,7 +35,7 @@ const isHls = computed(() => !!activeHlsUrl.value);
 
 // URL MP4: Bunny original (disponible inmediatamente) o stream legacy
 const activeMp4Url = computed(() =>
-    !isHls.value ? (props.bunnyMp4Url ?? props.streamUrl) : props.streamUrl
+    !isHls.value ? (props.bunnyMp4Url ?? props.streamUrl ?? '') : (props.streamUrl ?? '')
 );
 
 const emit = defineEmits<{
@@ -197,32 +209,52 @@ function handleVideoClick(event: MouseEvent) {
     >
         <!-- Video wrapper for flex layout (doesn't affect canvas positioning) -->
         <div class="video-wrapper" style="position: relative; width: 100%; height: 100%;">
-            <video
-                ref="videoEl"
-                :controls="showControls"
-                preload="metadata"
-                crossorigin="anonymous"
-                x-webkit-airplay="allow"
-                :data-video-title="title"
-                style="width: 100%; height: auto; display: block;"
-                @timeupdate="videoStore.onTimeUpdate"
-                @durationchange="videoStore.onDurationChange"
-                @play="videoStore.onPlay"
-                @pause="videoStore.onPause"
-                @waiting="videoStore.onWaiting"
-                @canplay="videoStore.onCanPlay"
-                @volumechange="videoStore.onVolumeChange"
-                @click="handleVideoClick"
-            >
-                <!-- Safari native HLS (cuando HLS está listo); Chrome/Firefox usa hls.js vía watch -->
-                <source v-if="isHls" :src="activeHlsUrl!" type="application/vnd.apple.mpegurl">
-                <!-- MP4 de Bunny original (mientras encodea) o stream legacy -->
-                <source v-else :src="activeMp4Url" type="video/mp4">
-                Tu navegador no soporta la reproducción de video.
-            </video>
 
-            <!-- Annotation Canvas Slot (inside video wrapper) -->
-            <slot name="annotation-canvas" />
+            <!-- YouTube iframe embed -->
+            <template v-if="isYoutube">
+                <iframe
+                    :src="youtubeEmbedUrl!"
+                    style="width: 100%; aspect-ratio: 16/9; display: block; border: none; border-radius: 8px;"
+                    allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    :title="title"
+                ></iframe>
+                <div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 8px;border-radius:4px;pointer-events:none;">
+                    <i class="fab fa-youtube" style="color:#ff0000;"></i> YouTube
+                </div>
+            </template>
+
+            <!-- HTML5 video player (archivo local / Bunny / HLS) -->
+            <template v-else>
+                <video
+                    ref="videoEl"
+                    :controls="showControls"
+                    preload="metadata"
+                    crossorigin="anonymous"
+                    x-webkit-airplay="allow"
+                    :data-video-title="title"
+                    style="width: 100%; height: auto; display: block;"
+                    @timeupdate="videoStore.onTimeUpdate"
+                    @durationchange="videoStore.onDurationChange"
+                    @play="videoStore.onPlay"
+                    @pause="videoStore.onPause"
+                    @waiting="videoStore.onWaiting"
+                    @canplay="videoStore.onCanPlay"
+                    @volumechange="videoStore.onVolumeChange"
+                    @click="handleVideoClick"
+                >
+                    <!-- Safari native HLS (cuando HLS está listo); Chrome/Firefox usa hls.js vía watch -->
+                    <source v-if="isHls" :src="activeHlsUrl!" type="application/vnd.apple.mpegurl">
+                    <!-- MP4 de Bunny original (mientras encodea) o stream legacy -->
+                    <source v-else :src="activeMp4Url" type="video/mp4">
+                    Tu navegador no soporta la reproducción de video.
+                </video>
+
+                <!-- Annotation Canvas Slot (inside video wrapper, solo para video local) -->
+                <slot name="annotation-canvas" />
+            </template>
+
         </div>
 
         <!-- Loading Overlay (for multi-camera) -->
@@ -238,8 +270,8 @@ function handleVideoClick(event: MouseEvent) {
         <!-- Annotation Toolbar Slot -->
         <slot name="annotation-toolbar" />
 
-        <!-- Video Utility Controls -->
-        <div class="video-utility-controls">
+        <!-- Video Utility Controls (no disponibles para YouTube) -->
+        <div v-if="!isYoutube" class="video-utility-controls">
             <button
                 class="video-utility-btn"
                 title="Picture-in-Picture (Mini ventana)"
@@ -259,17 +291,17 @@ function handleVideoClick(event: MouseEvent) {
             <SpeedControl />
         </div>
 
-        <!-- Overlay action buttons -->
+        <!-- Overlay action buttons (Comentar disponible para todos; Anotar solo para video local) -->
         <div class="video-controls-overlay">
             <button
                 class="btn btn-sm btn-rugby font-weight-bold mr-2"
-                v-show="!videoStore.isPlaying"
+                v-show="isYoutube || !videoStore.isPlaying"
                 @click="$emit('addComment')"
             >
                 <i class="fas fa-comment-plus"></i> Comentar aquí
             </button>
             <button
-                v-if="canAnnotate"
+                v-if="canAnnotate && !isYoutube"
                 class="btn btn-sm btn-rugby-outline font-weight-bold"
                 @click="$emit('toggleAnnotationMode')"
             >
