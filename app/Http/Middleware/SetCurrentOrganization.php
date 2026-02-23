@@ -42,20 +42,18 @@ class SetCurrentOrganization
         }
 
         $user = auth()->user();
-
-        // Super admins pueden acceder sin organización seleccionada
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
         $currentOrg = $user->currentOrganization();
 
         // Si el usuario no tiene organización seleccionada
         if (! $currentOrg) {
-            $organizations = $user->organizations;
+            // Super admins ven todas las orgs activas del sistema
+            $organizations = $user->isSuperAdmin()
+                ? \App\Models\Organization::where('is_active', true)->get()
+                : $user->organizations;
 
             // Si tiene exactamente una organización, seleccionarla automáticamente
             if ($organizations->count() === 1) {
-                $user->switchOrganization($organizations->first());
+                $user->switchOrganization($organizations->first(), $user->isSuperAdmin());
 
                 return $next($request);
             }
@@ -66,13 +64,15 @@ class SetCurrentOrganization
                     ->with('info', 'Por favor selecciona una organización para continuar.');
             }
 
-            // Si no tiene ninguna organización, error
-            if ($organizations->count() === 0) {
-                auth()->logout();
-
-                return redirect()->route('login')
-                    ->with('error', 'Tu cuenta no está asociada a ninguna organización. Contacta al administrador.');
+            // Si no hay ninguna organización (super admin en sistema vacío: dejar pasar)
+            if ($user->isSuperAdmin()) {
+                return $next($request);
             }
+
+            auth()->logout();
+
+            return redirect()->route('login')
+                ->with('error', 'Tu cuenta no está asociada a ninguna organización. Contacta al administrador.');
         }
 
         // Verificar que la organización esté activa
