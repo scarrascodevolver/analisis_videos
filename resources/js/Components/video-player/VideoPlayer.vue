@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref, provide } from 'vue';
+import { onMounted, onUnmounted, computed, ref, provide, watch } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import { useVideoApi } from '@/composables/useVideoApi';
@@ -46,6 +46,11 @@ const hasMultiCamera = computed(() =>
 
 const showComments = ref(true);
 const isTheaterMode = ref(false);
+
+// Auto-ocultar sidebar al reproducir, mostrar al pausar
+watch(() => videoStore.isPlaying, (playing) => {
+    showComments.value = !playing;
+});
 
 // ── Panel resize state ────────────────────────────────────────
 const layoutRef = ref<HTMLElement | null>(null);
@@ -158,7 +163,7 @@ function toggleTheaterMode() {
 
 <template>
     <div class="row">
-        <div :class="!isTheaterMode ? 'col-lg-10' : 'col-12'" id="videoSection">
+        <div :class="!isTheaterMode ? (showComments ? 'col-lg-10' : 'col-12') : 'col-12'" id="videoSection">
             <div class="card">
                 <VideoHeader
                     :video="video"
@@ -234,7 +239,7 @@ function toggleTheaterMode() {
             <VideoInfo :video="video" />
         </div>
 
-        <div v-if="!isTheaterMode" class="col-lg-2 sidebar-col" id="sidebarSection">
+        <div v-if="!isTheaterMode && showComments" class="col-lg-2 sidebar-col" id="sidebarSection">
             <slot name="sidebar" />
         </div>
     </div>
