@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref, provide, watch } from 'vue';
+import { onMounted, onUnmounted, computed, ref, provide, watch, onBeforeUnmount } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import { useVideoApi } from '@/composables/useVideoApi';
@@ -47,9 +47,14 @@ const hasMultiCamera = computed(() =>
 const showComments = ref(true);
 const isTheaterMode = ref(false);
 
-// Auto-ocultar sidebar al reproducir, mostrar al pausar
+// Colapsar el sidebar IZQUIERDO de AdminLTE al primer play.
+// Una vez colapsado, no vuelve automáticamente (el usuario lo expande manualmente).
+let sidebarCollapsedByVideo = false;
 watch(() => videoStore.isPlaying, (playing) => {
-    showComments.value = !playing;
+    if (playing && !sidebarCollapsedByVideo) {
+        sidebarCollapsedByVideo = true;
+        document.body.classList.add('sidebar-collapse');
+    }
 });
 
 // ── Panel resize state ────────────────────────────────────────
@@ -163,7 +168,7 @@ function toggleTheaterMode() {
 
 <template>
     <div class="row">
-        <div :class="!isTheaterMode ? (showComments ? 'col-lg-10' : 'col-12') : 'col-12'" id="videoSection">
+        <div :class="!isTheaterMode ? 'col-lg-10' : 'col-12'" id="videoSection">
             <div class="card">
                 <VideoHeader
                     :video="video"
@@ -239,7 +244,7 @@ function toggleTheaterMode() {
             <VideoInfo :video="video" />
         </div>
 
-        <div v-if="!isTheaterMode && showComments" class="col-lg-2 sidebar-col" id="sidebarSection">
+        <div v-if="!isTheaterMode" class="col-lg-2 sidebar-col" id="sidebarSection">
             <slot name="sidebar" />
         </div>
     </div>
