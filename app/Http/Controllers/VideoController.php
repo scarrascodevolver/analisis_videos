@@ -96,10 +96,10 @@ class VideoController extends Controller
             ->each(function ($video) {
                 $group = $video->videoGroups->first();
                 if ($group && $group->videos->isNotEmpty()) {
-                    $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->total_size = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
                     $video->angles_count = $group->videos->count();
                 } else {
-                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->total_size = $video->compressed_file_size ?? $video->file_size ?? 0;
                     $video->angles_count = 1;
                 }
             });
@@ -161,7 +161,7 @@ class VideoController extends Controller
                     : 'required|file|mimes:mp4,mov,avi,webm,mkv|max:8388608',
                 'youtube_url' => $isYoutube
                     ? ['required', 'string', 'max:500', function ($attribute, $value, $fail) {
-                        if (!\App\Models\Video::extractYoutubeVideoId($value)) {
+                        if (! \App\Models\Video::extractYoutubeVideoId($value)) {
                             $fail('La URL de YouTube no es válida. Usá el formato: youtube.com/watch?v=ID o youtu.be/ID');
                         }
                     }]
@@ -216,7 +216,7 @@ class VideoController extends Controller
                 $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
 
                 $autoTitle = $request->title
-                    ?: trim(($request->local_team_name ?? '') . ' vs ' . ($request->rival_team_name ?? ''))
+                    ?: trim(($request->local_team_name ?? '').' vs '.($request->rival_team_name ?? ''))
                        ?: "Video YouTube {$request->match_date}";
 
                 $video = Video::create([
@@ -251,9 +251,9 @@ class VideoController extends Controller
                 // Debug: escribir directo a archivo para evitar issues con Log
                 file_put_contents(
                     storage_path('logs/yt_debug.log'),
-                    date('Y-m-d H:i:s') . ' | ' . get_class($e) . ': ' . $e->getMessage()
-                    . ' | ' . $e->getFile() . ':' . $e->getLine() . "\n"
-                    . $e->getTraceAsString() . "\n---\n",
+                    date('Y-m-d H:i:s').' | '.get_class($e).': '.$e->getMessage()
+                    .' | '.$e->getFile().':'.$e->getLine()."\n"
+                    .$e->getTraceAsString()."\n---\n",
                     FILE_APPEND
                 );
                 throw $e;
@@ -408,13 +408,17 @@ class VideoController extends Controller
                         ->map(fn ($v) => [
                             'id' => $v->id,
                             'title' => $v->title,
-                            'stream_url' => route('videos.stream', $v),
+                            'stream_url' => $v->is_youtube_video ? null : route('videos.stream', $v),
+                            'camera_angle' => $v->pivot->camera_angle ?? null,
                             'sync_offset' => $v->pivot->sync_offset ?? 0,
+                            'is_synced' => (bool) ($v->pivot->is_synced ?? false),
                             'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
                                                 ? $bunnyService->getHlsUrl($v->bunny_video_id)
                                                 : ($v->bunny_hls_url ?? null),
                             'bunny_status' => $v->bunny_status,
                             'bunny_mp4_url' => $v->bunny_mp4_url,
+                            'is_youtube_video' => (bool) $v->is_youtube_video,
+                            'youtube_video_id' => $v->youtube_video_id,
                         ])
                         ->values();
                 })->values()->all()
@@ -531,8 +535,8 @@ class VideoController extends Controller
                 \App\Services\BunnyStreamService::forOrganization($video->organization)
                     ->deleteVideo($video->bunny_video_id);
             } catch (\Exception $e) {
-                \Log::warning('Bunny Stream delete failed: ' . $e->getMessage(), [
-                    'video_id'       => $video->id,
+                \Log::warning('Bunny Stream delete failed: '.$e->getMessage(), [
+                    'video_id' => $video->id,
                     'bunny_video_id' => $video->bunny_video_id,
                 ]);
             }

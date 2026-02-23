@@ -8,6 +8,7 @@ use App\Models\VideoAssignment;
 use App\Models\VideoGroup;
 use App\Services\BunnyStreamService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -22,6 +23,106 @@ class BunnyUploadController extends Controller
         $org = auth()->user()->currentOrganization();
 
         $isClub = $org->isClub();
+
+        // ── YouTube slave branch ──────────────────────────────────────────────
+        // When the request carries youtube_url + master_video_id (no file upload),
+        // we create a YouTube-backed slave video and link it to the master's group.
+        if ($request->filled('youtube_url') && $request->filled('master_video_id')) {
+            $request->validate([
+                'youtube_url' => 'required|string|max:500',
+                'master_video_id' => 'required|exists:videos,id',
+                'camera_angle' => 'nullable|string|max:100',
+            ]);
+
+            $youtubeUrl = $request->input('youtube_url');
+            $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
+
+            if (! $youtubeVideoId) {
+                return response()->json(['message' => 'URL de YouTube inválida'], 422);
+            }
+
+            $masterVideo = Video::find($request->input('master_video_id'));
+            if (! $masterVideo) {
+                return response()->json(['message' => 'Video master no encontrado'], 404);
+            }
+
+            // Verify master belongs to the same organisation
+            if ($masterVideo->organization_id !== $org->id) {
+                return response()->json(['message' => 'No autorizado'], 403);
+            }
+
+            $cameraAngle = $request->input('camera_angle', 'Ángulo YouTube');
+
+            $slaveVideo = Video::create([
+                'title' => $masterVideo->title.' - '.$cameraAngle,
+                'file_path' => '',
+                'file_name' => '',
+                'file_size' => 0,
+                'mime_type' => '',
+                'youtube_url' => $youtubeUrl,
+                'youtube_video_id' => $youtubeVideoId,
+                'is_youtube_video' => true,
+                'status' => 'completed',
+                'processing_status' => 'completed',
+                'organization_id' => $masterVideo->organization_id,
+                'uploaded_by' => auth()->id(),
+                'category_id' => $masterVideo->category_id,
+                'match_date' => $masterVideo->match_date,
+            ]);
+
+            // Force is_master = false (bypasses $fillable restriction)
+            DB::table('videos')->where('id', $slaveVideo->id)->update(['is_master' => false]);
+
+            // Link to the master's group, creating the group first if needed
+            $group = $masterVideo->videoGroups()->first();
+            if (! $group) {
+                $group = VideoGroup::create([
+                    'name' => null,
+                    'organization_id' => $masterVideo->organization_id,
+                ]);
+                $group->videos()->attach($masterVideo->id, [
+                    'is_master' => true,
+                    'camera_angle' => 'Master / Tribuna Central',
+                    'sync_offset' => 0,
+                    'is_synced' => true,
+                ]);
+                DB::table('videos')->where('id', $masterVideo->id)->update(['is_master' => true]);
+            }
+
+            $group->videos()->attach($slaveVideo->id, [
+                'is_master' => false,
+                'camera_angle' => $cameraAngle,
+                'sync_offset' => 0,
+                'is_synced' => false,
+            ]);
+
+            Log::info('YouTube slave video created', [
+                'slave_video_id' => $slaveVideo->id,
+                'master_video_id' => $masterVideo->id,
+                'youtube_video_id' => $youtubeVideoId,
+                'group_id' => $group->id,
+                'org_id' => $org->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'is_youtube' => true,
+                'slave_video' => [
+                    'id' => $slaveVideo->id,
+                    'title' => $slaveVideo->title,
+                    'camera_angle' => $cameraAngle,
+                    'sync_offset' => 0,
+                    'is_synced' => false,
+                    'stream_url' => null,
+                    'bunny_hls_url' => null,
+                    'bunny_status' => null,
+                    'bunny_mp4_url' => null,
+                    'is_youtube_video' => true,
+                    'youtube_video_id' => $youtubeVideoId,
+                ],
+            ]);
+        }
+        // ── End YouTube slave branch ──────────────────────────────────────────
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -72,7 +173,7 @@ class BunnyUploadController extends Controller
             // para que los videos aparezcan en carpetas Torneo > Club
             $clubId = null;
             if ($request->filled('local_team_name') && ! $org->isClub()) {
-                $club   = Club::firstOrCreate(['name' => trim($request->local_team_name)]);
+                $club = Club::firstOrCreate(['name' => trim($request->local_team_name)]);
                 $clubId = $club->id;
             }
 
@@ -88,7 +189,7 @@ class BunnyUploadController extends Controller
                 'match_date' => $request->match_date,
                 'visibility_type' => $request->input('visibility_type', 'public'),
                 'analyzed_team_name' => $request->local_team_name,
-                'club_id'           => $clubId,
+                'club_id' => $clubId,
                 'rival_team_id' => $request->rival_team_id,
                 'rival_team_name' => $request->rival_team_name,
                 'tournament_id' => $request->tournament_id,
@@ -134,7 +235,7 @@ class BunnyUploadController extends Controller
                 if ($master) {
                     // Get or create group for master
                     $group = $master->videoGroups()->first();
-                    if (!$group) {
+                    if (! $group) {
                         $group = VideoGroup::create([
                             'name' => null,
                             'organization_id' => $org->id,

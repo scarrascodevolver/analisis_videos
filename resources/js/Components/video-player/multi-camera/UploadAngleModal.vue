@@ -23,6 +23,10 @@ const emit = defineEmits<{
     angleUploaded: [slave: SlaveVideo];
 }>();
 
+// ─── Tabs ──────────────────────────────────────────────────────
+type UploadTab = 'file' | 'youtube';
+const activeTab = ref<UploadTab>('file');
+
 // ─── Preset angles ────────────────────────────────────────────
 const PRESET_ANGLES = [
     'Tribuna lateral',
@@ -32,15 +36,20 @@ const PRESET_ANGLES = [
     'Diagonal',
 ];
 
-// ─── State ────────────────────────────────────────────────────
+// ─── Shared state ─────────────────────────────────────────────
 const cameraAngle = ref('');
 const customAngle = ref('');
+const isUploading = ref(false);
+const errorMessage = ref('');
+
+// ─── File tab state ───────────────────────────────────────────
 const selectedFile = ref<File | null>(null);
 const isDragging = ref(false);
 const uploadProgress = ref(0);
-const isUploading = ref(false);
-const errorMessage = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
+
+// ─── YouTube tab state ────────────────────────────────────────
+const youtubeUrl = ref('');
 
 // ─── Computed ─────────────────────────────────────────────────
 const effectiveAngle = computed(() => {
@@ -48,8 +57,16 @@ const effectiveAngle = computed(() => {
     return cameraAngle.value;
 });
 
-const canSubmit = computed(() => {
+const canSubmitFile = computed(() => {
     return effectiveAngle.value.length > 0 && selectedFile.value !== null && !isUploading.value;
+});
+
+const canSubmitYoutube = computed(() => {
+    return effectiveAngle.value.length > 0 && youtubeUrl.value.trim().length > 0 && !isUploading.value;
+});
+
+const canSubmit = computed(() => {
+    return activeTab.value === 'file' ? canSubmitFile.value : canSubmitYoutube.value;
 });
 
 const formattedFileSize = computed(() => {
@@ -93,9 +110,68 @@ function openFilePicker() {
     fileInputRef.value?.click();
 }
 
-// ─── Upload ───────────────────────────────────────────────────
-async function handleSubmit() {
-    if (!canSubmit.value || !selectedFile.value) return;
+// ─── Submit: YouTube ──────────────────────────────────────────
+async function handleSubmitYoutube() {
+    if (!canSubmitYoutube.value) return;
+
+    isUploading.value = true;
+    errorMessage.value = '';
+
+    const angle = effectiveAngle.value;
+    const videoAny = props.video as any;
+
+    try {
+        const payload = {
+            youtube_url: youtubeUrl.value.trim(),
+            camera_angle: angle,
+            master_video_id: props.video.id,
+        };
+
+        const res = await fetch('/api/upload/bunny/init', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrf(),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({})) as any;
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || `Error al agregar el ángulo de YouTube (HTTP ${res.status})`);
+        }
+
+        // Build a SlaveVideo from the server response
+        const newSlave: SlaveVideo = {
+            id: data.slave_video.id,
+            title: data.slave_video.title,
+            stream_url: data.slave_video.stream_url ?? '',
+            camera_angle: data.slave_video.camera_angle,
+            sync_offset: data.slave_video.sync_offset ?? 0,
+            is_synced: data.slave_video.is_synced ?? false,
+            bunny_hls_url: data.slave_video.bunny_hls_url ?? null,
+            bunny_status: data.slave_video.bunny_status ?? null,
+            bunny_mp4_url: data.slave_video.bunny_mp4_url ?? null,
+            is_youtube_video: true,
+            youtube_video_id: data.slave_video.youtube_video_id,
+        };
+
+        emit('angleUploaded', newSlave);
+        resetForm();
+        emit('close');
+
+    } catch (err: any) {
+        console.error('UploadAngleModal YouTube error:', err);
+        errorMessage.value = err.message || 'Ocurrió un error inesperado. Intentá de nuevo.';
+    } finally {
+        isUploading.value = false;
+    }
+}
+
+// ─── Submit: File upload ───────────────────────────────────────
+async function handleSubmitFile() {
+    if (!canSubmitFile.value || !selectedFile.value) return;
 
     isUploading.value = true;
     errorMessage.value = '';
@@ -222,6 +298,15 @@ async function handleSubmit() {
     }
 }
 
+// ─── Unified submit dispatcher ─────────────────────────────────
+function handleSubmit() {
+    if (activeTab.value === 'youtube') {
+        handleSubmitYoutube();
+    } else {
+        handleSubmitFile();
+    }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────
 function handleClose() {
     if (!isUploading.value) {
@@ -231,12 +316,14 @@ function handleClose() {
 }
 
 function resetForm() {
+    activeTab.value = 'file';
     cameraAngle.value = '';
     customAngle.value = '';
     selectedFile.value = null;
     uploadProgress.value = 0;
     errorMessage.value = '';
     isDragging.value = false;
+    youtubeUrl.value = '';
     if (fileInputRef.value) fileInputRef.value.value = '';
 }
 
@@ -278,7 +365,31 @@ watch(() => props.show, (newVal) => {
                                 <span>Ángulo adicional para: <strong>{{ video.title }}</strong></span>
                             </div>
 
-                            <!-- Angle name -->
+                            <!-- Source type tabs -->
+                            <div class="source-tabs">
+                                <button
+                                    type="button"
+                                    class="source-tab"
+                                    :class="{ active: activeTab === 'file' }"
+                                    :disabled="isUploading"
+                                    @click="activeTab = 'file'"
+                                >
+                                    <i class="fas fa-file-video"></i>
+                                    Subir archivo
+                                </button>
+                                <button
+                                    type="button"
+                                    class="source-tab"
+                                    :class="{ active: activeTab === 'youtube' }"
+                                    :disabled="isUploading"
+                                    @click="activeTab = 'youtube'"
+                                >
+                                    <i class="fab fa-youtube"></i>
+                                    URL de YouTube
+                                </button>
+                            </div>
+
+                            <!-- Angle name (shared for both tabs) -->
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-video"></i>
@@ -317,77 +428,105 @@ watch(() => props.show, (newVal) => {
                                 />
                             </div>
 
-                            <!-- File dropzone -->
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-file-video"></i>
-                                    Archivo de video
-                                </label>
+                            <!-- TAB: File upload -->
+                            <template v-if="activeTab === 'file'">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-video"></i>
+                                        Archivo de video
+                                    </label>
 
-                                <!-- Hidden file input -->
-                                <input
-                                    ref="fileInputRef"
-                                    type="file"
-                                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,.mp4,.mov,.avi,.webm,.mkv"
-                                    style="display:none"
-                                    @change="handleFileSelect"
-                                />
+                                    <!-- Hidden file input -->
+                                    <input
+                                        ref="fileInputRef"
+                                        type="file"
+                                        accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,.mp4,.mov,.avi,.webm,.mkv"
+                                        style="display:none"
+                                        @change="handleFileSelect"
+                                    />
 
-                                <!-- Dropzone (shown when no file selected) -->
-                                <div
-                                    v-if="!selectedFile"
-                                    class="dropzone"
-                                    :class="{ dragging: isDragging }"
-                                    @click="openFilePicker"
-                                    @dragover.prevent="isDragging = true"
-                                    @dragleave.prevent="isDragging = false"
-                                    @drop.prevent="handleDrop"
-                                >
-                                    <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
-                                    <p class="dropzone-text">Arrastrá el video aquí o hacé clic para seleccionar</p>
-                                    <p class="dropzone-hint">mp4, mov, avi, webm, mkv — hasta 8 GB</p>
-                                </div>
-
-                                <!-- Selected file info -->
-                                <div v-if="selectedFile" class="file-info">
-                                    <div class="file-details">
-                                        <i class="fas fa-file-video file-icon"></i>
-                                        <div class="file-text">
-                                            <span class="file-name">{{ selectedFile.name }}</span>
-                                            <span class="file-size">{{ formattedFileSize }}</span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        v-if="!isUploading"
-                                        type="button"
-                                        class="btn-remove-file"
-                                        title="Quitar archivo"
-                                        @click="selectedFile = null"
-                                    >
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Upload progress -->
-                            <div v-if="isUploading" class="progress-section">
-                                <div class="progress-header">
-                                    <span class="progress-label">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                        Subiendo ángulo...
-                                    </span>
-                                    <span class="progress-percent">{{ uploadProgress }}%</span>
-                                </div>
-                                <div class="progress-bar-track">
+                                    <!-- Dropzone (shown when no file selected) -->
                                     <div
-                                        class="progress-bar-fill"
-                                        :style="{ width: uploadProgress + '%' }"
-                                    ></div>
+                                        v-if="!selectedFile"
+                                        class="dropzone"
+                                        :class="{ dragging: isDragging }"
+                                        @click="openFilePicker"
+                                        @dragover.prevent="isDragging = true"
+                                        @dragleave.prevent="isDragging = false"
+                                        @drop.prevent="handleDrop"
+                                    >
+                                        <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
+                                        <p class="dropzone-text">Arrastrá el video aquí o hacé clic para seleccionar</p>
+                                        <p class="dropzone-hint">mp4, mov, avi, webm, mkv — hasta 8 GB</p>
+                                    </div>
+
+                                    <!-- Selected file info -->
+                                    <div v-if="selectedFile" class="file-info">
+                                        <div class="file-details">
+                                            <i class="fas fa-file-video file-icon"></i>
+                                            <div class="file-text">
+                                                <span class="file-name">{{ selectedFile.name }}</span>
+                                                <span class="file-size">{{ formattedFileSize }}</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            v-if="!isUploading"
+                                            type="button"
+                                            class="btn-remove-file"
+                                            title="Quitar archivo"
+                                            @click="selectedFile = null"
+                                        >
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="progress-note">
-                                    No cierres esta ventana hasta que la subida termine.
-                                </p>
-                            </div>
+
+                                <!-- Upload progress -->
+                                <div v-if="isUploading" class="progress-section">
+                                    <div class="progress-header">
+                                        <span class="progress-label">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            Subiendo ángulo...
+                                        </span>
+                                        <span class="progress-percent">{{ uploadProgress }}%</span>
+                                    </div>
+                                    <div class="progress-bar-track">
+                                        <div
+                                            class="progress-bar-fill"
+                                            :style="{ width: uploadProgress + '%' }"
+                                        ></div>
+                                    </div>
+                                    <p class="progress-note">
+                                        No cierres esta ventana hasta que la subida termine.
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- TAB: YouTube URL -->
+                            <template v-if="activeTab === 'youtube'">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fab fa-youtube yt-icon"></i>
+                                        URL de YouTube
+                                    </label>
+                                    <input
+                                        v-model="youtubeUrl"
+                                        type="url"
+                                        class="form-control"
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                        :disabled="isUploading"
+                                        maxlength="500"
+                                    />
+                                    <p class="field-hint">
+                                        Formatos aceptados: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+                                    </p>
+                                </div>
+
+                                <div v-if="isUploading" class="yt-loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    Agregando ángulo de YouTube...
+                                </div>
+                            </template>
 
                             <!-- Error message -->
                             <div v-if="errorMessage" class="alert alert-danger">
@@ -415,9 +554,14 @@ watch(() => props.show, (newVal) => {
                             >
                                 <i
                                     class="fas"
-                                    :class="isUploading ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'"
+                                    :class="isUploading ? 'fa-spinner fa-spin' : (activeTab === 'youtube' ? 'fa-plus-circle' : 'fa-cloud-upload-alt')"
                                 ></i>
-                                {{ isUploading ? `Subiendo ${uploadProgress}%...` : 'Subir ángulo' }}
+                                <template v-if="isUploading">
+                                    {{ activeTab === 'file' ? `Subiendo ${uploadProgress}%...` : 'Agregando...' }}
+                                </template>
+                                <template v-else>
+                                    {{ activeTab === 'youtube' ? 'Agregar ángulo YouTube' : 'Subir ángulo' }}
+                                </template>
                             </button>
                         </div>
 
@@ -528,7 +672,7 @@ watch(() => props.show, (newVal) => {
     border-radius: 6px;
     color: #aaa;
     font-size: 0.85rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .master-info i {
@@ -538,6 +682,52 @@ watch(() => props.show, (newVal) => {
 
 .master-info strong {
     color: #fff;
+}
+
+/* ─── Source tabs ────────────────────────────────────────── */
+.source-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.25rem;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.source-tab {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background: #0f0f0f;
+    border: none;
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    transition: all 0.2s;
+}
+
+.source-tab:first-child {
+    border-right: 1px solid #333;
+}
+
+.source-tab:hover:not(:disabled):not(.active) {
+    background: #1a1a1a;
+    color: #ccc;
+}
+
+.source-tab.active {
+    background: rgba(0, 183, 181, 0.12);
+    color: #00B7B5;
+    font-weight: 600;
+}
+
+.source-tab:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* Form groups */
@@ -557,6 +747,10 @@ watch(() => props.show, (newVal) => {
 
 .form-label i {
     color: #00B7B5;
+}
+
+.yt-icon {
+    color: #ff0000 !important;
 }
 
 .form-control {
@@ -583,6 +777,12 @@ watch(() => props.show, (newVal) => {
 
 .mt-2 {
     margin-top: 0.5rem;
+}
+
+.field-hint {
+    margin: 0.4rem 0 0 0;
+    font-size: 0.75rem;
+    color: #555;
 }
 
 /* Preset buttons */
@@ -777,6 +977,23 @@ watch(() => props.show, (newVal) => {
     color: #666;
     margin: 0.5rem 0 0 0;
     font-style: italic;
+}
+
+/* YouTube loading indicator */
+.yt-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 0, 0, 0.07);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    border-radius: 6px;
+    color: #f08080;
+    font-size: 0.875rem;
+}
+
+.yt-loading i {
+    color: #ff4444;
 }
 
 /* Alert */

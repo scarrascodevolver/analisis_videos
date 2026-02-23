@@ -76,6 +76,8 @@ export interface SlaveVideo {
     bunny_hls_url?: string | null;
     bunny_status?: string | null;
     bunny_mp4_url?: string | null;
+    is_youtube_video?: boolean;
+    youtube_video_id?: string | null;
 }
 
 export interface VideoComment {

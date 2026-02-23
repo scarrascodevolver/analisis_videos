@@ -4,7 +4,16 @@
         @click="handleClick"
     >
         <div class="video-wrapper">
+            <!-- YouTube slave player -->
+            <div
+                v-if="slave.is_youtube_video && slave.youtube_video_id"
+                :id="ytContainerId"
+                class="slave-video yt-slave"
+            />
+
+            <!-- Regular HTML5 video slave -->
             <video
+                v-else
                 ref="videoRef"
                 class="slave-video"
                 :src="isHls ? undefined : (slave.bunny_mp4_url ?? slave.stream_url)"
@@ -53,6 +62,10 @@ const emit = defineEmits<{
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 let hlsInstance: Hls | null = null;
+let ytPlayerInstance: any = null;
+
+// Stable DOM id for the YouTube iframe container
+const ytContainerId = `yt-slave-${props.slave.id}`;
 
 const activeHlsUrl = computed(() =>
     props.slave.bunny_hls_url && props.slave.bunny_status === 'ready' ? props.slave.bunny_hls_url : null
@@ -62,7 +75,77 @@ const isHls = computed(() => !!activeHlsUrl.value);
 // Inject the multiCamera composable from parent
 const multiCamera = inject<any>('multiCamera', null);
 
+// ── YouTube IFrame API helpers ────────────────────────────────────────────────
+
+declare global {
+    interface Window {
+        YT: any;
+        onYouTubeIframeAPIReady?: () => void;
+    }
+}
+
+function ensureYtApiLoaded(): Promise<void> {
+    return new Promise((resolve) => {
+        if (window.YT && window.YT.Player) {
+            resolve();
+            return;
+        }
+
+        // If the script tag is already in the DOM, just wait for the callback
+        const existingCallback = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+            if (existingCallback) existingCallback();
+            resolve();
+        };
+
+        if (!document.getElementById('yt-iframe-api-script')) {
+            const tag = document.createElement('script');
+            tag.id = 'yt-iframe-api-script';
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+        }
+    });
+}
+
+async function initYtPlayer() {
+    await ensureYtApiLoaded();
+
+    const container = document.getElementById(ytContainerId);
+    if (!container) return;
+
+    ytPlayerInstance = new window.YT.Player(ytContainerId, {
+        videoId: props.slave.youtube_video_id!,
+        playerVars: {
+            autoplay: 0,
+            controls: 0,          // Hide YouTube controls — master controls playback
+            mute: 1,              // Always muted (slaves follow master audio)
+            modestbranding: 1,
+            rel: 0,
+            disablekb: 1,
+            fs: 0,
+            iv_load_policy: 3,
+            playsinline: 1,
+        },
+        events: {
+            onReady: () => {
+                // Register the YT player with the multi-camera controller
+                if (multiCamera) {
+                    multiCamera.registerSlaveYtPlayer(props.slave.id, ytPlayerInstance);
+                }
+            },
+        },
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 onMounted(() => {
+    if (props.slave.is_youtube_video && props.slave.youtube_video_id) {
+        // YouTube slave: initialise YT.Player
+        initYtPlayer();
+        return;
+    }
+
     if (!videoRef.value) return;
 
     // Inicializar HLS (Bunny o Cloudflare legacy)
@@ -83,6 +166,17 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    if (props.slave.is_youtube_video) {
+        if (multiCamera) {
+            multiCamera.unregisterSlaveYtPlayer(props.slave.id);
+        }
+        if (ytPlayerInstance) {
+            try { ytPlayerInstance.destroy(); } catch (_) {}
+            ytPlayerInstance = null;
+        }
+        return;
+    }
+
     if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
@@ -132,6 +226,17 @@ defineExpose({
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+/* YouTube iframe fills the wrapper the same way as the video element */
+.yt-slave {
+    object-fit: unset;
+}
+
+.yt-slave :deep(iframe) {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .title-overlay {

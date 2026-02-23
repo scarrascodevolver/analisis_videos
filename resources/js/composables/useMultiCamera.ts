@@ -17,6 +17,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
 
     // State
     const slaveVideoElements = ref<Map<number, HTMLVideoElement>>(new Map());
+    const slaveYtPlayers = ref<Map<number, any>>(new Map()); // slaveId -> YT.Player
     const lastSyncTimes = ref<Map<number, number>>(new Map());
     const abortController = ref<AbortController | null>(null);
     const isBuffering = ref(false);
@@ -39,6 +40,62 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         if (!Array.isArray(slaveVideos.value)) return [];
         return slaveVideos.value;
     }
+
+    // ── YouTube player registration ───────────────────────────────────────────
+
+    function registerSlaveYtPlayer(slaveId: number, ytPlayer: any) {
+        slaveYtPlayers.value.set(slaveId, ytPlayer);
+        lastSyncTimes.value.set(slaveId, 0);
+    }
+
+    function unregisterSlaveYtPlayer(slaveId: number) {
+        slaveYtPlayers.value.delete(slaveId);
+        lastSyncTimes.value.delete(slaveId);
+    }
+
+    /**
+     * Sync a single YT slave to the master's current time.
+     * isPlaying indicates whether master is playing (not paused).
+     */
+    function syncYtSlaveToMaster(slaveId: number, masterCurrentTime: number, isPlaying: boolean) {
+        const ytPlayer = slaveYtPlayers.value.get(slaveId);
+        if (!ytPlayer) return;
+
+        const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
+        if (!slaveData) return;
+
+        const offset = Number(slaveData.sync_offset || 0);
+
+        // If master hasn't reached this slave's start point yet, keep it at 0/paused
+        if (offset > 0 && masterCurrentTime < offset) {
+            try {
+                ytPlayer.seekTo(0, true);
+                ytPlayer.pauseVideo();
+            } catch (_) { /* player may not be ready */ }
+            return;
+        }
+
+        const targetTime = Math.max(0, masterCurrentTime - offset);
+
+        try {
+            ytPlayer.seekTo(targetTime, true);
+            if (isPlaying) {
+                ytPlayer.playVideo();
+            } else {
+                ytPlayer.pauseVideo();
+            }
+            lastSyncTimes.value.set(slaveId, Date.now());
+        } catch (_) { /* YT player can fail if not ready yet */ }
+    }
+
+    /** Sync all registered YT slave players. */
+    function syncAllYtSlaves(masterCurrentTime: number, isPlaying: boolean) {
+        slaveYtPlayers.value.forEach((_, slaveId) => {
+            syncYtSlaveToMaster(slaveId, masterCurrentTime, isPlaying);
+        });
+    }
+
+    // ── HTML video slave helpers ──────────────────────────────────────────────
 
     // Setup slave event listeners for buffering recovery
     function setupSlaveListeners(slaveId: number, slave: HTMLVideoElement) {
@@ -243,20 +300,23 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             // CRITICAL: On first play after mount or after a master swap,
             // wait for all slaves to be ready before starting playback.
             if (isFirstPlay.value && slaves.size > 0) {
-                console.log('🎬 First play - waiting for all slaves to be ready...');
+                console.log('First play - waiting for all slaves to be ready...');
                 isFirstPlay.value = false;
 
                 // Pause master immediately
                 master.pause();
 
-                // Wait for all slaves to be ready
+                // Wait for all HTML slaves to be ready
                 await syncAllSlavesAndWait();
+
+                // Seek YT slaves to the correct position (best-effort; they will start playing after master resumes)
+                syncAllYtSlaves(master.currentTime, false);
 
                 // Small delay for stability
                 await new Promise(resolve => setTimeout(resolve, 200));
 
                 // Resume master after all slaves ready
-                console.log('✅ All slaves ready - resuming master playback');
+                console.log('All slaves ready - resuming master playback');
                 await master.play().catch(err => {
                     if (err?.name === 'AbortError') return;
                     console.warn('Master play failed after loading:', err);
@@ -266,7 +326,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                 return;
             }
 
-            // Normal play: sync all slaves (only play those that should be active)
+            // Normal play: sync all HTML slaves (only play those that should be active)
             const slavesForPlay = getSlavesMap();
             if (slavesForPlay) {
                 slavesForPlay.forEach((slave, slaveId) => {
@@ -304,6 +364,9 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     });
                 });
             }
+
+            // Play YT slaves
+            syncAllYtSlaves(master.currentTime, true);
         }, { signal });
 
         // Pause event - pause all slaves
@@ -313,6 +376,11 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             slaves.forEach(slave => {
                 slave.pause();
             });
+
+            // Pause YT slaves
+            slaveYtPlayers.value.forEach((ytPlayer) => {
+                try { ytPlayer.pauseVideo(); } catch (_) {}
+            });
         }, { signal });
 
         // Waiting event - master is buffering, pause all slaves
@@ -320,13 +388,18 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaves = getSlavesMap();
             if (!slaves) return;
 
-            console.log('⏸️ Master buffering - pausing all slaves to maintain sync');
+            console.log('Master buffering - pausing all slaves to maintain sync');
             isBuffering.value = true;
 
             slaves.forEach(slave => {
                 if (!slave.paused) {
                     slave.pause();
                 }
+            });
+
+            // Pause YT slaves while master buffers
+            slaveYtPlayers.value.forEach((ytPlayer) => {
+                try { ytPlayer.pauseVideo(); } catch (_) {}
             });
         }, { signal });
 
@@ -337,9 +410,9 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaves = getSlavesMap();
             if (!slaves) return;
 
-            console.log('▶️ Master resumed after buffering - re-syncing slaves...');
+            console.log('Master resumed after buffering - re-syncing slaves...');
 
-            // Re-sync all slaves to master time
+            // Re-sync all HTML slaves to master time
             await syncAllSlavesAndWait();
 
             // Resume playback only on slaves that should be active
@@ -361,8 +434,11 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                 });
             });
 
+            // Re-sync YT slaves after buffering
+            syncAllYtSlaves(master.currentTime, true);
+
             isBuffering.value = false;
-            console.log('✅ All slaves resumed and synced after buffering');
+            console.log('All slaves resumed and synced after buffering');
         }, { signal });
 
         // Stalled event - network issues on master, pause slaves
@@ -370,11 +446,16 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaves = getSlavesMap();
             if (!slaves) return;
 
-            console.warn('⚠️ Master stalled (network issue) - pausing slaves');
+            console.warn('Master stalled (network issue) - pausing slaves');
             slaves.forEach(slave => {
                 if (!slave.paused) {
                     slave.pause();
                 }
+            });
+
+            // Pause YT slaves on stall
+            slaveYtPlayers.value.forEach((ytPlayer) => {
+                try { ytPlayer.pauseVideo(); } catch (_) {}
             });
         }, { signal });
 
@@ -384,11 +465,16 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const slaves = getSlavesMap();
             if (!slaves) return;
 
-            console.log('🔍 Master seeking - pausing all slaves immediately');
+            console.log('Master seeking - pausing all slaves immediately');
             slaves.forEach(slave => {
                 if (!slave.paused) {
                     slave.pause();
                 }
+            });
+
+            // Pause YT slaves during seek
+            slaveYtPlayers.value.forEach((ytPlayer) => {
+                try { ytPlayer.pauseVideo(); } catch (_) {}
             });
         }, { signal });
 
@@ -398,10 +484,13 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             // Small debounce (25ms) to handle rapid seeks (like dragging scrubber)
             if (seekDebounce) clearTimeout(seekDebounce);
             seekDebounce = setTimeout(async () => {
-                console.log('✅ Master seeked - syncing all slaves...');
+                console.log('Master seeked - syncing all slaves...');
 
-                // Wait for all slaves to buffer and be ready
+                // Wait for all HTML slaves to buffer and be ready
                 await syncAllSlavesAndWait();
+
+                // Seek YT slaves
+                syncAllYtSlaves(master.currentTime, !master.paused);
 
                 // Then sync play/pause state
                 const slaves = getSlavesMap();
@@ -433,7 +522,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
 
                 // Clear seeking flag
                 isSeeking.value = false;
-                console.log('✅ Seek complete - all slaves synced');
+                console.log('Seek complete - all slaves synced');
             }, 25); // Reduced from 100ms to 25ms for faster response
         }, { signal });
 
@@ -452,6 +541,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const adaptiveTolerance = currentRate > 2 ? 0.5 : SYNC_TOLERANCE;
             const adaptiveThrottle = currentRate > 2 ? 100 : SYNC_THROTTLE; // 100ms for high speeds
 
+            // Sync HTML slaves
             slaves.forEach((slave, slaveId) => {
                 const lastSync = lastSyncTimes.value.get(slaveId) || 0;
                 if (now - lastSync < adaptiveThrottle) return;
@@ -494,6 +584,20 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     lastSyncTimes.value.set(slaveId, now);
                 }
             });
+
+            // Sync YT slaves (throttled at adaptive rate)
+            slaveYtPlayers.value.forEach((_, slaveId) => {
+                const lastSync = lastSyncTimes.value.get(slaveId) || 0;
+                if (now - lastSync < adaptiveThrottle) return;
+
+                const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
+                if (!slaveData) return;
+
+                const offset = Number(slaveData.sync_offset || 0);
+                const targetTime = Math.max(0, master.currentTime - offset);
+
+                syncYtSlaveToMaster(slaveId, master.currentTime, !master.paused);
+            });
         }, { signal });
 
         // Ratechange event - sync playback rate with improved synchronization
@@ -504,7 +608,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
             const newRate = master.playbackRate;
             const wasPlaying = !master.paused;
 
-            console.log(`🎬 Playback rate changed to ${newRate}x - syncing ${slaves.size} slaves...`);
+            console.log(`Playback rate changed to ${newRate}x - syncing ${slaves.size} slaves...`);
 
             // If changing to high speed (>2x), use improved sync
             if (newRate > 2) {
@@ -513,7 +617,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     master.pause();
                 }
 
-                // Apply new rate to all slaves and wait for them to be ready
+                // Apply new rate to all HTML slaves and wait for them to be ready
                 const syncPromises: Promise<void>[] = [];
 
                 slaves.forEach((slave, slaveId) => {
@@ -538,7 +642,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     syncPromises.push(promise);
                 });
 
-                // Wait for all slaves to be ready
+                // Wait for all HTML slaves to be ready
                 await Promise.all(syncPromises);
 
                 // Sync time precisely before resuming
@@ -550,14 +654,20 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                     slaves.forEach(slave => {
                         slave.play().catch(() => {});
                     });
+                    // YT slaves don't support arbitrary playback rates; just re-sync position
+                    syncAllYtSlaves(master.currentTime, true);
                 }
 
-                console.log(`✅ Playback rate ${newRate}x applied and synced`);
+                console.log(`Playback rate ${newRate}x applied and synced`);
             } else {
                 // For normal speeds (<=2x), just apply immediately
                 slaves.forEach(slave => {
                     slave.playbackRate = newRate;
                 });
+                // YT slaves: re-sync position only (no playback rate control via API)
+                if (wasPlaying) {
+                    syncAllYtSlaves(master.currentTime, true);
+                }
             }
         }, { signal });
     }
@@ -611,6 +721,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     function cleanup() {
         abortController.value?.abort();
         slaveVideoElements.value.clear();
+        slaveYtPlayers.value.clear();
         lastSyncTimes.value.clear();
     }
 
@@ -634,6 +745,8 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
     return {
         registerSlaveElement,
         unregisterSlaveElement,
+        registerSlaveYtPlayer,
+        unregisterSlaveYtPlayer,
         resetForNewMaster,
         getSyncStatus,
         swapMaster,
