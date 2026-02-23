@@ -717,6 +717,15 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         isFirstPlay.value = true;
     }
 
+    /**
+     * Called by Show.vue when master is a YouTube video.
+     * Bridges videoStore state changes → YT slave sync.
+     * (masterVideoRef is null for YT masters so setupMasterListeners never runs.)
+     */
+    function onYtMasterUpdate(currentTime: number, isPlaying: boolean) {
+        syncAllYtSlaves(currentTime, isPlaying);
+    }
+
     // Cleanup
     function cleanup() {
         abortController.value?.abort();
@@ -748,6 +757,7 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         registerSlaveYtPlayer,
         unregisterSlaveYtPlayer,
         resetForNewMaster,
+        onYtMasterUpdate,
         getSyncStatus,
         swapMaster,
         adjustSyncOffset,

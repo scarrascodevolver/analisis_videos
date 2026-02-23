@@ -175,17 +175,27 @@ console.log('🎬 Video Multi-Camera Setup:', {
 // Instead, useMultiCamera handles synchronization internally
 const videoLoader = null;
 
-const multiCamera = props.video.is_part_of_group
-    ? useMultiCamera({
-        masterVideoRef,
-        slaveVideos,
-        videoLoader: videoLoader ?? undefined,
-    })
-    : null;
+// Siempre crear multiCamera — maneja tanto HTML5 como YouTube como master.
+// Si se crea con is_part_of_group=false, no tiene slaves registrados y es no-op.
+const multiCamera = useMultiCamera({
+    masterVideoRef,
+    slaveVideos,
+    videoLoader: videoLoader ?? undefined,
+});
 
 // Provide multiCamera and videoLoader to child components
 provide('multiCamera', multiCamera);
 provide('videoLoader', videoLoader);
+
+// Cuando el master es YouTube, useMultiCamera no tiene HTMLVideoElement para escuchar.
+// Bridgeamos los cambios del videoStore hacia los slaves YouTube.
+watch(
+    [() => videoStore.isPlaying, () => videoStore.currentTime],
+    ([playing, time]) => {
+        if (!isYoutubeVideo.value) return; // Solo para master YouTube
+        multiCamera.onYtMasterUpdate(time as number, playing as boolean);
+    }
+);
 
 // Provide videoApi and toast to child components (for TimelineOffset and others)
 const videoApi = useVideoApi(props.video.id);
