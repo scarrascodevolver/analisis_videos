@@ -21,11 +21,21 @@ const props = defineProps<{
 // ── YouTube ────────────────────────────────────────────────────────────────────
 const isYoutube = computed(() => !!props.isYoutubeVideo && !!props.youtubeVideoId);
 
-const youtubeEmbedUrl = computed(() => {
-    if (!isYoutube.value) return null;
-    // enablejsapi=1 permite controlar el player con YouTube IFrame API si se necesita en el futuro
-    return `https://www.youtube.com/embed/${props.youtubeVideoId}?enablejsapi=1&rel=0&modestbranding=1`;
-});
+const ytContainerRef = ref<HTMLElement | null>(null);
+
+// Load YouTube IFrame API once (singleton — safe to call multiple times)
+let ytApiPromise: Promise<void> | null = null;
+function loadYouTubeAPI(): Promise<void> {
+    if (ytApiPromise) return ytApiPromise;
+    ytApiPromise = new Promise(resolve => {
+        if ((window as any).YT?.Player) { resolve(); return; }
+        const tag   = document.createElement('script');
+        tag.src     = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+        (window as any).onYouTubeIframeAPIReady = resolve;
+    });
+    return ytApiPromise;
+}
 
 // ── HLS / MP4 ─────────────────────────────────────────────────────────────────
 const activeHlsUrl = computed(() =>
@@ -118,16 +128,38 @@ function initHls(hlsUrl: string, restoreTime?: number, shouldPlay?: boolean) {
     }
 }
 
-onMounted(() => {
-    if (!videoEl.value) return;
+onMounted(async () => {
+    if (isYoutube.value && props.youtubeVideoId && ytContainerRef.value) {
+        // ── YouTube IFrame API player ──────────────────────────────────────────
+        await loadYouTubeAPI();
+        const YT = (window as any).YT;
+        const player = new YT.Player(ytContainerRef.value, {
+            videoId: props.youtubeVideoId,
+            width:   '100%',
+            height:  '100%',
+            playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
+            events: {
+                onReady: () => {
+                    videoStore.setYouTubePlayer(player);
+                },
+                onStateChange: (e: any) => {
+                    if (e.data === 1) videoStore.onPlay();  // YT.PlayerState.PLAYING
+                    if (e.data === 2) videoStore.onPause(); // YT.PlayerState.PAUSED
+                    if (e.data === 0) videoStore.onPause(); // YT.PlayerState.ENDED
+                },
+            },
+        });
+    } else {
+        // ── HTML5 video flow (unchanged) ───────────────────────────────────────
+        if (!videoEl.value) return;
 
-    // Inicializar HLS si ya está disponible (video existente con encoding completo)
-    if (isHls.value && activeHlsUrl.value) {
-        initHls(activeHlsUrl.value);
+        // Inicializar HLS si ya está disponible (video existente con encoding completo)
+        if (isHls.value && activeHlsUrl.value) {
+            initHls(activeHlsUrl.value);
+        }
+
+        videoStore.setVideoRef(videoEl.value);
     }
-
-    videoStore.setVideoRef(videoEl.value);
-
 });
 
 // Transición silenciosa a HLS en dos casos:
@@ -183,6 +215,10 @@ onBeforeUnmount(() => {
     if (document.pictureInPictureElement) {
         document.exitPictureInPicture().catch(() => {});
     }
+    // YouTube cleanup: stop polling interval and release player reference
+    if (isYoutube.value) {
+        videoStore.clearYouTubePlayer();
+    }
 });
 
 function downloadVideo() {
@@ -204,24 +240,21 @@ function handleVideoClick(event: MouseEvent) {
 <template>
     <div
         class="video-container"
-        :class="{ 'annotation-mode-active': annotationsStore.annotationMode }"
+        :class="{ 'annotation-mode-active': annotationsStore.annotationMode, 'is-youtube': isYoutube }"
         style="position: relative; background: #000; border-radius: 8px;"
     >
         <!-- Video wrapper for flex layout (doesn't affect canvas positioning) -->
         <div class="video-wrapper" style="position: relative; width: 100%; height: 100%;">
 
-            <!-- YouTube iframe embed -->
+            <!-- YouTube IFrame API player container -->
             <template v-if="isYoutube">
-                <iframe
-                    :src="youtubeEmbedUrl!"
-                    style="width: 100%; aspect-ratio: 16/9; display: block; border: none; border-radius: 8px;"
-                    allowfullscreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    :title="title"
-                ></iframe>
-                <div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 8px;border-radius:4px;pointer-events:none;">
-                    <i class="fab fa-youtube" style="color:#ff0000;"></i> YouTube
+                <div
+                    ref="ytContainerRef"
+                    style="width: 100%; height: 100%; min-height: 300px; background: #000;"
+                />
+                <!-- Badge YouTube -->
+                <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; pointer-events: none;">
+                    <i class="fab fa-youtube" style="color: #ff0000;"></i> YouTube
                 </div>
             </template>
 
@@ -321,6 +354,20 @@ function handleVideoClick(event: MouseEvent) {
 /* Allow toolbar to overflow when in annotation mode */
 .video-container.annotation-mode-active {
     overflow: visible;
+}
+
+/* YouTube container: ensure iframe fills the full space */
+.video-container.is-youtube {
+    height: 100%;
+    min-height: 300px;
+}
+
+:deep(iframe) {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    border: none;
+    border-radius: 8px;
 }
 
 .video-utility-controls {

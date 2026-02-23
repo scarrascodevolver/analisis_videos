@@ -22,6 +22,11 @@ export const useVideoStore = defineStore('video', () => {
     // Clip playback boundary (null = play freely)
     const clipEndTime = ref<number | null>(null);
 
+    // YouTube state
+    const youtubePlayer   = ref<any>(null);   // YT.Player instance
+    const isYoutubeActive = ref(false);
+    let   ytPollInterval: ReturnType<typeof setInterval> | null = null;
+
     // Computed
     const progress = computed(() => {
         if (!duration.value) return 0;
@@ -50,15 +55,53 @@ export const useVideoStore = defineStore('video', () => {
         }
     }
 
+    function setYouTubePlayer(player: any) {
+        youtubePlayer.value   = player;
+        isYoutubeActive.value = true;
+        // Poll currentTime + duration every 250ms (YT API has no timeupdate event)
+        ytPollInterval = setInterval(() => {
+            if (!youtubePlayer.value) return;
+            const ct  = youtubePlayer.value.getCurrentTime?.() ?? 0;
+            const dur = youtubePlayer.value.getDuration?.()    ?? 0;
+            currentTime.value = ct;
+            if (dur > 0) duration.value = dur;
+            // Respect clipEndTime boundary
+            if (clipEndTime.value !== null && ct >= clipEndTime.value) {
+                youtubePlayer.value.pauseVideo();
+                clipEndTime.value = null;
+            }
+        }, 250);
+    }
+
+    function clearYouTubePlayer() {
+        if (ytPollInterval) clearInterval(ytPollInterval);
+        ytPollInterval        = null;
+        youtubePlayer.value   = null;
+        isYoutubeActive.value = false;
+    }
+
     function play() {
-        videoRef.value?.play();
+        if (isYoutubeActive.value && youtubePlayer.value) {
+            youtubePlayer.value.playVideo();
+        } else {
+            videoRef.value?.play();
+        }
     }
 
     function pause() {
-        videoRef.value?.pause();
+        if (isYoutubeActive.value && youtubePlayer.value) {
+            youtubePlayer.value.pauseVideo();
+        } else {
+            videoRef.value?.pause();
+        }
     }
 
     function togglePlay() {
+        if (isYoutubeActive.value) {
+            if (isPlaying.value) pause();
+            else play();
+            return;
+        }
         if (!videoRef.value) return;
         if (videoRef.value.paused) {
             play();
@@ -68,21 +111,28 @@ export const useVideoStore = defineStore('video', () => {
     }
 
     function seek(time: number) {
-        if (!videoRef.value) return;
         const clamped = Math.max(0, Math.min(time, duration.value));
-        videoRef.value.currentTime = clamped;
         currentTime.value = clamped;
         clipEndTime.value = null; // Cancel any active clip boundary on manual seek
+        if (isYoutubeActive.value && youtubePlayer.value) {
+            youtubePlayer.value.seekTo(clamped, true);
+        } else if (videoRef.value) {
+            videoRef.value.currentTime = clamped;
+        }
     }
 
     /** Seek to start, play, and auto-pause when end is reached */
     function playClip(start: number, end: number) {
-        if (!videoRef.value) return;
         const clamped = Math.max(0, Math.min(start, duration.value));
-        videoRef.value.currentTime = clamped;
         currentTime.value = clamped;
         clipEndTime.value = end;
-        videoRef.value.play();
+        if (isYoutubeActive.value && youtubePlayer.value) {
+            youtubePlayer.value.seekTo(clamped, true);
+            youtubePlayer.value.playVideo();
+        } else if (videoRef.value) {
+            videoRef.value.currentTime = clamped;
+            videoRef.value.play();
+        }
     }
 
     function seekRelative(delta: number) {
@@ -176,6 +226,9 @@ export const useVideoStore = defineStore('video', () => {
         volume,
         isMuted,
         isPiPActive,
+        // YouTube state
+        youtubePlayer,
+        isYoutubeActive,
         // Computed
         progress,
         formattedCurrentTime,
@@ -185,6 +238,8 @@ export const useVideoStore = defineStore('video', () => {
         setVideoRef,
         setVideo,
         updateTimelineOffset,
+        setYouTubePlayer,
+        clearYouTubePlayer,
         play,
         pause,
         togglePlay,
