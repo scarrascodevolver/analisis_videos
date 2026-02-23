@@ -721,9 +721,38 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
      * Called by Show.vue when master is a YouTube video.
      * Bridges videoStore state changes → YT slave sync.
      * (masterVideoRef is null for YT masters so setupMasterListeners never runs.)
+     *
+     * Smart sync: only seekTo on state change or significant drift (>2s).
+     * Avoids interrupting buffer every 250ms which causes infinite loading.
      */
+    let _lastYtMasterPlaying: boolean | null = null;
+
     function onYtMasterUpdate(currentTime: number, isPlaying: boolean) {
-        syncAllYtSlaves(currentTime, isPlaying);
+        const playStateChanged = isPlaying !== _lastYtMasterPlaying;
+        _lastYtMasterPlaying = isPlaying;
+
+        slaveYtPlayers.value.forEach((ytPlayer, slaveId) => {
+            const slaveData = getSafeSlaveVideos().find(s => s.id === slaveId);
+            if (!slaveData) return;
+
+            const offset = Number(slaveData.sync_offset || 0);
+            const targetTime = Math.max(0, currentTime - offset);
+
+            try {
+                if (playStateChanged) {
+                    // Estado cambió: seek + play/pause inmediato
+                    ytPlayer.seekTo(targetTime, true);
+                    if (isPlaying) ytPlayer.playVideo();
+                    else ytPlayer.pauseVideo();
+                } else if (isPlaying) {
+                    // Ya está reproduciendo: solo corregir si hay deriva significativa
+                    const slaveTime = ytPlayer.getCurrentTime?.() ?? 0;
+                    if (Math.abs(slaveTime - targetTime) > 2.0) {
+                        ytPlayer.seekTo(targetTime, true);
+                    }
+                }
+            } catch (_) { /* player not ready yet */ }
+        });
     }
 
     // Cleanup
