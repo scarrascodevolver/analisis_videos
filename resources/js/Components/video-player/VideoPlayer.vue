@@ -408,6 +408,12 @@ function toggleTheaterMode() {
     transition: none !important;
 }
 
+/* Durante el drag: los iframes capturan mousemove/mouseup y bloquean el resize.
+   pointer-events:none hace que el cursor "atraviese" el iframe hacia el document. */
+:global(body.mc-no-select) iframe {
+    pointer-events: none !important;
+}
+
 :global(body.mc-no-select) {
     user-select: none !important;
     -webkit-user-select: none !important;
