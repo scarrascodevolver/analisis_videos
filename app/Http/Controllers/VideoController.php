@@ -235,7 +235,7 @@ class VideoController extends Controller
                     'category_id' => $request->category_id,
                     'division' => $request->division ?: 'unica',
                     'match_date' => $request->match_date,
-                    'status' => 'ready',
+                    'status' => 'completed',
                     'visibility_type' => $request->visibility_type ?? 'public',
                     'processing_status' => 'completed',
                     'is_youtube_video' => true,
