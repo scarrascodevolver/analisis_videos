@@ -1331,7 +1331,7 @@ function onYoutubeUrlChange(url) {
 }
 
 
-function submitYoutubeVideo() {
+async function submitYoutubeVideo() {
     const url = document.getElementById('youtubeUrlInput').value.trim();
     if (!url) {
         alert('Ingresá la URL del video de YouTube.');
@@ -1351,6 +1351,9 @@ function submitYoutubeVideo() {
         if (!categoryId) { alert('Seleccioná una categoría.'); return; }
     }
 
+    // Reusar resolveCommonData para crear torneo/rival si fueron escritos manualmente
+    const commonData = await resolveCommonData();
+
     // Construir y enviar el form con los datos del partido
     const form = document.createElement('form');
     form.method = 'POST';
@@ -1364,37 +1367,30 @@ function submitYoutubeVideo() {
         form.appendChild(input);
     };
 
-    addField('_token', getCsrf());
-    addField('video_source', 'youtube');
-    addField('youtube_url', url);
-
-    // Datos del partido desde el formulario
-    const localTeam  = document.getElementById('local_team_name')?.value || '';
-    const rivalTeam  = document.getElementById('rival_team_input')?.value || '';
-
-    // Auto-generar título igual que con archivos: "Local vs Rival (YYYY-MM-DD)"
+    // Auto-generar título: "Local vs Rival (YYYY-MM-DD)"
+    const localTeam = commonData.local_team_name || '';
+    const rivalTeam = commonData.rival_team_name  || document.getElementById('rival_team_input')?.value || '';
     let autoTitle = localTeam && rivalTeam
         ? `${localTeam} vs ${rivalTeam}`
         : (localTeam || rivalTeam || 'Video YouTube');
     if (matchDate) autoTitle += ` (${matchDate})`;
 
-    addField('title', autoTitle);
-    addField('local_team_name', localTeam);
-    addField('match_date',      matchDate);
-    addField('description',     document.getElementById('description')?.value || '');
-    addField('category_id',     document.getElementById('category_id')?.value || '');
-    addField('rival_team_name', document.getElementById('rival_team_input')?.value || '');
-    addField('rival_team_id',   document.getElementById('rival_team_id')?.value || '');
-    addField('tournament_id',   document.getElementById('tournament_id')?.value || '');
-    addField('division',        document.getElementById('division')?.value || '');
-    addField('assignment_notes',document.getElementById('assignment_notes')?.value || '');
-    const visEl = document.querySelector('input[name="visibility_type"]:checked');
-    addField('visibility_type', visEl ? visEl.value : 'public');
+    addField('_token',           getCsrf());
+    addField('video_source',     'youtube');
+    addField('youtube_url',      url);
+    addField('title',            autoTitle);
+    addField('local_team_name',  localTeam);
+    addField('match_date',       matchDate);
+    addField('description',      commonData.description);
+    addField('category_id',      commonData.category_id);
+    addField('rival_team_name',  rivalTeam);
+    addField('rival_team_id',    commonData.rival_team_id);
+    addField('tournament_id',    commonData.tournament_id);
+    addField('division',         commonData.division);
+    addField('assignment_notes', commonData.assignment_notes);
+    addField('visibility_type',  commonData.visibility_type);
 
-    // Jugadores asignados (select2 multi)
-    document.querySelectorAll('#assigned_players option:checked').forEach(el => {
-        addField('assigned_players[]', el.value);
-    });
+    commonData.assigned_players.forEach(p => addField('assigned_players[]', p));
 
     document.body.appendChild(form);
     form.submit();
