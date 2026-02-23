@@ -189,6 +189,10 @@ class VideoController extends Controller
                 'youtube_url.required' => 'Ingresá la URL del video de YouTube.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::warning('YouTube/Video store validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->except(['_token', 'youtube_url']),
+            ]);
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,

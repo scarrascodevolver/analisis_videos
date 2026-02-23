@@ -12,6 +12,19 @@
 <div class="row justify-content-center">
 <div class="col-lg-10">
 
+    {{-- ERRORES DE VALIDACIÓN --}}
+    @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show mb-3">
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        <strong><i class="fas fa-exclamation-triangle mr-1"></i>Errores al guardar el video:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
     {{-- ZONA DE ARCHIVOS --}}
     <div class="card card-rugby mb-3">
         <div class="card-header">
