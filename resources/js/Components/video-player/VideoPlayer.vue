@@ -272,6 +272,11 @@ function toggleTheaterMode() {
     align-items: center;
 }
 
+/* YouTube: el div contenedor no tiene ratio intrínseco, necesita ancho explícito */
+.single-col :deep(.video-container.is-youtube .video-wrapper) {
+    width: 100% !important;
+}
+
 .single-col :deep(video) {
     width: auto !important;
     height: 100% !important;
