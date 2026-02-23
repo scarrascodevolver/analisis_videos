@@ -192,6 +192,7 @@
 
         .brand-link .brand-image {
             max-height: 40px;
+            border-radius: 8px;
             filter: drop-shadow(0 0 6px rgba(0, 183, 181, 0.5));
         }
 
