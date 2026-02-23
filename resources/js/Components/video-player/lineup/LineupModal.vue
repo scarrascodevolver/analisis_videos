@@ -324,7 +324,7 @@ function availableLocalUsers() {
             .filter((id): id is number => id !== null) ?? []
     );
     return props.allUsers.filter(
-        u => !usedIds.has(u.id) && ['jugador', 'analista', 'entrenador'].includes(u.role)
+        u => !usedIds.has(u.id) && u.role === 'jugador'
     );
 }
 
