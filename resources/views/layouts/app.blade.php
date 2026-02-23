@@ -8,14 +8,16 @@
     @php
         $currentOrganization = auth()->check() ? auth()->user()->currentOrganization() : null;
         $orgName = $currentOrganization ? $currentOrganization->name : 'Rugby Key Performance';
+        $logoV   = filemtime(public_path('logo.png'))   ?: time();
+        $faviconV = filemtime(public_path('favicon.png')) ?: time();
         $orgLogo =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
-                : asset('logo.png');
+                : asset('logo.png') . '?v=' . $logoV;
         $orgFavicon =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
-                : asset('favicon.png');
+                : asset('favicon.png') . '?v=' . $faviconV;
     @endphp
     <title>@yield('page_title', 'Dashboard') - {{ $orgName }}</title>
     <link rel="icon" type="image/png" href="{{ $orgFavicon }}">
