@@ -234,11 +234,13 @@ class VideoController extends Controller
                 'status' => 'ready',
                 'visibility_type' => $request->visibility_type ?? 'public',
                 'processing_status' => 'completed',
-                'is_master' => true,
                 'is_youtube_video' => true,
                 'youtube_url' => $youtubeUrl,
                 'youtube_video_id' => $youtubeVideoId,
             ]);
+
+            // is_master no está en $fillable — se setea con query directa (igual que el modelo)
+            \DB::table('videos')->where('id', $video->id)->update(['is_master' => true]);
 
             \Log::info("Video {$video->id} registrado desde YouTube: {$youtubeUrl}");
         } else {
