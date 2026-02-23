@@ -4,12 +4,16 @@
         @click="handleClick"
     >
         <div class="video-wrapper">
-            <!-- YouTube slave player -->
+            <!-- YouTube slave player:
+                 YT.Player REEMPLAZA el div target con un <iframe>.
+                 El wrapper externo (.yt-slave-outer) persiste con la posición correcta.
+                 El iframe hereda tamaño vía :deep(iframe). -->
             <div
                 v-if="slave.is_youtube_video && slave.youtube_video_id"
-                :id="ytContainerId"
-                class="slave-video yt-slave"
-            />
+                class="slave-video yt-slave-outer"
+            >
+                <div :id="ytContainerId" style="width:100%;height:100%;" />
+            </div>
 
             <!-- Regular HTML5 video slave -->
             <video
@@ -228,15 +232,19 @@ defineExpose({
     object-fit: contain;
 }
 
-/* YouTube iframe fills the wrapper the same way as the video element */
-.yt-slave {
+/* YouTube: wrapper persiste con la posición, el iframe hereda tamaño */
+.yt-slave-outer {
     object-fit: unset;
 }
 
-.yt-slave :deep(iframe) {
-    width: 100%;
-    height: 100%;
+.yt-slave-outer :deep(iframe) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
     border: none;
+    display: block;
 }
 
 .title-overlay {
