@@ -248,12 +248,14 @@ class VideoController extends Controller
 
                 \Log::info("YouTube video {$video->id} created OK: {$youtubeUrl}");
             } catch (\Throwable $e) {
-                \Log::error('YouTube video creation FAILED: ' . $e->getMessage(), [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString(),
-                    'input' => $request->except('_token'),
-                ]);
+                // Debug: escribir directo a archivo para evitar issues con Log
+                file_put_contents(
+                    storage_path('logs/yt_debug.log'),
+                    date('Y-m-d H:i:s') . ' | ' . get_class($e) . ': ' . $e->getMessage()
+                    . ' | ' . $e->getFile() . ':' . $e->getLine() . "\n"
+                    . $e->getTraceAsString() . "\n---\n",
+                    FILE_APPEND
+                );
                 throw $e;
             }
         } else {
