@@ -606,7 +606,7 @@
             <!-- Brand Logo -->
             <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-2">
                 <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo" class="brand-logo-full"
-                    style="width: 120px; height: auto; object-fit: contain;">
+                    style="width: 120px; height: auto; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 0 6px rgba(0,183,181,0.5));">
                 <img src="{{ asset('favicon.png') }}" alt="{{ $orgName }}" class="brand-logo-mini"
                     style="width: 36px; height: 36px; object-fit: contain; display: none;">
             </a>
