@@ -55,7 +55,7 @@
                             <div v-else-if="activeTab === 'local'">
                                 <div class="section-header">
                                     <span class="section-title">Titulares (1-15)</span>
-                                    <span class="hint">Seleccioná jugadores del plantel</span>
+                                    <span class="hint">Buscá o escribí el nombre del jugador</span>
                                 </div>
 
                                 <div class="players-grid">
@@ -82,19 +82,49 @@
                                         </div>
 
                                         <div v-else class="slot-empty">
-                                            <select
-                                                class="player-select"
-                                                @change="onLocalPlayerSelect(pos, $event)"
+                                            <div
+                                                v-click-outside="() => closeDropdown(pos)"
+                                                class="slot-combobox"
                                             >
-                                                <option value="">— Asignar jugador —</option>
-                                                <option
-                                                    v-for="u in availableLocalUsers()"
-                                                    :key="u.id"
-                                                    :value="u.id"
+                                                <input
+                                                    type="text"
+                                                    class="player-input"
+                                                    placeholder="Buscar o escribir nombre..."
+                                                    :value="searchInputs[pos] ?? ''"
+                                                    @input="onSearchInput(pos, $event)"
+                                                    @keyup.enter="onManualConfirm(pos)"
+                                                    @focus="showDropdown[pos] = true"
+                                                    autocomplete="off"
+                                                />
+                                                <div
+                                                    v-if="showDropdown[pos] && filteredUsers(pos).length > 0"
+                                                    class="player-dropdown"
                                                 >
-                                                    {{ u.name }}
-                                                </option>
-                                            </select>
+                                                    <button
+                                                        v-for="u in filteredUsers(pos)"
+                                                        :key="u.id"
+                                                        class="dropdown-item"
+                                                        @mousedown.prevent="selectUser(pos, u)"
+                                                    >
+                                                        {{ u.name }}
+                                                        <span v-if="(u as any).position" class="user-position">{{ (u as any).position }}</span>
+                                                    </button>
+                                                    <div
+                                                        v-if="(searchInputs[pos] ?? '').trim()"
+                                                        class="dropdown-manual-hint"
+                                                    >
+                                                        <i class="fas fa-keyboard mr-1"></i> Presioná Enter para agregar "{{ searchInputs[pos] }}" manualmente
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    v-else-if="showDropdown[pos] && (searchInputs[pos] ?? '').trim()"
+                                                    class="player-dropdown"
+                                                >
+                                                    <div class="dropdown-manual-hint">
+                                                        <i class="fas fa-keyboard mr-1"></i> Presioná Enter para agregar "{{ searchInputs[pos] }}" manualmente
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -125,19 +155,49 @@
                                         </div>
 
                                         <div v-else class="slot-empty">
-                                            <select
-                                                class="player-select"
-                                                @change="onLocalBenchSelect(bench + 15, $event)"
+                                            <div
+                                                v-click-outside="() => closeDropdown(bench + 15)"
+                                                class="slot-combobox"
                                             >
-                                                <option value="">— Banco —</option>
-                                                <option
-                                                    v-for="u in availableLocalUsers()"
-                                                    :key="u.id"
-                                                    :value="u.id"
+                                                <input
+                                                    type="text"
+                                                    class="player-input"
+                                                    placeholder="Buscar o escribir nombre..."
+                                                    :value="searchInputs[bench + 15] ?? ''"
+                                                    @input="onSearchInput(bench + 15, $event)"
+                                                    @keyup.enter="onManualConfirm(bench + 15)"
+                                                    @focus="showDropdown[bench + 15] = true"
+                                                    autocomplete="off"
+                                                />
+                                                <div
+                                                    v-if="showDropdown[bench + 15] && filteredUsers(bench + 15).length > 0"
+                                                    class="player-dropdown"
                                                 >
-                                                    {{ u.name }}
-                                                </option>
-                                            </select>
+                                                    <button
+                                                        v-for="u in filteredUsers(bench + 15)"
+                                                        :key="u.id"
+                                                        class="dropdown-item"
+                                                        @mousedown.prevent="selectUser(bench + 15, u)"
+                                                    >
+                                                        {{ u.name }}
+                                                        <span v-if="(u as any).position" class="user-position">{{ (u as any).position }}</span>
+                                                    </button>
+                                                    <div
+                                                        v-if="(searchInputs[bench + 15] ?? '').trim()"
+                                                        class="dropdown-manual-hint"
+                                                    >
+                                                        <i class="fas fa-keyboard mr-1"></i> Presioná Enter para agregar "{{ searchInputs[bench + 15] }}" manualmente
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    v-else-if="showDropdown[bench + 15] && (searchInputs[bench + 15] ?? '').trim()"
+                                                    class="player-dropdown"
+                                                >
+                                                    <div class="dropdown-manual-hint">
+                                                        <i class="fas fa-keyboard mr-1"></i> Presioná Enter para agregar "{{ searchInputs[bench + 15] }}" manualmente
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -261,6 +321,22 @@ import { ref, computed, watch } from 'vue';
 import { useLineupStore } from '@/stores/lineupStore';
 import type { Video, User, RivalPlayer } from '@/types/video-player';
 
+// ── Custom v-click-outside directive ──────────────────────────────────────────
+
+const vClickOutside = {
+    mounted(el: HTMLElement, binding: any) {
+        el._clickOutsideHandler = (event: MouseEvent) => {
+            if (!el.contains(event.target as Node)) {
+                binding.value(event);
+            }
+        };
+        document.addEventListener('click', el._clickOutsideHandler);
+    },
+    unmounted(el: HTMLElement) {
+        document.removeEventListener('click', el._clickOutsideHandler);
+    },
+};
+
 // ── Props & emits ─────────────────────────────────────────────────────────────
 
 const props = defineProps<{
@@ -276,6 +352,10 @@ defineEmits<{ close: [] }>();
 const lineupStore = useLineupStore();
 const activeTab = ref<'local' | 'rival'>('local');
 const knownRivalPlayers = ref<RivalPlayer[]>([]);
+
+// Combobox state: keyed by slot position number (1-23)
+const searchInputs = ref<Record<number, string>>({});
+const showDropdown = ref<Record<number, boolean>>({});
 
 // ── Position map ──────────────────────────────────────────────────────────────
 
@@ -328,42 +408,85 @@ function availableLocalUsers() {
     );
 }
 
-async function onLocalPlayerSelect(pos: number, event: Event): Promise<void> {
-    const userId = parseInt((event.target as HTMLSelectElement).value);
-    if (!userId) return;
-    // Reset the select immediately so it doesn't look "stuck"
-    (event.target as HTMLSelectElement).value = '';
+// ── Combobox helpers ──────────────────────────────────────────────────────────
+
+function filteredUsers(pos: number) {
+    const q = (searchInputs.value[pos] ?? '').toLowerCase().trim();
+    const usedIds = new Set(
+        lineupStore.localLineup?.players.map(p => p.user_id).filter(Boolean) ?? []
+    );
+    const users = props.allUsers.filter(u => !usedIds.has(u.id) && u.role === 'jugador');
+    if (!q) return users.slice(0, 8);
+    return users.filter(u => u.name.toLowerCase().includes(q)).slice(0, 8);
+}
+
+function onSearchInput(pos: number, event: Event): void {
+    searchInputs.value[pos] = (event.target as HTMLInputElement).value;
+    showDropdown.value[pos] = true;
+}
+
+async function selectUser(pos: number, user: Pick<User, 'id' | 'name' | 'role'>): Promise<void> {
+    showDropdown.value[pos] = false;
+    searchInputs.value[pos] = '';
 
     const lineup = await lineupStore.ensureLineup(props.video.id, 'local');
     await lineupStore.addPlayer(lineup.id, {
-        user_id: userId,
-        position_number: pos,
+        user_id: user.id,
+        position_number: pos <= 15 ? pos : undefined,
         shirt_number: pos,
-        status: 'starter',
+        status: pos <= 15 ? 'starter' : 'substitute',
     });
 }
 
-async function onLocalBenchSelect(shirtNumber: number, event: Event): Promise<void> {
-    const userId = parseInt((event.target as HTMLSelectElement).value);
-    if (!userId) return;
-    (event.target as HTMLSelectElement).value = '';
+async function onManualConfirm(pos: number): Promise<void> {
+    const name = (searchInputs.value[pos] ?? '').trim();
+    if (!name) return;
+
+    // Check if the typed text exactly matches a registered player
+    const usedIds = new Set(
+        lineupStore.localLineup?.players.map(p => p.user_id).filter(Boolean) ?? []
+    );
+    const match = props.allUsers.find(
+        u => u.name.toLowerCase() === name.toLowerCase() && !usedIds.has(u.id) && u.role === 'jugador'
+    );
+    if (match) {
+        await selectUser(pos, match);
+        return;
+    }
+
+    // Manual entry — save as player_name (unregistered player)
+    showDropdown.value[pos] = false;
+    searchInputs.value[pos] = '';
 
     const lineup = await lineupStore.ensureLineup(props.video.id, 'local');
     await lineupStore.addPlayer(lineup.id, {
-        user_id: userId,
-        shirt_number: shirtNumber,
-        status: 'substitute',
+        player_name: name,
+        position_number: pos <= 15 ? pos : undefined,
+        shirt_number: pos,
+        status: pos <= 15 ? 'starter' : 'substitute',
     });
+}
+
+function closeDropdown(pos: number): void {
+    showDropdown.value[pos] = false;
 }
 
 async function removeLocalPlayer(pos: number): Promise<void> {
     const player = getLocalPlayer(pos);
-    if (player) await lineupStore.removePlayer(player.id);
+    if (player) {
+        await lineupStore.removePlayer(player.id);
+        searchInputs.value[pos] = '';
+        showDropdown.value[pos] = false;
+    }
 }
 
 async function removeLocalBenchPlayer(shirtNumber: number): Promise<void> {
     const player = getLocalBenchPlayer(shirtNumber);
-    if (player) await lineupStore.removePlayer(player.id);
+    if (player) {
+        await lineupStore.removePlayer(player.id);
+        searchInputs.value[shirtNumber] = '';
+        showDropdown.value[shirtNumber] = false;
+    }
 }
 
 // ── Rival team helpers ────────────────────────────────────────────────────────
@@ -720,19 +843,60 @@ watch(
     align-items: flex-end;
 }
 
-/* ── Form controls inside slots ───────────────────────────────────────────── */
-.player-select {
-    width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #444;
-    color: #aaa;
-    border-radius: 3px;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.3rem;
-    cursor: pointer;
+/* ── Combobox ─────────────────────────────────────────────────────────────── */
+.slot-combobox {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
 }
-.player-select:focus { outline: none; border-color: #00B7B5; }
 
+.player-dropdown {
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    z-index: 100;
+    max-height: 160px;
+    overflow-y: auto;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    background: transparent;
+    border: none;
+    color: #ddd;
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s;
+}
+.dropdown-item:hover { background: rgba(0, 183, 181, 0.15); color: #fff; }
+
+.user-position {
+    font-size: 0.62rem;
+    color: #666;
+    margin-left: 0.3rem;
+    flex-shrink: 0;
+}
+
+.dropdown-manual-hint {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.65rem;
+    color: #666;
+    border-top: 1px solid #333;
+    font-style: italic;
+}
+
+/* ── Form controls inside slots ───────────────────────────────────────────── */
 .player-input {
     width: 100%;
     background: #1a1a1a;

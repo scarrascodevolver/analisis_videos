@@ -309,11 +309,6 @@ class VideoController extends Controller
             ->orderBy('timestamp_seconds')
             ->get();
 
-        // Blade fallback solo si se solicita explícitamente (para compatibilidad temporal)
-        if ($request->has('blade')) {
-            return view('videos.show', compact('video', 'comments'));
-        }
-
         // Default: Usar Vue/Inertia (migración a SPA)
         $currentOrgId = auth()->user()->currentOrganization()?->id;
         $orgUsers = User::select('id', 'name', 'role')
