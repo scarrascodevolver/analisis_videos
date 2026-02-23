@@ -168,7 +168,7 @@ class VideoController extends Controller
                     : 'nullable',
                 'rival_team_name' => 'nullable|string|max:255',
                 'category_id' => [
-                    'required',
+                    $currentOrg?->isClub() ? 'required' : 'nullable',
                     Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
                         $query->where('organization_id', $currentOrg->id);
                     }),
