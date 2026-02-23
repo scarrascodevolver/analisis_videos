@@ -1371,7 +1371,6 @@ function submitYoutubeVideo() {
     // Datos del partido desde el formulario
     const localTeam  = document.getElementById('local_team_name')?.value || '';
     const rivalTeam  = document.getElementById('rival_team_input')?.value || '';
-    const matchDate  = document.getElementById('match_date')?.value || '';
 
     // Auto-generar título igual que con archivos: "Local vs Rival (YYYY-MM-DD)"
     let autoTitle = localTeam && rivalTeam
