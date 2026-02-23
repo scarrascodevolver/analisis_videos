@@ -37,7 +37,7 @@
             <div class="auth-header">
                 <div class="logo-icon">
                     <img src="{{ asset('logo.png') }}?v={{ filemtime(public_path('logo.png')) }}" alt="Rugby Key Performance Logo"
-                        style="width: 366px; height: 235px; object-fit: contain;">
+                        style="width: 256px; height: auto; object-fit: contain;">
                 </div>
             </div>
 
