@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref, provide, watch, onBeforeUnmount } from 'vue';
+import { onMounted, onUnmounted, computed, ref, provide, watch, onBeforeUnmount, useSlots } from 'vue';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
 import { useVideoApi } from '@/composables/useVideoApi';
@@ -9,6 +9,7 @@ import VideoElement from './VideoElement.vue';
 import VideoHeader from './VideoHeader.vue';
 import VideoInfo from './VideoInfo.vue';
 import ToastContainer from './ui/ToastContainer.vue';
+import PanelOrderWrapper from './ui/PanelOrderWrapper.vue';
 
 const props = defineProps<{
     video: Video;
@@ -164,6 +165,47 @@ function handleToggleAnnotationMode() {
 function toggleTheaterMode() {
     isTheaterMode.value = !isTheaterMode.value;
 }
+
+// ── Panel ordering ─────────────────────────────────────────────
+type PanelName = 'timelines-sync' | 'clip-panel' | 'clip-timeline' | 'comment-timeline';
+
+const ALL_PANELS: PanelName[] = [
+    'timelines-sync', 'clip-panel', 'clip-timeline', 'comment-timeline'
+];
+const PANEL_ORDER_KEY = 'rugbyhub_panel_order';
+
+const panelOrder = ref<PanelName[]>((() => {
+    try {
+        const saved = localStorage.getItem(PANEL_ORDER_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved) as PanelName[];
+            if (ALL_PANELS.every(p => parsed.includes(p))) return parsed;
+        }
+    } catch (_) {}
+    return [...ALL_PANELS];
+})());
+
+const slots = useSlots();
+
+const visiblePanels = computed(() =>
+    panelOrder.value.filter(name => !!slots[name])
+);
+
+function movePanelUp(index: number) {
+    if (index <= 0) return;
+    const order = [...panelOrder.value];
+    [order[index - 1], order[index]] = [order[index], order[index - 1]];
+    panelOrder.value = order;
+    try { localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(panelOrder.value)); } catch (_) {}
+}
+
+function movePanelDown(index: number) {
+    if (index >= visiblePanels.value.length - 1) return;
+    const order = [...panelOrder.value];
+    [order[index + 1], order[index]] = [order[index], order[index + 1]];
+    panelOrder.value = order;
+    try { localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(panelOrder.value)); } catch (_) {}
+}
 </script>
 
 <template>
@@ -234,10 +276,16 @@ function toggleTheaterMode() {
                         </div>
                     </div>
 
-                    <slot name="timelines-sync" />
-                    <slot name="clip-panel" />
-                    <slot name="clip-timeline" />
-                    <slot name="comment-timeline" />
+                    <template v-for="(panelName, index) in visiblePanels" :key="panelName">
+                        <PanelOrderWrapper
+                            :can-move-up="index > 0"
+                            :can-move-down="index < visiblePanels.length - 1"
+                            @move-up="movePanelUp(index)"
+                            @move-down="movePanelDown(index)"
+                        >
+                            <slot :name="panelName" />
+                        </PanelOrderWrapper>
+                    </template>
                 </div>
             </div>
 
