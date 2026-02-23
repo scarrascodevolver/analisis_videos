@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'id' => $organization->id,
                 'name' => $organization->name,
                 'slug' => $organization->slug,
+                'type' => $organization->type,
                 'logo_path' => $organization->logo_path
                     ? asset('storage/' . $organization->logo_path)
                     : null,

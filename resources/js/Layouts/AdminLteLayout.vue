@@ -240,25 +240,13 @@ function markAllNotificationsAsRead() {
                             <li class="nav-item">
                                 <a href="/videos" class="nav-link" :class="{ active: isActive('/videos') && !isActive('/videos/create') }">
                                     <i class="nav-icon fas fa-video"></i>
-                                    <p>Videos del Equipo</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="/my-videos" class="nav-link" :class="{ active: isActive('/my-videos') }">
-                                    <i class="nav-icon fas fa-user-circle"></i>
-                                    <p>Mis Videos</p>
+                                    <p>{{ organization?.type === 'club' ? 'Videos del Equipo' : 'Videos' }}</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/coach/users" class="nav-link" :class="{ active: isActive('/coach/users') }">
                                     <i class="nav-icon fas fa-users"></i>
                                     <p>Jugadores</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="/evaluacion/resultados" class="nav-link" :class="{ active: isActive('/evaluacion/resultados') }">
-                                    <i class="nav-icon fas fa-chart-bar"></i>
-                                    <p>Resultados de Evaluaciones</p>
                                 </a>
                             </li>
                             <li class="nav-header">ADMINISTRACIÓN</li>

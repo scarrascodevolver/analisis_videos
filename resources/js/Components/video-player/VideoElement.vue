@@ -116,10 +116,6 @@ onMounted(() => {
 
     videoStore.setVideoRef(videoEl.value);
 
-    // Auto-collapse sidebar on play (AdminLTE behavior)
-    videoEl.value.addEventListener('play', () => {
-        document.body.classList.add('sidebar-collapse');
-    });
 });
 
 // Transición silenciosa a HLS en dos casos:
