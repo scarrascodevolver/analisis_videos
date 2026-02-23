@@ -1271,6 +1271,11 @@ function setVideoSource(source) {
         btnYoutube.classList.add('btn-danger');
         // Limpiar archivos seleccionados si los hay
         clearAllFiles && clearAllFiles();
+        // Mostrar cards de detalles y submit para YouTube
+        document.getElementById('detailsCard').style.removeProperty('display');
+        document.getElementById('uploadCard').style.removeProperty('display');
+        document.getElementById('uploadBtnText').textContent = 'Guardar Video de YouTube';
+        document.getElementById('uploadBtn').onclick = submitYoutubeVideo;
     } else {
         sectionYoutube.classList.add('d-none');
         sectionUpload.classList.remove('d-none');
@@ -1282,6 +1287,10 @@ function setVideoSource(source) {
         document.getElementById('youtubeUrlInput').value = '';
         document.getElementById('youtubePreviw').classList.add('d-none');
         document.getElementById('youtubeError').classList.add('d-none');
+        // Restaurar botón a comportamiento de upload normal
+        document.getElementById('uploadBtn').onclick = startUpload;
+        // Ocultar cards si no hay archivos
+        updateUI();
     }
 }
 
@@ -1321,29 +1330,6 @@ function onYoutubeUrlChange(url) {
     }
 }
 
-// Sobreescribir el submit para validar YouTube antes de enviar
-document.addEventListener('DOMContentLoaded', function () {
-    const originalSubmit = window.startAllUploads;
-    // El submit de YouTube va directo al form (no usa TUS/Bunny)
-    const ytForm = document.createElement('form');
-
-    document.addEventListener('submit', function(e) {
-        // Solo aplica si hay un form submit directo (no el de TUS)
-    });
-
-    // Interceptar el botón de submit principal cuando es YouTube
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(e) {
-            const source = document.getElementById('videoSourceInput').value;
-            if (source === 'youtube') {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                submitYoutubeVideo();
-            }
-        }, true);
-    }
-});
 
 function submitYoutubeVideo() {
     const url = document.getElementById('youtubeUrlInput').value.trim();
@@ -1355,6 +1341,14 @@ function submitYoutubeVideo() {
     if (!videoId) {
         alert('La URL de YouTube no es válida.');
         return;
+    }
+
+    const matchDate = document.getElementById('match_date').value;
+    if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
+
+    if (isClub) {
+        const categoryId = document.getElementById('category_id').value;
+        if (!categoryId) { alert('Seleccioná una categoría.'); return; }
     }
 
     // Construir y enviar el form con los datos del partido
@@ -1375,16 +1369,20 @@ function submitYoutubeVideo() {
     addField('youtube_url', url);
 
     // Datos del partido desde el formulario
-    const fields = ['title', 'description', 'match_date', 'category_id',
-                    'rival_team_name', 'rival_team_id', 'tournament_id',
-                    'division', 'visibility_type', 'assignment_notes'];
-    fields.forEach(field => {
-        const el = document.querySelector(`[name="${field}"]`);
-        if (el) addField(field, el.value);
-    });
+    addField('local_team_name', document.getElementById('local_team_name')?.value || '');
+    addField('match_date',      document.getElementById('match_date')?.value || '');
+    addField('description',     document.getElementById('description')?.value || '');
+    addField('category_id',     document.getElementById('category_id')?.value || '');
+    addField('rival_team_name', document.getElementById('rival_team_input')?.value || '');
+    addField('rival_team_id',   document.getElementById('rival_team_id')?.value || '');
+    addField('tournament_id',   document.getElementById('tournament_id')?.value || '');
+    addField('division',        document.getElementById('division')?.value || '');
+    addField('assignment_notes',document.getElementById('assignment_notes')?.value || '');
+    const visEl = document.querySelector('input[name="visibility_type"]:checked');
+    addField('visibility_type', visEl ? visEl.value : 'public');
 
-    // Jugadores asignados (checkboxes/multi-select)
-    document.querySelectorAll('[name="assigned_players[]"]:checked').forEach(el => {
+    // Jugadores asignados (select2 multi)
+    document.querySelectorAll('#assigned_players option:checked').forEach(el => {
         addField('assigned_players[]', el.value);
     });
 
