@@ -211,42 +211,51 @@ class VideoController extends Controller
 
         if ($isYoutube) {
             // ── YouTube: no upload de archivo ────────────────────────────────
-            $youtubeUrl = $request->input('youtube_url');
-            $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
+            try {
+                $youtubeUrl = $request->input('youtube_url');
+                $youtubeVideoId = Video::extractYoutubeVideoId($youtubeUrl);
 
-            $autoTitle = $request->title
-                ?: trim(($request->local_team_name ?? '') . ' vs ' . ($request->rival_team_name ?? ''))
-                   ?: "Video YouTube {$request->match_date}";
+                $autoTitle = $request->title
+                    ?: trim(($request->local_team_name ?? '') . ' vs ' . ($request->rival_team_name ?? ''))
+                       ?: "Video YouTube {$request->match_date}";
 
-            $video = Video::create([
-                'title' => $autoTitle,
-                'description' => $request->description,
-                'file_path' => null,
-                'thumbnail_path' => "https://img.youtube.com/vi/{$youtubeVideoId}/maxresdefault.jpg",
-                'file_name' => null,
-                'file_size' => 0,
-                'mime_type' => null,
-                'uploaded_by' => auth()->id(),
-                'organization_id' => $currentOrg?->id,
-                'analyzed_team_name' => $request->local_team_name ?: $organizationName,
-                'rival_team_id' => $request->rival_team_id ?: null,
-                'rival_team_name' => $request->rival_team_name,
-                'tournament_id' => $request->tournament_id ?: null,
-                'category_id' => $request->category_id,
-                'division' => $request->division ?: 'unica',
-                'match_date' => $request->match_date,
-                'status' => 'ready',
-                'visibility_type' => $request->visibility_type ?? 'public',
-                'processing_status' => 'completed',
-                'is_youtube_video' => true,
-                'youtube_url' => $youtubeUrl,
-                'youtube_video_id' => $youtubeVideoId,
-            ]);
+                $video = Video::create([
+                    'title' => $autoTitle,
+                    'description' => $request->description,
+                    'file_path' => null,
+                    'thumbnail_path' => "https://img.youtube.com/vi/{$youtubeVideoId}/maxresdefault.jpg",
+                    'file_name' => null,
+                    'file_size' => 0,
+                    'mime_type' => null,
+                    'uploaded_by' => auth()->id(),
+                    'analyzed_team_name' => $request->local_team_name ?: $organizationName,
+                    'rival_team_id' => $request->rival_team_id ?: null,
+                    'rival_team_name' => $request->rival_team_name,
+                    'tournament_id' => $request->tournament_id ?: null,
+                    'category_id' => $request->category_id,
+                    'division' => $request->division ?: 'unica',
+                    'match_date' => $request->match_date,
+                    'status' => 'ready',
+                    'visibility_type' => $request->visibility_type ?? 'public',
+                    'processing_status' => 'completed',
+                    'is_youtube_video' => true,
+                    'youtube_url' => $youtubeUrl,
+                    'youtube_video_id' => $youtubeVideoId,
+                ]);
 
-            // is_master no está en $fillable — se setea con query directa (igual que el modelo)
-            \DB::table('videos')->where('id', $video->id)->update(['is_master' => true]);
+                // is_master no está en $fillable — se setea con query directa
+                \DB::table('videos')->where('id', $video->id)->update(['is_master' => true]);
 
-            \Log::info("Video {$video->id} registrado desde YouTube: {$youtubeUrl}");
+                \Log::info("YouTube video {$video->id} created OK: {$youtubeUrl}");
+            } catch (\Throwable $e) {
+                \Log::error('YouTube video creation FAILED: ' . $e->getMessage(), [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                    'input' => $request->except('_token'),
+                ]);
+                throw $e;
+            }
         } else {
             // ── Upload de archivo local/cloud ─────────────────────────────────
             $file = $request->file('video_file');
