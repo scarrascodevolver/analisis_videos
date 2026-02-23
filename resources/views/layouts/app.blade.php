@@ -191,7 +191,8 @@
         }
 
         .brand-link .brand-image {
-            max-height: 28px;
+            max-height: 40px;
+            filter: drop-shadow(0 0 6px rgba(0, 183, 181, 0.5));
         }
 
         /* Logo switching for collapsed sidebar */
