@@ -780,11 +780,25 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
         return slave?.currentTime || 0;
     }
 
+    /**
+     * Called from SlaveVideo.vue's onReady callback.
+     * If the HTML5 master is already playing when the YouTube slave finishes
+     * initializing, sync it immediately — otherwise it stays black until the
+     * next timeupdate tick (which only fires while master is playing).
+     */
+    function syncSlaveIfMasterPlaying(slaveId: number) {
+        const master = masterVideoRef.value;
+        if (master && !master.paused) {
+            syncYtSlaveToMaster(slaveId, master.currentTime, true);
+        }
+    }
+
     return {
         registerSlaveElement,
         unregisterSlaveElement,
         registerSlaveYtPlayer,
         unregisterSlaveYtPlayer,
+        syncSlaveIfMasterPlaying,
         resetForNewMaster,
         onYtMasterUpdate,
         getSyncStatus,

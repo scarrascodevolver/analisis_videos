@@ -138,6 +138,10 @@ async function initYtPlayer() {
                 // Register the YT player with the multi-camera controller
                 if (multiCamera) {
                     multiCamera.registerSlaveYtPlayer(props.slave.id, ytPlayerInstance);
+                    // If the HTML5 master was already playing when this slave
+                    // finished initializing, start it immediately instead of
+                    // waiting for the next timeupdate tick.
+                    multiCamera.syncSlaveIfMasterPlaying(props.slave.id);
                 }
             },
         },
