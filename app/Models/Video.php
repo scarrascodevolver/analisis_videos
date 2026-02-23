@@ -149,6 +149,21 @@ class Video extends Model
         return $this->hasMany(VideoClip::class);
     }
 
+    public function lineups()
+    {
+        return $this->hasMany(Lineup::class);
+    }
+
+    public function localLineup()
+    {
+        return $this->hasOne(Lineup::class)->where('team_type', 'local');
+    }
+
+    public function rivalLineup()
+    {
+        return $this->hasOne(Lineup::class)->where('team_type', 'rival');
+    }
+
     public function views()
     {
         return $this->hasMany(VideoView::class);

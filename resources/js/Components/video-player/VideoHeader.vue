@@ -15,6 +15,7 @@ const emit = defineEmits<{
     deleteVideo: [];
     toggleTimelines: [];
     toggleTheater: [];
+    showLineup: [];
 }>();
 
 const isAnalystOrCoach = computed(() =>
@@ -61,6 +62,14 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 @click="$emit('uploadAngle')"
             >
                 <i class="fas fa-cloud-upload-alt"></i> Subir ángulo
+            </button>
+            <button
+                v-if="isAnalystOrCoach"
+                class="btn btn-sm btn-rugby-outline mr-2"
+                title="Registrar jugadores del partido (plantel local y rival)"
+                @click="$emit('showLineup')"
+            >
+                <i class="fas fa-users"></i> Jugadores
             </button>
             <button
                 v-if="isAnalystOrCoach"

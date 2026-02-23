@@ -35,6 +35,7 @@ export interface Video {
     timeline_offset: number;
     uploaded_by: number;
     analyzed_team_name: string;
+    rival_team_id: number | null;
     rival_team_name: string | null;
     rival_name: string | null;
     category_id: number;
@@ -220,3 +221,40 @@ export type PlaybackSpeed =
 export const PLAYBACK_SPEEDS: PlaybackSpeed[] = [
     0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5, 6, 7,
 ];
+
+// ── Lineup types ─────────────────────────────────────────────────────────────
+
+export interface RivalPlayer {
+    id: number;
+    rival_team_id: number;
+    name: string;
+    shirt_number: number | null;
+    usual_position: number | null;
+    notes: string | null;
+}
+
+export interface LineupPlayer {
+    id: number;
+    lineup_id: number;
+    user_id: number | null;
+    rival_player_id: number | null;
+    player_name: string | null;
+    shirt_number: number | null;
+    position_number: number | null;
+    status: 'starter' | 'substitute' | 'unavailable';
+    substitution_minute: number | null;
+    display_name?: string;
+    position_label?: string;
+    // Relations
+    user?: { id: number; name: string } | null;
+    rival_player?: RivalPlayer | null;
+}
+
+export interface Lineup {
+    id: number;
+    video_id: number;
+    team_type: 'local' | 'rival';
+    formation: string | null;
+    notes: string | null;
+    players: LineupPlayer[];
+}

@@ -23,6 +23,7 @@ const emit = defineEmits<{
     deleteVideo: [];
     uploadAngle: [];
     toggleTimelines: [];
+    showLineup: [];
 }>();
 
 const videoStore = useVideoStore();
@@ -169,6 +170,7 @@ function toggleTheaterMode() {
                     @toggle-timelines="$emit('toggleTimelines')"
                     @delete-video="$emit('deleteVideo')"
                     @toggle-theater="toggleTheaterMode"
+                    @show-lineup="$emit('showLineup')"
                 />
 
                 <div class="card-body p-0">

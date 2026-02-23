@@ -16,6 +16,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\RivalTeamController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\LineupController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\VideoCommentController;
 use App\Http\Controllers\VideoController;
@@ -178,6 +179,17 @@ Route::middleware(['auth'])->group(function () {
 
     // Rival Teams API (for autocomplete in video upload)
     Route::get('api/rival-teams/autocomplete', [RivalTeamController::class, 'autocomplete'])->name('api.rival-teams.autocomplete');
+
+    // Lineups API
+    Route::prefix('api/videos/{video}/lineups')->name('api.lineups.')->group(function () {
+        Route::get('/', [LineupController::class, 'index'])->name('index');
+        Route::post('/', [LineupController::class, 'store'])->name('store');
+    });
+    Route::post('api/lineups/{lineup}/players', [LineupController::class, 'addPlayer'])->name('api.lineups.players.store');
+    Route::put('api/lineup-players/{player}', [LineupController::class, 'updatePlayer'])->name('api.lineup-players.update');
+    Route::delete('api/lineup-players/{player}', [LineupController::class, 'removePlayer'])->name('api.lineup-players.destroy');
+    Route::get('api/rival-teams/{rivalTeam}/players', [LineupController::class, 'rivalTeamPlayers'])->name('api.rival-teams.players.index');
+    Route::post('api/rival-teams/{rivalTeam}/players', [LineupController::class, 'storeRivalPlayer'])->name('api.rival-teams.players.store');
 
     // Video Clips CRUD Routes
     Route::prefix('videos/{video}/clips')->name('videos.clips.')->group(function () {

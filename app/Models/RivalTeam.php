@@ -25,6 +25,11 @@ class RivalTeam extends Model
         return $this->hasMany(Video::class, 'rival_team_id');
     }
 
+    public function rivalPlayers()
+    {
+        return $this->hasMany(RivalPlayer::class)->orderBy('shirt_number');
+    }
+
     /**
      * Scope for searching rival teams
      */
@@ -36,8 +41,8 @@ class RivalTeam extends Model
 
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'LIKE', "%{$term}%")
-              ->orWhere('code', 'LIKE', "%{$term}%")
-              ->orWhere('city', 'LIKE', "%{$term}%");
+                ->orWhere('code', 'LIKE', "%{$term}%")
+                ->orWhere('city', 'LIKE', "%{$term}%");
         });
     }
 

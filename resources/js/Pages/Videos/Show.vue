@@ -16,6 +16,7 @@ import SidebarPanel from '@/Components/video-player/sidebar/SidebarPanel.vue';
 import CategoryModal from '@/Components/video-player/modals/CategoryModal.vue';
 import ManageCategoriesModal from '@/Components/video-player/modals/ManageCategoriesModal.vue';
 import DeleteVideoModal from '@/Components/video-player/modals/DeleteVideoModal.vue';
+import LineupModal from '@/Components/video-player/lineup/LineupModal.vue';
 import StatsModal from '@/Components/video-player/modals/StatsModal.vue';
 import AnnotationCanvas from '@/Components/video-player/annotations/AnnotationCanvas.vue';
 import AnnotationToolbar from '@/Components/video-player/annotations/AnnotationToolbar.vue';
@@ -29,6 +30,7 @@ import { useVideoLoader } from '@/composables/useVideoLoader';
 import { useCommentsStore } from '@/stores/commentsStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
+import { useLineupStore } from '@/stores/lineupStore';
 import { useViewTracking } from '@/composables/useViewTracking';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useVideoStore } from '@/stores/videoStore';
@@ -49,6 +51,7 @@ const user = computed<User>(() => authUser.value.user);
 const commentsStore = useCommentsStore();
 const clipsStore = useClipsStore();
 const annotationsStore = useAnnotationsStore();
+const lineupStore = useLineupStore();
 const videoStore = useVideoStore();
 const toast = useToast();
 const notificationsEnabled = ref(true);
@@ -73,6 +76,7 @@ function toggleTimelinesSync() {
 }
 
 // Modal state
+const showLineupModal = ref(false);
 const showCategoryModal = ref(false);
 const editingCategory = ref<ClipCategory | undefined>(undefined);
 const showManageCategoriesModal = ref(false);
@@ -197,6 +201,9 @@ onMounted(async () => {
     shortcuts.registerHotkey('ArrowRight', () => videoStore.seekRelative(5));
 
     if (isAnalystOrCoach.value) {
+        // Load lineups in background — no await, non-blocking
+        lineupStore.loadLineups(props.video.id);
+
         try {
             const api = useVideoApi(props.video.id);
             const [,, loadedAnnotations] = await Promise.all([
@@ -422,6 +429,7 @@ function onSyncSaved(offsets: Record<number, number>) {
             @delete-video="showDeleteModal = true"
             @upload-angle="onUploadAngle"
             @toggle-timelines="toggleTimelinesSync"
+            @show-lineup="showLineupModal = true"
         >
             <!-- Annotation Canvas (overlay on video) -->
             <template v-if="isAnalystOrCoach" #annotation-canvas>
@@ -498,6 +506,12 @@ function onSyncSaved(offsets: Record<number, number>) {
 
             <!-- Modals slot -->
             <template #modals>
+                <LineupModal
+                    :show="showLineupModal"
+                    :video="video"
+                    :all-users="allUsers"
+                    @close="showLineupModal = false"
+                />
                 <CategoryModal
                     :show="showCategoryModal"
                     :category="editingCategory"
