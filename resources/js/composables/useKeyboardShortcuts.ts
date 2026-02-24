@@ -28,14 +28,21 @@ export function useKeyboardShortcuts() {
         const raw = event.key === ' ' ? 'space' : event.key;
         const key = raw.toLowerCase();
 
-        // Ignore if user is typing in an input field
-        if (isInputFocused()) {
-            // Log only for keys that are registered hotkeys (not random typing)
-            if (shortcuts.has(key)) {
-                console.debug('[hotkey] bloqueado por foco en:', document.activeElement?.tagName, document.activeElement?.className?.toString().slice(0, 40));
-            }
-            return;
+        // Log all relevant keypresses for diagnostics
+        const isRelevant = key.length === 1 || ['space', 'escape', 'arrowleft', 'arrowright'].includes(key);
+        if (isRelevant) {
+            const activeEl = document.activeElement;
+            console.debug(
+                `[hotkey] ↓ key=${JSON.stringify(key)}`,
+                `| handler=${shortcuts.has(key) ? '✓' : '✗'}`,
+                `| inputFocused=${isInputFocused()}`,
+                `| activeEl=${activeEl?.tagName}#${(activeEl as HTMLElement)?.id || (activeEl as HTMLElement)?.className?.toString().slice(0, 30) || '?'}`,
+                `| registered=[${Array.from(shortcuts.keys()).join(', ')}]`,
+            );
         }
+
+        // Ignore if user is typing in an input field
+        if (isInputFocused()) return;
 
         const handler = shortcuts.get(key);
 
