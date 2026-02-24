@@ -246,7 +246,7 @@ onMounted(async () => {
                         try {
                             // Auto-play if paused when starting recording
                             const wasRecording = clipsStore.isRecording && clipsStore.recordingCategoryId === cat.id;
-                            if (!wasRecording && videoStore.isPaused) {
+                            if (!wasRecording && !videoStore.isPlaying) {
                                 videoStore.play();
                             }
 

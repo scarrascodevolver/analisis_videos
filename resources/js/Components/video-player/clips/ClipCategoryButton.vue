@@ -27,7 +27,7 @@ async function handleClick() {
         const wasRecording = clipsStore.isRecording && clipsStore.recordingCategoryId === props.category.id;
 
         // Auto-play video if paused and starting a new recording
-        if (!wasRecording && videoStore.isPaused) {
+        if (!wasRecording && !videoStore.isPlaying) {
             videoStore.play();
         }
 
