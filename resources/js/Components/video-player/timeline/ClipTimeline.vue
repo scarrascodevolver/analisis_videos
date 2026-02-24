@@ -469,6 +469,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     const seekTime    = (clickX / rect.width) * duration.value;
 
     if (isFinite(seekTime)) videoStore.seek(seekTime);
+    (document.activeElement as HTMLElement)?.blur();
 }
 </script>
 

@@ -84,11 +84,15 @@ export function useKeyboardShortcuts() {
     }
 
     onMounted(() => {
-        window.addEventListener('keydown', handleKeyDown);
+        // capture: true → recibe el evento ANTES de que cualquier elemento hijo
+        // pueda llamar stopPropagation() en la fase de burbujeo.
+        // Esto garantiza que los hotkeys globales siempre funcionen sin importar
+        // qué elemento tiene foco o llama stopPropagation.
+        window.addEventListener('keydown', handleKeyDown, { capture: true });
     });
 
     onUnmounted(() => {
-        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keydown', handleKeyDown, { capture: true });
         unregisterAll();
     });
 
