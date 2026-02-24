@@ -172,7 +172,7 @@ type PanelName = 'timelines-sync' | 'clip-panel' | 'clip-timeline' | 'comment-ti
 const ALL_PANELS: PanelName[] = [
     'timelines-sync', 'clip-panel', 'clip-timeline', 'comment-timeline'
 ];
-const PANEL_ORDER_KEY = 'rugbyhub_panel_order';
+const PANEL_ORDER_KEY = `rugbyhub_panel_order_${props.user.id}`;
 
 const panelOrder = ref<PanelName[]>((() => {
     try {
