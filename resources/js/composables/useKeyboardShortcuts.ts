@@ -36,6 +36,7 @@ export function useKeyboardShortcuts() {
                 `[hotkey] ↓ key=${JSON.stringify(key)}`,
                 `handler=${shortcuts.has(key) ? '✓' : '✗'}`,
                 `inputFocused=${isInputFocused()}`,
+                `docFocused=${document.hasFocus()}`,
                 `activeEl=${activeEl?.tagName}#${(activeEl as HTMLElement)?.id || (activeEl as HTMLElement)?.className?.toString().slice(0, 40) || '?'}`,
                 `registered=[${Array.from(shortcuts.keys()).join(',')}]`,
             );
@@ -91,16 +92,27 @@ export function useKeyboardShortcuts() {
         return Array.from(shortcuts.values());
     }
 
+    // Canary: listener completamente independiente para detectar si window recibe eventos
+    // Si este aparece pero [hotkey] ↓ NO aparece → el listener principal fue removido
+    // Si este NO aparece → window no recibe eventos (foco perdido, iframe, etc.)
+    function canaryListener(e: KeyboardEvent) {
+        const raw = e.key === ' ' ? 'space' : e.key;
+        const k = raw.toLowerCase();
+        if (k.length === 1 || ['space', 'escape'].includes(k)) {
+            console.log(`[hotkey] 🐦 canary window capture: key=${JSON.stringify(k)} docFocused=${document.hasFocus()} activeEl=${document.activeElement?.tagName}`);
+        }
+    }
+
     onMounted(() => {
-        // capture: true → recibe el evento ANTES de que cualquier elemento hijo
-        // pueda llamar stopPropagation() en la fase de burbujeo.
-        // Esto garantiza que los hotkeys globales siempre funcionen sin importar
-        // qué elemento tiene foco o llama stopPropagation.
+        console.log('[hotkey] ✅ MOUNTED — registrando listeners (capture:true)');
         window.addEventListener('keydown', handleKeyDown, { capture: true });
+        window.addEventListener('keydown', canaryListener, { capture: true });
     });
 
     onUnmounted(() => {
+        console.log('[hotkey] ❌ UNMOUNTED — removiendo listeners, shortcuts:', Array.from(shortcuts.keys()));
         window.removeEventListener('keydown', handleKeyDown, { capture: true });
+        window.removeEventListener('keydown', canaryListener, { capture: true });
         unregisterAll();
     });
 
