@@ -339,9 +339,36 @@
 
 
 {{-- ═══════════════════════════════════════════════════════════
+     JUGADOR (ASOCIACIÓN) — Nivel 1: Torneos de su equipo
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'player_tournaments')
+@include('videos.partials.folder-header', ['title' => 'Mis Torneos', 'icon' => 'trophy'])
+@if($tournaments->isEmpty())
+    @include('videos.partials.empty-folder', ['msg' => 'No hay torneos disponibles para tu equipo aún.'])
+@else
+    <div class="folder-grid">
+        @foreach($tournaments as $t)
+            <div class="folder-card-wrap">
+                <a href="{{ route('videos.index', ['tournament' => $t->id]) }}"
+                   class="folder-card text-decoration-none">
+                    <div class="folder-icon-wrap"><i class="fas fa-trophy"></i></div>
+                    <div class="folder-name">{{ $t->name }}</div>
+                    <div class="folder-meta">{{ $t->videos_count }} partidos</div>
+                </a>
+            </div>
+        @endforeach
+    </div>
+@endif
+
+{{-- ═══════════════════════════════════════════════════════════
      JUGADOR — Misma vista de cards que analistas/entrenadores
 ═══════════════════════════════════════════════════════════ --}}
 @elseif($view === 'player_matches')
+
+    {{-- Header cuando viene de un torneo (asociación) --}}
+    @if(isset($tournament))
+        @include('videos.partials.folder-header', ['title' => $tournament->name, 'icon' => 'trophy', 'back' => route('videos.index')])
+    @endif
 
     {{-- Barra de búsqueda --}}
     <div class="d-flex align-items-center mb-3" style="gap:8px">

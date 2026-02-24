@@ -19,8 +19,56 @@ class VideoController extends Controller
         $user = auth()->user();
         $isStaff = in_array($user->role, ['analista', 'entrenador']);
 
-        // Jugadores: misma vista de cards bonitas que analistas/entrenadores
+        // Jugadores: vista adaptativa según tipo de organización
         if (! $isStaff) {
+            $org            = $user->currentOrganization();
+            $orgType        = $org?->type ?? 'club';
+            $userCategoryId = $user->profile?->user_category_id;
+
+            // ── ASOCIACIÓN: Torneo → Videos de su equipo ────────────────────────
+            if ($orgType !== 'club') {
+                $tournamentParam = $request->get('tournament');
+
+                // Nivel 1: torneos que tienen videos del equipo del jugador
+                if (! $tournamentParam) {
+                    $tournaments = Tournament::whereHas('videos', function ($q) use ($userCategoryId) {
+                        $q->where('is_master', true)->where('category_id', $userCategoryId);
+                    })
+                    ->withCount(['videos as videos_count' => function ($q) use ($userCategoryId) {
+                        $q->where('is_master', true)->where('category_id', $userCategoryId);
+                    }])
+                    ->orderByDesc('updated_at')
+                    ->get();
+
+                    return view('videos.index', compact('tournaments'))->with('view', 'player_tournaments');
+                }
+
+                // Nivel 2: videos del torneo filtrados por su equipo
+                $tournament = Tournament::findOrFail($tournamentParam);
+
+                $videos = Video::with(['rivalTeam', 'videoGroups.videos'])
+                    ->withCount('clips')
+                    ->where('is_master', true)
+                    ->teamVisible($user)
+                    ->where('tournament_id', $tournamentParam)
+                    ->orderBy('match_date', 'desc')
+                    ->paginate(24);
+
+                $videos->each(function ($video) {
+                    $group = $video->videoGroups->first();
+                    if ($group && $group->videos->isNotEmpty()) {
+                        $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                        $video->angles_count = $group->videos->count();
+                    } else {
+                        $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                        $video->angles_count = 1;
+                    }
+                });
+
+                return view('videos.index', compact('tournament', 'videos'))->with('view', 'player_matches');
+            }
+
+            // ── CLUB: lista plana de videos de su categoría ─────────────────────
             $query = Video::with(['category', 'uploader', 'rivalTeam', 'videoGroups.videos'])
                 ->withCount('clips')
                 ->where('is_master', true)
@@ -191,7 +239,7 @@ class VideoController extends Controller
                     : 'nullable',
                 'rival_team_name' => 'nullable|string|max:255',
                 'category_id' => [
-                    $currentOrg?->isClub() ? 'required' : 'nullable',
+                    'required',
                     Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
                         $query->where('organization_id', $currentOrg->id);
                     }),
@@ -208,6 +256,7 @@ class VideoController extends Controller
                 'video_file.required' => 'Seleccioná un archivo de video o pegá una URL de YouTube.',
                 'video_file.max' => 'El archivo de video no puede superar 8GB. Videos grandes serán comprimidos automáticamente.',
                 'video_file.mimes' => 'El archivo debe ser un video en formato: MP4, MOV, AVI, WEBM o MKV.',
+                'category_id.required' => 'Seleccioná la categoría o equipo del partido.',
                 'category_id.exists' => 'La categoría seleccionada no es válida para tu organización.',
                 'youtube_url.required' => 'Ingresá la URL del video de YouTube.',
             ]);

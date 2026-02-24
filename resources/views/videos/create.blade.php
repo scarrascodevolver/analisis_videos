@@ -178,7 +178,7 @@
 
             <div class="row">
                 {{-- Torneo --}}
-                <div class="{{ $isClub ? 'col-md-4' : 'col-md-7' }}">
+                <div class="col-md-4">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold">
                             <i class="fas fa-trophy text-warning mr-1"></i>Torneo
@@ -198,7 +198,7 @@
                 </div>
 
                 {{-- Fecha --}}
-                <div class="{{ $isClub ? 'col-md-3' : 'col-md-5' }}">
+                <div class="{{ $isClub ? 'col-md-3' : 'col-md-4' }}">
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold"><i class="fas fa-calendar mr-1"></i>Fecha <span class="text-danger">*</span></label>
                         <input type="date" id="match_date" name="match_date"
@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                {{-- Categoría + División (solo clubs) --}}
+                {{-- Categoría + División (clubs) | Equipo (asociaciones) --}}
                 @if($isClub)
                 <div class="col-md-3">
                     <div class="form-group mb-2">
@@ -226,6 +226,18 @@
                         <select id="division" name="division" class="form-control form-control-sm">
                             <option value="primera">Primera</option>
                             <option value="intermedia">Intermedia</option>
+                        </select>
+                    </div>
+                </div>
+                @else
+                <div class="col-md-4">
+                    <div class="form-group mb-2">
+                        <label class="small font-weight-bold"><i class="fas fa-shield-alt mr-1"></i>Equipo <span class="text-danger">*</span></label>
+                        <select id="category_id" name="category_id" class="form-control form-control-sm" required>
+                            <option value="">Seleccionar equipo...</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -994,10 +1006,8 @@ async function startUpload() {
     if (uploadState.isUploading) return;
 
     const matchDate = document.getElementById('match_date').value;
-    if (isClub) {
-        const categoryId = document.getElementById('category_id').value;
-        if (!categoryId) { alert('Seleccioná una categoría.'); return; }
-    }
+    const categoryId = document.getElementById('category_id')?.value;
+    if (!categoryId) { alert(isClub ? 'Seleccioná una categoría.' : 'Seleccioná el equipo.'); return; }
     if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
     if (uploadState.files.length === 0) { alert('Seleccioná al menos un video.'); return; }
 
@@ -1117,7 +1127,7 @@ async function resolveCommonData() {
 
     return {
         local_team_name:  document.getElementById('local_team_name').value,
-        category_id:      isClub ? document.getElementById('category_id').value : null,
+        category_id:      document.getElementById('category_id')?.value || null,
         match_date:       document.getElementById('match_date').value,
         division:         isClub ? document.getElementById('division').value : null,
         description:      document.getElementById('description').value,
@@ -1359,10 +1369,8 @@ async function submitYoutubeVideo() {
     const matchDate = document.getElementById('match_date').value;
     if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
 
-    if (isClub) {
-        const categoryId = document.getElementById('category_id').value;
-        if (!categoryId) { alert('Seleccioná una categoría.'); return; }
-    }
+    const categoryIdYt = document.getElementById('category_id')?.value;
+    if (!categoryIdYt) { alert(isClub ? 'Seleccioná una categoría.' : 'Seleccioná el equipo.'); return; }
 
     // Reusar resolveCommonData para crear torneo/rival si fueron escritos manualmente
     const commonData = await resolveCommonData();
