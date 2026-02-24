@@ -60,24 +60,24 @@ const emit = defineEmits<{
 
 .panel-order-btn {
     pointer-events: all;
-    background: rgba(15, 15, 15, 0.85);
-    border: 1px solid #444;
-    color: #555;
-    padding: 2px 5px;
-    border-radius: 2px;
+    background: rgba(0, 183, 181, 0.12);
+    border: 1px solid #00B7B5;
+    color: #00B7B5;
+    padding: 4px 8px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .panel-order-btn:hover:not(.disabled) {
-    color: #00B7B5;
-    border-color: #00B7B5;
+    background: #00B7B5;
+    color: #0f0f0f;
 }
 
 .panel-order-btn.disabled {
-    opacity: 0.25;
+    opacity: 0.2;
     cursor: not-allowed;
 }
 </style>
