@@ -215,6 +215,8 @@ function handleClick(event: MouseEvent) {
 
         // Emitir evento de seek
         emit('seek', seekTime);
+        // Devolver foco al body para que los hotkeys funcionen de inmediato
+        (document.activeElement as HTMLElement)?.blur();
     }
 }
 

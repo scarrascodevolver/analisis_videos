@@ -92,6 +92,8 @@ function seekToPosition(event: MouseEvent) {
     const rect = bar.getBoundingClientRect();
     const percent = (event.clientX - rect.left) / rect.width;
     videoStore.seek(percent * videoStore.duration);
+    // Devolver foco al body para que los hotkeys funcionen de inmediato
+    (document.activeElement as HTMLElement)?.blur();
 }
 
 function seekToMarker(marker: MarkerCluster) {

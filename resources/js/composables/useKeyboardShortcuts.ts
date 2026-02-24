@@ -24,12 +24,19 @@ export function useKeyboardShortcuts() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-        // Ignore if user is typing in an input field
-        if (isInputFocused()) return;
-
         // Normalize: event.key for spacebar is ' ' (space char), not 'Space'
         const raw = event.key === ' ' ? 'space' : event.key;
         const key = raw.toLowerCase();
+
+        // Ignore if user is typing in an input field
+        if (isInputFocused()) {
+            // Log only for keys that are registered hotkeys (not random typing)
+            if (shortcuts.has(key)) {
+                console.debug('[hotkey] bloqueado por foco en:', document.activeElement?.tagName, document.activeElement?.className?.toString().slice(0, 40));
+            }
+            return;
+        }
+
         const handler = shortcuts.get(key);
 
         if (handler) {
