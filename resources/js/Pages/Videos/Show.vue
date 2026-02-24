@@ -326,11 +326,13 @@ function onSwapMaster(slaveId: number) {
 
     const incomingSlave = slaveVideos.value[slaveIndex];
 
-    // Snapshot current master URL data before overwriting
+    // Snapshot current master state (URLs + YouTube info)
     const oldMasterStreamUrl = videoStreamUrl.value;
     const oldMasterHlsUrl    = videoHlsUrl.value;
     const oldMasterMp4Url    = videoMp4Url.value;
     const oldMasterStatus    = videoStatus.value;
+    const oldIsYoutube       = isYoutubeVideo.value;
+    const oldYoutubeId       = youtubeVideoId.value;
 
     // Promote slave's URLs to master refs — Vue watchers in VideoElement.vue
     // will detect the activeHlsUrl or activeMp4Url change and reload seamlessly,
@@ -343,21 +345,28 @@ function onSwapMaster(slaveId: number) {
     videoMp4Url.value    = incomingSlave.bunny_mp4_url ?? incomingSlave.stream_url;
     videoStatus.value    = incomingSlave.bunny_status ?? null;
 
+    // Promote slave's YouTube state — VideoElement.vue watches isYoutube and
+    // initializes/destroys the YT.Player dynamically when this changes.
+    isYoutubeVideo.value = incomingSlave.is_youtube_video ?? false;
+    youtubeVideoId.value = incomingSlave.youtube_video_id ?? null;
+
     // Demote the CURRENT master (tracked by currentMasterId, NOT always props.video.id).
     // sync_offset for demoted master = -(incomingSlave.sync_offset):
     //   Before swap: slave.currentTime = master.currentTime - slaveOffset
     //   After swap:  newSlave.currentTime = newMaster.currentTime - newSlaveOffset
     //   Since both were at the same real-world moment: newSlaveOffset = -slaveOffset
     const demotedMaster: SlaveVideo = {
-        id:              currentMasterId.value,
-        title:           props.video.title,
-        stream_url:      oldMasterStreamUrl,
-        camera_angle:    incomingSlave.camera_angle,
-        sync_offset:     -(incomingSlave.sync_offset ?? 0),
-        is_synced:       true,
-        bunny_hls_url:   oldMasterHlsUrl,
-        bunny_status:    oldMasterStatus,
-        bunny_mp4_url:   oldMasterMp4Url,
+        id:               currentMasterId.value,
+        title:            props.video.title,
+        stream_url:       oldMasterStreamUrl,
+        camera_angle:     incomingSlave.camera_angle,
+        sync_offset:      -(incomingSlave.sync_offset ?? 0),
+        is_synced:        true,
+        bunny_hls_url:    oldMasterHlsUrl,
+        bunny_status:     oldMasterStatus,
+        bunny_mp4_url:    oldMasterMp4Url,
+        is_youtube_video: oldIsYoutube,
+        youtube_video_id: oldYoutubeId,
     };
 
     // Update currentMasterId to the promoted slave's real ID

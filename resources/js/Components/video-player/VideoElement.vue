@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, computed, watch, nextTick } from 'vue';
 import Hls from 'hls.js';
 import { useVideoStore } from '@/stores/videoStore';
 import { useAnnotationsStore } from '@/stores/annotationsStore';
@@ -159,6 +159,45 @@ onMounted(async () => {
         }
 
         videoStore.setVideoRef(videoEl.value);
+    }
+});
+
+// Swap dinámico YouTube ↔ HTML5:
+// Cuando un slave YouTube sube a master (o viceversa), isYoutube cambia DESPUÉS del mount.
+// onMounted ya corrió — hay que inicializar el player correspondiente con nextTick.
+watch(isYoutube, async (nowYoutube) => {
+    await nextTick(); // esperar que el v-if renderice el nuevo elemento DOM
+
+    if (nowYoutube) {
+        // Slave YouTube promovido a master → crear YT.Player
+        if (!props.youtubeVideoId || !ytContainerRef.value) return;
+        await loadYouTubeAPI();
+        const YT = (window as any).YT;
+        const player = new YT.Player(ytContainerRef.value, {
+            videoId: props.youtubeVideoId,
+            width:   '100%',
+            height:  '100%',
+            playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
+            events: {
+                onReady: () => { videoStore.setYouTubePlayer(player); },
+                onStateChange: (e: any) => {
+                    if (e.data === 1) videoStore.onPlay();
+                    if (e.data === 2) videoStore.onPause();
+                    if (e.data === 0) videoStore.onPause();
+                },
+            },
+        });
+    } else {
+        // Master YouTube degradado → activar HTML5
+        videoStore.clearYouTubePlayer();
+        if (!videoEl.value) return;
+        videoStore.setVideoRef(videoEl.value);
+        if (isHls.value && activeHlsUrl.value) {
+            initHls(activeHlsUrl.value);
+        } else if (activeMp4Url.value) {
+            videoEl.value.src = activeMp4Url.value;
+            videoEl.value.load();
+        }
     }
 });
 
