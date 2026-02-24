@@ -171,7 +171,8 @@ watch(isYoutube, async (nowYoutube) => {
     if (nowYoutube) {
         // Slave YouTube promovido a master → crear YT.Player
         if (!props.youtubeVideoId || !ytContainerRef.value) return;
-        const savedTime = videoStore.currentTime; // capture BEFORE async
+        const savedTime   = videoStore.currentTime; // capture BEFORE async
+        const shouldPlay  = videoStore.isPlaying;   // capture BEFORE async
         await loadYouTubeAPI();
         const YT = (window as any).YT;
         const player = new YT.Player(ytContainerRef.value, {
@@ -183,6 +184,7 @@ watch(isYoutube, async (nowYoutube) => {
                 onReady: () => {
                     player.seekTo(savedTime, true);
                     videoStore.setYouTubePlayer(player);
+                    if (shouldPlay) player.playVideo();
                 },
                 onStateChange: (e: any) => {
                     if (e.data === 1) videoStore.onPlay();
@@ -217,10 +219,16 @@ watch(() => props.youtubeVideoId, async (newId, oldId) => {
     const player = videoStore.youtubePlayer;
     if (player) {
         try {
-            // cueVideoById loads the video without auto-playing (user controls playback)
-            player.cueVideoById(newId, videoStore.currentTime);
+            const wasPlaying = videoStore.isPlaying;
+            // loadVideoById = carga y arranca; cueVideoById = carga y pausa
+            if (wasPlaying) {
+                player.loadVideoById(newId, videoStore.currentTime);
+            } else {
+                player.cueVideoById(newId, videoStore.currentTime);
+            }
         } catch (_) {
             // Player not ready — do a full recreate
+            const wasPlaying = videoStore.isPlaying;
             videoStore.clearYouTubePlayer();
             if (!ytContainerRef.value) return;
             await loadYouTubeAPI();
@@ -234,6 +242,7 @@ watch(() => props.youtubeVideoId, async (newId, oldId) => {
                     onReady: () => {
                         p.seekTo(videoStore.currentTime, true);
                         videoStore.setYouTubePlayer(p);
+                        if (wasPlaying) p.playVideo();
                     },
                     onStateChange: (e: any) => {
                         if (e.data === 1) videoStore.onPlay();
