@@ -57,6 +57,7 @@
 import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
 import Hls from 'hls.js';
 import type { SlaveVideo as SlaveVideoType } from '@/types/video-player';
+import { useVideoStore } from '@/stores/videoStore';
 
 const props = defineProps<{
     slave: SlaveVideoType;
@@ -81,6 +82,7 @@ const isHls = computed(() => !!activeHlsUrl.value);
 
 // Inject the multiCamera composable from parent
 const multiCamera = inject<any>('multiCamera', null);
+const videoStore = useVideoStore();
 
 // ── Defensive watchers (handle component reuse when key stays the same) ────────
 // These fire when props change on a reused component. With composite :key they
@@ -171,6 +173,12 @@ async function initYtPlayer() {
                     // finished initializing, start it immediately instead of
                     // waiting for the next timeupdate tick.
                     multiCamera.syncSlaveIfMasterPlaying(props.slave.id);
+                    // Also position slave at the correct timestamp even if master is
+                    // paused (e.g., after a master swap). Works for both HTML5 and
+                    // YouTube masters via videoStore.currentTime.
+                    const offset = Number(props.slave.sync_offset || 0);
+                    const targetTime = Math.max(0, videoStore.currentTime - offset);
+                    try { ytPlayerInstance.seekTo(targetTime, true); } catch (_) {}
                 }
             },
         },

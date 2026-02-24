@@ -171,6 +171,7 @@ watch(isYoutube, async (nowYoutube) => {
     if (nowYoutube) {
         // Slave YouTube promovido a master → crear YT.Player
         if (!props.youtubeVideoId || !ytContainerRef.value) return;
+        const savedTime = videoStore.currentTime; // capture BEFORE async
         await loadYouTubeAPI();
         const YT = (window as any).YT;
         const player = new YT.Player(ytContainerRef.value, {
@@ -179,7 +180,10 @@ watch(isYoutube, async (nowYoutube) => {
             height:  '100%',
             playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
             events: {
-                onReady: () => { videoStore.setYouTubePlayer(player); },
+                onReady: () => {
+                    player.seekTo(savedTime, true);
+                    videoStore.setYouTubePlayer(player);
+                },
                 onStateChange: (e: any) => {
                     if (e.data === 1) videoStore.onPlay();
                     if (e.data === 2) videoStore.onPause();
@@ -214,7 +218,7 @@ watch(() => props.youtubeVideoId, async (newId, oldId) => {
     if (player) {
         try {
             // cueVideoById loads the video without auto-playing (user controls playback)
-            player.cueVideoById(newId);
+            player.cueVideoById(newId, videoStore.currentTime);
         } catch (_) {
             // Player not ready — do a full recreate
             videoStore.clearYouTubePlayer();
@@ -227,7 +231,10 @@ watch(() => props.youtubeVideoId, async (newId, oldId) => {
                 height:  '100%',
                 playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
                 events: {
-                    onReady: () => { videoStore.setYouTubePlayer(p); },
+                    onReady: () => {
+                        p.seekTo(videoStore.currentTime, true);
+                        videoStore.setYouTubePlayer(p);
+                    },
                     onStateChange: (e: any) => {
                         if (e.data === 1) videoStore.onPlay();
                         if (e.data === 2) videoStore.onPause();
