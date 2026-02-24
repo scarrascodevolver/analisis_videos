@@ -19,25 +19,36 @@ class VideoController extends Controller
         $user = auth()->user();
         $isStaff = in_array($user->role, ['analista', 'entrenador']);
 
-        // Jugadores: lista plana de sus videos asignados (sin cambios)
+        // Jugadores: misma vista de cards bonitas que analistas/entrenadores
         if (! $isStaff) {
-            $query = Video::with(['category', 'uploader', 'rugbySituation', 'rivalTeam'])
+            $query = Video::with(['category', 'uploader', 'rivalTeam', 'videoGroups.videos'])
+                ->withCount('clips')
                 ->where('is_master', true)
                 ->teamVisible($user);
 
-            if ($request->filled('rugby_situation')) {
-                $query->where('rugby_situation_id', $request->rugby_situation);
-            }
             if ($request->filled('search')) {
-                $query->where('title', 'like', '%'.$request->search.'%');
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('analyzed_team_name', 'like', "%{$search}%")
+                      ->orWhere('rival_name', 'like', "%{$search}%");
+                });
             }
 
-            $videos = $query->latest()->paginate(9);
-            $rugbySituations = RugbySituation::active()->ordered()->get()->groupBy('category');
-            $userCategoryId = $user->profile->user_category_id ?? null;
-            $categories = $userCategoryId ? Category::where('id', $userCategoryId)->get() : collect();
+            $videos = $query->orderBy('match_date', 'desc')->paginate(24);
 
-            return view('videos.index', compact('videos', 'rugbySituations', 'categories'))->with('view', 'list');
+            $videos->each(function ($video) {
+                $group = $video->videoGroups->first();
+                if ($group && $group->videos->isNotEmpty()) {
+                    $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->angles_count = $group->videos->count();
+                } else {
+                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->angles_count = 1;
+                }
+            });
+
+            return view('videos.index', compact('videos'))->with('view', 'player_matches');
         }
 
         // Analistas/entrenadores: navegación por carpetas (adaptativa según tipo de org)

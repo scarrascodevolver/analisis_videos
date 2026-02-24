@@ -339,68 +339,101 @@
 
 
 {{-- ═══════════════════════════════════════════════════════════
-     VISTA JUGADOR — Lista plana de videos asignados
+     JUGADOR — Misma vista de cards que analistas/entrenadores
 ═══════════════════════════════════════════════════════════ --}}
-@else
+@elseif($view === 'player_matches')
 
-    {{-- Filtros para jugadores --}}
-    <div class="card card-rugby mb-3">
-        <div class="card-body py-2 px-3">
-            <form method="GET" action="{{ route('videos.index') }}" class="d-flex flex-wrap" style="gap:8px">
-                <input type="text" name="search" class="form-control form-control-sm"
-                       style="max-width:220px" placeholder="Buscar..." value="{{ request('search') }}">
-                <button type="submit" class="btn btn-rugby btn-sm">
-                    <i class="fas fa-search mr-1"></i> Buscar
-                </button>
-                @if(request('search'))
-                    <a href="{{ route('videos.index') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-times mr-1"></i> Limpiar
-                    </a>
-                @endif
-            </form>
-        </div>
+    {{-- Barra de búsqueda --}}
+    <div class="d-flex align-items-center mb-3" style="gap:8px">
+        <form method="GET" action="{{ route('videos.index') }}" class="d-flex" style="gap:8px;flex:1">
+            <input type="text" name="search" class="form-control form-control-sm bg-dark border-secondary text-white"
+                   style="max-width:260px" placeholder="Buscar por título, local o rival..."
+                   value="{{ request('search') }}">
+            <button type="submit" class="btn btn-rugby btn-sm">
+                <i class="fas fa-search mr-1"></i>Buscar
+            </button>
+            @if(request('search'))
+                <a href="{{ route('videos.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times mr-1"></i>Limpiar
+                </a>
+            @endif
+        </form>
     </div>
 
     @if($videos->isEmpty())
-        <div class="card card-rugby">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-video fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No tenés videos asignados aún</h5>
-            </div>
-        </div>
+        @include('videos.partials.empty-folder', ['msg' => 'No hay videos disponibles aún.'])
     @else
-        <div class="row">
+        <div class="match-grid">
             @foreach($videos as $video)
-                <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
-                    <div class="card video-card h-100">
-                        <div class="video-thumbnail-container"
-                             onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                            @if($video->bunny_thumbnail)
-                                <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail"
-                                     class="w-100 h-100" style="object-fit:cover">
-                            @else
-                                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark">
-                                    <i class="fas fa-film fa-2x text-muted"></i>
-                                </div>
+                @php
+                    $totalSize = $video->total_size ?? 0;
+                    $sizeLabel = '';
+                    if ($totalSize > 0) {
+                        $gb = $totalSize / 1073741824;
+                        $sizeLabel = $gb >= 1
+                            ? number_format($gb, 1) . ' GB'
+                            : number_format($totalSize / 1048576, 0) . ' MB';
+                    }
+                    $anglesCount = $video->angles_count ?? 1;
+                @endphp
+                <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                    {{-- Thumbnail 16:9 --}}
+                    <div class="match-card-thumb">
+                        @if($video->bunny_thumbnail)
+                            <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail">
+                        @else
+                            <div class="match-thumb-placeholder">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        @endif
+                        <div class="match-play-overlay">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        {{-- Status --}}
+                        @if($video->bunny_status === 'error')
+                            <span class="status-badge" style="background:rgba(220,53,69,.85)">
+                                <i class="fas fa-exclamation-circle mr-1"></i>Error
+                            </span>
+                        @elseif($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
+                            <span class="status-badge">
+                                <i class="fas fa-spinner fa-spin mr-1"></i>Procesando
+                            </span>
+                        @endif
+                        {{-- XML --}}
+                        @if($video->clips_count > 0)
+                            <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
+                        @endif
+                        {{-- Ángulos --}}
+                        @if($anglesCount > 1)
+                            <span class="angles-badge">
+                                <i class="fas fa-video mr-1"></i>{{ $anglesCount }}
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Info fixture --}}
+                    <div class="match-card-body">
+                        <div class="match-fixture">
+                            <span class="fixture-team fixture-local">{{ $video->analyzed_team_name ?? 'Local' }}</span>
+                            <span class="fixture-vs">VS</span>
+                            <span class="fixture-team fixture-rival">{{ $video->rival_name ?? 'Rival' }}</span>
+                        </div>
+                        <div class="match-card-meta">
+                            <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                            @if($video->division)
+                                <span class="mx-1">·</span>{{ ucfirst($video->division) }}
                             @endif
-                        </div>
-                        <div class="card-body py-2 px-3">
-                            <h6 class="card-title mb-1 video-title">{{ $video->title }}</h6>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                            </small>
-                        </div>
-                        <div class="card-footer py-2 px-3">
-                            <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm">
-                                <i class="fas fa-play mr-1"></i> Ver
-                            </a>
+                            @if($sizeLabel)
+                                <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
+                            @endif
                         </div>
                     </div>
                 </div>
             @endforeach
         </div>
+
         <div class="d-flex justify-content-center mt-3">
-            {{ $videos->links('custom.pagination') }}
+            {{ $videos->appends(request()->query())->links('custom.pagination') }}
         </div>
     @endif
 
