@@ -45,11 +45,19 @@ export function useKeyboardShortcuts() {
         // Ignore if user is typing in an input field
         if (isInputFocused()) return;
 
-        // Blur defensivo: si hay algún elemento con foco (ej. header timeline, botón)
-        // que no sea un input, lo desfocalizamos. Esto limpia anillos de foco visuales
-        // y evita que elementos UI intercepten la tecla como acción propia.
+        // Blur defensivo: si hay algún elemento UI con foco (ej. botón de timeline)
+        // lo desfocalizamos para evitar que intercepte la tecla como acción propia.
+        // IMPORTANTE: excluir VIDEO y AUDIO — hacer blur de un <video> en Chrome
+        // causa que el window pierda foco (Chrome pasa el control al SO), rompiendo
+        // todos los hotkeys posteriores. El capture:true ya garantiza que nuestro
+        // handler se ejecuta antes que cualquier handler del video.
         const focusedEl = document.activeElement as HTMLElement | null;
-        if (focusedEl && focusedEl !== document.body && focusedEl.tagName !== 'BODY') {
+        if (
+            focusedEl &&
+            focusedEl.tagName !== 'BODY' &&
+            focusedEl.tagName !== 'VIDEO' &&
+            focusedEl.tagName !== 'AUDIO'
+        ) {
             focusedEl.blur?.();
         }
 
