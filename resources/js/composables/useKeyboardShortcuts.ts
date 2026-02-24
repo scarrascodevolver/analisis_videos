@@ -103,16 +103,29 @@ export function useKeyboardShortcuts() {
         }
     }
 
+    // Focus diagnostics: log when the parent window loses/gains focus
+    // If blur fires before hotkeys stop → YouTube iframe or other element is stealing focus
+    function onWindowBlur() {
+        console.log('[hotkey] ⚠️ WINDOW BLUR — foco perdido, activeEl:', document.activeElement?.tagName, document.activeElement?.id || '');
+    }
+    function onWindowFocus() {
+        console.log('[hotkey] ✅ WINDOW FOCUS — foco recuperado');
+    }
+
     onMounted(() => {
         console.log('[hotkey] ✅ MOUNTED — registrando listeners (capture:true)');
         window.addEventListener('keydown', handleKeyDown, { capture: true });
         window.addEventListener('keydown', canaryListener, { capture: true });
+        window.addEventListener('blur', onWindowBlur);
+        window.addEventListener('focus', onWindowFocus);
     });
 
     onUnmounted(() => {
         console.log('[hotkey] ❌ UNMOUNTED — removiendo listeners, shortcuts:', Array.from(shortcuts.keys()));
         window.removeEventListener('keydown', handleKeyDown, { capture: true });
         window.removeEventListener('keydown', canaryListener, { capture: true });
+        window.removeEventListener('blur', onWindowBlur);
+        window.removeEventListener('focus', onWindowFocus);
         unregisterAll();
     });
 

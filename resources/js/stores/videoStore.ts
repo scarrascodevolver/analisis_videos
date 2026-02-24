@@ -86,6 +86,9 @@ export const useVideoStore = defineStore('video', () => {
         } else {
             videoRef.value?.play();
         }
+        // Any play call can cause focus to drift (YouTube iframe, native video controls, etc.)
+        // Reclaim focus so keyboard shortcuts keep working.
+        setTimeout(() => window.focus(), 50);
     }
 
     function pause() {
@@ -119,6 +122,8 @@ export const useVideoStore = defineStore('video', () => {
         } else if (videoRef.value) {
             videoRef.value.currentTime = clamped;
         }
+        // Reclaim focus after any seek — prevents focus drift from iframe or native video controls
+        setTimeout(() => window.focus(), 50);
     }
 
     /** Seek to start, play, and auto-pause when end is reached */
@@ -133,6 +138,8 @@ export const useVideoStore = defineStore('video', () => {
             videoRef.value.currentTime = clamped;
             videoRef.value.play();
         }
+        // Reclaim focus after any seek/play to prevent focus drift
+        setTimeout(() => window.focus(), 50);
     }
 
     function seekRelative(delta: number) {

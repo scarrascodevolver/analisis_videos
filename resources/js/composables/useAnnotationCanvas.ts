@@ -60,9 +60,13 @@ function createAnnotationCanvas() {
         // Disable pointer events by default (will be enabled when annotation mode is activated)
         if (fabricCanvas.value.lowerCanvasEl) {
             fabricCanvas.value.lowerCanvasEl.style.pointerEvents = 'none';
+            // Fabric.js sets tabIndex="1" by default — prevent focus stealing
+            fabricCanvas.value.lowerCanvasEl.tabIndex = -1;
         }
         if (fabricCanvas.value.upperCanvasEl) {
             fabricCanvas.value.upperCanvasEl.style.pointerEvents = 'none';
+            // Fabric.js sets tabIndex="1" by default — prevent focus stealing
+            fabricCanvas.value.upperCanvasEl.tabIndex = -1;
         }
         console.log('🚫 Canvas pointer events disabled by default');
 
