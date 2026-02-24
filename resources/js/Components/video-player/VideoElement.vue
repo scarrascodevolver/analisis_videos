@@ -201,6 +201,44 @@ watch(isYoutube, async (nowYoutube) => {
     }
 });
 
+// YouTube → YouTube master swap: isYoutube stays true so watch(isYoutube) never fires.
+// Detect the video ID change and reload the existing YT.Player with the new video.
+watch(() => props.youtubeVideoId, async (newId, oldId) => {
+    // Only handle YouTube→YouTube transitions:
+    // both IDs must be non-null (skip HTML5↔YouTube, handled by watch(isYoutube) above)
+    if (!newId || !oldId || newId === oldId || !isYoutube.value) return;
+
+    await nextTick();
+
+    const player = videoStore.youtubePlayer;
+    if (player) {
+        try {
+            // cueVideoById loads the video without auto-playing (user controls playback)
+            player.cueVideoById(newId);
+        } catch (_) {
+            // Player not ready — do a full recreate
+            videoStore.clearYouTubePlayer();
+            if (!ytContainerRef.value) return;
+            await loadYouTubeAPI();
+            const YT = (window as any).YT;
+            const p = new YT.Player(ytContainerRef.value, {
+                videoId: newId,
+                width:   '100%',
+                height:  '100%',
+                playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
+                events: {
+                    onReady: () => { videoStore.setYouTubePlayer(p); },
+                    onStateChange: (e: any) => {
+                        if (e.data === 1) videoStore.onPlay();
+                        if (e.data === 2) videoStore.onPause();
+                        if (e.data === 0) videoStore.onPause();
+                    },
+                },
+            });
+        }
+    }
+});
+
 // Transición silenciosa a HLS en dos casos:
 // 1. Bunny terminó de encodear mientras el usuario veía el MP4 original (FIX 2: siempre inmediato)
 // 2. El usuario hizo swap de master/slave y el nuevo master tiene HLS (FIX 1: data-driven)

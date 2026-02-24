@@ -377,11 +377,10 @@ function onSwapMaster(slaveId: number) {
         i === slaveIndex ? demotedMaster : s
     );
 
-    console.log('[SWAP]', {
-        promoted: { id: incomingSlave.id, hls: !!incomingSlave.bunny_hls_url, stream: incomingSlave.stream_url?.slice(-30) },
-        demoted:  { id: demotedMaster.id, hls: !!demotedMaster.bunny_hls_url, stream: demotedMaster.stream_url?.slice(-30) },
-        newSlaves: newSlaves.map(s => ({ id: s.id, stream: s.stream_url?.slice(-30) })),
-    });
+    console.log(`[SWAP] promoted=${incomingSlave.id}(yt=${incomingSlave.is_youtube_video},ytId=${incomingSlave.youtube_video_id}) → demoted=${demotedMaster.id}(yt=${demotedMaster.is_youtube_video},ytId=${demotedMaster.youtube_video_id})`);
+    console.log(`[SWAP] promoted.stream=...${String(incomingSlave.stream_url).slice(-40)} | promoted.hls=${!!incomingSlave.bunny_hls_url}`);
+    console.log(`[SWAP] demoted.stream=...${String(demotedMaster.stream_url).slice(-40)} | demoted.hls=${!!demotedMaster.bunny_hls_url}`);
+    console.log(`[SWAP] newSlaves=${newSlaves.map(s => `${s.id}(yt=${s.is_youtube_video})`).join(', ')}`);
 
     slaveVideos.value = newSlaves;
 

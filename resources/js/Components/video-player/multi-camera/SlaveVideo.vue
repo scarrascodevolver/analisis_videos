@@ -180,12 +180,7 @@ async function initYtPlayer() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 onMounted(() => {
-    console.log(`[SLAVE MOUNT] id=${props.slave.id}`, {
-        stream: props.slave.stream_url?.slice(-30),
-        isHls: isHls.value,
-        hlsUrl: activeHlsUrl.value?.slice(-40) ?? null,
-        isYoutube: props.slave.is_youtube_video,
-    });
+    console.log(`[SLAVE MOUNT] id=${props.slave.id} isYt=${props.slave.is_youtube_video} ytId=${props.slave.youtube_video_id ?? 'none'} isHls=${isHls.value} stream=...${String(props.slave.stream_url).slice(-40)}`);
 
     if (props.slave.is_youtube_video && props.slave.youtube_video_id) {
         // YouTube slave: initialise YT.Player
