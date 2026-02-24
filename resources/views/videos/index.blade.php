@@ -196,105 +196,107 @@
 @endif
 
 {{-- ═══════════════════════════════════════════════════════════
-     NIVEL FINAL — Lista de videos (ambos tipos de org)
+     CLUB — Nivel 2: Videos de una categoría (mismo diseño que asoc_matches)
 ═══════════════════════════════════════════════════════════ --}}
 @elseif($view === 'matches')
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0 text-muted">
-        <a href="{{ route('videos.index') }}" class="text-muted mr-2" title="Volver">
-            <i class="fas fa-arrow-left"></i>
-        </a>
-        <i class="fas fa-video mr-2"></i>
-        {{ $category->name ?? $tournament?->name ?? $club->name ?? 'Videos' }}
-    </h5>
-    <a href="{{ route('videos.create') }}" class="btn btn-rugby btn-sm">
-        <i class="fas fa-plus mr-1"></i> Subir Video
-    </a>
-</div>
+@include('videos.partials.folder-header', ['title' => $category->name, 'icon' => 'layer-group', 'back' => route('videos.index')])
 
 @if($videos->isEmpty())
-    <div class="card card-rugby">
-        <div class="card-body text-center py-4">
-            <p class="text-muted mb-0">No hay partidos en este torneo.</p>
-        </div>
-    </div>
+    @include('videos.partials.empty-folder', [
+        'msg' => 'Todavía no hay videos en esta categoría.',
+        'action' => route('videos.create'),
+        'actionLabel' => 'Subir el primer video'
+    ])
 @else
-    <div class="video-grid">
+    <div class="match-grid">
         @foreach($videos as $video)
             @php
-                $rawSize = $video->compressed_file_size ?? $video->file_size ?? 0;
+                $totalSize = $video->total_size ?? 0;
                 $sizeLabel = '';
-                if ($rawSize > 0) {
-                    $gb = $rawSize / 1073741824;
+                if ($totalSize > 0) {
+                    $gb = $totalSize / 1073741824;
                     $sizeLabel = $gb >= 1
                         ? number_format($gb, 1) . ' GB'
-                        : number_format($rawSize / 1048576, 0) . ' MB';
+                        : number_format($totalSize / 1048576, 0) . ' MB';
                 }
+                $anglesCount = $video->angles_count ?? 1;
+
+                $angleNames = [];
+                $firstGroup = $video->videoGroups->first();
+                if ($firstGroup) {
+                    foreach ($firstGroup->videos as $gv) {
+                        $angle = $gv->pivot->camera_angle ?? null;
+                        if ($angle) $angleNames[] = $angle;
+                    }
+                }
+                $anglesTooltip = !empty($angleNames)
+                    ? implode(' · ', $angleNames)
+                    : $anglesCount . ' ángulos';
             @endphp
-            <div id="video-card-{{ $video->id }}">
-                <div class="card video-card h-100">
-                    <div class="video-thumbnail-container"
-                         onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                        @if($video->bunny_thumbnail)
-                            <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail"
-                                 class="w-100 h-100" style="object-fit:cover">
-                        @else
-                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark">
-                                <i class="fas fa-film fa-2x text-muted"></i>
-                            </div>
-                        @endif
-                        {{-- Status badge --}}
-                        @if($video->bunny_status && $video->bunny_status !== 'ready')
-                            @if($video->bunny_status === 'error')
-                                <span class="status-badge" style="background:rgba(220,53,69,.85)">
-                                    <i class="fas fa-exclamation-circle mr-1"></i>Error
-                                </span>
-                            @else
-                                <span class="status-badge">
-                                    <i class="fas fa-spinner fa-spin mr-1"></i>
-                                    {{ $video->bunny_status === 'processing' ? 'Procesando' : 'Pendiente' }}
-                                </span>
-                            @endif
-                        @endif
-                        {{-- XML badge --}}
-                        @if($video->clips_count > 0)
-                            <span class="xml-badge" title="{{ $video->clips_count }} clips importados">
-                                <i class="fas fa-list-ul mr-1"></i>XML
-                            </span>
-                        @endif
-                    </div>
-                    <div class="card-body py-2 px-2 d-flex flex-column">
-                        <h6 class="card-title mb-1 video-title" title="{{ $video->title }}">
-                            {{ $video->title }}
-                        </h6>
-                        <div class="mt-auto">
-                            <div class="mb-1">
-                                <span class="badge badge-rugby badge-sm">{{ $video->category->name ?? 'Sin cat.' }}</span>
-                                @if($video->rival_name)
-                                    <span class="video-meta d-inline ml-1">vs {{ $video->rival_name }}</span>
-                                @endif
-                            </div>
-                            <div class="video-meta">
-                                <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
-                                @if($sizeLabel)
-                                    &nbsp;·&nbsp;<i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
-                                @endif
-                            </div>
+            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
+                {{-- Botones flotantes --}}
+                @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
+                    <a href="{{ route('videos.edit', $video) }}"
+                       class="match-edit-btn" title="Editar"
+                       onclick="event.stopPropagation()">
+                        <i class="fas fa-pencil-alt"></i>
+                    </a>
+                    <button type="button"
+                            class="match-delete-btn" title="Eliminar"
+                            data-toggle="modal" data-target="#deleteModal-{{ $video->id }}"
+                            onclick="event.stopPropagation()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                @endif
+
+                {{-- Thumbnail 16:9 --}}
+                <div class="match-card-thumb">
+                    @if($video->bunny_thumbnail)
+                        <img src="{{ $video->bunny_thumbnail }}" alt="Thumbnail">
+                    @else
+                        <div class="match-thumb-placeholder">
+                            <i class="fas fa-film"></i>
                         </div>
+                    @endif
+                    <div class="match-play-overlay">
+                        <i class="fas fa-play-circle"></i>
                     </div>
-                    <div class="card-footer py-1 px-2 d-flex" style="gap:4px">
-                        <a href="{{ route('videos.show', $video) }}" class="btn btn-rugby btn-sm btn-xs flex-grow-1">
-                            <i class="fas fa-play"></i>
-                        </a>
-                        @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
-                            <a href="{{ route('videos.edit', $video) }}" class="btn btn-rugby-light btn-sm btn-xs">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-delete btn-sm btn-xs"
-                                    data-toggle="modal" data-target="#deleteModal-{{ $video->id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                    {{-- Status --}}
+                    @if($video->bunny_status === 'error')
+                        <span class="status-badge" style="background:rgba(220,53,69,.85)">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Error
+                        </span>
+                    @elseif($video->bunny_status && !in_array($video->bunny_status, ['ready', 'completed']))
+                        <span class="status-badge">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>Procesando
+                        </span>
+                    @endif
+                    {{-- XML --}}
+                    @if($video->clips_count > 0)
+                        <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
+                    @endif
+                    {{-- Ángulos --}}
+                    @if($anglesCount > 1)
+                        <span class="angles-badge" title="{{ $anglesTooltip }}">
+                            <i class="fas fa-video mr-1"></i>{{ $anglesCount }}
+                        </span>
+                    @endif
+                </div>
+
+                {{-- Info fixture --}}
+                <div class="match-card-body">
+                    <div class="match-fixture">
+                        <span class="fixture-team fixture-local">{{ $video->analyzed_team_name ?? 'Local' }}</span>
+                        <span class="fixture-vs">VS</span>
+                        <span class="fixture-team fixture-rival">{{ $video->rival_name ?? 'Rival' }}</span>
+                    </div>
+                    <div class="match-card-meta">
+                        <i class="fas fa-calendar mr-1"></i>{{ $video->match_date->format('d/m/Y') }}
+                        @if($video->division)
+                            <span class="mx-1">·</span>{{ ucfirst($video->division) }}
+                        @endif
+                        @if($sizeLabel)
+                            <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
                         @endif
                     </div>
                 </div>
@@ -304,16 +306,13 @@
 
     {{-- Modales de eliminación --}}
     @foreach($videos as $video)
+        @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
         <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header modal-header-rugby text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-trash mr-2"></i>Confirmar eliminación
-                        </h5>
-                        <button type="button" class="close text-white" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
+                        <h5 class="modal-title"><i class="fas fa-trash mr-2"></i>Confirmar eliminación</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <p class="text-center mb-3">¿Eliminar <strong>{{ $video->title }}</strong>?</p>
@@ -330,6 +329,7 @@
                 </div>
             </div>
         </div>
+        @endif
     @endforeach
 
     <div class="d-flex justify-content-center mt-3">
@@ -618,6 +618,22 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     text-decoration: none;
 }
 .match-edit-btn:hover { background: #00B7B5; color: #fff; text-decoration: none; }
+/* Botón eliminar flotante (club view) */
+.match-delete-btn {
+    position: absolute;
+    top: 8px; left: 8px;
+    z-index: 10;
+    width: 28px; height: 28px;
+    background: rgba(0,0,0,.65);
+    border: none;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: .7rem;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    padding: 0;
+}
+.match-delete-btn:hover { background: rgba(220,53,69,.85); color: #fff; }
 /* Thumbnail 16:9 */
 .match-card-thumb {
     position: relative;

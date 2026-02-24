@@ -60,13 +60,25 @@ class VideoController extends Controller
             // Nivel 2: videos de la categoría
             $category = Category::findOrFail($categoryParam);
 
-            $videos = Video::with(['category', 'uploader', 'tournament', 'rivalTeam'])
+            $videos = Video::with(['category', 'uploader', 'tournament', 'rivalTeam', 'videoGroups.videos'])
                 ->withCount('clips')
                 ->where('is_master', true)
                 ->teamVisible($user)
                 ->where('category_id', $categoryParam)
                 ->orderBy('match_date', 'desc')
                 ->paginate(24);
+
+            // Calcular totales igual que asoc_matches
+            $videos->each(function ($video) {
+                $group = $video->videoGroups->first();
+                if ($group && $group->videos->isNotEmpty()) {
+                    $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->angles_count = $group->videos->count();
+                } else {
+                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->angles_count = 1;
+                }
+            });
 
             return view('videos.index', compact('category', 'videos'))->with('view', 'matches');
         }
