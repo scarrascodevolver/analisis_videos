@@ -200,6 +200,12 @@ export const useVideoStore = defineStore('video', () => {
 
     function onPlay() {
         isPlaying.value = true;
+        // Cuando el <video> tiene foco y empieza a reproducir, Chrome pasa el control
+        // de media keys al OS, disparando window.blur y rompiendo los hotkeys.
+        // Redirigir foco al body (sin llamar video.blur()) previene esto.
+        if (document.activeElement?.tagName === 'VIDEO') {
+            document.body.focus();
+        }
     }
 
     function onPause() {
