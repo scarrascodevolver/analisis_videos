@@ -186,7 +186,8 @@ function markAllNotificationsAsRead() {
 
         <!-- Main Sidebar -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
-            <a href="/videos" class="brand-link d-flex justify-content-center py-2">
+            <a href="/videos" class="brand-link d-flex justify-content-center align-items-center py-2">
+                <!-- Logo completo — visible cuando el sidebar está expandido -->
                 <img
                     v-if="organization?.logo_path"
                     :src="organization.logo_path"
@@ -200,6 +201,12 @@ function markAllNotificationsAsRead() {
                     alt="RugbyKP"
                     class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain;"
+                >
+                <!-- Logo miniatura — visible solo cuando el sidebar está colapsado -->
+                <img
+                    :src="organization?.logo_path || '/logo.png'"
+                    :alt="organization?.name || 'RugbyKP'"
+                    class="brand-logo-mini"
                 >
             </a>
 
@@ -399,3 +406,28 @@ function markAllNotificationsAsRead() {
         </footer>
     </div>
 </template>
+
+<style>
+/* Logo miniatura: oculto por defecto, visible cuando sidebar está colapsado */
+.brand-logo-mini {
+    display: none;
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.sidebar-collapse .brand-logo-full {
+    display: none !important;
+}
+
+.sidebar-collapse .brand-logo-mini {
+    display: block !important;
+}
+
+/* Centrar el link del brand cuando está colapsado */
+.sidebar-collapse .brand-link {
+    padding: 0.6rem 0 !important;
+    justify-content: center !important;
+}
+</style>
