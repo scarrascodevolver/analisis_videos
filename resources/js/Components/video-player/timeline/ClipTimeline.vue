@@ -136,8 +136,10 @@ const playheadPosition = computed(() => {
     return `calc(110px + (100% - 110px) * ${percent / 100})`;
 });
 
-function toggleCollapsed() {
+function toggleCollapsed(event?: MouseEvent | KeyboardEvent) {
     isCollapsed.value = !isCollapsed.value;
+    // Blur para que el header no retenga foco y no intercepte hotkeys posteriores
+    (event?.currentTarget as HTMLElement)?.blur();
 }
 
 function getClipsForCategory(categoryId: number): VideoClip[] {
@@ -496,6 +498,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     line-height: 1.1;
 }
 .timeline-header:hover { background: #2a2a2a; }
+.timeline-header:focus { outline: none; }
 
 .header-content { display: flex; align-items: center; }
 

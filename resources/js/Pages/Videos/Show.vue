@@ -251,7 +251,7 @@ if (isAnalystOrCoach.value) {
     watch(
         () => clipsStore.activeCategories,
         (categories) => {
-            console.debug('[hotkey] 🔄 watch(activeCategories) fired →', categories.length, 'cats, hotkeys:', categories.map(c => c.hotkey).filter(Boolean));
+            console.log('[hotkey] 🔄 watch(activeCategories) fired →', categories.length, 'cats, hotkeys:', categories.map(c => c.hotkey).filter(Boolean));
             // Remove old category hotkeys, keep base hotkeys (space, arrows, escape)
             for (const cat of categories) {
                 if (cat.hotkey) shortcuts.unregisterHotkey(cat.hotkey);
@@ -260,7 +260,7 @@ if (isAnalystOrCoach.value) {
             for (const cat of categories) {
                 if (cat.hotkey) {
                     shortcuts.registerHotkey(cat.hotkey, async () => {
-                        console.debug(`[hotkey] 🎬 callback cat="${cat.name}" key="${cat.hotkey}" isRecording=${clipsStore.isRecording} recCatId=${clipsStore.recordingCategoryId} isPlaying=${videoStore.isPlaying} t=${videoStore.currentTime.toFixed(2)}`);
+                        console.log(`[hotkey] 🎬 callback cat="${cat.name}" key="${cat.hotkey}" isRecording=${clipsStore.isRecording} recCatId=${clipsStore.recordingCategoryId} isPlaying=${videoStore.isPlaying} t=${videoStore.currentTime.toFixed(2)}`);
                         try {
                             const wasRecording =
                                 clipsStore.isRecording &&

@@ -28,21 +28,29 @@ export function useKeyboardShortcuts() {
         const raw = event.key === ' ' ? 'space' : event.key;
         const key = raw.toLowerCase();
 
-        // Log all relevant keypresses for diagnostics
+        // Log all relevant keypresses (console.log = visible en filtro Default de Chrome)
         const isRelevant = key.length === 1 || ['space', 'escape', 'arrowleft', 'arrowright'].includes(key);
         if (isRelevant) {
             const activeEl = document.activeElement;
-            console.debug(
+            console.log(
                 `[hotkey] ↓ key=${JSON.stringify(key)}`,
-                `| handler=${shortcuts.has(key) ? '✓' : '✗'}`,
-                `| inputFocused=${isInputFocused()}`,
-                `| activeEl=${activeEl?.tagName}#${(activeEl as HTMLElement)?.id || (activeEl as HTMLElement)?.className?.toString().slice(0, 30) || '?'}`,
-                `| registered=[${Array.from(shortcuts.keys()).join(', ')}]`,
+                `handler=${shortcuts.has(key) ? '✓' : '✗'}`,
+                `inputFocused=${isInputFocused()}`,
+                `activeEl=${activeEl?.tagName}#${(activeEl as HTMLElement)?.id || (activeEl as HTMLElement)?.className?.toString().slice(0, 40) || '?'}`,
+                `registered=[${Array.from(shortcuts.keys()).join(',')}]`,
             );
         }
 
         // Ignore if user is typing in an input field
         if (isInputFocused()) return;
+
+        // Blur defensivo: si hay algún elemento con foco (ej. header timeline, botón)
+        // que no sea un input, lo desfocalizamos. Esto limpia anillos de foco visuales
+        // y evita que elementos UI intercepten la tecla como acción propia.
+        const focusedEl = document.activeElement as HTMLElement | null;
+        if (focusedEl && focusedEl !== document.body && focusedEl.tagName !== 'BODY') {
+            focusedEl.blur?.();
+        }
 
         const handler = shortcuts.get(key);
 

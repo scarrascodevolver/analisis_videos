@@ -102,8 +102,9 @@ const totalTimelines = computed(() => {
     return count;
 });
 
-function toggleExpanded() {
+function toggleExpanded(event?: MouseEvent) {
     isExpanded.value = !isExpanded.value;
+    (event?.currentTarget as HTMLElement)?.blur();
 }
 
 function getSlaveCurrentTime(slaveId: number): number {
@@ -184,6 +185,10 @@ function handleSeek(time: number) {
 
 .timeline-toggle:hover {
     background: #2a2a2a;
+}
+
+.timeline-toggle:focus {
+    outline: none;
 }
 
 .toggle-content {
