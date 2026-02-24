@@ -27,7 +27,9 @@ export function useKeyboardShortcuts() {
         // Ignore if user is typing in an input field
         if (isInputFocused()) return;
 
-        const key = event.key.toLowerCase();
+        // Normalize: event.key for spacebar is ' ' (space char), not 'Space'
+        const raw = event.key === ' ' ? 'space' : event.key;
+        const key = raw.toLowerCase();
         const handler = shortcuts.get(key);
 
         if (handler) {

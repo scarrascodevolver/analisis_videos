@@ -224,6 +224,13 @@ onMounted(async () => {
         // Load lineups in background — no await, non-blocking
         lineupStore.loadLineups(props.video.id);
 
+        shortcuts.registerHotkey('Escape', () => {
+            if (clipsStore.isRecording) {
+                clipsStore.cancelRecording();
+                toast.info('Grabación cancelada');
+            }
+        });
+
         try {
             const api = useVideoApi(props.video.id);
             const [,, loadedAnnotations] = await Promise.all([
@@ -232,24 +239,33 @@ onMounted(async () => {
                 api.getAnnotations(),
             ]);
             annotationsStore.loadAnnotations(loadedAnnotations);
+        } catch (e) {
+            console.error('Error loading clips/categories:', e);
+        }
+    }
+});
 
-            shortcuts.registerHotkey('Escape', () => {
-                if (clipsStore.isRecording) {
-                    clipsStore.cancelRecording();
-                    toast.info('Grabación cancelada');
-                }
-            });
-
-            for (const cat of clipsStore.activeCategories) {
+// Reactive hotkey registration — runs whenever categories load or change
+// (handles initial load, edits, deletes, reorders)
+if (isAnalystOrCoach.value) {
+    watch(
+        () => clipsStore.activeCategories,
+        (categories) => {
+            // Remove old category hotkeys, keep base hotkeys (space, arrows, escape)
+            for (const cat of categories) {
+                if (cat.hotkey) shortcuts.unregisterHotkey(cat.hotkey);
+            }
+            // Register fresh for current categories
+            for (const cat of categories) {
                 if (cat.hotkey) {
                     shortcuts.registerHotkey(cat.hotkey, async () => {
                         try {
-                            // Auto-play if paused when starting recording
-                            const wasRecording = clipsStore.isRecording && clipsStore.recordingCategoryId === cat.id;
+                            const wasRecording =
+                                clipsStore.isRecording &&
+                                clipsStore.recordingCategoryId === cat.id;
                             if (!wasRecording && !videoStore.isPlaying) {
                                 videoStore.play();
                             }
-
                             const result = await clipsStore.toggleRecording(
                                 props.video.id, cat.id, videoStore.currentTime,
                             );
@@ -260,11 +276,10 @@ onMounted(async () => {
                     });
                 }
             }
-        } catch (e) {
-            console.error('Error loading clips/categories:', e);
-        }
-    }
-});
+        },
+        { immediate: false },
+    );
+}
 
 // Category modal handlers
 function onCreateCategory() {

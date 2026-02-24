@@ -7,7 +7,6 @@
             role="button"
             tabindex="0"
             @keydown.enter="toggleCollapsed"
-            @keydown.space.prevent="toggleCollapsed"
         >
             <div class="header-content">
                 <i class="fas fa-cut text-warning mr-2"></i>
