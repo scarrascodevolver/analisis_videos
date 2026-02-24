@@ -220,6 +220,18 @@ onMounted(async () => {
     shortcuts.registerHotkey('ArrowLeft', () => videoStore.seekRelative(-5));
     shortcuts.registerHotkey('ArrowRight', () => videoStore.seekRelative(5));
 
+    // Prevent Chrome from activating OS-level media session when a video plays/seeks.
+    // Without this, Chrome dispatches window.blur when any <video> starts playing,
+    // which breaks all keyboard shortcuts until the user clicks somewhere on the page.
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => videoStore.play());
+        navigator.mediaSession.setActionHandler('pause', () => videoStore.pause());
+        navigator.mediaSession.setActionHandler('seekforward', () => videoStore.seekRelative(10));
+        navigator.mediaSession.setActionHandler('seekbackward', () => videoStore.seekRelative(-10));
+        navigator.mediaSession.setActionHandler('previoustrack', () => videoStore.seekRelative(-10));
+        navigator.mediaSession.setActionHandler('nexttrack', () => videoStore.seekRelative(10));
+    }
+
     if (isAnalystOrCoach.value) {
         // Load lineups in background — no await, non-blocking
         lineupStore.loadLineups(props.video.id);
