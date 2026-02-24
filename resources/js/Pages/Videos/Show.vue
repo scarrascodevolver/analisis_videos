@@ -376,6 +376,13 @@ function onSwapMaster(slaveId: number) {
     const newSlaves = slaveVideos.value.map((s, i) =>
         i === slaveIndex ? demotedMaster : s
     );
+
+    console.log('[SWAP]', {
+        promoted: { id: incomingSlave.id, hls: !!incomingSlave.bunny_hls_url, stream: incomingSlave.stream_url?.slice(-30) },
+        demoted:  { id: demotedMaster.id, hls: !!demotedMaster.bunny_hls_url, stream: demotedMaster.stream_url?.slice(-30) },
+        newSlaves: newSlaves.map(s => ({ id: s.id, stream: s.stream_url?.slice(-30) })),
+    });
+
     slaveVideos.value = newSlaves;
 
     // Reset "first play" flag so the next play waits for the new slave
@@ -392,11 +399,8 @@ async function onRemoveSlave(slaveId: number) {
         const api = useVideoApi(props.video.id);
         await api.removeSlaveVideo(slaveId);
 
-        // Remove from local state
-        const index = slaveVideos.value.findIndex(s => s.id === slaveId);
-        if (index !== -1) {
-            slaveVideos.value.splice(index, 1);
-        }
+        // Remove from local state (must assign new array — shallowRef doesn't detect splice)
+        slaveVideos.value = slaveVideos.value.filter(s => s.id !== slaveId);
 
         toast.success('Ángulo eliminado correctamente');
     } catch (error) {

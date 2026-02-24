@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, computed, watch } from 'vue';
 import Hls from 'hls.js';
 import type { SlaveVideo as SlaveVideoType } from '@/types/video-player';
 
@@ -81,6 +81,35 @@ const isHls = computed(() => !!activeHlsUrl.value);
 
 // Inject the multiCamera composable from parent
 const multiCamera = inject<any>('multiCamera', null);
+
+// ── Defensive watchers (handle component reuse when key stays the same) ────────
+// These fire when props change on a reused component. With composite :key they
+// almost never fire, but they ensure correctness in all edge cases.
+
+watch(activeHlsUrl, (newHlsUrl, oldHlsUrl) => {
+    if (!videoRef.value || !newHlsUrl || newHlsUrl === oldHlsUrl) return;
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    if (Hls.isSupported()) {
+        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance.loadSource(newHlsUrl);
+        hlsInstance.attachMedia(videoRef.value);
+    } else if (videoRef.value.canPlayType('application/vnd.apple.mpegurl')) {
+        videoRef.value.src = newHlsUrl;
+        videoRef.value.load();
+    }
+});
+
+const activeSrc = computed(() =>
+    !props.slave.is_youtube_video && !isHls.value
+        ? (props.slave.bunny_mp4_url ?? props.slave.stream_url)
+        : null
+);
+watch(activeSrc, (newSrc, oldSrc) => {
+    if (!videoRef.value || !newSrc || newSrc === oldSrc) return;
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    videoRef.value.src = newSrc;
+    videoRef.value.load();
+});
 
 // ── YouTube IFrame API helpers ────────────────────────────────────────────────
 
@@ -151,6 +180,13 @@ async function initYtPlayer() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 onMounted(() => {
+    console.log(`[SLAVE MOUNT] id=${props.slave.id}`, {
+        stream: props.slave.stream_url?.slice(-30),
+        isHls: isHls.value,
+        hlsUrl: activeHlsUrl.value?.slice(-40) ?? null,
+        isYoutube: props.slave.is_youtube_video,
+    });
+
     if (props.slave.is_youtube_video && props.slave.youtube_video_id) {
         // YouTube slave: initialise YT.Player
         initYtPlayer();

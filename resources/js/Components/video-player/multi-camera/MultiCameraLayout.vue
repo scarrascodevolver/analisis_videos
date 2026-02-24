@@ -2,7 +2,7 @@
     <div v-if="slaves.length > 0" class="slave-videos-list">
         <SlaveVideo
             v-for="slave in slaves"
-            :key="slave.id"
+            :key="`${slave.id}|${slave.stream_url}|${slave.youtube_video_id ?? ''}`"
             :slave="slave"
             @click="handleSwapMaster(slave.id)"
             @remove="handleRemoveSlave"
