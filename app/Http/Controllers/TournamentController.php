@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tournament;
+use App\Services\VideoDeletionService;
 use Illuminate\Http\Request;
 
 class TournamentController extends Controller
@@ -64,76 +65,44 @@ class TournamentController extends Controller
      * and Bunny Stream before the tournament row is removed.
      * DELETE /api/tournaments/{tournament}
      */
-    public function apiDestroy(Tournament $tournament): \Illuminate\Http\JsonResponse
+    public function apiDestroy(Tournament $tournament, VideoDeletionService $videoDeletionService): \Illuminate\Http\JsonResponse
     {
         set_time_limit(120);
 
         $videos = $tournament->videos()->with('organization')->get();
         $deletedCount = 0;
+        $failed = [];
+        $warnings = [];
 
         foreach ($videos as $video) {
-            // Spaces — archivo principal
             try {
-                if ($video->file_path && \Storage::disk('spaces')->exists($video->file_path)) {
-                    \Storage::disk('spaces')->delete($video->file_path);
+                $result = $videoDeletionService->deleteVideo($video);
+                $deletedCount++;
+                if (! empty($result['warnings'])) {
+                    $warnings[$video->id] = $result['warnings'];
                 }
-            } catch (\Exception $e) {
-                \Log::warning("Tournament delete — Spaces delete failed for video {$video->id}: " . $e->getMessage());
-            }
+            } catch (\Throwable $e) {
+                \Log::error("Tournament delete failed for video {$video->id}", [
+                    'tournament_id' => $tournament->id,
+                    'video_id' => $video->id,
+                    'error' => $e->getMessage(),
+                ]);
 
-            // Almacenamiento local — archivo principal
-            try {
-                \Storage::disk('public')->delete($video->file_path);
-            } catch (\Exception $e) {
-                // silencioso
+                $failed[] = [
+                    'video_id' => $video->id,
+                    'error' => $e->getMessage(),
+                ];
             }
+        }
 
-            // Thumbnail
-            if ($video->thumbnail_path) {
-                try {
-                    if (\Storage::disk('spaces')->exists($video->thumbnail_path)) {
-                        \Storage::disk('spaces')->delete($video->thumbnail_path);
-                    }
-                } catch (\Exception $e) {
-                    \Log::warning("Tournament delete — Spaces thumbnail delete failed for video {$video->id}: " . $e->getMessage());
-                }
-                try {
-                    \Storage::disk('public')->delete($video->thumbnail_path);
-                } catch (\Exception $e) {
-                    // silencioso
-                }
-            }
-
-            // Archivo original (antes de compresión), si difiere del principal
-            if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
-                try {
-                    if (\Storage::disk('spaces')->exists($video->original_file_path)) {
-                        \Storage::disk('spaces')->delete($video->original_file_path);
-                    }
-                } catch (\Exception $e) {
-                    \Log::warning("Tournament delete — Spaces original delete failed for video {$video->id}: " . $e->getMessage());
-                }
-                try {
-                    \Storage::disk('public')->delete($video->original_file_path);
-                } catch (\Exception $e) {
-                    // silencioso
-                }
-            }
-
-            // Bunny Stream
-            if ($video->bunny_video_id) {
-                try {
-                    \App\Services\BunnyStreamService::forOrganization($video->organization)
-                        ->deleteVideo($video->bunny_video_id);
-                } catch (\Exception $e) {
-                    \Log::warning("Tournament delete — Bunny delete failed for video {$video->id}: " . $e->getMessage());
-                }
-            }
-
-            // Base de datos (activa el boot method del modelo: cancela jobs pendientes,
-            // elimina asignaciones y demás relaciones en cascada)
-            $video->delete();
-            $deletedCount++;
+        if (! empty($failed)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudo eliminar el torneo porque algunos videos fallaron al borrarse.',
+                'videos_deleted' => $deletedCount,
+                'failed' => $failed,
+                'warnings' => $warnings,
+            ], 500);
         }
 
         $tournament->delete();
@@ -144,6 +113,7 @@ class TournamentController extends Controller
                 ? "Torneo eliminado con {$deletedCount} video(s) borrados del servidor."
                 : 'Torneo eliminado.',
             'videos_deleted' => $deletedCount,
+            'warnings' => $warnings,
         ]);
     }
 

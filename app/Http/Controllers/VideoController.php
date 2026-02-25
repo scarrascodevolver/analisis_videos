@@ -7,6 +7,8 @@ use App\Models\RugbySituation;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Video;
+use App\Services\VideoDeletionService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -545,82 +547,36 @@ class VideoController extends Controller
             ->with('success', 'Video actualizado exitosamente');
     }
 
-    public function destroy(Request $request, Video $video)
+    public function destroy(Request $request, Video $video, VideoDeletionService $videoDeletionService)
     {
         $this->authorize('delete', $video);
 
         $videoTitle = $video->title;
 
-        // Delete video file from storage - try Spaces first, then local
         try {
-            if (Storage::disk('spaces')->exists($video->file_path)) {
-                Storage::disk('spaces')->delete($video->file_path);
+            $result = $videoDeletionService->deleteVideo($video);
+        } catch (\Throwable $e) {
+            \Log::error('Video delete failed', [
+                'video_id' => $video->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudo eliminar el video. Revisá logs del servidor.',
+                ], 500);
             }
-        } catch (Exception $e) {
-            \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'No se pudo eliminar el video.');
         }
-
-        // Also try deleting from local storage (for old files or fallback)
-        try {
-            Storage::disk('public')->delete($video->file_path);
-        } catch (Exception $e) {
-            \Log::warning('Local storage delete failed: '.$e->getMessage());
-        }
-
-        // Delete thumbnail if exists
-        if ($video->thumbnail_path) {
-            try {
-                if (Storage::disk('spaces')->exists($video->thumbnail_path)) {
-                    Storage::disk('spaces')->delete($video->thumbnail_path);
-                }
-            } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from Spaces failed: '.$e->getMessage());
-            }
-
-            try {
-                Storage::disk('public')->delete($video->thumbnail_path);
-            } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from local storage failed: '.$e->getMessage());
-            }
-        }
-
-        // Delete original file if exists (uncompressed video)
-        if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
-            try {
-                if (Storage::disk('spaces')->exists($video->original_file_path)) {
-                    Storage::disk('spaces')->delete($video->original_file_path);
-                }
-            } catch (Exception $e) {
-                \Log::warning('Original file delete from Spaces failed: '.$e->getMessage());
-            }
-
-            try {
-                Storage::disk('public')->delete($video->original_file_path);
-            } catch (Exception $e) {
-                \Log::warning('Original file delete from local storage failed: '.$e->getMessage());
-            }
-        }
-
-        // Eliminar video de Bunny Stream si existe
-        if ($video->bunny_video_id) {
-            try {
-                \App\Services\BunnyStreamService::forOrganization($video->organization)
-                    ->deleteVideo($video->bunny_video_id);
-            } catch (\Exception $e) {
-                \Log::warning('Bunny Stream delete failed: '.$e->getMessage(), [
-                    'video_id' => $video->id,
-                    'bunny_video_id' => $video->bunny_video_id,
-                ]);
-            }
-        }
-
-        $video->delete();
 
         // Respuesta JSON para AJAX
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => "Video '{$videoTitle}' eliminado exitosamente",
+                'warnings' => $result['warnings'],
             ]);
         }
 
