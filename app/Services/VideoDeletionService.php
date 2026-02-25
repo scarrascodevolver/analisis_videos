@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Video;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,7 +19,6 @@ class VideoDeletionService
 
         $warnings = array_merge($warnings, $this->deleteStorageAssets($video));
         $warnings = array_merge($warnings, $this->deleteBunnyAsset($video));
-        $this->deleteDependentRows($video);
 
         // The DB delete is the source of truth. If this fails, caller must know.
         $video->delete();
@@ -109,12 +107,5 @@ class VideoDeletionService
             || str_starts_with($path, 'cloudflare:')
             || str_starts_with($path, 'http://')
             || str_starts_with($path, 'https://');
-    }
-
-    private function deleteDependentRows(Video $video): void
-    {
-        // Defensive delete before parent removal.
-        // Even with FK ON DELETE CASCADE, this avoids edge-cases with legacy data/metadata.
-        DB::table('video_clips')->where('video_id', $video->id)->delete();
     }
 }
