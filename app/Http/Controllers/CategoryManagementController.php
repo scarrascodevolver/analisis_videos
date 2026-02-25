@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Services\VideoDeletionService;
 use Illuminate\Http\Request;
 
 class CategoryManagementController extends Controller
@@ -95,44 +94,76 @@ class CategoryManagementController extends Controller
      * and Bunny Stream before the category row is removed.
      * DELETE /api/categories/{category}
      */
-    public function apiDestroy(Category $category, VideoDeletionService $videoDeletionService): \Illuminate\Http\JsonResponse
+    public function apiDestroy(Category $category): \Illuminate\Http\JsonResponse
     {
         set_time_limit(120);
 
         $videos = $category->videos()->with('organization')->get();
         $deletedCount = 0;
-        $failed = [];
-        $warnings = [];
 
         foreach ($videos as $video) {
+            // Spaces — archivo principal
             try {
-                $result = $videoDeletionService->deleteVideo($video);
-                $deletedCount++;
-                if (! empty($result['warnings'])) {
-                    $warnings[$video->id] = $result['warnings'];
+                if ($video->file_path && \Storage::disk('spaces')->exists($video->file_path)) {
+                    \Storage::disk('spaces')->delete($video->file_path);
                 }
-            } catch (\Throwable $e) {
-                \Log::error("Category delete failed for video {$video->id}", [
-                    'category_id' => $category->id,
-                    'video_id' => $video->id,
-                    'error' => $e->getMessage(),
-                ]);
-
-                $failed[] = [
-                    'video_id' => $video->id,
-                    'error' => $e->getMessage(),
-                ];
+            } catch (\Exception $e) {
+                \Log::warning("Category delete — Spaces delete failed for video {$video->id}: " . $e->getMessage());
             }
-        }
 
-        if (! empty($failed)) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'No se pudo eliminar la categoría porque algunos videos fallaron al borrarse.',
-                'videos_deleted' => $deletedCount,
-                'failed' => $failed,
-                'warnings' => $warnings,
-            ], 500);
+            // Almacenamiento local — archivo principal
+            try {
+                \Storage::disk('public')->delete($video->file_path);
+            } catch (\Exception $e) {
+                // silencioso
+            }
+
+            // Thumbnail
+            if ($video->thumbnail_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->thumbnail_path)) {
+                        \Storage::disk('spaces')->delete($video->thumbnail_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Spaces thumbnail delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->thumbnail_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Archivo original (antes de compresión), si difiere del principal
+            if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->original_file_path)) {
+                        \Storage::disk('spaces')->delete($video->original_file_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Spaces original delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->original_file_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Bunny Stream
+            if ($video->bunny_video_id) {
+                try {
+                    \App\Services\BunnyStreamService::forOrganization($video->organization)
+                        ->deleteVideo($video->bunny_video_id);
+                } catch (\Exception $e) {
+                    \Log::warning("Category delete — Bunny delete failed for video {$video->id}: " . $e->getMessage());
+                }
+            }
+
+            // Base de datos (activa el boot method del modelo: cancela jobs pendientes,
+            // elimina asignaciones y demás relaciones en cascada)
+            $video->delete();
+            $deletedCount++;
         }
 
         $category->delete();
@@ -143,7 +174,6 @@ class CategoryManagementController extends Controller
                 ? "Categoría eliminada con {$deletedCount} video(s) borrados del servidor."
                 : 'Categoría eliminada.',
             'videos_deleted' => $deletedCount,
-            'warnings' => $warnings,
         ]);
     }
 }

@@ -6,7 +6,6 @@ use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class Video extends Model
 {
@@ -91,38 +90,21 @@ class Video extends Model
     protected static function booted()
     {
         static::deleting(function ($video) {
-            // Best effort cleanup: nunca bloquear el borrado por fallas en subsistemas auxiliares.
-            try {
-                static $jobsTableExists = null;
-                if ($jobsTableExists === null) {
-                    $jobsTableExists = Schema::hasTable('jobs');
-                }
+            // Cancel any pending compression jobs for this video
+            // Jobs are stored with video ID in the payload as JSON
+            $deletedCount = DB::table('jobs')
+                ->where('payload', 'like', '%CompressVideoJob%')
+                ->where('payload', 'like', "%\"videoId\":{$video->id}%")
+                ->delete();
 
-                if ($jobsTableExists) {
-                    $deletedCount = DB::table('jobs')
-                        ->where('payload', 'like', '%CompressVideoJob%')
-                        ->where('payload', 'like', "%\"videoId\":{$video->id}%")
-                        ->delete();
-
-                    if ($deletedCount > 0) {
-                        Log::info("Video {$video->id} deleting: Cancelled {$deletedCount} pending compression job(s)");
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Video {$video->id} deleting: could not cleanup jobs table", [
-                    'error' => $e->getMessage(),
-                ]);
+            if ($deletedCount > 0) {
+                Log::info("Video {$video->id} deleting: Cancelled {$deletedCount} pending compression job(s)");
             }
 
-            try {
-                $assignmentsDeleted = $video->assignments()->delete();
-                if ($assignmentsDeleted > 0) {
-                    Log::info("Video {$video->id} deleting: Removed {$assignmentsDeleted} assignment(s)");
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Video {$video->id} deleting: could not cleanup assignments", [
-                    'error' => $e->getMessage(),
-                ]);
+            // Delete video assignments when video is deleted
+            $assignmentsDeleted = $video->assignments()->delete();
+            if ($assignmentsDeleted > 0) {
+                Log::info("Video {$video->id} deleting: Removed {$assignmentsDeleted} assignment(s)");
             }
         });
     }

@@ -40,12 +40,8 @@ class BunnyStreamService
      * are used; otherwise the service falls back to the global .env config so
      * that existing organizations keep working without any data migration.
      */
-    public static function forOrganization(?Organization $org): self
+    public static function forOrganization(Organization $org): self
     {
-        if (! $org) {
-            return new self;
-        }
-
         // Usar credenciales de la org si tiene library_id + api_key,
         // aunque cdn_hostname sea null (se resuelve después del upload).
         if ($org->bunny_library_id && $org->bunny_api_key) {
