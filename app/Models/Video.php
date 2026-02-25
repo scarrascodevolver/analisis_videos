@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Video extends Model
 {
@@ -83,19 +85,28 @@ class Video extends Model
     }
 
     /**
-     * Boot method — kept minimal.
-     *
-     * Compression-job cancellation and external file cleanup are owned by
-     * VideoDeletionService so they run safely outside the model lifecycle.
-     *
-     * Relation cleanup is handled by:
-     *  - VideoObserver (registered in AppServiceProvider): multi-camera groups.
-     *  - MySQL CASCADE: video_comments, video_assignments, video_annotations,
-     *    video_views, video_clips, video_group_video, lineups.
+     * Boot method to cancel compression jobs when video is deleted
      */
-    protected static function booted(): void
+    protected static function booted()
     {
-        // No manual cleanup needed here.
+        static::deleting(function ($video) {
+            // Cancel any pending compression jobs for this video
+            // Jobs are stored with video ID in the payload as JSON
+            $deletedCount = DB::table('jobs')
+                ->where('payload', 'like', '%CompressVideoJob%')
+                ->where('payload', 'like', "%\"videoId\":{$video->id}%")
+                ->delete();
+
+            if ($deletedCount > 0) {
+                Log::info("Video {$video->id} deleting: Cancelled {$deletedCount} pending compression job(s)");
+            }
+
+            // Delete video assignments when video is deleted
+            $assignmentsDeleted = $video->assignments()->delete();
+            if ($assignmentsDeleted > 0) {
+                Log::info("Video {$video->id} deleting: Removed {$assignmentsDeleted} assignment(s)");
+            }
+        });
     }
 
     public function uploader()

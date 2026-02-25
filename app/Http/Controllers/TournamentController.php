@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tournament;
-use App\Services\VideoDeletionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class TournamentController extends Controller
 {
@@ -62,34 +60,87 @@ class TournamentController extends Controller
 
     /**
      * Delete a tournament via AJAX from the folder context menu.
-     * All associated videos are permanently deleted before the tournament row is removed.
+     * All associated videos are permanently deleted from Spaces, local storage,
+     * and Bunny Stream before the tournament row is removed.
      * DELETE /api/tournaments/{tournament}
      */
     public function apiDestroy(Tournament $tournament): \Illuminate\Http\JsonResponse
     {
         set_time_limit(120);
 
-        try {
-            $videos       = $tournament->videos()->with('organization')->get();
-            $deletedCount = app(VideoDeletionService::class)->deleteMany($videos);
+        $videos = $tournament->videos()->with('organization')->get();
+        $deletedCount = 0;
 
-            $tournament->delete();
-        } catch (\Throwable $e) {
-            Log::error('TournamentController: tournament deletion failed', [
-                'tournament_id' => $tournament->id,
-                'error'         => $e->getMessage(),
-                'trace'         => $e->getTraceAsString(),
-            ]);
+        foreach ($videos as $video) {
+            // Spaces — archivo principal
+            try {
+                if ($video->file_path && \Storage::disk('spaces')->exists($video->file_path)) {
+                    \Storage::disk('spaces')->delete($video->file_path);
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Tournament delete — Spaces delete failed for video {$video->id}: " . $e->getMessage());
+            }
 
-            return response()->json([
-                'ok'      => false,
-                'message' => 'Error al eliminar el torneo. Por favor intente nuevamente.',
-            ], 500);
+            // Almacenamiento local — archivo principal
+            try {
+                \Storage::disk('public')->delete($video->file_path);
+            } catch (\Exception $e) {
+                // silencioso
+            }
+
+            // Thumbnail
+            if ($video->thumbnail_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->thumbnail_path)) {
+                        \Storage::disk('spaces')->delete($video->thumbnail_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Tournament delete — Spaces thumbnail delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->thumbnail_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Archivo original (antes de compresión), si difiere del principal
+            if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
+                try {
+                    if (\Storage::disk('spaces')->exists($video->original_file_path)) {
+                        \Storage::disk('spaces')->delete($video->original_file_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Tournament delete — Spaces original delete failed for video {$video->id}: " . $e->getMessage());
+                }
+                try {
+                    \Storage::disk('public')->delete($video->original_file_path);
+                } catch (\Exception $e) {
+                    // silencioso
+                }
+            }
+
+            // Bunny Stream
+            if ($video->bunny_video_id) {
+                try {
+                    \App\Services\BunnyStreamService::forOrganization($video->organization)
+                        ->deleteVideo($video->bunny_video_id);
+                } catch (\Exception $e) {
+                    \Log::warning("Tournament delete — Bunny delete failed for video {$video->id}: " . $e->getMessage());
+                }
+            }
+
+            // Base de datos (activa el boot method del modelo: cancela jobs pendientes,
+            // elimina asignaciones y demás relaciones en cascada)
+            $video->delete();
+            $deletedCount++;
         }
 
+        $tournament->delete();
+
         return response()->json([
-            'ok'             => true,
-            'message'        => $deletedCount > 0
+            'ok' => true,
+            'message' => $deletedCount > 0
                 ? "Torneo eliminado con {$deletedCount} video(s) borrados del servidor."
                 : 'Torneo eliminado.',
             'videos_deleted' => $deletedCount,

@@ -7,9 +7,7 @@ use App\Models\RugbySituation;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Video;
-use App\Services\VideoDeletionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -552,27 +550,73 @@ class VideoController extends Controller
         $this->authorize('delete', $video);
 
         $videoTitle = $video->title;
-        $videoId    = $video->id;
 
+        // Delete video file from storage - try Spaces first, then local
         try {
-            app(VideoDeletionService::class)->delete($video);
-        } catch (\Throwable $e) {
-            Log::error('VideoController: video deletion failed', [
-                'video_id' => $videoId,
-                'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString(),
-            ]);
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error al eliminar el video. Por favor intente nuevamente.',
-                ], 500);
+            if (Storage::disk('spaces')->exists($video->file_path)) {
+                Storage::disk('spaces')->delete($video->file_path);
             }
-
-            return redirect()->back()->with('error', 'Error al eliminar el video. Por favor intente nuevamente.');
+        } catch (Exception $e) {
+            \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
         }
 
+        // Also try deleting from local storage (for old files or fallback)
+        try {
+            Storage::disk('public')->delete($video->file_path);
+        } catch (Exception $e) {
+            \Log::warning('Local storage delete failed: '.$e->getMessage());
+        }
+
+        // Delete thumbnail if exists
+        if ($video->thumbnail_path) {
+            try {
+                if (Storage::disk('spaces')->exists($video->thumbnail_path)) {
+                    Storage::disk('spaces')->delete($video->thumbnail_path);
+                }
+            } catch (Exception $e) {
+                \Log::warning('Thumbnail delete from Spaces failed: '.$e->getMessage());
+            }
+
+            try {
+                Storage::disk('public')->delete($video->thumbnail_path);
+            } catch (Exception $e) {
+                \Log::warning('Thumbnail delete from local storage failed: '.$e->getMessage());
+            }
+        }
+
+        // Delete original file if exists (uncompressed video)
+        if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
+            try {
+                if (Storage::disk('spaces')->exists($video->original_file_path)) {
+                    Storage::disk('spaces')->delete($video->original_file_path);
+                }
+            } catch (Exception $e) {
+                \Log::warning('Original file delete from Spaces failed: '.$e->getMessage());
+            }
+
+            try {
+                Storage::disk('public')->delete($video->original_file_path);
+            } catch (Exception $e) {
+                \Log::warning('Original file delete from local storage failed: '.$e->getMessage());
+            }
+        }
+
+        // Eliminar video de Bunny Stream si existe
+        if ($video->bunny_video_id) {
+            try {
+                \App\Services\BunnyStreamService::forOrganization($video->organization)
+                    ->deleteVideo($video->bunny_video_id);
+            } catch (\Exception $e) {
+                \Log::warning('Bunny Stream delete failed: '.$e->getMessage(), [
+                    'video_id' => $video->id,
+                    'bunny_video_id' => $video->bunny_video_id,
+                ]);
+            }
+        }
+
+        $video->delete();
+
+        // Respuesta JSON para AJAX
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
