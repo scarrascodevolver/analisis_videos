@@ -68,26 +68,8 @@
                             @enderror
                         </div>
 
-                        <div class="form-group">
-                            <label for="slug">Slug (URL amigable)</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">/</span>
-                                </div>
-                                <input type="text"
-                                       class="form-control @error('slug') is-invalid @enderror"
-                                       id="slug"
-                                       name="slug"
-                                       value="{{ old('slug') }}"
-                                       placeholder="club-los-troncos">
-                                @error('slug')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <small class="form-text text-muted">
-                                Se genera automáticamente si se deja vacío. Solo letras, números y guiones.
-                            </small>
-                        </div>
+                        {{-- Slug: campo oculto, se auto-genera desde el nombre --}}
+                        <input type="hidden" id="slug" name="slug" value="{{ old('slug') }}">
 
                         <div class="form-group">
                             <label for="logo">Logo de la Organización</label>
