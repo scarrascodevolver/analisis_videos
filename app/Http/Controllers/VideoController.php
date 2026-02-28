@@ -7,6 +7,7 @@ use App\Models\RugbySituation;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Video;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class SyncBunnyWebhooks extends Command
 {
     protected $signature   = 'bunny:sync-webhooks {--dry-run : Solo mostrar sin aplicar}';
-    protected $description = 'Configura el webhook URL en todas las libraries de Bunny existentes';
+    protected $description = 'Configura webhook URL y resoluciones (720p,1080p) en todas las libraries de Bunny existentes';
 
     public function handle(): void
     {
@@ -38,11 +38,12 @@ class SyncBunnyWebhooks extends Command
             try {
                 $res = Http::withHeaders(['AccessKey' => $accountApiKey])
                     ->post("https://api.bunny.net/videolibrary/{$org->bunny_library_id}", [
-                        'WebhookUrl' => $webhookUrl,
+                        'WebhookUrl'         => $webhookUrl,
+                        'EnabledResolutions' => '720p,1080p',
                     ]);
 
                 if ($res->successful()) {
-                    $this->info("    ✓ Webhook configurado");
+                    $this->info("    ✓ Webhook + resoluciones (720p,1080p) configurados");
                 } else {
                     $this->error("    ✗ Error: " . $res->body());
                 }
