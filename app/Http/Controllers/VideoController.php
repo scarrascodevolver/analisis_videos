@@ -553,19 +553,21 @@ class VideoController extends Controller
         $videoTitle = $video->title;
 
         // Delete video file from storage - try Spaces first, then local
-        try {
-            if (Storage::disk('spaces')->exists($video->file_path)) {
-                Storage::disk('spaces')->delete($video->file_path);
+        if ($video->file_path) {
+            try {
+                if (Storage::disk('spaces')->exists($video->file_path)) {
+                    Storage::disk('spaces')->delete($video->file_path);
+                }
+            } catch (Exception $e) {
+                \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
             }
-        } catch (Exception $e) {
-            \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
-        }
 
-        // Also try deleting from local storage (for old files or fallback)
-        try {
-            Storage::disk('public')->delete($video->file_path);
-        } catch (Exception $e) {
-            \Log::warning('Local storage delete failed: '.$e->getMessage());
+            // Also try deleting from local storage (for old files or fallback)
+            try {
+                Storage::disk('public')->delete($video->file_path);
+            } catch (Exception $e) {
+                \Log::warning('Local storage delete failed: '.$e->getMessage());
+            }
         }
 
         // Delete thumbnail if exists
