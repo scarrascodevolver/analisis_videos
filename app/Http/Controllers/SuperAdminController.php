@@ -142,7 +142,7 @@ class SuperAdminController extends Controller
 
         // Crear categorías por defecto según tipo de organización
         if ($organization->type === Organization::TYPE_CLUB) {
-            $defaultCategories = ['Adulta', 'Juveniles', 'Femenino'];
+            $defaultCategories = ['Masculino', 'Juveniles', 'Femenino'];
             foreach ($defaultCategories as $catName) {
                 \App\Models\Category::create([
                     'name' => $catName,
