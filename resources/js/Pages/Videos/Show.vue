@@ -593,6 +593,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                     :show="showDeleteModal"
                     :video="video"
                     @close="showDeleteModal = false"
+                    @confirmed="showDeleteModal = false"
                 />
                 <StatsModal
                     :show="showStatsModal"

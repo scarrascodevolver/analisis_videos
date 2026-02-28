@@ -66,7 +66,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
 import { useVideoApi } from '@/composables/useVideoApi';
 import type { Video } from '@/types/video-player';
 
@@ -103,13 +102,8 @@ async function handleConfirm() {
 
         emit('confirmed');
 
-        // Redirect to videos list
-        router.visit('/videos', {
-            onSuccess: () => {
-                // Show success message
-                console.log('Video deleted successfully');
-            },
-        });
+        // Full page redirect — evita conflictos entre Inertia partial nav y AdminLTE jQuery
+        window.location.href = '/videos';
     } catch (error: any) {
         console.error('Error deleting video:', error);
         alert(error.message || 'Error al eliminar el video');
