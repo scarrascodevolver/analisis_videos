@@ -274,15 +274,15 @@
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label class="text-muted small font-weight-bold">Peso (kg)</label>
-                                        <input type="number" class="form-control" name="weight" min="40"
+                                        <input type="number" class="form-control" name="weight" min="30"
                                             max="200" placeholder="75">
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label class="text-muted small font-weight-bold">Altura (cm)</label>
-                                        <input type="number" class="form-control" name="height" min="150"
-                                            max="220" placeholder="180">
+                                        <input type="number" class="form-control" name="height" min="100"
+                                            max="230" placeholder="180">
                                     </div>
                                 </div>
                             </div>

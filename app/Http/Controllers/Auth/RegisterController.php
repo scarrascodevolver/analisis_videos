@@ -125,8 +125,8 @@ class RegisterController extends Controller
             'position' => ['nullable', 'string'],
             'secondary_position' => ['nullable', 'string'],
             'player_number' => ['nullable', 'integer', 'min:1', 'max:99'],
-            'weight' => ['nullable', 'integer', 'min:40', 'max:200'],
-            'height' => ['nullable', 'integer', 'min:150', 'max:220'],
+            'weight' => ['nullable', 'integer', 'min:30', 'max:200'],
+            'height' => ['nullable', 'integer', 'min:100', 'max:230'],
             'date_of_birth' => ['nullable', 'date'],
             'user_category_id' => ['required', 'exists:categories,id'],
         ]);

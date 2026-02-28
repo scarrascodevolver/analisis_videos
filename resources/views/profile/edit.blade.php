@@ -308,7 +308,7 @@
                             <div class="form-group">
                                 <label for="weight">Peso (kg)</label>
                                 <input type="number" class="form-control @error('weight') is-invalid @enderror"
-                                       id="weight" name="weight" min="40" max="200"
+                                       id="weight" name="weight" min="30" max="200"
                                        value="{{ old('weight', $user->profile->weight ?? '') }}">
                                 @error('weight')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -319,7 +319,7 @@
                             <div class="form-group">
                                 <label for="height">Altura (cm)</label>
                                 <input type="number" class="form-control @error('height') is-invalid @enderror"
-                                       id="height" name="height" min="150" max="220"
+                                       id="height" name="height" min="100" max="230"
                                        value="{{ old('height', $user->profile->height ?? '') }}">
                                 @error('height')
                                     <span class="invalid-feedback">{{ $message }}</span>
