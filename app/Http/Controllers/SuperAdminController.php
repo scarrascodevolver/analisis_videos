@@ -141,13 +141,11 @@ class SuperAdminController extends Controller
         }
 
         // Crear categorías por defecto según tipo de organización
+        // Usamos la relación para que Eloquent asigne organization_id directamente
+        // (evita el problema de mass assignment: organization_id no está en $fillable de Category)
         if ($organization->type === Organization::TYPE_CLUB) {
-            $defaultCategories = ['Masculino', 'Juveniles', 'Femenino'];
-            foreach ($defaultCategories as $catName) {
-                \App\Models\Category::create([
-                    'name' => $catName,
-                    'organization_id' => $organization->id,
-                ]);
+            foreach (['Masculino', 'Juveniles', 'Femenino'] as $catName) {
+                $organization->categories()->create(['name' => $catName]);
             }
         }
 
