@@ -89,6 +89,26 @@ class CategoryManagementController extends Controller
     }
 
     /**
+     * Create a category via AJAX from the videos index modal.
+     * POST /api/categories
+     */
+    public function apiStore(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $org = auth()->user()->currentOrganization();
+
+        $request->validate([
+            'name' => [
+                'required', 'string', 'max:255',
+                \Illuminate\Validation\Rule::unique('categories')->where('organization_id', $org->id),
+            ],
+        ]);
+
+        $category = $org->categories()->create(['name' => $request->name]);
+
+        return response()->json(['id' => $category->id, 'name' => $category->name]);
+    }
+
+    /**
      * Delete a category via AJAX from the folder context menu.
      * All associated videos are permanently deleted from Spaces, local storage,
      * and Bunny Stream before the category row is removed.

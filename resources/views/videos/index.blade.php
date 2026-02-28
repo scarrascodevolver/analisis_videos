@@ -36,7 +36,11 @@
      CLUB — Nivel 1: Carpetas de categorías
 ═══════════════════════════════════════════════════════════ --}}
 @if($view === 'club_categories')
-@include('videos.partials.folder-header', ['title' => 'Categorías', 'icon' => 'layer-group'])
+@include('videos.partials.folder-header', [
+    'title' => 'Categorías',
+    'icon' => 'layer-group',
+    'extraBtn' => ['label' => 'Nueva Categoría', 'icon' => 'folder-plus', 'modal' => '#createCategoryModal']
+])
 @if($categories->isEmpty())
     @include('videos.partials.empty-folder', ['msg' => 'No hay categorías creadas aún.'])
 @else
@@ -57,6 +61,54 @@
             </div>
         @endforeach
     </div>
+<div class="modal fade" id="createCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary py-2">
+                <h6 class="modal-title"><i class="fas fa-folder-plus mr-2 text-success"></i>Nueva Categoría</h6>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body py-2">
+                <div class="form-group mb-0">
+                    <input type="text" id="newCategoryName" class="form-control form-control-sm bg-dark border-secondary text-white"
+                        placeholder="Ej: Masculino, Juveniles..." maxlength="255">
+                    <div id="categoryError" class="text-danger small mt-1 d-none"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-rugby btn-sm" id="saveCategoryBtn">
+                    <i class="fas fa-save mr-1"></i> Crear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@push('scripts')
+<script>
+document.getElementById('saveCategoryBtn').addEventListener('click', function() {
+    const name = document.getElementById('newCategoryName').value.trim();
+    const errEl = document.getElementById('categoryError');
+    if (!name) { errEl.textContent = 'Ingresa un nombre.'; errEl.classList.remove('d-none'); return; }
+    errEl.classList.add('d-none');
+    this.disabled = true;
+    fetch('{{ route("api.categories.store") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.id) { window.location.reload(); }
+        else { errEl.textContent = data.message || 'Error al crear.'; errEl.classList.remove('d-none'); this.disabled = false; }
+    })
+    .catch(() => { errEl.textContent = 'Error de red.'; errEl.classList.remove('d-none'); this.disabled = false; });
+});
+document.getElementById('newCategoryName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('saveCategoryBtn').click();
+});
+</script>
+@endpush
 @endif
 
 {{-- ═══════════════════════════════════════════════════════════

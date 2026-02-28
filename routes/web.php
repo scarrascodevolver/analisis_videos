@@ -150,6 +150,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('api/tournaments/{tournament}', [TournamentController::class, 'apiDestroy'])->name('api.tournaments.delete');
     Route::delete('api/categories/{category}', [CategoryManagementController::class, 'apiDestroy'])->name('api.categories.delete');
 
+    // Create de categoría via AJAX — modal en videos index (clubs)
+    Route::post('api/categories', [CategoryManagementController::class, 'apiStore'])->name('api.categories.store');
+
     // Local Teams recent (for Select2 autocomplete in upload form)
     Route::get('/api/local-teams/recent', [VideoController::class, 'recentLocalTeams'])->name('api.local-teams.recent');
 
