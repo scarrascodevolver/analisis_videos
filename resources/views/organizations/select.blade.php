@@ -43,7 +43,7 @@
 
                                         <p class="text-muted small mb-3">
                                             <i class="fas fa-user-tag mr-1"></i>
-                                            Rol: <strong>{{ ucfirst($org->pivot->role) }}</strong>
+                                            Rol: <strong>{{ ucfirst($org->pivot->role ?? 'Sin rol') }}</strong>
                                         </p>
 
                                         @if($currentOrg && $currentOrg->id === $org->id)
