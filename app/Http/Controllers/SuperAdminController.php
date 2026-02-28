@@ -302,12 +302,14 @@ class SuperAdminController extends Controller
      */
     public function assignAdminForm(Organization $organization)
     {
-        // Usuarios disponibles: analistas y entrenadores que no están en esta organización
-        // (Pueden trabajar para múltiples clubes)
-        $availableUsers = User::where('is_super_admin', false)
-            ->whereIn('role', ['analista', 'entrenador'])
-            ->whereDoesntHave('organizations', function ($query) use ($organization) {
+        // Usuarios disponibles: analistas, entrenadores y super_admins que no están en esta organización
+        // Los super_admins pueden unirse con un rol funcional (analista/entrenador/staff)
+        $availableUsers = User::whereDoesntHave('organizations', function ($query) use ($organization) {
                 $query->where('organizations.id', $organization->id);
+            })
+            ->where(function ($q) {
+                $q->whereIn('role', ['analista', 'entrenador', 'staff', 'jugador'])
+                  ->orWhere('is_super_admin', true);
             })
             ->orderBy('name')
             ->get();

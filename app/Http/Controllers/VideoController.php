@@ -455,10 +455,10 @@ class VideoController extends Controller
             ->get();
 
         // Default: Usar Vue/Inertia (migración a SPA)
-        // Usuarios mencionables: de la org del VIDEO (no del viewer) y sin super_admins
+        // Usuarios mencionables: de la org del VIDEO (no del viewer)
+        // Super admins aparecen solo si están asignados explícitamente a esta org
         $orgUsers = User::select('id', 'name', 'role')
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $video->organization_id))
-            ->where('role', '!=', 'super_admin')
             ->get();
 
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
