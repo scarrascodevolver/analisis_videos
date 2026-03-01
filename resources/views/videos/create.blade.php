@@ -569,6 +569,14 @@ const uploadState = {
     masterVideoId: null, // video_id del master (para vincular slaves)
 };
 
+// ─── Prevenir navegación accidental durante upload ────────────
+window.addEventListener('beforeunload', function (e) {
+    if (uploadState.isUploading) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
 // ─── Slave mode (cuando se llega desde Show.vue via "Subir ángulo") ──────────
 const urlParams    = new URLSearchParams(window.location.search);
 const masterVideoId = urlParams.get('master_video_id');
