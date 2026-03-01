@@ -32,7 +32,7 @@
             --gray-300: #d1d5db;
             --white: #ffffff;
             --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+            --gradient-accent: #FFC300;
         }
 
         * {
