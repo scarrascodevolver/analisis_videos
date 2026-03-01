@@ -26,7 +26,7 @@
     }
     .dark-table th,
     .dark-table td {
-        border-color: #2d2d4e !important;
+        border-color: #243038 !important;
         vertical-align: middle;
     }
 
@@ -39,8 +39,8 @@
         border-radius: 20px;
         font-size: 0.78rem;
         font-weight: 600;
-        background: #0f0f1a;
-        border: 1px solid #2d2d4e;
+        background: #0d1519;
+        border: 1px solid #243038;
         color: #ccc;
     }
     .role-badge-count .dot {
@@ -84,8 +84,8 @@
     <div class="row">
         <!-- Agregar Usuario Existente -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#005461; border-bottom:1px solid #2d2d4e;">
+            <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
+                <div class="card-header py-3" style="background:#005461; border-bottom:1px solid #243038;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-user-plus mr-2"></i>Agregar Usuario Existente
                     </h6>
@@ -99,7 +99,7 @@
                             <select class="form-control @error('user_id') is-invalid @enderror"
                                     id="user_id"
                                     name="user_id"
-                                    style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                    style="background:#0d1519; border-color:#243038; color:#fff;"
                                     required>
                                 <option value="">-- Seleccionar usuario --</option>
                                 @foreach($availableUsers as $user)
@@ -121,7 +121,7 @@
                             <select class="form-control @error('role') is-invalid @enderror"
                                     id="role"
                                     name="role"
-                                    style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                    style="background:#0d1519; border-color:#243038; color:#fff;"
                                     required>
                                 <option value="analista">Analista</option>
                                 <option value="entrenador">Entrenador</option>
@@ -157,8 +157,8 @@
 
         <!-- Crear Nuevo Usuario -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#D4A017; border-bottom:1px solid #2d2d4e;">
+            <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
+                <div class="card-header py-3" style="background:#D4A017; border-bottom:1px solid #243038;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-user-edit mr-2"></i>Crear Nuevo Usuario
                     </h6>
@@ -175,7 +175,7 @@
                                    name="name"
                                    value="{{ old('name') }}"
                                    placeholder="Nombre del usuario"
-                                   style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                   style="background:#0d1519; border-color:#243038; color:#fff;"
                                    required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -190,7 +190,7 @@
                                    name="email"
                                    value="{{ old('email') }}"
                                    placeholder="usuario@ejemplo.com"
-                                   style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                   style="background:#0d1519; border-color:#243038; color:#fff;"
                                    required>
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -204,7 +204,7 @@
                                    id="new_password"
                                    name="password"
                                    placeholder="Dejar vacío para generar automáticamente"
-                                   style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;">
+                                   style="background:#0d1519; border-color:#243038; color:#fff;">
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -216,7 +216,7 @@
                             <select class="form-control @error('role') is-invalid @enderror"
                                     id="new_role"
                                     name="role"
-                                    style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                    style="background:#0d1519; border-color:#243038; color:#fff;"
                                     required>
                                 <option value="analista" {{ old('role') == 'analista' ? 'selected' : '' }}>Analista</option>
                                 <option value="entrenador" {{ old('role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
@@ -254,8 +254,8 @@
     <!-- Usuarios Actuales -->
     <div class="row">
         <div class="col-12 mb-4">
-            <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#003d4a; border-bottom:1px solid #2d2d4e;">
+            <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
+                <div class="card-header py-3" style="background:#003d4a; border-bottom:1px solid #243038;">
                     <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
                         <h6 class="m-0 font-weight-bold" style="color:#fff;">
                             <i class="fas fa-users mr-2" style="color:#D4A017;"></i>
@@ -292,13 +292,13 @@
                         <div class="table-responsive">
                             <table class="table table-hover mb-0 dark-table" style="color:#ccc;">
                                 <thead>
-                                    <tr style="background:#0f0f1a; color:#888;">
-                                        <th style="border-color:#2d2d4e;">Usuario</th>
-                                        <th style="border-color:#2d2d4e;">Email</th>
-                                        <th class="text-center" style="border-color:#2d2d4e;">Rol</th>
-                                        <th class="text-center" style="border-color:#2d2d4e;">Admin Org</th>
-                                        <th class="text-center" style="border-color:#2d2d4e;">Org Actual</th>
-                                        <th class="text-center" style="border-color:#2d2d4e;">Acciones</th>
+                                    <tr style="background:#0d1519; color:#888;">
+                                        <th style="border-color:#243038;">Usuario</th>
+                                        <th style="border-color:#243038;">Email</th>
+                                        <th class="text-center" style="border-color:#243038;">Rol</th>
+                                        <th class="text-center" style="border-color:#243038;">Admin Org</th>
+                                        <th class="text-center" style="border-color:#243038;">Org Actual</th>
+                                        <th class="text-center" style="border-color:#243038;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -329,8 +329,8 @@
                                                 : '')
                                         );
                                     @endphp
-                                    <tr style="border-color:#2d2d4e; background:#1a1a2e;">
-                                        <td style="border-color:#2d2d4e;">
+                                    <tr style="border-color:#243038; background:#141c22;">
+                                        <td style="border-color:#243038;">
                                             <div class="d-flex align-items-center" style="gap:10px;">
                                                 <span class="user-avatar" style="background:{{ $avatarColor }};">
                                                     {{ $initials }}
@@ -343,13 +343,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style="border-color:#2d2d4e;"><small>{{ $user->email }}</small></td>
-                                        <td class="text-center" style="border-color:#2d2d4e;">
+                                        <td style="border-color:#243038;"><small>{{ $user->email }}</small></td>
+                                        <td class="text-center" style="border-color:#243038;">
                                             <span class="badge badge-{{ $roleColors[$role] ?? 'secondary' }}">
                                                 {{ ucfirst($role) }}
                                             </span>
                                         </td>
-                                        <td class="text-center" style="border-color:#2d2d4e;">
+                                        <td class="text-center" style="border-color:#243038;">
                                             @if($user->pivot->is_org_admin)
                                                 <span class="badge badge-warning">
                                                     <i class="fas fa-crown mr-1"></i>Admin
@@ -358,14 +358,14 @@
                                                 <span style="color:#555;">—</span>
                                             @endif
                                         </td>
-                                        <td class="text-center" style="border-color:#2d2d4e;">
+                                        <td class="text-center" style="border-color:#243038;">
                                             @if($user->pivot->is_current)
                                                 <i class="fas fa-check-circle text-success" title="Org. actual del usuario"></i>
                                             @else
                                                 <i class="fas fa-circle" style="color:#333;" title="No es la org. actual"></i>
                                             @endif
                                         </td>
-                                        <td class="text-center" style="border-color:#2d2d4e;">
+                                        <td class="text-center" style="border-color:#243038;">
                                             @if($user->id !== auth()->id())
                                                 <form action="{{ route('super-admin.organizations.remove-user', [$organization, $user]) }}"
                                                       method="POST"
@@ -375,7 +375,7 @@
                                                     @method('DELETE')
                                                     <button type="submit"
                                                             class="btn btn-sm"
-                                                            style="background:#2d2d4e; border:1px solid #3d3d5e; color:#e74a3b;"
+                                                            style="background:#243038; border:1px solid #3d3d5e; color:#e74a3b;"
                                                             title="Quitar de la organización">
                                                         <i class="fas fa-user-minus"></i>
                                                     </button>
@@ -393,7 +393,7 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <i class="fas fa-users fa-3x mb-3" style="color:#2d2d4e;"></i>
+                            <i class="fas fa-users fa-3x mb-3" style="color:#243038;"></i>
                             <p style="color:#888;">No hay usuarios en esta organización</p>
                         </div>
                     @endif

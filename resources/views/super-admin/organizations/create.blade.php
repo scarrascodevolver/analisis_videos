@@ -5,10 +5,10 @@
     /* --- Type cards --- */
     .type-card {
         cursor: pointer;
-        border: 2px solid #2d2d4e;
+        border: 2px solid #243038;
         border-radius: 10px;
         padding: 20px 16px;
-        background: #0f0f1a;
+        background: #0d1519;
         transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         text-align: center;
         flex: 1;
@@ -59,7 +59,7 @@
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid #D4A017;
-        background: #0f0f1a;
+        background: #0d1519;
     }
 
     /* --- Admin card animated reveal --- */
@@ -87,8 +87,8 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#005461; border-bottom:1px solid #2d2d4e;">
+            <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
+                <div class="card-header py-3" style="background:#005461; border-bottom:1px solid #243038;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-building mr-2"></i>Datos de la Organización
                     </h6>
@@ -133,7 +133,7 @@
                                    name="name"
                                    value="{{ old('name') }}"
                                    placeholder="Ej: Club Deportivo Rugby"
-                                   style="background:#0f0f1a; border-color:#2d2d4e; color:#fff;"
+                                   style="background:#0d1519; border-color:#243038; color:#fff;"
                                    required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -153,7 +153,7 @@
                                        name="logo"
                                        accept="image/*">
                                 <label class="custom-file-label" for="logo"
-                                       style="background:#0f0f1a; border-color:#2d2d4e; color:#888;">
+                                       style="background:#0d1519; border-color:#243038; color:#888;">
                                     Seleccionar archivo...
                                 </label>
                                 @error('logo')
@@ -187,7 +187,7 @@
                             <small style="color:#888;">Las organizaciones inactivas no permiten el acceso a sus usuarios.</small>
                         </div>
 
-                        <hr style="border-color:#2d2d4e;">
+                        <hr style="border-color:#243038;">
 
                         {{-- Switch crear admin --}}
                         <div class="form-group mb-2">
@@ -206,8 +206,8 @@
 
                         {{-- Card admin con animacion CSS --}}
                         <div id="admin_fields" class="{{ old('create_admin') ? 'open' : '' }}">
-                            <div class="card mb-3" style="background:#0f0f1a; border:1px solid #2d2d4e;">
-                                <div class="card-header" style="background:#003d4a; border-bottom:1px solid #2d2d4e; color:#fff;">
+                            <div class="card mb-3" style="background:#0d1519; border:1px solid #243038;">
+                                <div class="card-header" style="background:#003d4a; border-bottom:1px solid #243038; color:#fff;">
                                     <i class="fas fa-user-shield mr-2" style="color:#D4A017;"></i>Datos del Administrador
                                 </div>
                                 <div class="card-body">
@@ -219,7 +219,7 @@
                                                name="admin_name"
                                                value="{{ old('admin_name') }}"
                                                placeholder="Nombre del administrador"
-                                               style="background:#1a1a2e; border-color:#2d2d4e; color:#fff;">
+                                               style="background:#141c22; border-color:#243038; color:#fff;">
                                         @error('admin_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -233,7 +233,7 @@
                                                name="admin_email"
                                                value="{{ old('admin_email') }}"
                                                placeholder="admin@ejemplo.com"
-                                               style="background:#1a1a2e; border-color:#2d2d4e; color:#fff;">
+                                               style="background:#141c22; border-color:#243038; color:#fff;">
                                         @error('admin_email')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -246,7 +246,7 @@
                                                id="admin_password"
                                                name="admin_password"
                                                placeholder="Dejar vacío para generar automáticamente"
-                                               style="background:#1a1a2e; border-color:#2d2d4e; color:#fff;">
+                                               style="background:#141c22; border-color:#243038; color:#fff;">
                                         @error('admin_password')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -258,7 +258,7 @@
                                         <select class="form-control @error('admin_role') is-invalid @enderror"
                                                 id="admin_role"
                                                 name="admin_role"
-                                                style="background:#1a1a2e; border-color:#2d2d4e; color:#fff;">
+                                                style="background:#141c22; border-color:#243038; color:#fff;">
                                             <option value="analista" {{ old('admin_role') == 'analista' ? 'selected' : '' }}>Analista</option>
                                             <option value="entrenador" {{ old('admin_role') == 'entrenador' ? 'selected' : '' }}>Entrenador</option>
                                             <option value="staff" {{ old('admin_role') == 'staff' ? 'selected' : '' }}>Staff</option>
@@ -271,7 +271,7 @@
                             </div>
                         </div>
 
-                        <hr style="border-color:#2d2d4e;">
+                        <hr style="border-color:#243038;">
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('super-admin.organizations') }}" class="btn btn-secondary">
@@ -287,8 +287,8 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#D4A017; border-bottom:1px solid #2d2d4e;">
+            <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
+                <div class="card-header py-3" style="background:#D4A017; border-bottom:1px solid #243038;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-info-circle mr-2"></i>Información
                     </h6>
@@ -298,7 +298,7 @@
                     <p style="color:#888;" class="small">
                         Una organización representa un club, equipo o entidad que utilizará el sistema de análisis de video.
                     </p>
-                    <hr style="border-color:#2d2d4e;">
+                    <hr style="border-color:#243038;">
                     <p style="color:#fff;"><strong>Después de crear:</strong></p>
                     <ul class="small pl-3" style="color:#888;">
                         <li>Asignar un administrador</li>
