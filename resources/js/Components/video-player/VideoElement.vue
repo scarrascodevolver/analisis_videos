@@ -315,8 +315,10 @@ onBeforeUnmount(() => {
 });
 
 function downloadVideo() {
+    const url = props.bunnyMp4Url || props.streamUrl;
+    if (!url) return;
     const a = document.createElement('a');
-    a.href = props.streamUrl;
+    a.href = url;
     a.download = props.title + '.mp4';
     a.click();
 }
