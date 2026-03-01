@@ -455,10 +455,12 @@ class SuperAdminController extends Controller
         }
 
         // Determinar organización a filtrar
+        // Org manager: sin filtro por defecto (ve todos sus usuarios)
+        // Super admin: pre-selecciona la org actual del navbar
         $selectedOrganization = null;
         if ($request->has('organization')) {
             $selectedOrganization = $request->organization ?: null;
-        } else {
+        } elseif (! $isOrgManager) {
             $currentOrg = auth()->user()->currentOrganization();
             $selectedOrganization = $currentOrg ? $currentOrg->id : null;
         }
