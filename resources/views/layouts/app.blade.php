@@ -148,7 +148,8 @@
            LAYOUT - NAVBAR Y SIDEBAR
            ======================================== */
         .main-header.navbar {
-            background-color: var(--color-primary) !important;
+            background-color: var(--color-sidebar) !important;
+            border-bottom: 1px solid rgba(212, 160, 23, 0.15);
         }
 
         .main-sidebar {
