@@ -92,6 +92,7 @@
             --color-primary-hover: #003d4a;
             --color-secondary: #4A6274;
             --color-accent: #D4A017;
+            --color-sidebar: #0d1117;
             --color-bg: #0f0f0f;
             --color-bg-card: #0f0f0f;
             --color-text: #ffffff;
@@ -151,7 +152,7 @@
         }
 
         .main-sidebar {
-            background-color: var(--color-primary-hover) !important;
+            background-color: var(--color-sidebar) !important;
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -186,9 +187,9 @@
         }
 
         .brand-link {
-            background-color: var(--color-primary) !important;
+            background-color: var(--color-sidebar) !important;
             color: white !important;
-            border-bottom: 1px solid var(--color-secondary);
+            border-bottom: 1px solid rgba(212, 160, 23, 0.2);
             padding: 0.6rem 0.7rem;
         }
 
