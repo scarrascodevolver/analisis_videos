@@ -14,7 +14,7 @@ function iconClass(type: string): string {
 
 function bgColor(type: string): string {
     switch (type) {
-        case 'success': return '#FFC300';
+        case 'success': return COLOR_ACCENT;
         case 'error': return '#dc3545';
         case 'warning': return '#ffc107';
         default: return '#005461';

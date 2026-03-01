@@ -175,7 +175,7 @@ const canDelete = computed(() => isAnalystOrCoach.value);
 .btn-rugby-outline {
     background: transparent;
     border: 1px solid #005461;
-    color: #FFC300;
+    color: var(--color-accent);
 }
 .btn-rugby-outline:hover {
     background: #005461;

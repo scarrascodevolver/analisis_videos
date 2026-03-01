@@ -243,7 +243,7 @@ function handleReset() {
 }
 
 .timeline-row.is-slave {
-    border-left-color: #FFC300;
+    border-left-color: var(--color-accent);
 }
 
 .timeline-row.is-clips {
@@ -311,7 +311,7 @@ function handleReset() {
 
 .timeline-track.is-dragging {
     cursor: grabbing;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     box-shadow: 0 0 8px rgba(255, 195, 0, 0.4);
 }
 
@@ -406,7 +406,7 @@ function handleReset() {
 }
 
 .text-info {
-    color: #FFC300 !important;
+    color: var(--color-accent) !important;
 }
 
 .text-warning {

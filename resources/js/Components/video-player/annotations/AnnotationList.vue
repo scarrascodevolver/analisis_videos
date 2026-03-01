@@ -148,7 +148,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 
 .list-header h6 {
     margin: 0;
-    color: #FFC300;
+    color: var(--color-accent);
     font-size: 14px;
     font-weight: 600;
     display: flex;
@@ -157,7 +157,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 }
 
 .count-badge {
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
     font-size: 11px;
     font-weight: 600;
@@ -215,7 +215,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 
 .annotation-item:hover {
     background: #1a1a1a;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     box-shadow: 0 2px 8px rgba(255, 195, 0, 0.2);
 }
 
@@ -225,7 +225,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
     border-radius: 50%;
     font-size: 14px;
@@ -252,7 +252,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 
 .annotation-timestamp {
     font-size: 12px;
-    color: #FFC300;
+    color: var(--color-accent);
     font-weight: 600;
     font-family: 'Courier New', monospace;
 }
@@ -312,6 +312,6 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 }
 
 .annotations-container::-webkit-scrollbar-thumb:hover {
-    background: #FFC300;
+    background: var(--color-accent);
 }
 </style>

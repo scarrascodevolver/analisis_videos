@@ -369,7 +369,7 @@ const clipBlockStyles = computed(() => {
 
             const startPercent = (adjustedStart / dur) * 100;
             const widthPercent = ((adjustedEnd - adjustedStart) / dur) * 100;
-            const color        = clip.category?.color || '#FFC300';
+            const color        = clip.category?.color || COLOR_ACCENT;
             const rowMap = staggerCache.value.get(category.id);
             const rowIdx = rowMap?.get(clip.id) ?? 0;
             const topPx    = rowIdx * ROW_HEIGHT + 2;
@@ -415,7 +415,7 @@ function getClipBlockStyle(clip: VideoClip, categoryId: number) {
 
     const startPercent = (adjustedStart / duration.value) * 100;
     const widthPercent = ((adjustedEnd - adjustedStart) / duration.value) * 100;
-    const color        = clip.category?.color || '#FFC300';
+    const color        = clip.category?.color || COLOR_ACCENT;
 
     // Stagger: which sub-row does this clip belong to?
     const rowMap = staggerCache.value.get(categoryId);
@@ -639,7 +639,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     border: 1px solid #444;
     border-radius: 4px;
     font-size: 11px;
-    color: #FFC300;
+    color: var(--color-accent);
     user-select: none;
 }
 .drag-duration { color: #888; margin-left: 4px; }

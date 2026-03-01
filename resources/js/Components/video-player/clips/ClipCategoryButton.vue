@@ -95,7 +95,7 @@ async function handleClick() {
 
 .clip-category-button:hover {
     background-color: #2a2a2a;
-    border-color: var(--category-color, #FFC300);
+    border-color: var(--category-color, var(--color-accent));
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -115,7 +115,7 @@ async function handleClick() {
 
 .category-icon {
     font-size: 1.25rem;
-    color: var(--category-color, #FFC300);
+    color: var(--category-color, var(--color-accent));
 }
 
 .category-name {
@@ -142,11 +142,11 @@ async function handleClick() {
     height: 20px;
     padding: 0 0.35rem;
     background-color: rgba(255, 195, 0, 0.2);
-    border: 1px solid var(--category-color, #FFC300);
+    border: 1px solid var(--category-color, var(--color-accent));
     border-radius: 3px;
     font-size: 0.7rem;
     font-weight: 700;
-    color: var(--category-color, #FFC300);
+    color: var(--category-color, var(--color-accent));
 }
 
 .clips-count {
@@ -156,7 +156,7 @@ async function handleClick() {
     min-width: 20px;
     height: 20px;
     padding: 0 0.35rem;
-    background-color: var(--category-color, #FFC300);
+    background-color: var(--category-color, var(--color-accent));
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
@@ -188,7 +188,7 @@ async function handleClick() {
     bottom: 0.35rem;
     right: 0.35rem;
     font-size: 0.55rem;
-    color: #FFC300;
+    color: var(--color-accent);
     opacity: 0.7;
     line-height: 1;
 }

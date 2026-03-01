@@ -629,7 +629,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .modal-title i {
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .btn-close {
@@ -676,7 +676,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .master-info i {
-    color: #FFC300;
+    color: var(--color-accent);
     flex-shrink: 0;
 }
 
@@ -721,7 +721,7 @@ watch(() => props.show, (newVal) => {
 
 .source-tab.active {
     background: rgba(255, 195, 0, 0.12);
-    color: #FFC300;
+    color: var(--color-accent);
     font-weight: 600;
 }
 
@@ -746,7 +746,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .form-label i {
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .yt-icon {
@@ -767,7 +767,7 @@ watch(() => props.show, (newVal) => {
 
 .form-control:focus {
     outline: none;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .form-control:disabled {
@@ -805,14 +805,14 @@ watch(() => props.show, (newVal) => {
 }
 
 .preset-btn:hover:not(:disabled) {
-    border-color: #FFC300;
-    color: #FFC300;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
 }
 
 .preset-btn.active {
     background: rgba(255, 195, 0, 0.15);
-    border-color: #FFC300;
-    color: #FFC300;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
     font-weight: 600;
 }
 
@@ -834,7 +834,7 @@ watch(() => props.show, (newVal) => {
 
 .dropzone:hover,
 .dropzone.dragging {
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     background: rgba(255, 195, 0, 0.04);
 }
 
@@ -847,7 +847,7 @@ watch(() => props.show, (newVal) => {
 
 .dropzone:hover .dropzone-icon,
 .dropzone.dragging .dropzone-icon {
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .dropzone-text {
@@ -882,7 +882,7 @@ watch(() => props.show, (newVal) => {
 
 .file-icon {
     font-size: 1.5rem;
-    color: #FFC300;
+    color: var(--color-accent);
     flex-shrink: 0;
 }
 
@@ -949,13 +949,13 @@ watch(() => props.show, (newVal) => {
 }
 
 .progress-label i {
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .progress-percent {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .progress-bar-track {
@@ -967,7 +967,7 @@ watch(() => props.show, (newVal) => {
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #005461, #FFC300);
+    background: linear-gradient(90deg, #005461, var(--color-accent));
     border-radius: 3px;
     transition: width 0.3s ease;
 }
@@ -1053,7 +1053,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #005461, #FFC300);
+    background: linear-gradient(135deg, #005461, var(--color-accent));
     color: #fff;
 }
 

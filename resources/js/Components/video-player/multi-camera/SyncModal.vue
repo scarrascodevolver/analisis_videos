@@ -278,7 +278,7 @@ watch(() => props.show, (newValue) => {
 }
 
 .modal-title i {
-    color: #FFC300;
+    color: var(--color-accent);
 }
 
 .btn-close {
@@ -337,7 +337,7 @@ watch(() => props.show, (newValue) => {
 .current-offset {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #FFC300;
+    color: var(--color-accent);
     background: rgba(255, 195, 0, 0.1);
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
@@ -377,7 +377,7 @@ watch(() => props.show, (newValue) => {
     appearance: none;
     width: 18px;
     height: 18px;
-    background: linear-gradient(135deg, #FFC300, #005461);
+    background: linear-gradient(135deg, var(--color-accent), #005461);
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -386,7 +386,7 @@ watch(() => props.show, (newValue) => {
 .sync-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: linear-gradient(135deg, #FFC300, #005461);
+    background: linear-gradient(135deg, var(--color-accent), #005461);
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -413,7 +413,7 @@ watch(() => props.show, (newValue) => {
 
 .offset-input:focus {
     outline: none;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .offset-unit {
@@ -442,7 +442,7 @@ watch(() => props.show, (newValue) => {
 .btn-preview {
     flex: 1;
     background: rgba(255, 195, 0, 0.1);
-    color: #FFC300;
+    color: var(--color-accent);
     border: 1px solid rgba(255, 195, 0, 0.3);
 }
 
@@ -493,7 +493,7 @@ watch(() => props.show, (newValue) => {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #FFC300, #005461);
+    background: linear-gradient(135deg, var(--color-accent), #005461);
     color: #ffffff;
 }
 

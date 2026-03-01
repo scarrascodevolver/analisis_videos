@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
 .notification-time {
     font-family: monospace;
     font-size: 11px;
-    background: #FFC300;
+    background: var(--color-accent);
     padding: 1px 6px;
     border-radius: 4px;
 }

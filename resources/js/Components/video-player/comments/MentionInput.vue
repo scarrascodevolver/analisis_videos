@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
 
 .mention-input-wrapper textarea:focus {
     background-color: #005461;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     color: #fff;
 }
 

@@ -1,3 +1,4 @@
+import { COLOR_ACCENT } from '../config/colors.js';
 /**
  * Video Player - Annotations Module
  * Handles drawing annotations on video using Fabric.js
@@ -632,7 +633,7 @@ function addSpotlight() {
         top: centerY,
         radius: 80,
         fill: 'transparent',
-        stroke: '#FFC300',
+        stroke: COLOR_ACCENT,
         strokeWidth: 4,
         originX: 'center',
         originY: 'center',

@@ -71,7 +71,7 @@ const progress = computed(() => {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FFC300, #005461);
+    background: linear-gradient(135deg, var(--color-accent), #005461);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,7 +119,7 @@ const progress = computed(() => {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #FFC300, #005461);
+    background: linear-gradient(90deg, var(--color-accent), #005461);
     border-radius: 4px;
     transition: width 0.3s ease;
     box-shadow: 0 0 10px rgba(255, 195, 0, 0.5);
@@ -128,7 +128,7 @@ const progress = computed(() => {
 .progress-text {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #FFC300;
+    color: var(--color-accent);
     text-align: center;
     margin: 0;
 }

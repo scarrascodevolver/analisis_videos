@@ -86,7 +86,7 @@ defineProps<{
 }
 
 .text-rugby {
-    color: #FFC300 !important;
+    color: var(--color-accent) !important;
 }
 
 .loading-text h5 {
@@ -121,7 +121,7 @@ defineProps<{
 }
 
 .bg-rugby {
-    background-color: #FFC300 !important;
+    background-color: var(--color-accent) !important;
 }
 
 .warning-message {

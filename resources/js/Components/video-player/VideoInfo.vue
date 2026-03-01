@@ -77,7 +77,7 @@ const matchDate = computed(() => {
 
 <style scoped>
 .badge-rugby {
-    background-color: #FFC300;
+    background-color: var(--color-accent);
     color: white;
 }
 </style>

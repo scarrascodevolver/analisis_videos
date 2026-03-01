@@ -138,7 +138,7 @@ defineExpose({ focusWithTimestamp });
 }
 
 .timestamp-set-btn:hover {
-    background: #FFC300;
+    background: var(--color-accent);
 }
 
 .form-control-sm {
@@ -150,7 +150,7 @@ defineExpose({ focusWithTimestamp });
 
 .form-control-sm:focus {
     background-color: #005461;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     color: #fff;
 }
 

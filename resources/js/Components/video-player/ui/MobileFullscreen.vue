@@ -112,7 +112,7 @@ onUnmounted(() => {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FFC300, #005461);
+    background: linear-gradient(135deg, var(--color-accent), #005461);
     color: #ffffff;
     border: none;
     font-size: 1.25rem;

@@ -705,8 +705,8 @@ watch(
 }
 
 .lineup-tab.active {
-    color: #FFC300;
-    border-bottom-color: #FFC300;
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
 }
 
 .lineup-tab:hover:not(.active) {
@@ -716,7 +716,7 @@ watch(
 
 .player-count {
     background: rgba(255, 195, 0, 0.2);
-    color: #FFC300;
+    color: var(--color-accent);
     border-radius: 10px;
     padding: 0 0.4rem;
     font-size: 0.7rem;
@@ -749,7 +749,7 @@ watch(
 .section-title {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #FFC300;
+    color: var(--color-accent);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -798,7 +798,7 @@ watch(
 .slot-number {
     font-size: 0.7rem;
     font-weight: 700;
-    color: #FFC300;
+    color: var(--color-accent);
     line-height: 1;
 }
 
@@ -906,7 +906,7 @@ watch(
     font-size: 0.68rem;
     padding: 0.25rem 0.35rem;
 }
-.player-input:focus { outline: none; border-color: #FFC300; }
+.player-input:focus { outline: none; border-color: var(--color-accent); }
 
 /* ── Known rival players ──────────────────────────────────────────────────── */
 .known-players-hint {
@@ -933,12 +933,12 @@ watch(
     transition: all 0.15s;
 }
 .known-player-chip:hover:not(.added) {
-    border-color: #FFC300;
-    color: #FFC300;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
 }
 .known-player-chip.added {
     border-color: #005461;
-    color: #FFC300;
+    color: var(--color-accent);
     background: rgba(255, 195, 0, 0.1);
 }
 

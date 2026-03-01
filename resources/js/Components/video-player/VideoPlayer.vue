@@ -443,8 +443,8 @@ function movePanelDown(index: number) {
 .mc-divider:hover,
 .mc-divider.mc-dragging {
     background: #005461;
-    border-left-color: #FFC300;
-    border-right-color: #FFC300;
+    border-left-color: var(--color-accent);
+    border-right-color: var(--color-accent);
 }
 
 .mc-divider-handle {

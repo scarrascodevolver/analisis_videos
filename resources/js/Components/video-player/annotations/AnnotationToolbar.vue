@@ -350,7 +350,7 @@ const toolbarStyle = computed(() => ({
     width: 125px;
     max-height: calc(100vh - 150px);
     background: rgba(0, 0, 0, 0.95);
-    border: 1px solid #FFC300;
+    border: 1px solid var(--color-accent);
     border-radius: 4px;
     padding: 5px;
     z-index: 20;
@@ -374,7 +374,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .annotation-toolbar::-webkit-scrollbar-thumb {
-    background: #FFC300;
+    background: var(--color-accent);
     border-radius: 2px;
 }
 
@@ -396,7 +396,7 @@ const toolbarStyle = computed(() => ({
 .toolbar-title {
     margin: 0;
     font-size: 10px;
-    color: #FFC300;
+    color: var(--color-accent);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -413,7 +413,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .annotation-count {
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
     font-size: 8px;
     font-weight: 600;
@@ -454,13 +454,13 @@ const toolbarStyle = computed(() => ({
 
 .tool-btn:hover {
     background: #2a2a2a;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .tool-btn.active {
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .tool-btn i {
@@ -477,7 +477,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .color-preview:hover {
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .color-picker {
@@ -498,7 +498,7 @@ const toolbarStyle = computed(() => ({
 
 .color-option:hover,
 .color-option.active {
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .action-btn {
@@ -520,7 +520,7 @@ const toolbarStyle = computed(() => ({
 
 .action-btn:hover:not(:disabled) {
     background: #2a2a2a;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .action-btn:disabled {
@@ -529,7 +529,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .action-btn.save-btn {
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
     font-weight: 600;
 }
@@ -572,11 +572,11 @@ const toolbarStyle = computed(() => ({
 }
 
 .duration-select:hover {
-    border-color: #FFC300;
+    border-color: var(--color-accent);
 }
 
 .spotlight-btn {
-    background: #FFC300;
+    background: var(--color-accent);
     color: #000;
     font-weight: 600;
 }
@@ -605,7 +605,7 @@ const toolbarStyle = computed(() => ({
 
 .symbol-btn:hover {
     background: #2a2a2a;
-    border-color: #FFC300;
+    border-color: var(--color-accent);
     transform: scale(1.05);
 }
 

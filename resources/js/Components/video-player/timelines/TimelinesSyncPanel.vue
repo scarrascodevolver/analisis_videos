@@ -6,7 +6,7 @@
             @click="toggleExpanded"
         >
             <div class="toggle-content">
-                <i class="fas fa-film mr-2" style="color: #FFC300;"></i>
+                <i class="fas fa-film mr-2" style="color: var(--color-accent);"></i>
                 <strong>Sincronización de Timelines</strong>
                 <span v-if="!isExpanded" class="timeline-count ml-2">
                     ({{ totalTimelines }} {{ totalTimelines === 1 ? 'timeline' : 'timelines' }})
@@ -212,7 +212,7 @@ function handleSeek(time: number) {
     background: rgba(255, 195, 0, 0.1);
     border: 1px solid rgba(255, 195, 0, 0.3);
     border-radius: 4px;
-    color: #FFC300;
+    color: var(--color-accent);
     font-size: 11px;
     display: flex;
     align-items: center;

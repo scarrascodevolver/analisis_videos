@@ -123,7 +123,7 @@ function onClickOutside() {
 }
 
 .speed-option.active {
-    color: #FFC300;
+    color: var(--color-accent);
     font-weight: bold;
 }
 
