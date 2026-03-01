@@ -440,6 +440,10 @@ class SuperAdminController extends Controller
      */
     public function users(Request $request)
     {
+        if (! auth()->user()->isSuperAdmin()) {
+            abort(403, 'Solo el Super Admin puede ver todos los usuarios del sistema.');
+        }
+
         $query = User::with('organizations');
 
         // Determinar organización a filtrar
@@ -518,6 +522,10 @@ class SuperAdminController extends Controller
      */
     public function toggleOrgManager(User $user)
     {
+        if (! auth()->user()->isSuperAdmin()) {
+            abort(403, 'Solo el Super Admin puede cambiar este rol.');
+        }
+
         if ($user->is_super_admin) {
             return back()->with('error', 'Un Super Admin no necesita el rol de Org Manager.');
         }
@@ -534,6 +542,10 @@ class SuperAdminController extends Controller
      */
     public function storageStats()
     {
+        if (! auth()->user()->isSuperAdmin()) {
+            abort(403, 'Solo el Super Admin puede ver las estadísticas de almacenamiento.');
+        }
+
         // Obtener uso de almacenamiento por organización
         $storageByOrg = Organization::select('organizations.id', 'organizations.name', 'organizations.slug')
             ->selectRaw('COALESCE(SUM(videos.file_size), 0) as total_size')
