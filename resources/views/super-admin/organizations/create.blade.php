@@ -78,13 +78,6 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb" style="background:transparent;">
-                    <li class="breadcrumb-item"><a href="{{ route('super-admin.dashboard') }}" style="color:#00B7B5;">Super Admin</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('super-admin.organizations') }}" style="color:#00B7B5;">Organizaciones</a></li>
-                    <li class="breadcrumb-item active" style="color:#aaa;">Nueva Organización</li>
-                </ol>
-            </nav>
             <h1 class="h3 mb-0" style="color:#fff;">
                 <i class="fas fa-plus-circle mr-2" style="color:#00B7B5;"></i>
                 Nueva Organización
