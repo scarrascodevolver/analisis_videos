@@ -593,7 +593,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     color: inherit;
 }
 .folder-card:hover {
-    border-color: #005461;
+    border-color: var(--color-primary);
     background: #1e2e30;
     transform: translateY(-3px);
     color: inherit;
@@ -663,7 +663,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     border: 1px solid #2d2d2d;
     transition: border-color .2s, transform .15s;
 }
-.video-card:hover { border-color: #005461; transform: translateY(-2px); }
+.video-card:hover { border-color: var(--color-primary); transform: translateY(-2px); }
 .video-card .card-body { min-height: 80px; }
 .video-meta {
     font-size: .7rem;
@@ -684,16 +684,16 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 }
 
 /* ─── Colores rugby ────────────────────────────────────── */
-.btn-rugby        { background:#005461; border-color:#005461; color:#fff; }
-.btn-rugby:hover  { background:#003d4a; border-color:#003d4a; color:#fff; }
+.btn-rugby        { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
+.btn-rugby:hover  { background:var(--color-primary-hover); border-color:var(--color-primary-hover); color:#fff; }
 .btn-rugby-light  { background:#D4A017; border-color:#D4A017; color:#fff; }
-.btn-rugby-light:hover { background:#009e9c; color:#fff; }
+.btn-rugby-light:hover { background:var(--color-accent); color:#fff; }
 .btn-delete       { background:transparent; border-color:#2d4a4e; color:#6a9a9e; }
-.btn-delete:hover { background:#1a2e30; border-color:#005461; color:#D4A017; }
-.modal-header-rugby { background:#005461; }
-.card-rugby       { border-color:#005461; }
-.card-rugby .card-header { background:#005461; }
-.badge-rugby      { background:#005461; color:#fff; font-size:.8em; }
+.btn-delete:hover { background:#1a2e30; border-color:var(--color-primary); color:#D4A017; }
+.modal-header-rugby { background:var(--color-primary); }
+.card-rugby       { border-color:var(--color-primary); }
+.card-rugby .card-header { background:var(--color-primary); }
+.badge-rugby      { background:var(--color-primary); color:#fff; font-size:.8em; }
 .badge-sm         { font-size:.75em; padding:.2rem .5rem; }
 
 /* ─── Match grid (asociaciones) ───────────────────────── */
@@ -712,7 +712,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     transition: border-color .2s, transform .15s, box-shadow .2s;
 }
 .match-card:hover {
-    border-color: #005461;
+    border-color: var(--color-primary);
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0,84,97,.25);
 }

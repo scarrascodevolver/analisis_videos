@@ -333,7 +333,7 @@
 <style>
 /* Drop Zone */
 .drop-zone {
-    border: 2px dashed #005461;
+    border: 2px dashed var(--color-primary);
     border-radius: 10px;
     padding: 30px 20px;
     text-align: center;
@@ -347,7 +347,7 @@
 }
 .drop-zone-icon {
     font-size: 2.5rem;
-    color: #005461;
+    color: var(--color-primary);
     display: block;
     margin-bottom: .5rem;
 }
@@ -364,7 +364,7 @@
     margin-bottom: 6px;
     font-size: .85rem;
 }
-.file-row:hover { border-color: #005461; }
+.file-row:hover { border-color: var(--color-primary); }
 .file-thumb {
     width: 48px;
     height: 32px;
@@ -397,7 +397,7 @@
 .btn-xml {
     font-size: .75rem;
     padding: 2px 8px;
-    border: 1px solid #005461;
+    border: 1px solid var(--color-primary);
     color: #D4A017;
     background: transparent;
     border-radius: 4px;
@@ -417,7 +417,7 @@
     border-radius: 4px;
     cursor: pointer;
 }
-.role-select:focus { outline: none; border-color: #005461; }
+.role-select:focus { outline: none; border-color: var(--color-primary); }
 
 /* Botón quitar archivo */
 .btn-remove-file {
@@ -501,7 +501,7 @@
     transition: all .2s;
     user-select: none;
 }
-.visibility-option:hover { border-color: #005461; color: #fff; }
+.visibility-option:hover { border-color: var(--color-primary); color: #fff; }
 .visibility-option.active { border-color: #D4A017; color: #D4A017; background: rgba(212,160,23,.1); }
 
 /* Badge XML en fila */
@@ -513,13 +513,13 @@
 }
 
 /* Colores rugby */
-.btn-rugby { background: #005461; border-color: #005461; color: #fff; }
+.btn-rugby { background: #005461; border-color: var(--color-primary); color: #fff; }
 .btn-rugby:hover { background: #003d4a; border-color: #003d4a; color: #fff; }
-.btn-rugby-outline { background: transparent; border: 1px solid #005461; color: #D4A017; }
+.btn-rugby-outline { background: transparent; border: 1px solid var(--color-primary); color: #D4A017; }
 .btn-rugby-outline:hover { background: #005461; color: #fff; }
 .bg-rugby { background-color: #005461 !important; }
-.card-rugby { border-color: #005461; }
-.card-rugby .card-header { background: #005461; border-color: #005461; }
+.card-rugby { border-color: var(--color-primary); }
+.card-rugby .card-header { background: #005461; border-color: var(--color-primary); }
 
 /* Select2 dark — only used for assigned_players field */
 .select2-container--bootstrap4 .select2-selection { background: #1a1a1a !important; border-color: #444 !important; color: #fff !important; }
@@ -536,7 +536,7 @@
     top: 100%;
     left: 0; right: 0;
     background: #1e1e1e;
-    border: 1px solid #005461;
+    border: 1px solid var(--color-primary);
     border-top: none;
     border-radius: 0 0 6px 6px;
     max-height: 200px;
