@@ -477,13 +477,19 @@
                 <!-- Organization Dropdown (solo si tiene múltiples orgs o es super admin) -->
                 @php
                     $isSuperAdmin = auth()->user()->isSuperAdmin();
+                    $isOrgManager = auth()->user()->isOrgManager();
                     // Super admins ven TODAS las organizaciones
-                    $userOrganizations = $isSuperAdmin
-                        ? \App\Models\Organization::where('is_active', true)->orderBy('name')->get()
-                        : auth()->user()->organizations;
+                    // Org managers ven solo las que crearon
+                    if ($isSuperAdmin) {
+                        $userOrganizations = \App\Models\Organization::where('is_active', true)->orderBy('name')->get();
+                    } elseif ($isOrgManager) {
+                        $userOrganizations = \App\Models\Organization::where('is_active', true)->where('created_by', auth()->id())->orderBy('name')->get();
+                    } else {
+                        $userOrganizations = auth()->user()->organizations;
+                    }
                     $currentOrg = auth()->user()->currentOrganization();
                 @endphp
-                @if ($userOrganizations->count() > 1 || $isSuperAdmin)
+                @if ($userOrganizations->count() > 1 || $isSuperAdmin || $isOrgManager)
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
                             <i class="fas fa-building mr-1"></i>
