@@ -60,7 +60,7 @@ const emit = defineEmits<{
 
 .panel-order-btn {
     pointer-events: all;
-    background: rgba(255, 195, 0, 0.12);
+    background: rgba(212, 160, 23, 0.12);
     border: 1px solid var(--color-accent);
     color: var(--color-accent);
     padding: 4px 8px;

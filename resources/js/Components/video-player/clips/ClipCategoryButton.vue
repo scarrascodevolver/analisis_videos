@@ -141,7 +141,7 @@ async function handleClick() {
     min-width: 24px;
     height: 20px;
     padding: 0 0.35rem;
-    background-color: rgba(255, 195, 0, 0.2);
+    background-color: rgba(212, 160, 23, 0.2);
     border: 1px solid var(--category-color, var(--color-accent));
     border-radius: 3px;
     font-size: 0.7rem;

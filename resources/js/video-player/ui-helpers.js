@@ -136,7 +136,7 @@ function showSpeedFeedback(speed) {
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(255, 195, 0, 0.95);
+        background: rgba(212, 160, 23, 0.95);
         color: white;
         padding: 12px 24px;
         border-radius: 8px;

@@ -209,8 +209,8 @@ function handleSeek(time: number) {
 .help-message {
     margin-top: 12px;
     padding: 8px 12px;
-    background: rgba(255, 195, 0, 0.1);
-    border: 1px solid rgba(255, 195, 0, 0.3);
+    background: rgba(212, 160, 23, 0.1);
+    border: 1px solid rgba(212, 160, 23, 0.3);
     border-radius: 4px;
     color: var(--color-accent);
     font-size: 11px;

@@ -640,7 +640,7 @@ function addSpotlight() {
         selectable: true,
         evented: true,
         shadow: new fabric.Shadow({
-            color: 'rgba(255, 195, 0, 0.6)',
+            color: 'rgba(212, 160, 23, 0.6)',
             blur: 20,
             offsetX: 0,
             offsetY: 0
@@ -653,7 +653,7 @@ function addSpotlight() {
         top: centerY,
         radius: 75,
         fill: 'transparent',
-        stroke: 'rgba(255, 195, 0, 0.3)',
+        stroke: 'rgba(212, 160, 23, 0.3)',
         strokeWidth: 8,
         originX: 'center',
         originY: 'center',

@@ -354,14 +354,14 @@ const toolbarStyle = computed(() => ({
     border-radius: 4px;
     padding: 5px;
     z-index: 20;
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.3);
     overflow-y: auto;
     overflow-x: hidden;
     transition: box-shadow 0.2s;
 }
 
 .annotation-toolbar.is-dragging {
-    box-shadow: 0 6px 20px rgba(255, 195, 0, 0.5);
+    box-shadow: 0 6px 20px rgba(212, 160, 23, 0.5);
     cursor: grabbing;
 }
 

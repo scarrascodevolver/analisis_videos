@@ -127,7 +127,7 @@ onUnmounted(() => {
 
 .mobile-fullscreen-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 195, 0, 0.4);
+    box-shadow: 0 6px 20px rgba(212, 160, 23, 0.4);
 }
 
 .mobile-fullscreen-btn:active {

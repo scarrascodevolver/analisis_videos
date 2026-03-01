@@ -366,7 +366,7 @@ safeCategories.forEach((cat) => {
 
 .btn-share-category.is-shared:hover {
     color: #fff;
-    background: rgba(255, 195, 0, 0.15);
+    background: rgba(212, 160, 23, 0.15);
 }
 
 .toggle-icon {

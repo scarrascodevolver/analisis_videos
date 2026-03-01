@@ -216,7 +216,7 @@ async function deleteAnnotation(annotation: VideoAnnotation) {
 .annotation-item:hover {
     background: #1a1a1a;
     border-color: var(--color-accent);
-    box-shadow: 0 2px 8px rgba(255, 195, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(212, 160, 23, 0.2);
 }
 
 .annotation-icon {

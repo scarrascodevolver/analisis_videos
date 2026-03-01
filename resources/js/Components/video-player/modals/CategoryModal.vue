@@ -363,7 +363,7 @@ async function handleSubmit() {
     background: #2a2a2a;
     border-color: var(--color-accent);
     outline: none;
-    box-shadow: 0 0 0 0.15rem rgba(255, 195, 0, 0.25);
+    box-shadow: 0 0 0 0.15rem rgba(212, 160, 23, 0.25);
 }
 
 select.form-control {
@@ -481,7 +481,7 @@ select.form-control {
     min-width: 20px;
     height: 17px;
     padding: 0 0.3rem;
-    background: rgba(255, 195, 0, 0.15);
+    background: rgba(212, 160, 23, 0.15);
     border: 1px solid var(--cat-color, var(--color-accent));
     border-radius: 3px;
     font-size: 0.65rem;

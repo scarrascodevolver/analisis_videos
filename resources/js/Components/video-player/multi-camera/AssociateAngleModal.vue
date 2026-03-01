@@ -429,7 +429,7 @@ watch(searchQuery, async (q) => {
 }
 
 .video-item.is-selected {
-    background: rgba(255, 195, 0, 0.1);
+    background: rgba(212, 160, 23, 0.1);
     border-left: 3px solid var(--color-accent);
 }
 
@@ -540,7 +540,7 @@ watch(searchQuery, async (q) => {
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.3);
 }
 
 .btn-primary:disabled {

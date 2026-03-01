@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
 
 .notification-bubble {
     background: rgba(0, 84, 97, 0.95);
-    border: 1px solid rgba(255, 195, 0, 0.4);
+    border: 1px solid rgba(212, 160, 23, 0.4);
     border-radius: 10px;
     padding: 10px 14px;
     max-width: 320px;

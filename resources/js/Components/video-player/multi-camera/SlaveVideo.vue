@@ -259,7 +259,7 @@ defineExpose({
 .slave-video-card:hover {
     border-color: var(--color-accent);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.2);
 }
 
 .video-wrapper {

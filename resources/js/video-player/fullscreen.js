@@ -180,7 +180,7 @@ export function showCommentInPseudoFullscreen(comment) {
     const notification = document.createElement('div');
     notification.className = 'pseudo-fullscreen-comment';
     notification.style.cssText = `
-        background: rgba(255, 195, 0, 0.2);
+        background: rgba(212, 160, 23, 0.2);
         border: 1px solid var(--color-accent, #4B9DA9);
         border-radius: 8px;
         padding: 10px;

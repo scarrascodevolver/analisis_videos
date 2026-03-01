@@ -122,7 +122,7 @@ const progress = computed(() => {
     background: linear-gradient(90deg, var(--color-accent), #005461);
     border-radius: 4px;
     transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(255, 195, 0, 0.5);
+    box-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
 }
 
 .progress-text {

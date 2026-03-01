@@ -21,7 +21,7 @@
             --primary: #005461;
             --primary-dark: #003d4a;
             --primary-light: #018790;
-            --accent: #FFC300;
+            --accent: #D4A017;
             --dark: #0a0a0a;
             --dark-lighter: #1a1a1a;
             --gray-900: #111111;
@@ -32,7 +32,7 @@
             --gray-300: #d1d5db;
             --white: #ffffff;
             --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            --gradient-accent: #FFC300;
+            --gradient-accent: #D4A017;
         }
 
         * {
@@ -161,7 +161,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 195, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(212, 160, 23, 0.3);
         }
 
         .btn-outline {
@@ -207,7 +207,7 @@
             right: 0;
             bottom: 0;
             background:
-                radial-gradient(ellipse at 20% 50%, rgba(255, 195, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 50%, rgba(212, 160, 23, 0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 20%, rgba(0, 84, 97, 0.2) 0%, transparent 40%),
                 radial-gradient(ellipse at 60% 80%, rgba(1, 135, 144, 0.1) 0%, transparent 40%);
             z-index: 0;
@@ -295,8 +295,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(255, 195, 0, 0.1);
-            border: 1px solid rgba(255, 195, 0, 0.3);
+            background: rgba(212, 160, 23, 0.1);
+            border: 1px solid rgba(212, 160, 23, 0.3);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.875rem;
@@ -602,8 +602,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(255, 195, 0, 0.1);
-            border: 1px solid rgba(255, 195, 0, 0.3);
+            background: rgba(212, 160, 23, 0.1);
+            border: 1px solid rgba(212, 160, 23, 0.3);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.875rem;
@@ -639,7 +639,7 @@
         .feature-card:hover {
             transform: translateY(-5px);
             border-color: var(--accent);
-            box-shadow: 0 20px 40px rgba(255, 195, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(212, 160, 23, 0.1);
         }
 
         .feature-icon {
@@ -668,7 +668,7 @@
         }
 
         .feature-card.featured {
-            border-color: rgba(255, 195, 0, 0.3);
+            border-color: rgba(212, 160, 23, 0.3);
             background: linear-gradient(135deg, var(--gray-800) 0%, rgba(0, 84, 97, 0.1) 100%);
         }
 

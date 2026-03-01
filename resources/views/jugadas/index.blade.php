@@ -37,7 +37,7 @@
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 10px;
-            border-left: 3px solid #FFC300;
+            border-left: 3px solid #D4A017;
         }
         .mobile-play-item .play-name {
             color: #fff;
@@ -71,8 +71,8 @@
 
     .play-card:hover {
         transform: translateY(-3px);
-        border-color: #FFC300;
-        box-shadow: 0 8px 25px rgba(255, 195, 0, 0.2);
+        border-color: #D4A017;
+        box-shadow: 0 8px 25px rgba(212, 160, 23, 0.2);
     }
 
     .play-card-thumbnail {
@@ -669,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data.movements.forEach(m => {
                 if (m.type === 'movement' && m.points && m.points.length > 1) {
                     ctx.beginPath();
-                    ctx.strokeStyle = 'rgba(255, 195, 0, 0.5)';
+                    ctx.strokeStyle = 'rgba(212, 160, 23, 0.5)';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([5, 5]);
                     const firstPt = scale(m.points[0].x, m.points[0].y);

@@ -435,7 +435,7 @@ function getScopeIcon(scope: string): string {
     min-width: 22px;
     height: 18px;
     padding: 0 0.3rem;
-    background: rgba(255, 195, 0, 0.15);
+    background: rgba(212, 160, 23, 0.15);
     border: 1px solid var(--color-accent);
     border-radius: 3px;
     font-size: 0.7rem;
@@ -455,7 +455,7 @@ function getScopeIcon(scope: string): string {
 }
 
 .scope-team     { background: rgba(40, 167, 69, 0.2); color: #5cb85c; }
-.scope-personal { background: rgba(255, 195, 0, 0.15); color: var(--color-accent); }
+.scope-personal { background: rgba(212, 160, 23, 0.15); color: var(--color-accent); }
 .scope-xml      { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
 
 .cat-timing {

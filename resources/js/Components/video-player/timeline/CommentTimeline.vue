@@ -205,7 +205,7 @@ function seekToMarker(marker: MarkerCluster) {
     top: 0;
     left: 0;
     height: 100%;
-    background: rgba(255, 195, 0, 0.3);
+    background: rgba(212, 160, 23, 0.3);
     border-radius: 5px 0 0 5px;
     transition: width 0.1s linear;
     pointer-events: none;

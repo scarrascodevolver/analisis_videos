@@ -667,8 +667,8 @@ watch(() => props.show, (newVal) => {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: rgba(255, 195, 0, 0.08);
-    border: 1px solid rgba(255, 195, 0, 0.2);
+    background: rgba(212, 160, 23, 0.08);
+    border: 1px solid rgba(212, 160, 23, 0.2);
     border-radius: 6px;
     color: #aaa;
     font-size: 0.85rem;
@@ -720,7 +720,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .source-tab.active {
-    background: rgba(255, 195, 0, 0.12);
+    background: rgba(212, 160, 23, 0.12);
     color: var(--color-accent);
     font-weight: 600;
 }
@@ -810,7 +810,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .preset-btn.active {
-    background: rgba(255, 195, 0, 0.15);
+    background: rgba(212, 160, 23, 0.15);
     border-color: var(--color-accent);
     color: var(--color-accent);
     font-weight: 600;
@@ -835,7 +835,7 @@ watch(() => props.show, (newVal) => {
 .dropzone:hover,
 .dropzone.dragging {
     border-color: var(--color-accent);
-    background: rgba(255, 195, 0, 0.04);
+    background: rgba(212, 160, 23, 0.04);
 }
 
 .dropzone-icon {
@@ -1059,7 +1059,7 @@ watch(() => props.show, (newVal) => {
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.3);
 }
 
 .btn-primary:disabled {

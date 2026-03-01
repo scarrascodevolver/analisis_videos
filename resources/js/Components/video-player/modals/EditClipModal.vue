@@ -314,7 +314,7 @@ async function handleSubmit() {
     background: #2a2a2a;
     border-color: var(--color-accent);
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(255, 195, 0, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(212, 160, 23, 0.25);
 }
 
 .time-input-group {

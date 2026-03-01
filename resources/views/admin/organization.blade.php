@@ -180,7 +180,7 @@
     #invitationCode.readonly-highlight {
         background-color: #1a1a1a !important;
         color: #00ff88 !important;
-        border: 2px solid #FFC300 !important;
+        border: 2px solid #D4A017 !important;
         font-weight: 600 !important;
     }
 

@@ -715,7 +715,7 @@ watch(
 }
 
 .player-count {
-    background: rgba(255, 195, 0, 0.2);
+    background: rgba(212, 160, 23, 0.2);
     color: var(--color-accent);
     border-radius: 10px;
     padding: 0 0.4rem;
@@ -879,7 +879,7 @@ watch(
     text-align: left;
     transition: background 0.1s;
 }
-.dropdown-item:hover { background: rgba(255, 195, 0, 0.15); color: #fff; }
+.dropdown-item:hover { background: rgba(212, 160, 23, 0.15); color: #fff; }
 
 .user-position {
     font-size: 0.62rem;
@@ -939,7 +939,7 @@ watch(
 .known-player-chip.added {
     border-color: #005461;
     color: var(--color-accent);
-    background: rgba(255, 195, 0, 0.1);
+    background: rgba(212, 160, 23, 0.1);
 }
 
 .chip-number {

@@ -333,7 +333,7 @@ function renderClipsListGrouped(container, displayClips) {
                     <div class="d-flex align-items-center flex-grow-1">
                         <span style="width: 6px; height: 24px; background: ${group.color}; border-radius: 2px; margin-right: 10px;"></span>
                         <span style="font-weight: 600; font-size: 13px; color: #fff;">${group.name}</span>
-                        <span style="margin-left: 8px; background: rgba(255, 195, 0, 0.2); color: ${COLOR_ACCENT}; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                        <span style="margin-left: 8px; background: rgba(212, 160, 23, 0.2); color: ${COLOR_ACCENT}; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
                             ${clipCount}
                         </span>
                     </div>

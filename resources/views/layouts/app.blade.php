@@ -91,7 +91,7 @@
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
             --color-secondary: #018790;
-            --color-accent: #FFC300;
+            --color-accent: #D4A017;
             --color-bg: #0f0f0f;
             --color-bg-card: #0f0f0f;
             --color-text: #ffffff;
@@ -194,7 +194,7 @@
 
         .brand-link .brand-image {
             max-height: 40px;
-            filter: drop-shadow(0 0 6px rgba(255, 195, 0, 0.5));
+            filter: drop-shadow(0 0 6px rgba(212, 160, 23, 0.5));
         }
 
         /* Logo switching for collapsed sidebar */
@@ -611,7 +611,7 @@
             <!-- Brand Logo -->
             <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-2">
                 <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo" class="brand-logo-full"
-                    style="width: 120px; height: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255,195,0,0.5));">
+                    style="width: 120px; height: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(212,160,23,0.5));">
                 <img src="{{ asset('favicon.png') }}" alt="{{ $orgName }}" class="brand-logo-mini"
                     style="width: 36px; height: 36px; object-fit: contain; display: none;">
             </a>
@@ -791,18 +791,18 @@
                                 </a>
                             </li>
                         @elseif (Auth::user()->isOrgManager())
-                            <li class="nav-header" style="color:#FFC300;">MIS ORGANIZACIONES</li>
+                            <li class="nav-header" style="color:#D4A017;">MIS ORGANIZACIONES</li>
                             <li class="nav-item">
                                 <a href="{{ route('super-admin.dashboard') }}"
                                     class="nav-link {{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-chart-bar" style="color:#FFC300;"></i>
+                                    <i class="nav-icon fas fa-chart-bar" style="color:#D4A017;"></i>
                                     <p>Mi Panel</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('super-admin.organizations') }}"
                                     class="nav-link {{ request()->routeIs('super-admin.organizations*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-building" style="color:#FFC300;"></i>
+                                    <i class="nav-icon fas fa-building" style="color:#D4A017;"></i>
                                     <p>Mis Clubes y Orgs</p>
                                 </a>
                             </li>
@@ -1054,7 +1054,7 @@
             const container = document.getElementById('toast-container');
             if (!container) return;
 
-            const bgColor = type === 'success' ? '#FFC300' : (type === 'error' ? '#dc3545' : '#ffc107');
+            const bgColor = type === 'success' ? '#D4A017' : (type === 'error' ? '#dc3545' : '#ffc107');
             const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
 
             const toast = document.createElement('div');

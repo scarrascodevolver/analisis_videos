@@ -312,7 +312,7 @@ function handleReset() {
 .timeline-track.is-dragging {
     cursor: grabbing;
     border-color: var(--color-accent);
-    box-shadow: 0 0 8px rgba(255, 195, 0, 0.4);
+    box-shadow: 0 0 8px rgba(212, 160, 23, 0.4);
 }
 
 .timeline-grid {
@@ -386,7 +386,7 @@ function handleReset() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 195, 0, 0.95);
+    background: rgba(212, 160, 23, 0.95);
     color: white;
     padding: 4px 12px;
     border-radius: 4px;

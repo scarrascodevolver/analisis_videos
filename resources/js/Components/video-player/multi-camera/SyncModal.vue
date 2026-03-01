@@ -338,7 +338,7 @@ watch(() => props.show, (newValue) => {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-accent);
-    background: rgba(255, 195, 0, 0.1);
+    background: rgba(212, 160, 23, 0.1);
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
 }
@@ -441,13 +441,13 @@ watch(() => props.show, (newValue) => {
 
 .btn-preview {
     flex: 1;
-    background: rgba(255, 195, 0, 0.1);
+    background: rgba(212, 160, 23, 0.1);
     color: var(--color-accent);
-    border: 1px solid rgba(255, 195, 0, 0.3);
+    border: 1px solid rgba(212, 160, 23, 0.3);
 }
 
 .btn-preview:hover {
-    background: rgba(255, 195, 0, 0.2);
+    background: rgba(212, 160, 23, 0.2);
 }
 
 .btn-reset {
@@ -499,7 +499,7 @@ watch(() => props.show, (newValue) => {
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.3);
 }
 
 .btn-primary:disabled {

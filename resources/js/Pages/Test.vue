@@ -28,7 +28,7 @@ const decrement = () => counter.value--;
 
                         <!-- Status Card -->
                         <div class="card" style="background: #1a1a1a; border: 1px solid #018790;">
-                            <div class="card-header" style="background: linear-gradient(135deg, #005461, #FFC300); border: none;">
+                            <div class="card-header" style="background: linear-gradient(135deg, #005461, #D4A017); border: none;">
                                 <h3 class="card-title text-white">
                                     <i class="fas fa-check-circle mr-2"></i>
                                     Infraestructura Vue Activa
@@ -71,7 +71,7 @@ const decrement = () => counter.value--;
                                         <button class="btn btn-outline-danger btn-lg" @click="decrement">
                                             <i class="fas fa-minus"></i>
                                         </button>
-                                        <span style="font-size: 3rem; color: #FFC300; font-family: 'Bebas Neue', sans-serif; min-width: 80px; display: inline-block;">
+                                        <span style="font-size: 3rem; color: #D4A017; font-family: 'Bebas Neue', sans-serif; min-width: 80px; display: inline-block;">
                                             {{ counter }}
                                         </span>
                                         <button class="btn btn-lg" style="background: var(--color-accent); color: white;" @click="increment">
