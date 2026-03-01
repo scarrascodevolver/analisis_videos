@@ -790,6 +790,22 @@
                                     <p>Almacenamiento</p>
                                 </a>
                             </li>
+                        @elseif (Auth::user()->isOrgManager())
+                            <li class="nav-header" style="color:#00B7B5;">MIS ORGANIZACIONES</li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.dashboard') }}"
+                                    class="nav-link {{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-bar" style="color:#00B7B5;"></i>
+                                    <p>Mi Panel</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('super-admin.organizations') }}"
+                                    class="nav-link {{ request()->routeIs('super-admin.organizations*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-building" style="color:#00B7B5;"></i>
+                                    <p>Mis Clubes y Orgs</p>
+                                </a>
+                            </li>
                         @endif
 
                     </ul>

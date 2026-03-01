@@ -14,35 +14,63 @@ use Illuminate\Validation\Rule;
 class SuperAdminController extends Controller
 {
     /**
-     * Dashboard con estadísticas globales
+     * Base query de organizaciones según el rol del usuario actual.
+     * Super admin: todas. Org manager: solo las que creó.
+     */
+    private function orgQuery()
+    {
+        $query = Organization::query();
+        if (! auth()->user()->isSuperAdmin()) {
+            $query->where('created_by', auth()->id());
+        }
+
+        return $query;
+    }
+
+    /**
+     * Verifica que el org_manager tenga acceso a una organización específica.
+     */
+    private function authorizeOrgAccess(Organization $organization): void
+    {
+        if (! auth()->user()->isSuperAdmin() && $organization->created_by !== auth()->id()) {
+            abort(403, 'No tenés acceso a esta organización.');
+        }
+    }
+
+    /**
+     * Dashboard con estadísticas (filtrado por org_manager si aplica)
      */
     public function dashboard()
     {
-        // Métricas principales
-        $totalClubs = Organization::where('type', 'club')->count();
-        $totalAsociaciones = Organization::where('type', 'asociacion')->count();
-        $totalUsers = User::count();
-        $totalVideos = Video::withoutGlobalScope('organization')->count();
-        $totalStorageBytes = Video::withoutGlobalScope('organization')->sum('file_size');
+        $baseQuery = $this->orgQuery();
 
-        // Desglose de usuarios por rol
-        $usersByRole = User::selectRaw('role, count(*) as total')
-            ->groupBy('role')
-            ->pluck('total', 'role');
+        $totalClubs = (clone $baseQuery)->where('type', 'club')->count();
+        $totalAsociaciones = (clone $baseQuery)->where('type', 'asociacion')->count();
 
-        // Orgs con estadísticas (para la tabla principal)
-        $orgStats = Organization::withCount([
+        $orgIds = (clone $baseQuery)->pluck('id');
+
+        $totalUsers = User::whereHas('organizations', fn ($q) => $q->whereIn('organizations.id', $orgIds))->count();
+        $totalVideos = Video::withoutGlobalScope('organization')->whereIn('organization_id', $orgIds)->count();
+        $totalStorageBytes = Video::withoutGlobalScope('organization')->whereIn('organization_id', $orgIds)->sum('file_size');
+
+        // Desglose de usuarios por rol (solo super admin ve global)
+        $usersByRole = auth()->user()->isSuperAdmin()
+            ? User::selectRaw('role, count(*) as total')->groupBy('role')->pluck('total', 'role')
+            : collect();
+
+        // Orgs con estadísticas
+        $orgStats = (clone $baseQuery)->withCount([
             'users',
             'videos' => fn ($q) => $q->withoutGlobalScope('organization'),
         ])
             ->orderByDesc('created_at')
             ->get();
 
-        // Últimas 5 organizaciones creadas
-        $recentOrgs = Organization::latest()->take(5)->get();
+        $recentOrgs = (clone $baseQuery)->latest()->take(5)->get();
 
-        // Orgs sin Bunny library configurada (alerta operacional)
-        $orgsWithoutBunny = Organization::whereNull('bunny_library_id')->count();
+        $orgsWithoutBunny = auth()->user()->isSuperAdmin()
+            ? Organization::whereNull('bunny_library_id')->count()
+            : 0;
 
         return view('super-admin.dashboard', compact(
             'totalClubs', 'totalAsociaciones', 'totalUsers', 'totalVideos',
@@ -51,11 +79,11 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * Listar todas las organizaciones
+     * Listar organizaciones
      */
     public function organizations()
     {
-        $organizations = Organization::withCount([
+        $organizations = $this->orgQuery()->withCount([
             'users',
             'videos' => function ($query) {
                 $query->withoutGlobalScope('organization');
@@ -193,6 +221,7 @@ class SuperAdminController extends Controller
      */
     public function editOrganization(Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         $organization->loadCount(['users', 'videos']);
         $admins = $organization->users()->wherePivot('role', 'admin')->get();
 
@@ -204,6 +233,7 @@ class SuperAdminController extends Controller
      */
     public function updateOrganization(Request $request, Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:club,asociacion',
@@ -237,6 +267,7 @@ class SuperAdminController extends Controller
      */
     public function destroyOrganization(Request $request, Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         // Confirmación de seguridad: el nombre debe coincidir exactamente
         if ($request->input('confirm_name') !== $organization->name) {
             return back()->with('error', 'El nombre ingresado no coincide. La organización NO fue eliminada.');
@@ -303,6 +334,7 @@ class SuperAdminController extends Controller
      */
     public function assignAdminForm(Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         // Usuarios disponibles: analistas, entrenadores y super_admins que no están en esta organización
         // Los super_admins pueden unirse con un rol funcional (analista/entrenador/staff)
         $availableUsers = User::whereDoesntHave('organizations', function ($query) use ($organization) {
@@ -328,6 +360,7 @@ class SuperAdminController extends Controller
      */
     public function assignAdmin(Request $request, Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'role' => 'required|in:analista,entrenador,jugador,staff',
@@ -366,6 +399,7 @@ class SuperAdminController extends Controller
      */
     public function createUserForOrganization(Request $request, Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -536,7 +570,7 @@ class SuperAdminController extends Controller
      */
     public function settingsForm(Organization $organization)
     {
-        // Obtener todas las zonas horarias agrupadas por región
+        $this->authorizeOrgAccess($organization);
         $timezones = $this->getGroupedTimezones();
 
         return view('super-admin.organizations.settings', compact('organization', 'timezones'));
@@ -547,6 +581,7 @@ class SuperAdminController extends Controller
      */
     public function updateSettings(Request $request, Organization $organization)
     {
+        $this->authorizeOrgAccess($organization);
         $validated = $request->validate(Organization::compressionSettingsValidationRules());
 
         // Set default values for immediate strategy

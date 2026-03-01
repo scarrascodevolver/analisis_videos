@@ -19,7 +19,7 @@ class SuperAdmin
             return redirect()->route('login');
         }
 
-        if (! auth()->user()->isSuperAdmin()) {
+        if (! auth()->user()->isSuperAdmin() && ! auth()->user()->isOrgManager()) {
             abort(403, 'Acceso denegado. Solo Super Administradores pueden acceder a esta sección.');
         }
 
