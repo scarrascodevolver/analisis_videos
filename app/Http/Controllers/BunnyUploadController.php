@@ -260,11 +260,16 @@ class BunnyUploadController extends Controller
                 }
             }
 
+            // Siempre escribir is_master en la tabla, incluso si no se asoció a ningún grupo.
+            // Evita que un slave sin master_video_id quede con is_master=true (default de DB).
+            \DB::table('videos')->where('id', $video->id)->update(['is_master' => $isMaster]);
+
             Log::info('Bunny Stream upload initiated', [
                 'video_id' => $video->id,
                 'bunny_guid' => $upload['guid'],
                 'user_id' => auth()->id(),
                 'org_id' => $org->id,
+                'is_master' => $isMaster,
                 'group_id' => $groupId,
             ]);
 

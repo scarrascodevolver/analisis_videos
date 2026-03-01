@@ -1050,6 +1050,8 @@ async function startUpload() {
     if (failed === 0) {
         setStatus(`${success} video${success > 1 ? 's' : ''} enviado${success > 1 ? 's' : ''} correctamente`);
         const redirectId = uploadState.masterVideoId || lastVideoId;
+        // Limpiar flag ANTES de navegar para que beforeunload no interrumpa el redirect
+        uploadState.isUploading = false;
         setTimeout(() => {
             window.location.href = redirectId
                 ? '{{ url("videos") }}/' + redirectId
