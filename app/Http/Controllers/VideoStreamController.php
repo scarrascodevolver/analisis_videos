@@ -1015,28 +1015,21 @@ class VideoStreamController extends Controller
         $filename = \Illuminate\Support\Str::slug($video->title ?: 'video').'.mp4';
 
         // Hacer proxy del archivo con Content-Disposition: attachment
-        // para forzar la descarga en el navegador (sin redirect a Bunny)
+        // usando Guzzle (Http facade) que maneja SSL y redirects correctamente.
+        // Esto fuerza la descarga en el navegador sin navegar a Bunny CDN.
         return response()->stream(function () use ($url) {
             set_time_limit(0);
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'GET',
-                    'timeout' => 300,
-                    'user_agent' => 'RugbyHub/1.0',
-                ],
-            ]);
 
-            $stream = @fopen($url, 'r', false, $context);
-            if ($stream) {
-                while (! feof($stream)) {
-                    $chunk = fread($stream, 65536); // 64 KB chunks
-                    if ($chunk === false || strlen($chunk) === 0) {
-                        break;
-                    }
-                    echo $chunk;
-                    flush();
-                }
-                fclose($stream);
+            $response = \Illuminate\Support\Facades\Http::withOptions([
+                'stream'  => true,
+                'timeout' => 0,
+                'connect_timeout' => 15,
+            ])->get($url);
+
+            $body = $response->getBody();
+            while (! $body->eof()) {
+                echo $body->read(65536); // 64 KB chunks
+                flush();
             }
         }, 200, [
             'Content-Type' => 'video/mp4',
