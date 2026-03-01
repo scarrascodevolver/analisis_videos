@@ -47,13 +47,20 @@ class SetCurrentOrganization
         // Si el usuario no tiene organización seleccionada
         if (! $currentOrg) {
             // Super admins ven todas las orgs activas del sistema
-            $organizations = $user->isSuperAdmin()
-                ? \App\Models\Organization::where('is_active', true)->get()
-                : $user->organizations;
+            // Org managers ven solo las que crearon
+            if ($user->isSuperAdmin()) {
+                $organizations = \App\Models\Organization::where('is_active', true)->get();
+            } elseif ($user->isOrgManager()) {
+                $organizations = \App\Models\Organization::where('is_active', true)
+                    ->where('created_by', $user->id)
+                    ->get();
+            } else {
+                $organizations = $user->organizations;
+            }
 
             // Si tiene exactamente una organización, seleccionarla automáticamente
             if ($organizations->count() === 1) {
-                $user->switchOrganization($organizations->first(), $user->isSuperAdmin());
+                $user->switchOrganization($organizations->first(), $user->isSuperAdmin() || $user->isOrgManager());
 
                 return $next($request);
             }
@@ -64,8 +71,8 @@ class SetCurrentOrganization
                     ->with('info', 'Por favor selecciona una organización para continuar.');
             }
 
-            // Si no hay ninguna organización (super admin en sistema vacío: dejar pasar)
-            if ($user->isSuperAdmin()) {
+            // Si no hay ninguna organización (super admin u org manager en sistema vacío: dejar pasar)
+            if ($user->isSuperAdmin() || $user->isOrgManager()) {
                 return $next($request);
             }
 

@@ -383,6 +383,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::put('/organizations/{organization}/settings', [App\Http\Controllers\SuperAdminController::class, 'updateSettings'])->name('organizations.settings.update');
     Route::get('/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('users');
     Route::delete('/users/{user}', [App\Http\Controllers\SuperAdminController::class, 'destroyUser'])->name('users.destroy');
+    Route::post('/users/{user}/toggle-org-manager', [App\Http\Controllers\SuperAdminController::class, 'toggleOrgManager'])->name('users.toggle-org-manager');
     Route::get('/storage', [App\Http\Controllers\SuperAdminController::class, 'storageStats'])->name('storage');
 });
 

@@ -29,6 +29,7 @@ class Organization extends Model
         'bunny_library_id',
         'bunny_api_key',
         'bunny_cdn_hostname',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -96,6 +97,14 @@ class Organization extends Model
     public static function findByInvitationCode(string $code): ?self
     {
         return self::active()->byInvitationCode($code)->first();
+    }
+
+    /**
+     * Usuario que creó esta organización
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**

@@ -120,6 +120,7 @@ class SuperAdminController extends Controller
             'slug' => $slug,
             'logo_path' => $logoPath,
             'is_active' => $request->boolean('is_active', true),
+            'created_by' => auth()->id(),
         ]);
 
         // Crear library en Bunny Stream automáticamente
@@ -476,6 +477,22 @@ class SuperAdminController extends Controller
 
         return redirect()->route('super-admin.users')
             ->with('success', "Usuario '{$name}' eliminado exitosamente.");
+    }
+
+    /**
+     * Activar o desactivar el rol Org Manager de un usuario
+     */
+    public function toggleOrgManager(User $user)
+    {
+        if ($user->is_super_admin) {
+            return back()->with('error', 'Un Super Admin no necesita el rol de Org Manager.');
+        }
+
+        $user->update(['is_org_manager' => ! $user->is_org_manager]);
+
+        $estado = $user->is_org_manager ? 'activado' : 'desactivado';
+
+        return back()->with('success', "Rol Org Manager {$estado} para {$user->name}.");
     }
 
     /**

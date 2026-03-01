@@ -36,6 +36,7 @@ class User extends Authenticatable
         'phone',
         'role',
         'is_super_admin',
+        'is_org_manager',
     ];
 
     /**
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            'is_org_manager' => 'boolean',
         ];
     }
 
@@ -116,6 +118,11 @@ class User extends Authenticatable
     public function isSuperAdmin()
     {
         return $this->is_super_admin === true;
+    }
+
+    public function isOrgManager()
+    {
+        return $this->is_org_manager === true;
     }
 
     /**

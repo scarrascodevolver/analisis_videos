@@ -71,6 +71,7 @@
                             <th>Rol Global</th>
                             <th>Organizaciones</th>
                             <th class="text-center">Super Admin</th>
+                            <th class="text-center">Org Manager</th>
                             <th>Registrado</th>
                             <th class="text-center">Acciones</th>
                         </tr>
@@ -105,6 +106,22 @@
                                     </span>
                                 @else
                                     <span class="text-muted">No</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($user->is_super_admin)
+                                    <span class="text-muted" title="Super Admin ya tiene acceso total">—</span>
+                                @else
+                                    <form action="{{ route('super-admin.users.toggle-org-manager', $user) }}" method="POST" style="display:inline;">
+                                        @csrf
+                                        <button type="submit"
+                                                class="btn btn-sm {{ $user->is_org_manager ? 'btn-warning' : 'btn-outline-secondary' }}"
+                                                title="{{ $user->is_org_manager ? 'Desactivar Org Manager' : 'Activar Org Manager' }}"
+                                                onclick="return confirm('{{ $user->is_org_manager ? 'Desactivar' : 'Activar' }} rol Org Manager para {{ $user->name }}?')">
+                                            <i class="fas fa-building"></i>
+                                            {{ $user->is_org_manager ? 'Activo' : 'No' }}
+                                        </button>
+                                    </form>
                                 @endif
                             </td>
                             <td>
