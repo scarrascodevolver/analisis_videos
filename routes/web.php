@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Video Streaming Routes (PUBLIC - no auth needed for video tags)
 Route::get('videos/{video}/stream', [VideoStreamController::class, 'stream'])->name('videos.stream');
+Route::get('videos/{video}/download', [VideoStreamController::class, 'download'])->middleware('auth')->name('videos.download');
 Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByPath'])->name('videos.stream.file');
 
 // Clip Share (PUBLIC - no login required)

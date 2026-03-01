@@ -987,4 +987,29 @@ class VideoStreamController extends Controller
         // Keep original for other formats
         return $video->mime_type ?? 'video/mp4';
     }
+
+    public function download(Video $video)
+    {
+        if ($video->is_youtube_video) {
+            abort(404, 'Los videos de YouTube no se pueden descargar.');
+        }
+
+        // URL directa MP4 ya guardada
+        if ($video->bunny_mp4_url) {
+            return redirect()->away($video->bunny_mp4_url);
+        }
+
+        // Construir URL /original desde bunny_video_id + CDN hostname de la org
+        if ($video->bunny_video_id && $video->organization) {
+            try {
+                $service = \App\Services\BunnyStreamService::forOrganization($video->organization);
+                $url = $service->getOriginalUrl($video->bunny_video_id);
+                return redirect()->away($url);
+            } catch (\Throwable $e) {
+                \Log::warning("Download: could not build Bunny URL for video {$video->id}: {$e->getMessage()}");
+            }
+        }
+
+        abort(404, 'Archivo no disponible para descarga.');
+    }
 }

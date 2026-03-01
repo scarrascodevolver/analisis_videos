@@ -464,8 +464,9 @@ class VideoController extends Controller
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
 
         $videoData = array_merge($video->toArray(), [
-            'stream_url' => $video->is_youtube_video ? null : route('videos.stream', $video),
-            'edit_url' => route('videos.edit', $video),
+            'stream_url'   => $video->is_youtube_video ? null : route('videos.stream', $video),
+            'download_url' => $video->is_youtube_video ? null : route('videos.download', $video),
+            'edit_url'     => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
             'bunny_library_id' => $video->organization?->bunny_library_id,
             'bunny_hls_url' => $video->bunny_video_id && $video->bunny_status === 'ready'

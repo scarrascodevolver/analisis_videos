@@ -9,6 +9,7 @@ import type { useVideoLoader } from '@/composables/useVideoLoader';
 
 const props = defineProps<{
     streamUrl: string | null;
+    downloadUrl?: string | null;
     title: string;
     canAnnotate: boolean;
     bunnyHlsUrl?: string | null;
@@ -315,12 +316,9 @@ onBeforeUnmount(() => {
 });
 
 function downloadVideo() {
-    const url = props.bunnyMp4Url || props.streamUrl;
+    const url = props.downloadUrl || props.bunnyMp4Url || props.streamUrl;
     if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = props.title + '.mp4';
-    a.click();
+    window.open(url, '_blank');
 }
 
 // Prevent video interaction in annotation mode
