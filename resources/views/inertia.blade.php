@@ -34,6 +34,7 @@
             --color-primary-hover: #003d4a;
             --color-secondary: #4A6274;
             --color-accent: #D4A017;
+            --color-sidebar: #0d1117;
             --color-bg: #0f0f0f;
             --color-bg-card: #0f0f0f;
             --color-text: #ffffff;
@@ -55,16 +56,16 @@
         .text-rugby { color: var(--color-primary) !important; }
 
         /* Navbar */
-        .main-header.navbar { background-color: var(--color-primary) !important; }
+        .main-header.navbar { background-color: var(--color-sidebar) !important; border-bottom: 1px solid rgba(212, 160, 23, 0.15); }
 
         /* Sidebar */
-        .main-sidebar { background-color: var(--color-primary-hover) !important; display: flex; flex-direction: column; height: 100vh; }
+        .main-sidebar { background-color: var(--color-sidebar) !important; display: flex; flex-direction: column; height: 100vh; }
         .nav-sidebar .nav-link { color: #c2c7d0; font-size: 0.78rem; padding: 0.4rem 0.7rem; }
         .nav-sidebar .nav-link:hover { background-color: var(--color-secondary); color: white; }
         .nav-sidebar .nav-link.active { background-color: var(--color-accent) !important; color: white !important; }
         .nav-sidebar .nav-icon { font-size: 0.85rem; margin-right: 0.5rem; }
         .nav-header { font-size: 0.6rem; padding: 0.35rem 0.7rem; font-weight: 600; letter-spacing: 0.5px; }
-        .brand-link { background-color: var(--color-primary) !important; color: white !important; border-bottom: 1px solid var(--color-secondary); padding: 0.6rem 0.7rem; }
+        .brand-link { background-color: var(--color-sidebar) !important; color: white !important; border-bottom: 1px solid rgba(212, 160, 23, 0.2); padding: 0.6rem 0.7rem; }
         .brand-link .brand-image { max-height: 28px; }
         .brand-logo-full { display: block; }
         .brand-logo-mini { display: none !important; }
