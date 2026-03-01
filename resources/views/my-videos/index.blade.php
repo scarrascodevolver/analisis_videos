@@ -118,7 +118,7 @@
 
     /* Rugby badge light */
     .badge-rugby-light {
-        background: var(--color-accent, #4B9DA9);
+        background: var(--color-accent, #D4A017);
         color: white;
         font-size: 0.875em;
         font-weight: 500;
@@ -138,7 +138,7 @@
     .play-button-circle {
         width: 60px;
         height: 60px;
-        background: var(--color-accent, #4B9DA9);
+        background: var(--color-accent, #D4A017);
         border-radius: 50%;
         display: flex;
         align-items: center;

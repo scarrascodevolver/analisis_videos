@@ -123,7 +123,7 @@ export function enterPseudoFullscreen() {
         color: white;
         padding: 20px;
         overflow-y: auto;
-        border-top: 2px solid var(--color-accent, #4B9DA9);
+        border-top: 2px solid var(--color-accent, #D4A017);
     `;
     commentsArea.innerHTML = '<h6><i class="fas fa-comments"></i> Comentarios en tiempo real</h6>';
 
@@ -181,7 +181,7 @@ export function showCommentInPseudoFullscreen(comment) {
     notification.className = 'pseudo-fullscreen-comment';
     notification.style.cssText = `
         background: rgba(212, 160, 23, 0.2);
-        border: 1px solid var(--color-accent, #4B9DA9);
+        border: 1px solid var(--color-accent, #D4A017);
         border-radius: 8px;
         padding: 10px;
         margin: 10px 0;

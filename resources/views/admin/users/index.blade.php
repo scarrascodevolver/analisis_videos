@@ -106,7 +106,7 @@
 }
 
 #users-table_paginate .pagination .page-link:hover {
-    color: var(--color-accent, #4B9DA9) !important;
+    color: var(--color-accent, #D4A017) !important;
     background-color: #f8f9fa !important;
     border-color: #dee2e6 !important;
 }
@@ -128,8 +128,8 @@
 }
 
 .dt-button:hover {
-    background-color: var(--color-accent, #4B9DA9) !important;
-    border-color: var(--color-accent, #4B9DA9) !important;
+    background-color: var(--color-accent, #D4A017) !important;
+    border-color: var(--color-accent, #D4A017) !important;
 }
 
 /* Alinear buscador a la izquierda */

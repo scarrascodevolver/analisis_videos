@@ -19,7 +19,7 @@
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
             --color-secondary: #4A6274;
-            --color-accent: #4B9DA9;
+            --color-accent: #D4A017;
             --color-bg: #F4F4F4;
             --color-bg-card: #FFFFFF;
             --color-text: #333333;
