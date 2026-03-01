@@ -6,9 +6,11 @@
         <div class="col-12">
             <h1 class="h3 mb-0">
                 <i class="fas fa-users text-primary mr-2"></i>
-                Todos los Usuarios
+                {{ $isOrgManager ? 'Usuarios de Mis Organizaciones' : 'Todos los Usuarios' }}
             </h1>
-            <p class="text-muted mb-0">Vista global de usuarios en todas las organizaciones</p>
+            <p class="text-muted mb-0">
+                {{ $isOrgManager ? 'Usuarios que pertenecen a tus clubes y organizaciones' : 'Vista global de usuarios en todas las organizaciones' }}
+            </p>
         </div>
     </div>
 
@@ -68,12 +70,16 @@
                         <tr>
                             <th>Usuario</th>
                             <th>Email</th>
-                            <th>Rol Global</th>
+                            <th>Rol</th>
                             <th>Organizaciones</th>
+                            @if(!$isOrgManager)
                             <th class="text-center">Super Admin</th>
                             <th class="text-center">Org Manager</th>
+                            @endif
                             <th>Registrado</th>
+                            @if(!$isOrgManager)
                             <th class="text-center">Acciones</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -99,6 +105,7 @@
                                     <span class="text-muted">Sin organización</span>
                                 @endif
                             </td>
+                            @if(!$isOrgManager)
                             <td class="text-center">
                                 @if($user->is_super_admin)
                                     <span class="badge badge-danger">
@@ -124,9 +131,11 @@
                                     </form>
                                 @endif
                             </td>
+                            @endif
                             <td>
                                 <small>{{ $user->created_at->format('d/m/Y') }}</small>
                             </td>
+                            @if(!$isOrgManager)
                             <td class="text-center">
                                 @if(!$user->is_super_admin && $user->id !== auth()->id())
                                     <form action="{{ route('super-admin.users.destroy', $user) }}"
@@ -145,6 +154,7 @@
                                     </span>
                                 @endif
                             </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>

@@ -440,26 +440,34 @@ class SuperAdminController extends Controller
      */
     public function users(Request $request)
     {
-        if (! auth()->user()->isSuperAdmin()) {
-            abort(403, 'Solo el Super Admin puede ver todos los usuarios del sistema.');
-        }
+        $isOrgManager = auth()->user()->isOrgManager();
+
+        // Org managers solo ven usuarios de sus orgs
+        $orgIds = $isOrgManager
+            ? $this->orgQuery()->pluck('id')
+            : null;
 
         $query = User::with('organizations');
 
-        // Determinar organización a filtrar
-        // Si no hay parámetro en URL, usar la org actual del super admin (excepto si explícitamente pide "todas")
-        $selectedOrganization = null;
+        // Org manager: restringir siempre a sus orgs
+        if ($isOrgManager) {
+            $query->whereHas('organizations', fn ($q) => $q->whereIn('organizations.id', $orgIds));
+        }
 
+        // Determinar organización a filtrar
+        $selectedOrganization = null;
         if ($request->has('organization')) {
-            // Usuario seleccionó manualmente (puede ser vacío = "Todas")
             $selectedOrganization = $request->organization ?: null;
         } else {
-            // Primera carga: usar org actual del super admin
             $currentOrg = auth()->user()->currentOrganization();
             $selectedOrganization = $currentOrg ? $currentOrg->id : null;
         }
 
-        // Aplicar filtro por organización si hay una seleccionada
+        // Validar que el org_manager no filtre por una org ajena
+        if ($isOrgManager && $selectedOrganization && ! $orgIds->contains($selectedOrganization)) {
+            $selectedOrganization = null;
+        }
+
         if ($selectedOrganization) {
             $query->whereHas('organizations', function ($q) use ($selectedOrganization) {
                 $q->where('organizations.id', $selectedOrganization);
@@ -480,9 +488,13 @@ class SuperAdminController extends Controller
         }
 
         $users = $query->latest()->paginate(15);
-        $organizations = Organization::orderBy('name')->get();
 
-        return view('super-admin.users.index', compact('users', 'organizations', 'selectedOrganization'));
+        // Org manager solo ve sus orgs en el filtro
+        $organizations = $isOrgManager
+            ? $this->orgQuery()->orderBy('name')->get()
+            : Organization::orderBy('name')->get();
+
+        return view('super-admin.users.index', compact('users', 'organizations', 'selectedOrganization', 'isOrgManager'));
     }
 
     /**
