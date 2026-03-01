@@ -34,26 +34,16 @@ class RivalTeamController extends Controller
         $orgId = auth()->user()->currentOrganization()->id;
 
         $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('rival_teams')->where(function ($query) use ($orgId) {
-                    return $query->where('organization_id', $orgId);
-                }),
-            ],
+            'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:10',
             'city' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $rival = RivalTeam::create([
-            'organization_id' => $orgId,
-            'name' => $request->name,
-            'code' => $request->code,
-            'city' => $request->city,
-            'notes' => $request->notes,
-        ]);
+        $rival = RivalTeam::firstOrCreate(
+            ['organization_id' => $orgId, 'name' => strtoupper(trim($request->name))],
+            ['code' => $request->code, 'city' => $request->city, 'notes' => $request->notes]
+        );
 
         // AJAX (fetch desde create.blade.php) espera JSON con id
         if ($request->expectsJson() || $request->wantsJson() || $request->header('Content-Type') === 'application/json') {
