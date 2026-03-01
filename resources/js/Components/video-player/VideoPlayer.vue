@@ -191,18 +191,20 @@ const visiblePanels = computed(() =>
     panelOrder.value.filter(name => !!slots[name])
 );
 
-function movePanelUp(index: number) {
-    if (index <= 0) return;
+function movePanelUp(panelName: PanelName) {
     const order = [...panelOrder.value];
-    [order[index - 1], order[index]] = [order[index], order[index - 1]];
+    const idx = order.indexOf(panelName);
+    if (idx <= 0) return;
+    [order[idx - 1], order[idx]] = [order[idx], order[idx - 1]];
     panelOrder.value = order;
     try { localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(panelOrder.value)); } catch (_) {}
 }
 
-function movePanelDown(index: number) {
-    if (index >= visiblePanels.value.length - 1) return;
+function movePanelDown(panelName: PanelName) {
     const order = [...panelOrder.value];
-    [order[index + 1], order[index]] = [order[index], order[index + 1]];
+    const idx = order.indexOf(panelName);
+    if (idx >= order.length - 1) return;
+    [order[idx + 1], order[idx]] = [order[idx], order[idx + 1]];
     panelOrder.value = order;
     try { localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(panelOrder.value)); } catch (_) {}
 }
@@ -280,8 +282,8 @@ function movePanelDown(index: number) {
                         <PanelOrderWrapper
                             :can-move-up="index > 0"
                             :can-move-down="index < visiblePanels.length - 1"
-                            @move-up="movePanelUp(index)"
-                            @move-down="movePanelDown(index)"
+                            @move-up="movePanelUp(panelName)"
+                            @move-down="movePanelDown(panelName)"
                         >
                             <slot :name="panelName" />
                         </PanelOrderWrapper>
