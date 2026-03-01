@@ -318,7 +318,12 @@ onBeforeUnmount(() => {
 function downloadVideo() {
     const url = props.downloadUrl || props.bunnyMp4Url || props.streamUrl;
     if (!url) return;
-    window.open(url, '_blank');
+    const a = document.createElement('a');
+    a.href = url;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 // Prevent video interaction in annotation mode
