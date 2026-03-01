@@ -312,9 +312,9 @@ async function handleSubmit() {
 
 .form-control:focus {
     background: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(255, 195, 0, 0.25);
 }
 
 .time-input-group {
@@ -328,7 +328,7 @@ async function handleSubmit() {
 }
 
 .time-display {
-    color: #00B7B5;
+    color: #FFC300;
     font-family: monospace;
     font-size: 1rem;
     font-weight: 600;
@@ -345,7 +345,7 @@ async function handleSubmit() {
 }
 
 .duration-display strong {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .form-text {
@@ -385,7 +385,7 @@ textarea.form-control {
 }
 
 .btn-primary {
-    background-color: #00B7B5;
+    background-color: #FFC300;
     color: #fff;
 }
 

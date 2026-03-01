@@ -82,7 +82,7 @@ function markerColor(comment: VideoComment): string {
     switch (comment.priority) {
         case 'critica': return '#dc3545';
         case 'alta': return '#ffc107';
-        case 'media': return '#00B7B5';
+        case 'media': return '#FFC300';
         default: return '#6c757d';
     }
 }
@@ -108,9 +108,9 @@ function seekToMarker(marker: MarkerCluster) {
             class="btn btn-block text-left py-1 px-2 toggle-btn"
             @click="isCollapsed = !isCollapsed"
         >
-            <i class="fas fa-comments mr-2" style="color: #00B7B5;"></i>
+            <i class="fas fa-comments mr-2" style="color: #FFC300;"></i>
             <strong class="toggle-title">Timeline de Comentarios</strong>
-            <span class="badge ml-2 toggle-badge" style="background: #00B7B5;">{{ commentCount }}</span>
+            <span class="badge ml-2 toggle-badge" style="background: #FFC300;">{{ commentCount }}</span>
             <i class="fas float-right mt-1 toggle-chevron" :class="isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
         </button>
 
@@ -205,7 +205,7 @@ function seekToMarker(marker: MarkerCluster) {
     top: 0;
     left: 0;
     height: 100%;
-    background: rgba(0, 183, 181, 0.3);
+    background: rgba(255, 195, 0, 0.3);
     border-radius: 5px 0 0 5px;
     transition: width 0.1s linear;
     pointer-events: none;
@@ -216,7 +216,7 @@ function seekToMarker(marker: MarkerCluster) {
     top: -2px;
     width: 2px;
     height: calc(100% + 4px);
-    background: #00B7B5;
+    background: #FFC300;
     z-index: 5;
     pointer-events: none;
     transition: left 0.1s linear;

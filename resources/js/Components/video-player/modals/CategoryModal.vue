@@ -48,7 +48,7 @@
                                                 class="form-control"
                                                 v-model="formData.color"
                                                 pattern="^#[0-9A-Fa-f]{6}$"
-                                                placeholder="#00B7B5"
+                                                placeholder="#FFC300"
                                             />
                                         </div>
                                     </div>
@@ -190,7 +190,7 @@ const videoStore = useVideoStore();
 
 const formData = ref({
     name: '',
-    color: '#00B7B5',
+    color: '#FFC300',
     hotkey: '',
     scope: 'organization' as 'organization' | 'user' | 'video',
     lead_seconds: 0,
@@ -228,7 +228,7 @@ watch(
 function resetForm() {
     formData.value = {
         name: '',
-        color: '#00B7B5',
+        color: '#FFC300',
         hotkey: '',
         scope: 'organization',
         lead_seconds: 0,
@@ -361,9 +361,9 @@ async function handleSubmit() {
 
 .form-control:focus {
     background: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
     outline: none;
-    box-shadow: 0 0 0 0.15rem rgba(0, 183, 181, 0.25);
+    box-shadow: 0 0 0 0.15rem rgba(255, 195, 0, 0.25);
 }
 
 select.form-control {
@@ -425,7 +425,7 @@ select.form-control {
     border: none;
 }
 
-.btn-primary { background-color: #00B7B5; color: #fff; }
+.btn-primary { background-color: #FFC300; color: #fff; }
 .btn-primary:hover:not(:disabled) { background-color: #009f9d; }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -481,12 +481,12 @@ select.form-control {
     min-width: 20px;
     height: 17px;
     padding: 0 0.3rem;
-    background: rgba(0, 183, 181, 0.15);
-    border: 1px solid var(--cat-color, #00B7B5);
+    background: rgba(255, 195, 0, 0.15);
+    border: 1px solid var(--cat-color, #FFC300);
     border-radius: 3px;
     font-size: 0.65rem;
     font-weight: 700;
-    color: var(--cat-color, #00B7B5);
+    color: var(--cat-color, #FFC300);
 }
 
 .preview-scope {
@@ -494,7 +494,7 @@ select.form-control {
     margin-left: auto;
 }
 .preview-team     { color: #5cb85c; }
-.preview-personal { color: #00B7B5; }
+.preview-personal { color: #FFC300; }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }

@@ -243,7 +243,7 @@ function handleReset() {
 }
 
 .timeline-row.is-slave {
-    border-left-color: #00B7B5;
+    border-left-color: #FFC300;
 }
 
 .timeline-row.is-clips {
@@ -311,8 +311,8 @@ function handleReset() {
 
 .timeline-track.is-dragging {
     cursor: grabbing;
-    border-color: #00B7B5;
-    box-shadow: 0 0 8px rgba(0, 183, 181, 0.4);
+    border-color: #FFC300;
+    box-shadow: 0 0 8px rgba(255, 195, 0, 0.4);
 }
 
 .timeline-grid {
@@ -386,7 +386,7 @@ function handleReset() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 183, 181, 0.95);
+    background: rgba(255, 195, 0, 0.95);
     color: white;
     padding: 4px 12px;
     border-radius: 4px;
@@ -406,7 +406,7 @@ function handleReset() {
 }
 
 .text-info {
-    color: #00B7B5 !important;
+    color: #FFC300 !important;
 }
 
 .text-warning {

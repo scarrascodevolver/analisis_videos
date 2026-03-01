@@ -27,7 +27,7 @@ defineProps<{
     font-weight: 600;
     z-index: 30;
     box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6);
-    border: 2px solid #00B7B5;
+    border: 2px solid #FFC300;
 }
 
 .area-tip i {

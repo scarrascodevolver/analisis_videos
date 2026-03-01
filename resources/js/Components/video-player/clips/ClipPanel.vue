@@ -125,7 +125,7 @@ function handleEditCategories() {
 }
 
 .clip-panel-header i {
-    color: #00B7B5;
+    color: #FFC300;
     font-size: 0.72rem !important;
 }
 
@@ -167,7 +167,7 @@ function handleEditCategories() {
 }
 
 .btn-accent {
-    background-color: #00B7B5;
+    background-color: #FFC300;
     color: #fff;
     border: none;
 }

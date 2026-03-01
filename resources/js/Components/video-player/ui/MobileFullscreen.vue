@@ -112,7 +112,7 @@ onUnmounted(() => {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #00B7B5, #005461);
+    background: linear-gradient(135deg, #FFC300, #005461);
     color: #ffffff;
     border: none;
     font-size: 1.25rem;
@@ -127,7 +127,7 @@ onUnmounted(() => {
 
 .mobile-fullscreen-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 183, 181, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 195, 0, 0.4);
 }
 
 .mobile-fullscreen-btn:active {

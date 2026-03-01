@@ -393,7 +393,7 @@ function getScopeIcon(scope: string): string {
 }
 
 .category-row:hover { background: #2a2a2a; }
-.category-row.drag-over { border-color: #00B7B5; background: #1e2e2e; }
+.category-row.drag-over { border-color: #FFC300; background: #1e2e2e; }
 .category-row.dragging { opacity: 0.4; }
 
 .drag-handle {
@@ -435,12 +435,12 @@ function getScopeIcon(scope: string): string {
     min-width: 22px;
     height: 18px;
     padding: 0 0.3rem;
-    background: rgba(0, 183, 181, 0.15);
-    border: 1px solid #00B7B5;
+    background: rgba(255, 195, 0, 0.15);
+    border: 1px solid #FFC300;
     border-radius: 3px;
     font-size: 0.7rem;
     font-weight: 700;
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .cat-scope { flex-shrink: 0; }
@@ -455,7 +455,7 @@ function getScopeIcon(scope: string): string {
 }
 
 .scope-team     { background: rgba(40, 167, 69, 0.2); color: #5cb85c; }
-.scope-personal { background: rgba(0, 183, 181, 0.15); color: #00B7B5; }
+.scope-personal { background: rgba(255, 195, 0, 0.15); color: #FFC300; }
 .scope-xml      { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
 
 .cat-timing {

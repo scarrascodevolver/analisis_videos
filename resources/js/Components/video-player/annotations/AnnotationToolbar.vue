@@ -350,18 +350,18 @@ const toolbarStyle = computed(() => ({
     width: 125px;
     max-height: calc(100vh - 150px);
     background: rgba(0, 0, 0, 0.95);
-    border: 1px solid #00B7B5;
+    border: 1px solid #FFC300;
     border-radius: 4px;
     padding: 5px;
     z-index: 20;
-    box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
     overflow-y: auto;
     overflow-x: hidden;
     transition: box-shadow 0.2s;
 }
 
 .annotation-toolbar.is-dragging {
-    box-shadow: 0 6px 20px rgba(0, 183, 181, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 195, 0, 0.5);
     cursor: grabbing;
 }
 
@@ -374,7 +374,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .annotation-toolbar::-webkit-scrollbar-thumb {
-    background: #00B7B5;
+    background: #FFC300;
     border-radius: 2px;
 }
 
@@ -396,7 +396,7 @@ const toolbarStyle = computed(() => ({
 .toolbar-title {
     margin: 0;
     font-size: 10px;
-    color: #00B7B5;
+    color: #FFC300;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -413,7 +413,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .annotation-count {
-    background: #00B7B5;
+    background: #FFC300;
     color: #000;
     font-size: 8px;
     font-weight: 600;
@@ -454,13 +454,13 @@ const toolbarStyle = computed(() => ({
 
 .tool-btn:hover {
     background: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .tool-btn.active {
-    background: #00B7B5;
+    background: #FFC300;
     color: #000;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .tool-btn i {
@@ -477,7 +477,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .color-preview:hover {
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .color-picker {
@@ -498,7 +498,7 @@ const toolbarStyle = computed(() => ({
 
 .color-option:hover,
 .color-option.active {
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .action-btn {
@@ -520,7 +520,7 @@ const toolbarStyle = computed(() => ({
 
 .action-btn:hover:not(:disabled) {
     background: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .action-btn:disabled {
@@ -529,7 +529,7 @@ const toolbarStyle = computed(() => ({
 }
 
 .action-btn.save-btn {
-    background: #00B7B5;
+    background: #FFC300;
     color: #000;
     font-weight: 600;
 }
@@ -572,11 +572,11 @@ const toolbarStyle = computed(() => ({
 }
 
 .duration-select:hover {
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .spotlight-btn {
-    background: #00B7B5;
+    background: #FFC300;
     color: #000;
     font-weight: 600;
 }
@@ -605,7 +605,7 @@ const toolbarStyle = computed(() => ({
 
 .symbol-btn:hover {
     background: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
     transform: scale(1.05);
 }
 

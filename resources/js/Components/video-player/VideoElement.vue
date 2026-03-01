@@ -513,7 +513,7 @@ function handleVideoClick(event: MouseEvent) {
 .btn-rugby-outline {
     background-color: transparent;
     border: 1px solid #005461;
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .btn-rugby-outline:hover {

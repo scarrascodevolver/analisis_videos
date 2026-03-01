@@ -79,17 +79,17 @@ function handleTabChange(tab: TabType) {
 }
 
 .tab-pane::-webkit-scrollbar-thumb {
-    background: rgba(0, 183, 181, 0.35);
+    background: rgba(255, 195, 0, 0.35);
     border-radius: 4px;
 }
 
 .tab-pane::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 183, 181, 0.75);
+    background: rgba(255, 195, 0, 0.75);
 }
 
 /* Firefox */
 .tab-pane {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 183, 181, 0.35) transparent;
+    scrollbar-color: rgba(255, 195, 0, 0.35) transparent;
 }
 </style>

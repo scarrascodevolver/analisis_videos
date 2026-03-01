@@ -175,7 +175,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
 }
 
 .clip-icon {
-    color: #00B7B5;
+    color: #FFC300;
     font-size: 12px;
     flex-shrink: 0;
 }
@@ -201,7 +201,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
 }
 
 .badge-private i  { color: #888; }
-.badge-shared i   { color: #00B7B5; }
+.badge-shared i   { color: #FFC300; }
 
 /* ⋯ button */
 .btn-clip-menu {
@@ -282,7 +282,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
 }
 
 .clip-dropdown-teleport .clip-dropdown-item:hover:not(:disabled) i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .clip-dropdown-teleport .clip-dropdown-item--danger {

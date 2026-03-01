@@ -118,12 +118,12 @@ function onClickOutside() {
 }
 
 .speed-option:hover {
-    background: rgba(0, 183, 181, 0.2);
+    background: rgba(255, 195, 0, 0.2);
     color: #fff;
 }
 
 .speed-option.active {
-    color: #00B7B5;
+    color: #FFC300;
     font-weight: bold;
 }
 

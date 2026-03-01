@@ -153,7 +153,7 @@ function resetOffset() {
 }
 
 .btn-apply {
-    background: #00B7B5;
+    background: #FFC300;
     color: #fff;
 }
 

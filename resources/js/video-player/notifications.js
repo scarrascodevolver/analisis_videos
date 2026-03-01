@@ -174,7 +174,7 @@ function showCommentNotification(comment) {
         max-width: ${notificationWidth}px;
         min-width: ${minWidth}px;
         background: rgba(30, 30, 30, 0.95);
-        border: 2px solid var(--color-accent, #00B7B5);
+        border: 2px solid var(--color-accent, #FFC300);
         border-radius: 12px;
         padding: ${padding};
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);

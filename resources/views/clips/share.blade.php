@@ -66,16 +66,16 @@
             font-size: 11px;
             font-weight: 600;
             margin-bottom: 0.6rem;
-            background: {{ $clip->category?->color ?? '#00B7B5' }}22;
-            color: {{ $clip->category?->color ?? '#00B7B5' }};
-            border: 1px solid {{ $clip->category?->color ?? '#00B7B5' }}55;
+            background: {{ $clip->category?->color ?? '#FFC300' }}22;
+            color: {{ $clip->category?->color ?? '#FFC300' }};
+            border: 1px solid {{ $clip->category?->color ?? '#FFC300' }}55;
         }
         .clip-category::before {
             content: '';
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: {{ $clip->category?->color ?? '#00B7B5' }};
+            background: {{ $clip->category?->color ?? '#FFC300' }};
             flex-shrink: 0;
         }
         .video-title {
@@ -107,7 +107,7 @@
             padding: 0.4rem 0.8rem;
             font-size: 12px;
             font-family: monospace;
-            color: #00B7B5;
+            color: #FFC300;
         }
         .clip-times .sep { color: #444; }
 
@@ -125,7 +125,7 @@
         }
         .replay-overlay.visible { display: flex; }
         .replay-btn {
-            background: #00B7B5;
+            background: #FFC300;
             border: none;
             border-radius: 50%;
             width: 64px;
@@ -157,7 +157,7 @@
             width: 36px;
             height: 36px;
             border: 3px solid #333;
-            border-top-color: #00B7B5;
+            border-top-color: #FFC300;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -172,7 +172,7 @@
             text-align: center;
         }
         .share-footer a { color: #555; text-decoration: none; }
-        .share-footer a:hover { color: #00B7B5; }
+        .share-footer a:hover { color: #FFC300; }
     </style>
 </head>
 <body>

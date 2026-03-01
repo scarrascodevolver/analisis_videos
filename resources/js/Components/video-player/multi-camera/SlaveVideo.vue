@@ -257,9 +257,9 @@ defineExpose({
 }
 
 .slave-video-card:hover {
-    border-color: #00B7B5;
+    border-color: #FFC300;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 183, 181, 0.2);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.2);
 }
 
 .video-wrapper {
@@ -348,7 +348,7 @@ defineExpose({
 
 .swap-hint i {
     font-size: 2rem;
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .swap-hint span {

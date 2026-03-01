@@ -191,7 +191,7 @@ function renderComment(text: string): string {
     padding: 2px 8px;
 }
 .timestamp-btn:hover {
-    background: #00B7B5;
+    background: #FFC300;
 }
 
 .comment-text {
@@ -201,7 +201,7 @@ function renderComment(text: string): string {
 }
 
 :deep(.mention-highlight) {
-    color: #00B7B5;
+    color: #FFC300;
     font-weight: 600;
 }
 
@@ -211,7 +211,7 @@ function renderComment(text: string): string {
 }
 
 .reply-btn {
-    color: #00B7B5 !important;
+    color: #FFC300 !important;
     font-size: 11px;
 }
 

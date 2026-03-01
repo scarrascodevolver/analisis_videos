@@ -329,7 +329,7 @@ watch(searchQuery, async (q) => {
 }
 
 .modal-title i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .btn-close {
@@ -367,7 +367,7 @@ watch(searchQuery, async (q) => {
 }
 
 .form-label i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .form-control {
@@ -383,7 +383,7 @@ watch(searchQuery, async (q) => {
 
 .form-control:focus {
     outline: none;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .videos-list {
@@ -429,8 +429,8 @@ watch(searchQuery, async (q) => {
 }
 
 .video-item.is-selected {
-    background: rgba(0, 183, 181, 0.1);
-    border-left: 3px solid #00B7B5;
+    background: rgba(255, 195, 0, 0.1);
+    border-left: 3px solid #FFC300;
 }
 
 .video-info {
@@ -453,7 +453,7 @@ watch(searchQuery, async (q) => {
 }
 
 .video-check {
-    color: #00B7B5;
+    color: #FFC300;
     font-size: 1.25rem;
     opacity: 0;
     transition: opacity 0.2s;
@@ -534,13 +534,13 @@ watch(searchQuery, async (q) => {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00B7B5, #005461);
+    background: linear-gradient(135deg, #FFC300, #005461);
     color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
 }
 
 .btn-primary:disabled {

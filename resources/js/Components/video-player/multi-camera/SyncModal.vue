@@ -278,7 +278,7 @@ watch(() => props.show, (newValue) => {
 }
 
 .modal-title i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .btn-close {
@@ -337,8 +337,8 @@ watch(() => props.show, (newValue) => {
 .current-offset {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #00B7B5;
-    background: rgba(0, 183, 181, 0.1);
+    color: #FFC300;
+    background: rgba(255, 195, 0, 0.1);
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
 }
@@ -377,7 +377,7 @@ watch(() => props.show, (newValue) => {
     appearance: none;
     width: 18px;
     height: 18px;
-    background: linear-gradient(135deg, #00B7B5, #005461);
+    background: linear-gradient(135deg, #FFC300, #005461);
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -386,7 +386,7 @@ watch(() => props.show, (newValue) => {
 .sync-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: linear-gradient(135deg, #00B7B5, #005461);
+    background: linear-gradient(135deg, #FFC300, #005461);
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -413,7 +413,7 @@ watch(() => props.show, (newValue) => {
 
 .offset-input:focus {
     outline: none;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .offset-unit {
@@ -441,13 +441,13 @@ watch(() => props.show, (newValue) => {
 
 .btn-preview {
     flex: 1;
-    background: rgba(0, 183, 181, 0.1);
-    color: #00B7B5;
-    border: 1px solid rgba(0, 183, 181, 0.3);
+    background: rgba(255, 195, 0, 0.1);
+    color: #FFC300;
+    border: 1px solid rgba(255, 195, 0, 0.3);
 }
 
 .btn-preview:hover {
-    background: rgba(0, 183, 181, 0.2);
+    background: rgba(255, 195, 0, 0.2);
 }
 
 .btn-reset {
@@ -493,13 +493,13 @@ watch(() => props.show, (newValue) => {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00B7B5, #005461);
+    background: linear-gradient(135deg, #FFC300, #005461);
     color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
 }
 
 .btn-primary:disabled {

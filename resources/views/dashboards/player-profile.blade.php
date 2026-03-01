@@ -117,14 +117,14 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #FFC300));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 2.5rem;
-    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.4);
+    box-shadow: 0 4px 15px rgba(255, 195, 0, 0.4);
 }
 
 .info-item {
@@ -151,11 +151,11 @@
 }
 
 .text-rugby {
-    color: var(--color-accent, #00B7B5) !important;
+    color: var(--color-accent, #FFC300) !important;
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-accent, #00B7B5) !important;
+    color: var(--color-accent, #FFC300) !important;
 }
 
 .video-card {
@@ -167,8 +167,8 @@
 
 .video-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.25);
-    border-color: var(--color-accent, #00B7B5);
+    box-shadow: 0 4px 15px rgba(255, 195, 0, 0.25);
+    border-color: var(--color-accent, #FFC300);
 }
 
 .video-card a {
@@ -188,7 +188,7 @@
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #FFC300));
 }
 
 .video-thumbnail {
@@ -203,7 +203,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 183, 181, 0.8);
+    background: rgba(255, 195, 0, 0.8);
     color: white;
     border-radius: 50%;
     width: 50px;
@@ -216,7 +216,7 @@
 }
 
 .video-card:hover .play-overlay {
-    background: rgba(0, 183, 181, 0.95);
+    background: rgba(255, 195, 0, 0.95);
     transform: translate(-50%, -50%) scale(1.1);
 }
 
@@ -241,8 +241,8 @@
 }
 
 .stats-card:hover {
-    border-color: var(--color-accent, #00B7B5);
-    box-shadow: 0 2px 8px rgba(0, 183, 181, 0.2);
+    border-color: var(--color-accent, #FFC300);
+    box-shadow: 0 2px 8px rgba(255, 195, 0, 0.2);
 }
 
 .profile-info .text-muted {

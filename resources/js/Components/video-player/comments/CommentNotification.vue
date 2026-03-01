@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
 
 .notification-bubble {
     background: rgba(0, 84, 97, 0.95);
-    border: 1px solid rgba(0, 183, 181, 0.4);
+    border: 1px solid rgba(255, 195, 0, 0.4);
     border-radius: 10px;
     padding: 10px 14px;
     max-width: 320px;
@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
 .notification-time {
     font-family: monospace;
     font-size: 11px;
-    background: #00B7B5;
+    background: #FFC300;
     padding: 1px 6px;
     border-radius: 4px;
 }

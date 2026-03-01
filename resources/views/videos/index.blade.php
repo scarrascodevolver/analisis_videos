@@ -650,7 +650,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     position: absolute;
     top: 3px;
     left: 3px;
-    background: rgba(0, 183, 181, .85);
+    background: rgba(255, 195, 0, .85);
     color: #fff;
     font-size: .58rem;
     font-weight: 700;
@@ -686,10 +686,10 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 /* ─── Colores rugby ────────────────────────────────────── */
 .btn-rugby        { background:#005461; border-color:#005461; color:#fff; }
 .btn-rugby:hover  { background:#003d4a; border-color:#003d4a; color:#fff; }
-.btn-rugby-light  { background:#00B7B5; border-color:#00B7B5; color:#fff; }
+.btn-rugby-light  { background:#FFC300; border-color:#FFC300; color:#fff; }
 .btn-rugby-light:hover { background:#009e9c; color:#fff; }
 .btn-delete       { background:transparent; border-color:#2d4a4e; color:#6a9a9e; }
-.btn-delete:hover { background:#1a2e30; border-color:#005461; color:#00B7B5; }
+.btn-delete:hover { background:#1a2e30; border-color:#005461; color:#FFC300; }
 .modal-header-rugby { background:#005461; }
 .card-rugby       { border-color:#005461; }
 .card-rugby .card-header { background:#005461; }
@@ -729,7 +729,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     transition: background .2s, color .2s;
     text-decoration: none;
 }
-.match-edit-btn:hover { background: #00B7B5; color: #fff; text-decoration: none; }
+.match-edit-btn:hover { background: #FFC300; color: #fff; text-decoration: none; }
 /* Botón eliminar flotante (club view) */
 .match-delete-btn {
     position: absolute;
@@ -785,7 +785,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     position: absolute;
     bottom: 3px; right: 3px;
     background: rgba(0,84,97,.92);
-    color: #00B7B5;
+    color: #FFC300;
     font-size: .58rem; font-weight: 700;
     padding: 2px 6px; border-radius: 5px;
 }
@@ -810,7 +810,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 .fixture-rival { text-align: left; }
 .fixture-vs {
     font-size: .58rem; font-weight: 800;
-    color: #00B7B5; background: #0a3038;
+    color: #FFC300; background: #0a3038;
     padding: 2px 6px; border-radius: 10px;
     flex-shrink: 0; letter-spacing: .06em;
 }

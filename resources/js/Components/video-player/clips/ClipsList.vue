@@ -209,7 +209,7 @@ safeCategories.forEach((cat) => {
 }
 
 .clips-list-header i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .search-box {
@@ -238,7 +238,7 @@ safeCategories.forEach((cat) => {
 
 .search-box .form-control:focus {
     background-color: #2a2a2a;
-    border-color: #00B7B5;
+    border-color: #FFC300;
     box-shadow: none;
     color: #fff;
 }
@@ -287,7 +287,7 @@ safeCategories.forEach((cat) => {
     align-items: center;
     padding: 0.38rem 0.45rem;
     background-color: #252525;
-    border-left: 3px solid var(--category-color, #00B7B5);
+    border-left: 3px solid var(--category-color, #FFC300);
     cursor: pointer;
     user-select: none;
     transition: background-color 0.2s;
@@ -313,7 +313,7 @@ safeCategories.forEach((cat) => {
 }
 
 .category-icon {
-    color: var(--category-color, #00B7B5);
+    color: var(--category-color, #FFC300);
     font-size: 10.5px;
 }
 
@@ -333,7 +333,7 @@ safeCategories.forEach((cat) => {
     min-width: 16px;
     height: 16px;
     padding: 0 0.3rem;
-    background-color: var(--category-color, #00B7B5);
+    background-color: var(--category-color, #FFC300);
     border-radius: 11px;
     font-size: 0.65rem;
     font-weight: 700;
@@ -361,12 +361,12 @@ safeCategories.forEach((cat) => {
 
 /* Estado: compartida → teal */
 .btn-share-category.is-shared {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .btn-share-category.is-shared:hover {
     color: #fff;
-    background: rgba(0, 183, 181, 0.15);
+    background: rgba(255, 195, 0, 0.15);
 }
 
 .toggle-icon {

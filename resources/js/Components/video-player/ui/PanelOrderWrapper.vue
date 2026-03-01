@@ -60,9 +60,9 @@ const emit = defineEmits<{
 
 .panel-order-btn {
     pointer-events: all;
-    background: rgba(0, 183, 181, 0.12);
-    border: 1px solid #00B7B5;
-    color: #00B7B5;
+    background: rgba(255, 195, 0, 0.12);
+    border: 1px solid #FFC300;
+    color: #FFC300;
     padding: 4px 8px;
     border-radius: 3px;
     cursor: pointer;
@@ -72,7 +72,7 @@ const emit = defineEmits<{
 }
 
 .panel-order-btn:hover:not(.disabled) {
-    background: #00B7B5;
+    background: #FFC300;
     color: #0f0f0f;
 }
 

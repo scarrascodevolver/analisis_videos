@@ -332,7 +332,7 @@ function renderClipsListGrouped(container, displayClips) {
                     <div class="d-flex align-items-center flex-grow-1">
                         <span style="width: 6px; height: 24px; background: ${group.color}; border-radius: 2px; margin-right: 10px;"></span>
                         <span style="font-weight: 600; font-size: 13px; color: #fff;">${group.name}</span>
-                        <span style="margin-left: 8px; background: rgba(0, 183, 181, 0.2); color: #00B7B5; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                        <span style="margin-left: 8px; background: rgba(255, 195, 0, 0.2); color: #FFC300; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
                             ${clipCount}
                         </span>
                     </div>
@@ -471,7 +471,7 @@ function createClipItemHTML(clip) {
                         <div>
                             ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
                             <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
-                                    style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                    style="background: none; border: none; color: #FFC300; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                     title="Editar clip">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -520,7 +520,7 @@ function createClipItemElement(clip) {
                     <div>
                         ${clip.is_highlight ? '<i class="fas fa-star" style="color: #ffc107; font-size: 10px; margin-right: 5px;"></i>' : ''}
                         <button class="sidebar-edit-clip-btn" data-clip-id="${clip.id}" data-start="${clip.start_time}" data-end="${clip.end_time}" data-title="${clip.title || ''}" data-notes="${clip.notes || ''}" data-category-id="${clip.clip_category_id}"
-                                style="background: none; border: none; color: #00B7B5; padding: 2px 5px; cursor: pointer; font-size: 11px;"
+                                style="background: none; border: none; color: #FFC300; padding: 2px 5px; cursor: pointer; font-size: 11px;"
                                 title="Editar clip">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -1220,7 +1220,7 @@ style.textContent = `
     }
     .clip-item.active {
         background-color: #1a3a4a !important;
-        border-left: 3px solid #00B7B5;
+        border-left: 3px solid #FFC300;
     }
     .clip-item.playing {
         background-color: #3d2e00 !important;

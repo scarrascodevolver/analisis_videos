@@ -629,7 +629,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .modal-title i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .btn-close {
@@ -667,8 +667,8 @@ watch(() => props.show, (newVal) => {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: rgba(0, 183, 181, 0.08);
-    border: 1px solid rgba(0, 183, 181, 0.2);
+    background: rgba(255, 195, 0, 0.08);
+    border: 1px solid rgba(255, 195, 0, 0.2);
     border-radius: 6px;
     color: #aaa;
     font-size: 0.85rem;
@@ -676,7 +676,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .master-info i {
-    color: #00B7B5;
+    color: #FFC300;
     flex-shrink: 0;
 }
 
@@ -720,8 +720,8 @@ watch(() => props.show, (newVal) => {
 }
 
 .source-tab.active {
-    background: rgba(0, 183, 181, 0.12);
-    color: #00B7B5;
+    background: rgba(255, 195, 0, 0.12);
+    color: #FFC300;
     font-weight: 600;
 }
 
@@ -746,7 +746,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .form-label i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .yt-icon {
@@ -767,7 +767,7 @@ watch(() => props.show, (newVal) => {
 
 .form-control:focus {
     outline: none;
-    border-color: #00B7B5;
+    border-color: #FFC300;
 }
 
 .form-control:disabled {
@@ -805,14 +805,14 @@ watch(() => props.show, (newVal) => {
 }
 
 .preset-btn:hover:not(:disabled) {
-    border-color: #00B7B5;
-    color: #00B7B5;
+    border-color: #FFC300;
+    color: #FFC300;
 }
 
 .preset-btn.active {
-    background: rgba(0, 183, 181, 0.15);
-    border-color: #00B7B5;
-    color: #00B7B5;
+    background: rgba(255, 195, 0, 0.15);
+    border-color: #FFC300;
+    color: #FFC300;
     font-weight: 600;
 }
 
@@ -834,8 +834,8 @@ watch(() => props.show, (newVal) => {
 
 .dropzone:hover,
 .dropzone.dragging {
-    border-color: #00B7B5;
-    background: rgba(0, 183, 181, 0.04);
+    border-color: #FFC300;
+    background: rgba(255, 195, 0, 0.04);
 }
 
 .dropzone-icon {
@@ -847,7 +847,7 @@ watch(() => props.show, (newVal) => {
 
 .dropzone:hover .dropzone-icon,
 .dropzone.dragging .dropzone-icon {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .dropzone-text {
@@ -882,7 +882,7 @@ watch(() => props.show, (newVal) => {
 
 .file-icon {
     font-size: 1.5rem;
-    color: #00B7B5;
+    color: #FFC300;
     flex-shrink: 0;
 }
 
@@ -949,13 +949,13 @@ watch(() => props.show, (newVal) => {
 }
 
 .progress-label i {
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .progress-percent {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #00B7B5;
+    color: #FFC300;
 }
 
 .progress-bar-track {
@@ -967,7 +967,7 @@ watch(() => props.show, (newVal) => {
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #005461, #00B7B5);
+    background: linear-gradient(90deg, #005461, #FFC300);
     border-radius: 3px;
     transition: width 0.3s ease;
 }
@@ -1053,13 +1053,13 @@ watch(() => props.show, (newVal) => {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #005461, #00B7B5);
+    background: linear-gradient(135deg, #005461, #FFC300);
     color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
 }
 
 .btn-primary:disabled {

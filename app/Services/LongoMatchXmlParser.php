@@ -241,7 +241,7 @@ class LongoMatchXmlParser
                 ->keyBy(fn ($cat) => strtolower($cat->name));
 
             $colorPalette = [
-                '#00B7B5', '#005461', '#e67e22', '#8e44ad', '#27ae60',
+                '#FFC300', '#005461', '#e67e22', '#8e44ad', '#27ae60',
                 '#c0392b', '#2980b9', '#f39c12', '#16a085', '#d35400',
             ];
             $colorIndex = 0;

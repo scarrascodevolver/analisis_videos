@@ -456,14 +456,14 @@ function onSyncSaved(offsets: Record<number, number>) {
         <div v-if="isProcessing" class="card card-rugby text-center py-5 mx-auto" style="max-width:600px;margin-top:40px">
             <div class="card-body">
                 <div class="mb-3">
-                    <i class="fas fa-film fa-3x" style="color:#00B7B5;opacity:.6"></i>
+                    <i class="fas fa-film fa-3x" style="color:#FFC300;opacity:.6"></i>
                 </div>
                 <h4 class="font-weight-bold mb-1">{{ video.title }}</h4>
                 <p class="text-muted mb-3">
                     El video se subió correctamente y está siendo procesado por Bunny Stream.
                 </p>
                 <div class="d-flex align-items-center justify-content-center mb-3" style="gap:10px">
-                    <div class="spinner-border spinner-border-sm" style="color:#00B7B5" role="status"></div>
+                    <div class="spinner-border spinner-border-sm" style="color:#FFC300" role="status"></div>
                     <span class="text-muted small">
                         Verificando estado cada 10 segundos...
                         <span v-if="videoStatus" class="badge badge-secondary ml-1">{{ videoStatus }}</span>
@@ -471,7 +471,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                 </div>
                 <div class="progress" style="height:6px;background:#2a2a2a;border-radius:3px">
                     <div class="progress-bar progress-bar-striped progress-bar-animated"
-                        style="background:linear-gradient(90deg,#005461,#00B7B5);width:100%"></div>
+                        style="background:linear-gradient(90deg,#005461,#FFC300);width:100%"></div>
                 </div>
                 <p class="text-muted small mt-3 mb-0">
                     <i class="fas fa-info-circle mr-1"></i>

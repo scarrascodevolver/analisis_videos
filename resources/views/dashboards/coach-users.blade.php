@@ -116,16 +116,16 @@
 }
 
 .player-card:hover {
-    border-color: var(--color-accent, #00B7B5);
+    border-color: var(--color-accent, #FFC300);
     background: var(--color-primary-hover, #003d4a);
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 183, 181, 0.25);
+    box-shadow: 0 8px 25px rgba(255, 195, 0, 0.25);
 }
 
 .player-card.selected {
-    border-color: var(--color-accent, #00B7B5);
+    border-color: var(--color-accent, #FFC300);
     background: var(--color-primary-hover, #003d4a);
-    box-shadow: 0 4px 15px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 195, 0, 0.3);
 }
 
 /* Avatar centrado más grande */
@@ -133,14 +133,14 @@
     width: 85px;
     height: 85px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #00B7B5));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #FFC300));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 1.8rem;
-    box-shadow: 0 4px 10px rgba(0, 183, 181, 0.4);
+    box-shadow: 0 4px 10px rgba(255, 195, 0, 0.4);
 }
 
 /* Nombre del jugador */
@@ -166,7 +166,7 @@
 }
 
 .position-text {
-    color: var(--color-accent, #00B7B5);
+    color: var(--color-accent, #FFC300);
     font-size: 0.95rem;
     font-weight: 500;
     margin-left: 5px;
@@ -181,14 +181,14 @@
 
 /* Badges nuevos */
 .category-badge-new {
-    background: linear-gradient(135deg, var(--color-accent, #00B7B5), var(--color-secondary, #018790));
+    background: linear-gradient(135deg, var(--color-accent, #FFC300), var(--color-secondary, #018790));
     color: white;
     border-radius: 20px;
     padding: 8px 16px;
     font-size: 0.85rem;
     font-weight: 600;
     display: inline-block;
-    box-shadow: 0 2px 8px rgba(0, 183, 181, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 195, 0, 0.3);
 }
 
 .video-count-badge-new {
@@ -238,12 +238,12 @@
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-accent, #00B7B5) !important;
+    color: var(--color-accent, #FFC300) !important;
 }
 
 .form-control:focus {
-    border-color: var(--color-accent, #00B7B5);
-    box-shadow: 0 0 0 0.2rem rgba(0, 183, 181, 0.25);
+    border-color: var(--color-accent, #FFC300);
+    box-shadow: 0 0 0 0.2rem rgba(255, 195, 0, 0.25);
 }
 
 /* Texto de videos asignados */

@@ -265,7 +265,7 @@ function getProgressBarClass(percentage: number): string {
 
 .stat-icon {
     font-size: 2rem;
-    color: #00B7B5;
+    color: #FFC300;
     margin-bottom: 0.5rem;
 }
 

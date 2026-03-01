@@ -55,13 +55,13 @@
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb" style="background:transparent;">
-                    <li class="breadcrumb-item"><a href="{{ route('super-admin.dashboard') }}" style="color:#00B7B5;">Super Admin</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('super-admin.organizations') }}" style="color:#00B7B5;">Organizaciones</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('super-admin.dashboard') }}" style="color:#FFC300;">Super Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('super-admin.organizations') }}" style="color:#FFC300;">Organizaciones</a></li>
                     <li class="breadcrumb-item active" style="color:#aaa;">Gestionar Usuarios: {{ $organization->name }}</li>
                 </ol>
             </nav>
             <h1 class="h3 mb-0" style="color:#fff;">
-                <i class="fas fa-users-cog mr-2" style="color:#00B7B5;"></i>
+                <i class="fas fa-users-cog mr-2" style="color:#FFC300;"></i>
                 Gestionar Usuarios de {{ $organization->name }}
             </h1>
         </div>
@@ -158,7 +158,7 @@
         <!-- Crear Nuevo Usuario -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow" style="background:#1a1a2e; border:1px solid #2d2d4e;">
-                <div class="card-header py-3" style="background:#00B7B5; border-bottom:1px solid #2d2d4e;">
+                <div class="card-header py-3" style="background:#FFC300; border-bottom:1px solid #2d2d4e;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-user-edit mr-2"></i>Crear Nuevo Usuario
                     </h6>
@@ -242,7 +242,7 @@
                             <small style="color:#888;">Los administradores de organización pueden gestionar usuarios y configuración de su org.</small>
                         </div>
 
-                        <button type="submit" class="btn btn-block" style="background:#00B7B5; color:#fff;">
+                        <button type="submit" class="btn btn-block" style="background:#FFC300; color:#fff;">
                             <i class="fas fa-user-plus mr-1"></i> Crear y Asignar Usuario
                         </button>
                     </form>
@@ -258,7 +258,7 @@
                 <div class="card-header py-3" style="background:#003d4a; border-bottom:1px solid #2d2d4e;">
                     <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
                         <h6 class="m-0 font-weight-bold" style="color:#fff;">
-                            <i class="fas fa-users mr-2" style="color:#00B7B5;"></i>
+                            <i class="fas fa-users mr-2" style="color:#FFC300;"></i>
                             Usuarios de la Organización ({{ $currentUsers->count() }})
                         </h6>
 

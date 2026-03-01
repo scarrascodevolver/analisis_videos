@@ -145,7 +145,7 @@ function renderSidebarClips(clips) {
                  style="border-left: 3px solid ${color}; cursor: pointer; padding: 8px; margin-bottom: 8px; background: #1a1a1a; border-radius: 4px; transition: background 0.2s;">
                 <div class="d-flex justify-content-between align-items-start">
                     <div style="flex: 1;">
-                        <div style="font-size: 12px; color: #00B7B5; font-weight: bold;">
+                        <div style="font-size: 12px; color: #FFC300; font-weight: bold;">
                             ${formatTime(clip.start_time)} - ${formatTime(clip.end_time)}
                             ${highlightBadge}
                         </div>
