@@ -1014,27 +1014,64 @@ class VideoStreamController extends Controller
 
         $filename = \Illuminate\Support\Str::slug($video->title ?: 'video').'.mp4';
 
-        // Hacer proxy del archivo con Content-Disposition: attachment
-        // usando Guzzle (Http facade) que maneja SSL y redirects correctamente.
-        // Esto fuerza la descarga en el navegador sin navegar a Bunny CDN.
+        // HEAD request para obtener el tamaño real del archivo
+        $fileSize = 0;
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_NOBODY         => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $fileSize = (int) curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        \Log::info('Download proxy HEAD', [
+            'video_id'   => $video->id,
+            'url'        => $url,
+            'http_code'  => $httpCode,
+            'file_size'  => $fileSize,
+            'curl_error' => $curlError ?: null,
+        ]);
+
+        if ($httpCode !== 200) {
+            abort(502, "Bunny CDN respondió con HTTP {$httpCode}. No se puede descargar.");
+        }
+
+        $headers = [
+            'Content-Type'        => 'video/mp4',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control'       => 'no-cache',
+            'X-Accel-Buffering'   => 'no', // desactiva buffer de Nginx
+        ];
+        if ($fileSize > 0) {
+            $headers['Content-Length'] = $fileSize;
+        }
+
+        // Proxy via curl escribiendo directo a php://output (confiable y sin buffers extra)
         return response()->stream(function () use ($url) {
             set_time_limit(0);
-
-            $response = \Illuminate\Support\Facades\Http::withOptions([
-                'stream'  => true,
-                'timeout' => 0,
-                'connect_timeout' => 15,
-            ])->get($url);
-
-            $body = $response->getBody();
-            while (! $body->eof()) {
-                echo $body->read(65536); // 64 KB chunks
-                flush();
+            $fp = fopen('php://output', 'wb');
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_FILE           => $fp,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS      => 5,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_CONNECTTIMEOUT => 15,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_BUFFERSIZE     => 65536,
+            ]);
+            $ok = curl_exec($ch);
+            if (! $ok) {
+                \Log::error('Download curl stream failed', ['error' => curl_error($ch), 'url' => $url]);
             }
-        }, 200, [
-            'Content-Type' => 'video/mp4',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'Cache-Control' => 'no-cache',
-        ]);
+            curl_close($ch);
+            fclose($fp);
+        }, 200, $headers);
     }
 }
