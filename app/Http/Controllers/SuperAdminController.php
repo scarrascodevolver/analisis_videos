@@ -615,6 +615,22 @@ class SuperAdminController extends Controller
     }
 
     /**
+     * Quitar un usuario de una organización (desvincula sin eliminarlo del sistema)
+     */
+    public function removeUserFromOrganization(Organization $organization, User $user): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorizeOrgAccess($organization);
+
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'No puedes quitarte a ti mismo de la organización.');
+        }
+
+        $organization->users()->detach($user->id);
+
+        return back()->with('success', "Usuario {$user->name} quitado de {$organization->name}.");
+    }
+
+    /**
      * Obtener zonas horarias agrupadas por región
      */
     private function getGroupedTimezones(): array

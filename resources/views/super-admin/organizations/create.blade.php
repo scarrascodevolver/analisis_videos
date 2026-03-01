@@ -1,6 +1,80 @@
 @extends('layouts.app')
 
 @section('main_content')
+<style>
+    /* --- Type cards --- */
+    .type-card {
+        cursor: pointer;
+        border: 2px solid #2d2d4e;
+        border-radius: 10px;
+        padding: 20px 16px;
+        background: #0f0f1a;
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        text-align: center;
+        flex: 1;
+    }
+    .type-card:hover {
+        border-color: #005461;
+        background: #111827;
+    }
+    .type-card.selected {
+        border-color: #00B7B5;
+        background: #0d2226;
+        box-shadow: 0 0 0 3px rgba(0,183,181,0.15);
+    }
+    .type-card .type-icon {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        color: #888;
+        transition: color 0.2s ease;
+    }
+    .type-card.selected .type-icon {
+        color: #00B7B5;
+    }
+    .type-card .type-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+        margin-bottom: 4px;
+    }
+    .type-card .type-desc {
+        font-size: 0.78rem;
+        color: #888;
+        line-height: 1.4;
+    }
+
+    /* --- Logo preview --- */
+    #logo-preview-wrap {
+        display: none;
+        margin-top: 14px;
+        align-items: center;
+        gap: 14px;
+    }
+    #logo-preview-wrap.visible {
+        display: flex;
+    }
+    #logo-preview-img {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #00B7B5;
+        background: #0f0f1a;
+    }
+
+    /* --- Admin card animated reveal --- */
+    #admin_fields {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.35s ease, opacity 0.3s ease;
+    }
+    #admin_fields.open {
+        max-height: 600px;
+        opacity: 1;
+    }
+</style>
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
@@ -30,28 +104,32 @@
                     <form action="{{ route('super-admin.organizations.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
+                        {{-- Tipo de organización como cards --}}
                         <div class="form-group">
                             <label style="color:#ccc;">Tipo de Organización <span class="text-danger">*</span></label>
-                            <div class="d-flex" style="gap:16px;">
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="type_club" name="type" value="club"
-                                           class="custom-control-input"
-                                           {{ old('type', 'club') === 'club' ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="type_club" style="color:#ccc;">
-                                        <strong style="color:#fff;">Club</strong>
-                                        <small class="d-block" style="color:#888;">Un solo club con categorías (Adultos, M18…)</small>
-                                    </label>
+                            <div class="d-flex" style="gap:14px;">
+                                {{-- Card Club --}}
+                                <div class="type-card {{ old('type', 'club') === 'club' ? 'selected' : '' }}"
+                                     id="card-club"
+                                     onclick="selectType('club')">
+                                    <div class="type-icon"><i class="fas fa-shield-alt"></i></div>
+                                    <div class="type-title">Club</div>
+                                    <div class="type-desc">Un solo club con categorías<br>(Adultos, M18, Femenino…)</div>
                                 </div>
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="type_asoc" name="type" value="asociacion"
-                                           class="custom-control-input"
-                                           {{ old('type') === 'asociacion' ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="type_asoc" style="color:#ccc;">
-                                        <strong style="color:#fff;">Asociación</strong>
-                                        <small class="d-block" style="color:#888;">Analiza varios clubes en distintos torneos</small>
-                                    </label>
+                                {{-- Card Asociación --}}
+                                <div class="type-card {{ old('type') === 'asociacion' ? 'selected' : '' }}"
+                                     id="card-asoc"
+                                     onclick="selectType('asociacion')">
+                                    <div class="type-icon"><i class="fas fa-sitemap"></i></div>
+                                    <div class="type-title">Asociación</div>
+                                    <div class="type-desc">Analiza varios clubes en<br>distintos torneos</div>
                                 </div>
                             </div>
+                            {{-- Input oculto que lleva el valor real --}}
+                            <input type="hidden" id="type_input" name="type" value="{{ old('type', 'club') }}">
+                            @error('type')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-group">
@@ -72,6 +150,7 @@
                         {{-- Slug: campo oculto, se auto-genera desde el nombre --}}
                         <input type="hidden" id="slug" name="slug" value="{{ old('slug') }}">
 
+                        {{-- Logo con preview circular --}}
                         <div class="form-group">
                             <label for="logo" style="color:#ccc;">Logo de la Organización</label>
                             <div class="custom-file">
@@ -89,6 +168,15 @@
                                 @enderror
                             </div>
                             <small style="color:#888;">Formatos: JPEG, PNG, JPG, GIF, SVG. Máximo 10MB.</small>
+
+                            {{-- Preview circular --}}
+                            <div id="logo-preview-wrap">
+                                <img id="logo-preview-img" src="" alt="Preview logo">
+                                <div>
+                                    <div style="color:#ccc; font-size:0.85rem; font-weight:600;">Vista previa del logo</div>
+                                    <div id="logo-filename" style="color:#888; font-size:0.78rem;"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -108,8 +196,8 @@
 
                         <hr style="border-color:#2d2d4e;">
 
-                        <!-- Sección crear admin -->
-                        <div class="form-group">
+                        {{-- Switch crear admin --}}
+                        <div class="form-group mb-2">
                             <div class="custom-control custom-switch">
                                 <input type="checkbox"
                                        class="custom-control-input"
@@ -123,7 +211,8 @@
                             </div>
                         </div>
 
-                        <div id="admin_fields" style="{{ old('create_admin') ? '' : 'display: none;' }}">
+                        {{-- Card admin con animacion CSS --}}
+                        <div id="admin_fields" class="{{ old('create_admin') ? 'open' : '' }}">
                             <div class="card mb-3" style="background:#0f0f1a; border:1px solid #2d2d4e;">
                                 <div class="card-header" style="background:#003d4a; border-bottom:1px solid #2d2d4e; color:#fff;">
                                     <i class="fas fa-user-shield mr-2" style="color:#00B7B5;"></i>Datos del Administrador
@@ -231,8 +320,20 @@
 
 @push('scripts')
 <script>
+    // -------------------------------------------------------
+    // Type cards
+    // -------------------------------------------------------
+    function selectType(value) {
+        document.getElementById('type_input').value = value;
+
+        document.getElementById('card-club').classList.toggle('selected', value === 'club');
+        document.getElementById('card-asoc').classList.toggle('selected', value === 'asociacion');
+    }
+
+    // -------------------------------------------------------
     // Auto-generate slug from name
-    document.getElementById('name').addEventListener('input', function() {
+    // -------------------------------------------------------
+    document.getElementById('name').addEventListener('input', function () {
         const slugField = document.getElementById('slug');
         if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
             slugField.value = this.value
@@ -245,19 +346,47 @@
         }
     });
 
-    document.getElementById('slug').addEventListener('input', function() {
+    document.getElementById('slug').addEventListener('input', function () {
         this.dataset.autoGenerated = 'false';
     });
 
-    // File input label
-    document.querySelector('.custom-file-input').addEventListener('change', function() {
-        const fileName = this.files[0]?.name || 'Seleccionar archivo...';
-        this.nextElementSibling.textContent = fileName;
+    // -------------------------------------------------------
+    // Logo: label + preview circular
+    // -------------------------------------------------------
+    document.getElementById('logo').addEventListener('change', function () {
+        const file = this.files[0];
+
+        // Update custom-file label
+        this.nextElementSibling.textContent = file ? file.name : 'Seleccionar archivo...';
+
+        const wrap = document.getElementById('logo-preview-wrap');
+        const img  = document.getElementById('logo-preview-img');
+        const fnEl = document.getElementById('logo-filename');
+
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                img.src = e.target.result;
+                fnEl.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+                wrap.classList.add('visible');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            wrap.classList.remove('visible');
+            img.src = '';
+        }
     });
 
-    // Toggle admin fields
-    document.getElementById('create_admin').addEventListener('change', function() {
-        document.getElementById('admin_fields').style.display = this.checked ? 'block' : 'none';
+    // -------------------------------------------------------
+    // Toggle admin fields con animación CSS
+    // -------------------------------------------------------
+    document.getElementById('create_admin').addEventListener('change', function () {
+        const panel = document.getElementById('admin_fields');
+        if (this.checked) {
+            panel.classList.add('open');
+        } else {
+            panel.classList.remove('open');
+        }
     });
 </script>
 @endpush
