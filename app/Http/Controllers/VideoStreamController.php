@@ -994,22 +994,54 @@ class VideoStreamController extends Controller
             abort(404, 'Los videos de YouTube no se pueden descargar.');
         }
 
-        // URL directa MP4 ya guardada
-        if ($video->bunny_mp4_url) {
-            return redirect()->away($video->bunny_mp4_url);
-        }
+        // Determinar la URL fuente
+        $url = null;
 
-        // Construir URL /original desde bunny_video_id + CDN hostname de la org
-        if ($video->bunny_video_id && $video->organization) {
+        if ($video->bunny_mp4_url) {
+            $url = $video->bunny_mp4_url;
+        } elseif ($video->bunny_video_id && $video->organization) {
             try {
                 $service = \App\Services\BunnyStreamService::forOrganization($video->organization);
                 $url = $service->getOriginalUrl($video->bunny_video_id);
-                return redirect()->away($url);
             } catch (\Throwable $e) {
                 \Log::warning("Download: could not build Bunny URL for video {$video->id}: {$e->getMessage()}");
             }
         }
 
-        abort(404, 'Archivo no disponible para descarga.');
+        if (! $url) {
+            abort(404, 'Archivo no disponible para descarga.');
+        }
+
+        $filename = \Illuminate\Support\Str::slug($video->title ?: 'video').'.mp4';
+
+        // Hacer proxy del archivo con Content-Disposition: attachment
+        // para forzar la descarga en el navegador (sin redirect a Bunny)
+        return response()->stream(function () use ($url) {
+            set_time_limit(0);
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'timeout' => 300,
+                    'user_agent' => 'RugbyHub/1.0',
+                ],
+            ]);
+
+            $stream = @fopen($url, 'r', false, $context);
+            if ($stream) {
+                while (! feof($stream)) {
+                    $chunk = fread($stream, 65536); // 64 KB chunks
+                    if ($chunk === false || strlen($chunk) === 0) {
+                        break;
+                    }
+                    echo $chunk;
+                    flush();
+                }
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => 'video/mp4',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control' => 'no-cache',
+        ]);
     }
 }
