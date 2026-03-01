@@ -153,8 +153,8 @@ const canDelete = computed(() => isAnalystOrCoach.value);
 }
 
 .btn-rugby-light {
-    background-color: #018790;
-    border-color: #018790;
+    background-color: #4A6274;
+    border-color: #4A6274;
     color: white;
 }
 .btn-rugby-light:hover {

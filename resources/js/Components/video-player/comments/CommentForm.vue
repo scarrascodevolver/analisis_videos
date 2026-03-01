@@ -143,7 +143,7 @@ defineExpose({ focusWithTimestamp });
 
 .form-control-sm {
     background-color: #003d4a;
-    border-color: #018790;
+    border-color: #4A6274;
     color: #fff;
     font-size: 12px;
 }

@@ -20,7 +20,7 @@
         :root {
             --primary: #005461;
             --primary-dark: #003d4a;
-            --primary-light: #018790;
+            --primary-light: #4A6274;
             --accent: #D4A017;
             --dark: #0a0a0a;
             --dark-lighter: #1a1a1a;
@@ -209,7 +209,7 @@
             background:
                 radial-gradient(ellipse at 20% 50%, rgba(212, 160, 23, 0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 20%, rgba(0, 84, 97, 0.2) 0%, transparent 40%),
-                radial-gradient(ellipse at 60% 80%, rgba(1, 135, 144, 0.1) 0%, transparent 40%);
+                radial-gradient(ellipse at 60% 80%, rgba(74, 98, 116, 0.1) 0%, transparent 40%);
             z-index: 0;
         }
 

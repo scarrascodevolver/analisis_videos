@@ -187,7 +187,7 @@
     #registerUrl.readonly-link {
         background-color: #1a1a1a !important;
         color: #ffffff !important;
-        border: 2px solid #018790 !important;
+        border: 2px solid #4A6274 !important;
     }
 
     /* Mejorar contraste de labels */

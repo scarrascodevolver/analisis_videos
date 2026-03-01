@@ -6,6 +6,7 @@
 
 export const COLOR_PRIMARY      = '#005461';
 export const COLOR_PRIMARY_DARK = '#003d4a';
+export const COLOR_SECONDARY    = '#4A6274';
 export const COLOR_ACCENT       = '#D4A017';
 export const COLOR_BG           = '#0f0f0f';
 export const COLOR_BG_CARD      = '#1a1a2e';

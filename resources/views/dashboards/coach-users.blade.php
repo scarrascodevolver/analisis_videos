@@ -106,7 +106,7 @@
 .player-card {
     transition: all 0.3s ease;
     cursor: pointer;
-    border: 2px solid var(--color-secondary, #018790);
+    border: 2px solid var(--color-secondary, #4A6274);
     border-radius: 15px;
     background: var(--color-bg-card, #0f0f0f);
     min-height: 220px;
@@ -181,7 +181,7 @@
 
 /* Badges nuevos */
 .category-badge-new {
-    background: linear-gradient(135deg, var(--color-accent, #D4A017), var(--color-secondary, #018790));
+    background: linear-gradient(135deg, var(--color-accent, #D4A017), var(--color-secondary, #4A6274));
     color: white;
     border-radius: 20px;
     padding: 8px 16px;

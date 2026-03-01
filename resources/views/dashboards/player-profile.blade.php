@@ -130,7 +130,7 @@
 .info-item {
     text-align: left;
     padding: 10px 0;
-    border-bottom: 1px solid var(--color-secondary, #018790);
+    border-bottom: 1px solid var(--color-secondary, #4A6274);
 }
 
 .info-item:last-child {
@@ -160,7 +160,7 @@
 
 .video-card {
     transition: all 0.3s ease;
-    border: 2px solid var(--color-secondary, #018790);
+    border: 2px solid var(--color-secondary, #4A6274);
     border-radius: 10px;
     background: var(--color-bg-card, #0f0f0f);
 }
@@ -234,7 +234,7 @@
 }
 
 .stats-card {
-    border: 2px solid var(--color-secondary, #018790);
+    border: 2px solid var(--color-secondary, #4A6274);
     border-radius: 10px;
     transition: all 0.3s ease;
     background: var(--color-bg-card, #0f0f0f);

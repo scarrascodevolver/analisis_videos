@@ -18,7 +18,7 @@
         :root {
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
-            --color-secondary: #018790;
+            --color-secondary: #4A6274;
             --color-accent: #4B9DA9;
             --color-bg: #F4F4F4;
             --color-bg-card: #FFFFFF;
@@ -42,7 +42,7 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background: linear-gradient(135deg, rgba(0, 84, 97, 0.3) 0%, rgba(1, 135, 144, 0.3) 100%),
+            background: linear-gradient(135deg, rgba(0, 84, 97, 0.3) 0%, rgba(74, 98, 116, 0.3) 100%),
                         url('/rugby-ball.png');
             background-size: cover;
             background-position: center;

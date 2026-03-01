@@ -27,7 +27,7 @@ const decrement = () => counter.value--;
                         </div>
 
                         <!-- Status Card -->
-                        <div class="card" style="background: #1a1a1a; border: 1px solid #018790;">
+                        <div class="card" style="background: #1a1a1a; border: 1px solid #4A6274;">
                             <div class="card-header" style="background: linear-gradient(135deg, #005461, #D4A017); border: none;">
                                 <h3 class="card-title text-white">
                                     <i class="fas fa-check-circle mr-2"></i>

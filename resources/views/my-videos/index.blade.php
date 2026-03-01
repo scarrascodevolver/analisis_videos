@@ -150,7 +150,7 @@
 
     .rugby-thumbnail:hover .play-button-circle {
         transform: scale(1.1);
-        background: var(--color-secondary, #018790);
+        background: var(--color-secondary, #4A6274);
     }
 
     /* Video thumbnail improvements */
