@@ -19,7 +19,8 @@
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
             --color-secondary: #4A6274;
-            --color-accent: #D4A017;
+            --color-accent: #00B7B5;
+            --color-accent-hover: #009e9c;
             --color-bg: #F4F4F4;
             --color-bg-card: #FFFFFF;
             --color-text: #333333;
@@ -131,7 +132,7 @@
         }
 
         .btn-rugby {
-            background: var(--color-primary);
+            background: var(--color-accent);
             border: none;
             border-radius: 8px;
             padding: 12px 25px;
@@ -141,7 +142,7 @@
         }
 
         .btn-rugby:hover {
-            background: var(--color-primary-hover);
+            background: var(--color-accent-hover);
             color: white;
             transform: translateY(-2px);
         }
