@@ -25,7 +25,7 @@
 
     <style>
         /* Prevent horizontal overflow */
-        html, body { overflow-x: hidden; max-width: 100%; }
+        html, body { overflow-x: hidden; max-width: 100%; background-color: #0f0f0f; }
         .wrapper, .content-wrapper { overflow-x: hidden; }
 
         /* CSS Variables */
