@@ -146,6 +146,23 @@ class MultiCameraController extends Controller
         $slaveVideo = Video::findOrFail($request->slave_video_id);
         $groupId = $request->input('group_id');
 
+        // Reject if the slave has no playable source (upload was interrupted before /complete).
+        // Videos in 'queued' or 'ready' always have bunny_mp4_url set. Only a broken
+        // pendingupload record has all three URLs as null.
+        $hasPlayableSource = $slaveVideo->bunny_hls_url
+            || $slaveVideo->bunny_mp4_url
+            || $slaveVideo->is_youtube_video
+            || ($slaveVideo->file_path && ! str_starts_with($slaveVideo->file_path ?? '', 'bunny:'));
+
+        if (! $hasPlayableSource) {
+            Log::warning("Slave video {$slaveVideo->id} has no playable source (stuck pendingupload)");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Este video no terminó de subirse correctamente. Eliminalo y volvé a subirlo antes de usarlo como ángulo.',
+            ], 400);
+        }
+
         Log::info('=== ASSOCIATE DEBUG START (NEW SYSTEM) ===');
         Log::info("Master Video ID: {$masterVideo->id}");
         Log::info("Slave Video ID: {$slaveVideo->id}");

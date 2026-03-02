@@ -14,9 +14,11 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 
-// Limpiar videos huérfanos en Bunny (pendingupload > 24h sin completar)
-Schedule::command('videos:clean-orphans --hours=24')
-    ->dailyAt('04:00')
+// Limpiar videos huérfanos en Bunny (pendingupload > 2h sin completar).
+// La firma TUS expira en 1h, por lo que cualquier pendingupload de más de
+// 2h es definitivamente un upload roto y nunca va a completarse.
+Schedule::command('videos:clean-orphans --hours=2')
+    ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/clean-orphans.log'));
 

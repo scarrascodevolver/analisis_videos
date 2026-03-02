@@ -271,7 +271,15 @@ async function handleSubmitFile() {
             body: JSON.stringify({ video_id, bunny_guid }),
         });
 
+        if (!completeRes.ok) {
+            throw new Error(`El archivo se subió pero el servidor no pudo registrarlo (HTTP ${completeRes.status}). Actualizá la página e intentá de nuevo.`);
+        }
+
         const completeData = await completeRes.json().catch(() => ({})) as any;
+
+        if (!completeData.success) {
+            throw new Error(completeData.message || 'El archivo se subió pero no se pudo registrar correctamente. Actualizá la página e intentá de nuevo.');
+        }
 
         // Step 4: Build the new slave video object and emit it
         const newSlave: SlaveVideo = {
