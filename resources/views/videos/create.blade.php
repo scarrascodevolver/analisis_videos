@@ -101,7 +101,7 @@
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <img id="youtubeThumb" src="" alt="Preview"
-                                style="width:120px;border-radius:6px;border:2px solid #D4A017;">
+                                style="width:120px;border-radius:6px;border:2px solid #b8860b;">
                         </div>
                         <div class="col">
                             <p class="mb-1 small font-weight-bold text-success">
@@ -342,7 +342,7 @@
     background: rgba(0,84,97,.05);
 }
 .drop-zone:hover, .drop-zone.dragover {
-    border-color: #D4A017;
+    border-color: #b8860b;
     background: rgba(212,160,23,.08);
 }
 .drop-zone-icon {
@@ -374,7 +374,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: #D4A017;
+    color: #b8860b;
     font-size: 1rem;
 }
 .file-info { flex: 1; min-width: 0; }
@@ -398,7 +398,7 @@
     font-size: .75rem;
     padding: 2px 8px;
     border: 1px solid var(--color-primary);
-    color: #D4A017;
+    color: #b8860b;
     background: transparent;
     border-radius: 4px;
     cursor: pointer;
@@ -473,7 +473,7 @@
 }
 .row-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #005461, #D4A017);
+    background: linear-gradient(90deg, #005461, #b8860b);
     border-radius: 3px;
     transition: width .4s ease;
 }
@@ -484,7 +484,7 @@
     color: #888;
     margin-top: 2px;
 }
-.row-progress-label .pct { color: #D4A017; font-weight: 600; }
+.row-progress-label .pct { color: #b8860b; font-weight: 600; }
 
 /* Visibilidad */
 .visibility-option {
@@ -502,12 +502,12 @@
     user-select: none;
 }
 .visibility-option:hover { border-color: var(--color-primary); color: #fff; }
-.visibility-option.active { border-color: #D4A017; color: #D4A017; background: rgba(212,160,23,.1); }
+.visibility-option.active { border-color: #b8860b; color: #b8860b; background: rgba(212,160,23,.1); }
 
 /* Badge XML en fila */
 .xml-badge {
     font-size: .7rem;
-    color: #D4A017;
+    color: #b8860b;
     font-weight: 600;
     margin-left: 6px;
 }
@@ -515,7 +515,7 @@
 /* Colores rugby */
 .btn-rugby { background: #005461; border-color: var(--color-primary); color: #fff; }
 .btn-rugby:hover { background: #003d4a; border-color: #003d4a; color: #fff; }
-.btn-rugby-outline { background: transparent; border: 1px solid var(--color-primary); color: #D4A017; }
+.btn-rugby-outline { background: transparent; border: 1px solid var(--color-primary); color: #b8860b; }
 .btn-rugby-outline:hover { background: #005461; color: #fff; }
 .bg-rugby { background-color: #005461 !important; }
 .card-rugby { border-color: var(--color-primary); }
@@ -602,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const banner = document.createElement('div');
         banner.id = 'slaveModeBanner';
         banner.className = 'alert alert-info mb-3';
-        banner.style.cssText = 'border-left: 4px solid #D4A017; background: rgba(212,160,23,.1); color: #D4A017; border-color: #D4A017;';
+        banner.style.cssText = 'border-left: 4px solid #b8860b; background: rgba(212,160,23,.1); color: #b8860b; border-color: #b8860b;';
         banner.innerHTML = `
             <div class="d-flex align-items-start">
                 <i class="fas fa-video mr-2 mt-1"></i>
@@ -610,12 +610,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     <strong>Modo ángulo adicional</strong> —
                     El video se vinculará automáticamente al video master.
                     <div class="mt-2">
-                        <label for="cameraAngleInput" style="font-size:.85rem;font-weight:600;color:#D4A017;margin-bottom:4px;display:block;">
+                        <label for="cameraAngleInput" style="font-size:.85rem;font-weight:600;color:#b8860b;margin-bottom:4px;display:block;">
                             Nombre del ángulo <span style="color:#e74c3c">*</span>
                         </label>
                         <input type="text" id="cameraAngleInput"
                             placeholder="Ej: Tribuna lateral, Drone, Detrás del arco..."
-                            style="width:100%;max-width:420px;background:#1a1a1a;border:1px solid #D4A017;color:#fff;border-radius:6px;padding:6px 10px;font-size:.85rem;"
+                            style="width:100%;max-width:420px;background:#1a1a1a;border:1px solid #b8860b;color:#fff;border-radius:6px;padding:6px 10px;font-size:.85rem;"
                             maxlength="100">
                         <small style="color:#888;display:block;margin-top:3px;">
                             Este nombre aparecerá en el badge de ángulos del partido.

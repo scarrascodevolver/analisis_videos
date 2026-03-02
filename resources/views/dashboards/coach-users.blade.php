@@ -116,14 +116,14 @@
 }
 
 .player-card:hover {
-    border-color: var(--color-accent, #D4A017);
+    border-color: var(--color-accent, #b8860b);
     background: var(--color-primary-hover, #003d4a);
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(212, 160, 23, 0.25);
 }
 
 .player-card.selected {
-    border-color: var(--color-accent, #D4A017);
+    border-color: var(--color-accent, #b8860b);
     background: var(--color-primary-hover, #003d4a);
     box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3);
 }
@@ -133,7 +133,7 @@
     width: 85px;
     height: 85px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #D4A017));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #b8860b));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,7 +166,7 @@
 }
 
 .position-text {
-    color: var(--color-accent, #D4A017);
+    color: var(--color-accent, #b8860b);
     font-size: 0.95rem;
     font-weight: 500;
     margin-left: 5px;
@@ -181,7 +181,7 @@
 
 /* Badges nuevos */
 .category-badge-new {
-    background: linear-gradient(135deg, var(--color-accent, #D4A017), var(--color-secondary, #4A6274));
+    background: linear-gradient(135deg, var(--color-accent, #b8860b), var(--color-secondary, #4A6274));
     color: white;
     border-radius: 20px;
     padding: 8px 16px;
@@ -238,11 +238,11 @@
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-accent, #D4A017) !important;
+    color: var(--color-accent, #b8860b) !important;
 }
 
 .form-control:focus {
-    border-color: var(--color-accent, #D4A017);
+    border-color: var(--color-accent, #b8860b);
     box-shadow: 0 0 0 0.2rem rgba(212, 160, 23, 0.25);
 }
 

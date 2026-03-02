@@ -686,10 +686,10 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 /* ─── Colores rugby ────────────────────────────────────── */
 .btn-rugby        { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
 .btn-rugby:hover  { background:var(--color-primary-hover); border-color:var(--color-primary-hover); color:#fff; }
-.btn-rugby-light  { background:#D4A017; border-color:#D4A017; color:#fff; }
+.btn-rugby-light  { background:#b8860b; border-color:#b8860b; color:#fff; }
 .btn-rugby-light:hover { background:var(--color-accent); color:#fff; }
 .btn-delete       { background:transparent; border-color:#2d4a4e; color:#6a9a9e; }
-.btn-delete:hover { background:#1a2e30; border-color:var(--color-primary); color:#D4A017; }
+.btn-delete:hover { background:#1a2e30; border-color:var(--color-primary); color:#b8860b; }
 .modal-header-rugby { background:var(--color-primary); }
 .card-rugby       { border-color:var(--color-primary); }
 .card-rugby .card-header { background:var(--color-primary); }
@@ -729,7 +729,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     transition: background .2s, color .2s;
     text-decoration: none;
 }
-.match-edit-btn:hover { background: #D4A017; color: #fff; text-decoration: none; }
+.match-edit-btn:hover { background: #b8860b; color: #fff; text-decoration: none; }
 /* Botón eliminar flotante (club view) */
 .match-delete-btn {
     position: absolute;
@@ -785,7 +785,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     position: absolute;
     bottom: 3px; right: 3px;
     background: rgba(0,84,97,.92);
-    color: #D4A017;
+    color: #b8860b;
     font-size: .58rem; font-weight: 700;
     padding: 2px 6px; border-radius: 5px;
 }
@@ -810,7 +810,7 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
 .fixture-rival { text-align: left; }
 .fixture-vs {
     font-size: .58rem; font-weight: 800;
-    color: #D4A017; background: #0a3038;
+    color: #b8860b; background: #0a3038;
     padding: 2px 6px; border-radius: 10px;
     flex-shrink: 0; letter-spacing: .06em;
 }

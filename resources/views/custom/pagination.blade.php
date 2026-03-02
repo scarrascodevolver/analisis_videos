@@ -79,7 +79,7 @@
     }
 
     .pagination .page-link:hover {
-        color: var(--color-accent, #D4A017);
+        color: var(--color-accent, #b8860b);
         background-color: #f8f9fa;
         border-color: #dee2e6;
     }

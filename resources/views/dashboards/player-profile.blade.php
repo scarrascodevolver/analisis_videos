@@ -117,7 +117,7 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #D4A017));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #b8860b));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -151,11 +151,11 @@
 }
 
 .text-rugby {
-    color: var(--color-accent, #D4A017) !important;
+    color: var(--color-accent, #b8860b) !important;
 }
 
 .spinner-border.text-rugby {
-    color: var(--color-accent, #D4A017) !important;
+    color: var(--color-accent, #b8860b) !important;
 }
 
 .video-card {
@@ -168,7 +168,7 @@
 .video-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(212, 160, 23, 0.25);
-    border-color: var(--color-accent, #D4A017);
+    border-color: var(--color-accent, #b8860b);
 }
 
 .video-card a {
@@ -188,7 +188,7 @@
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #D4A017));
+    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #b8860b));
 }
 
 .video-thumbnail {
@@ -241,7 +241,7 @@
 }
 
 .stats-card:hover {
-    border-color: var(--color-accent, #D4A017);
+    border-color: var(--color-accent, #b8860b);
     box-shadow: 0 2px 8px rgba(212, 160, 23, 0.2);
 }
 

@@ -115,14 +115,14 @@
 }
 .editable-cell:hover {
     background: rgba(212,160,23,.1);
-    border-bottom-color: #D4A017;
+    border-bottom-color: #b8860b;
 }
 .editable-cell.editing {
     display: none;
 }
 .edit-input {
     background: #1a1a1a;
-    border: 1px solid #D4A017;
+    border: 1px solid #b8860b;
     color: #fff;
     border-radius: 4px;
     padding: 2px 6px;
@@ -133,7 +133,7 @@
 .edit-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(212,160,23,.3); }
 .save-indicator {
     font-size: .72rem;
-    color: #D4A017;
+    color: #b8860b;
     margin-left: 6px;
 }
 .error-indicator {

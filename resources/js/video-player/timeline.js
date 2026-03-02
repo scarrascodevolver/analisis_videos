@@ -142,7 +142,7 @@ export function createTimelineMarkers() {
             left: ${position}%;
             width: ${isCluster ? '12px' : '8px'};
             height: 50px;
-            background: var(--color-accent, #D4A017);
+            background: var(--color-accent, #b8860b);
             border: 2px solid #fff;
             border-radius: 4px;
             cursor: pointer;

@@ -37,7 +37,7 @@
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 10px;
-            border-left: 3px solid #D4A017;
+            border-left: 3px solid #b8860b;
         }
         .mobile-play-item .play-name {
             color: #fff;
@@ -71,7 +71,7 @@
 
     .play-card:hover {
         transform: translateY(-3px);
-        border-color: #D4A017;
+        border-color: #b8860b;
         box-shadow: 0 8px 25px rgba(212, 160, 23, 0.2);
     }
 

@@ -18,7 +18,7 @@
         background: #111827;
     }
     .type-card.selected {
-        border-color: #D4A017;
+        border-color: #b8860b;
         background: #0d2226;
         box-shadow: 0 0 0 3px rgba(212,160,23,0.15);
     }
@@ -29,7 +29,7 @@
         transition: color 0.2s ease;
     }
     .type-card.selected .type-icon {
-        color: #D4A017;
+        color: #b8860b;
     }
     .type-card .type-title {
         font-weight: 700;
@@ -58,7 +58,7 @@
         height: 72px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #D4A017;
+        border: 2px solid #b8860b;
         background: #0d1519;
     }
 
@@ -79,7 +79,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h3 mb-0" style="color:#fff;">
-                <i class="fas fa-plus-circle mr-2" style="color:#D4A017;"></i>
+                <i class="fas fa-plus-circle mr-2" style="color:#b8860b;"></i>
                 Nueva Organización
             </h1>
         </div>
@@ -208,7 +208,7 @@
                         <div id="admin_fields" class="{{ old('create_admin') ? 'open' : '' }}">
                             <div class="card mb-3" style="background:#0d1519; border:1px solid #243038;">
                                 <div class="card-header" style="background:#003d4a; border-bottom:1px solid #243038; color:#fff;">
-                                    <i class="fas fa-user-shield mr-2" style="color:#D4A017;"></i>Datos del Administrador
+                                    <i class="fas fa-user-shield mr-2" style="color:#b8860b;"></i>Datos del Administrador
                                 </div>
                                 <div class="card-body">
                                     <div class="form-group">
@@ -288,7 +288,7 @@
 
         <div class="col-lg-4">
             <div class="card shadow" style="background:#141c22; border:1px solid #243038;">
-                <div class="card-header py-3" style="background:#D4A017; border-bottom:1px solid #243038;">
+                <div class="card-header py-3" style="background:#b8860b; border-bottom:1px solid #243038;">
                     <h6 class="m-0 font-weight-bold" style="color:#fff;">
                         <i class="fas fa-info-circle mr-2"></i>Información
                     </h6>

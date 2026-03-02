@@ -91,7 +91,7 @@
             --color-primary: #005461;
             --color-primary-hover: #003d4a;
             --color-secondary: #4A6274;
-            --color-accent: #D4A017;
+            --color-accent: #b8860b;
             --color-sidebar: #0d1117;
             --color-bg: #0f0f0f;
             --color-bg-card: #0f0f0f;
@@ -793,18 +793,18 @@
                                 </a>
                             </li>
                         @elseif (Auth::user()->isOrgManager())
-                            <li class="nav-header" style="color:#D4A017;">MIS ORGANIZACIONES</li>
+                            <li class="nav-header" style="color:#b8860b;">MIS ORGANIZACIONES</li>
                             <li class="nav-item">
                                 <a href="{{ route('super-admin.dashboard') }}"
                                     class="nav-link {{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-chart-bar" style="color:#D4A017;"></i>
+                                    <i class="nav-icon fas fa-chart-bar" style="color:#b8860b;"></i>
                                     <p>Mi Panel</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('super-admin.organizations') }}"
                                     class="nav-link {{ request()->routeIs('super-admin.organizations*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-building" style="color:#D4A017;"></i>
+                                    <i class="nav-icon fas fa-building" style="color:#b8860b;"></i>
                                     <p>Mis Clubes y Orgs</p>
                                 </a>
                             </li>
@@ -1056,7 +1056,7 @@
             const container = document.getElementById('toast-container');
             if (!container) return;
 
-            const bgColor = type === 'success' ? '#D4A017' : (type === 'error' ? '#dc3545' : '#ffc107');
+            const bgColor = type === 'success' ? '#b8860b' : (type === 'error' ? '#dc3545' : '#ffc107');
             const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
 
             const toast = document.createElement('div');
