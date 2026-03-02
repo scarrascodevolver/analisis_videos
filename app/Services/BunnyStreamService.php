@@ -122,8 +122,11 @@ class BunnyStreamService
             Http::withHeaders(['AccessKey' => $accountApiKey])
                 ->post("https://api.bunny.net/videolibrary/{$libraryId}", [
                     'WebhookUrl'        => $webhookUrl,
-                    // Solo 720p y 1080p — 480p eliminado para reducir tiempo de procesamiento
-                    'EnabledResolutions' => '720p,1080p',
+                    // 360p y 480p son clave para los slaves multi-cámara: el player
+                    // los usa automáticamente en paneles pequeños (capLevelToPlayerSize),
+                    // reduciendo el ancho de banda necesario de ~8 Mbps a ~2.4 Mbps
+                    // con 3 slaves activos. 720p y 1080p quedan para el master.
+                    'EnabledResolutions' => '360p,480p,720p,1080p',
                     // Mantener archivo original para acceso directo post-upload (TUS)
                     'KeepOriginalFiles'  => true,
                 ]);
@@ -131,7 +134,7 @@ class BunnyStreamService
             Log::info('Bunny library configurada', [
                 'library_id'  => $libraryId,
                 'webhook_url' => $webhookUrl,
-                'resolutions' => '480p,720p,1080p',
+                'resolutions' => '360p,480p,720p,1080p',
             ]);
         } catch (\Throwable $e) {
             Log::warning('No se pudo configurar la library de Bunny', [

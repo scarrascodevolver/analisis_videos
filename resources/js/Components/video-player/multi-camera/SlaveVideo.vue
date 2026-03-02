@@ -92,7 +92,18 @@ watch(activeHlsUrl, (newHlsUrl, oldHlsUrl) => {
     if (!videoRef.value || !newHlsUrl || newHlsUrl === oldHlsUrl) return;
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     if (Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance = new Hls({
+            enableWorker: true,
+            // Arrancar siempre en la calidad más baja disponible (360p si existe)
+            // para tener el slave listo lo antes posible.
+            startLevel: 0,
+            // Respetar el tamaño físico del contenedor: un panel de 18vh
+            // nunca necesita más de 480p, el ABR lo selecciona automáticamente.
+            capLevelToPlayerSize: true,
+            // Buffer corto para no competir con el master por ancho de banda.
+            maxBufferLength: 15,
+            maxMaxBufferLength: 20,
+        });
         hlsInstance.loadSource(newHlsUrl);
         hlsInstance.attachMedia(videoRef.value);
     } else if (videoRef.value.canPlayType('application/vnd.apple.mpegurl')) {
@@ -201,7 +212,13 @@ onMounted(() => {
     // Inicializar HLS (Bunny o Cloudflare legacy)
     if (isHls.value && activeHlsUrl.value) {
         if (Hls.isSupported()) {
-            hlsInstance = new Hls({ enableWorker: true });
+            hlsInstance = new Hls({
+                enableWorker: true,
+                startLevel: 0,
+                capLevelToPlayerSize: true,
+                maxBufferLength: 15,
+                maxMaxBufferLength: 20,
+            });
             hlsInstance.loadSource(activeHlsUrl.value);
             hlsInstance.attachMedia(videoRef.value);
         } else if (videoRef.value.canPlayType('application/vnd.apple.mpegurl')) {
