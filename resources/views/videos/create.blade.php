@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                {{-- Categoría + División (clubs) | Equipo (asociaciones) --}}
+                {{-- Categoría + División (clubs) | Categoría opcional (asociaciones) --}}
                 @if($isClub)
                 <div class="col-md-3">
                     <div class="form-group mb-2">
@@ -217,6 +217,7 @@
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
+                            <option value="__new__" style="color:#b8860b;font-weight:600">＋ Nueva categoría...</option>
                         </select>
                     </div>
                 </div>
@@ -232,16 +233,42 @@
                 @else
                 <div class="col-md-4">
                     <div class="form-group mb-2">
-                        <label class="small font-weight-bold"><i class="fas fa-tag mr-1"></i>Categoría <span class="text-danger">*</span></label>
-                        <select id="category_id" name="category_id" class="form-control form-control-sm" required>
-                            <option value="">Seleccionar categoría...</option>
+                        <label class="small font-weight-bold"><i class="fas fa-tag mr-1"></i>Categoría <small class="text-muted font-weight-normal">(opcional)</small></label>
+                        <select id="category_id" name="category_id" class="form-control form-control-sm">
+                            <option value="">Sin categoría</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
+                            <option value="__new__" style="color:#b8860b;font-weight:600">＋ Nueva categoría...</option>
                         </select>
                     </div>
                 </div>
                 @endif
+
+                {{-- Modal inline: Nueva categoría --}}
+                <div class="modal fade" id="newCategoryModal" tabindex="-1">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content bg-dark border-secondary">
+                            <div class="modal-header border-secondary py-2">
+                                <h6 class="modal-title text-white"><i class="fas fa-folder-plus mr-2 text-warning"></i>Nueva categoría</h6>
+                                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                            </div>
+                            <div class="modal-body py-2">
+                                <input type="text" id="newCategoryInput"
+                                    class="form-control form-control-sm bg-dark border-secondary text-white"
+                                    placeholder="Ej: Masculino, Juveniles..." maxlength="255">
+                                <div id="newCategoryError" class="text-danger small mt-1 d-none"></div>
+                            </div>
+                            <div class="modal-footer border-secondary py-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-sm" id="saveCategoryInlineBtn"
+                                    style="background:#b8860b;color:#fff;border:none">
+                                    <i class="fas fa-save mr-1"></i>Crear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Visibilidad (solo clubs) --}}
@@ -787,11 +814,60 @@ function initVisibility() {
 
 function initCategoryListener() {
     document.getElementById('category_id').addEventListener('change', function () {
+        if (this.value === '__new__') {
+            this.value = '';
+            document.getElementById('newCategoryInput').value = '';
+            document.getElementById('newCategoryError').classList.add('d-none');
+            $('#newCategoryModal').modal('show');
+            return;
+        }
         const text = this.options[this.selectedIndex]?.text || '';
         const showDiv = text.toLowerCase().includes('adult');
-        document.getElementById('divisionCol').style.display = showDiv ? '' : 'none';
+        if (document.getElementById('divisionCol')) {
+            document.getElementById('divisionCol').style.display = showDiv ? '' : 'none';
+        }
     });
 }
+
+// ─── Crear categoría inline ───────────────────────────────────
+document.getElementById('saveCategoryInlineBtn').addEventListener('click', function () {
+    const name = document.getElementById('newCategoryInput').value.trim();
+    const errEl = document.getElementById('newCategoryError');
+    if (!name) { errEl.textContent = 'Ingresá un nombre.'; errEl.classList.remove('d-none'); return; }
+    errEl.classList.add('d-none');
+    this.disabled = true;
+
+    fetch('{{ route("api.categories.store") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.id) {
+            const sel = document.getElementById('category_id');
+            const opt = new Option(data.name, data.id, true, true);
+            // Insertar antes de la opción "+ Nueva categoría..."
+            const newOpt = sel.querySelector('option[value="__new__"]');
+            sel.insertBefore(opt, newOpt);
+            sel.value = data.id;
+            $('#newCategoryModal').modal('hide');
+        } else {
+            errEl.textContent = data.message || 'Error al crear.';
+            errEl.classList.remove('d-none');
+        }
+        this.disabled = false;
+    })
+    .catch(() => {
+        errEl.textContent = 'Error de red.';
+        errEl.classList.remove('d-none');
+        this.disabled = false;
+    });
+});
+
+document.getElementById('newCategoryInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('saveCategoryInlineBtn').click();
+});
 
 // ─── Gestión de archivos ─────────────────────────────────────
 const MAX_FILES = 4;
@@ -1015,7 +1091,8 @@ async function startUpload() {
 
     const matchDate = document.getElementById('match_date').value;
     const categoryId = document.getElementById('category_id')?.value;
-    if (!categoryId) { alert(isClub ? 'Seleccioná una categoría.' : 'Seleccioná el equipo.'); return; }
+    if (isClub && !categoryId) { alert('Seleccioná una categoría.'); return; }
+    if (categoryId === '__new__') { alert('Completá la nueva categoría antes de subir.'); return; }
     if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
     if (uploadState.files.length === 0) { alert('Seleccioná al menos un video.'); return; }
 
@@ -1380,7 +1457,8 @@ async function submitYoutubeVideo() {
     if (!matchDate) { alert('Ingresá la fecha del partido.'); return; }
 
     const categoryIdYt = document.getElementById('category_id')?.value;
-    if (!categoryIdYt) { alert(isClub ? 'Seleccioná una categoría.' : 'Seleccioná el equipo.'); return; }
+    if (isClub && !categoryIdYt) { alert('Seleccioná una categoría.'); return; }
+    if (categoryIdYt === '__new__') { alert('Completá la nueva categoría antes de subir.'); return; }
 
     // Reusar resolveCommonData para crear torneo/rival si fueron escritos manualmente
     const commonData = await resolveCommonData();

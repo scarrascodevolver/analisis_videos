@@ -224,6 +224,8 @@ class VideoController extends Controller
 
             $isYoutube = $request->filled('youtube_url') || $request->input('video_source') === 'youtube';
 
+            $isClub = $currentOrg?->isClub() ?? true;
+
             $request->validate([
                 'title' => $isYoutube ? 'nullable|string|max:255' : 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -239,12 +241,13 @@ class VideoController extends Controller
                     }]
                     : 'nullable',
                 'rival_team_name' => 'nullable|string|max:255',
-                'category_id' => [
-                    'required',
+                'category_id' => array_filter([
+                    $isClub ? 'required' : 'nullable',
+                    'sometimes',
                     Rule::exists('categories', 'id')->where(function ($query) use ($currentOrg) {
                         $query->where('organization_id', $currentOrg->id);
                     }),
-                ],
+                ]),
                 'tournament_id' => 'nullable|exists:tournaments,id',
                 'rival_team_id' => 'nullable|exists:rival_teams,id',
                 'division' => 'nullable|in:primera,intermedia,unica',
