@@ -732,8 +732,8 @@
                             <li class="nav-item">
                                 <a href="{{ route('admin.organization') }}"
                                     class="nav-link {{ request()->routeIs('admin.organization') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-user-plus"></i>
-                                    <p>Invitar Jugadores</p>
+                                    <i class="nav-icon fas fa-ticket-alt"></i>
+                                    <p>Código de Registro</p>
                                 </a>
                             </li>
                             <!-- Editor de Jugadas -->

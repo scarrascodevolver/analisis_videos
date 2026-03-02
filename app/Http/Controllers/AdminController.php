@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\ClipCategory;
-use App\Models\RugbySituation;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -19,9 +18,8 @@ class AdminController extends Controller
 
         // Contadores simples para las tarjetas (filtrados por organización)
         $stats = [
-            'categories' => Category::count(),
-            'situations' => RugbySituation::count(),
-            'users' => $currentOrg ? $currentOrg->users()->count() : 0,
+            'categories'      => Category::count(),
+            'users'           => $currentOrg ? $currentOrg->users()->count() : 0,
             'clip_categories' => ClipCategory::count(),
         ];
 

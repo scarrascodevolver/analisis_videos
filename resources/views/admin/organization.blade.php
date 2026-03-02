@@ -16,7 +16,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fas fa-ticket-alt mr-2"></i>
-                    Código de Invitación para Jugadores
+                    Código de Registro para Jugadores
                 </h3>
             </div>
             <div class="card-body">

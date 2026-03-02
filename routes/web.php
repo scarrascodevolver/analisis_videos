@@ -252,10 +252,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('clip-categories', ClipCategoryController::class);
         Route::post('clip-categories/reorder', [ClipCategoryController::class, 'reorder'])->name('clip-categories.reorder');
 
-        // Gestión de Situaciones de Rugby
-        Route::resource('situations', App\Http\Controllers\RugbySituationController::class);
-        Route::post('situations/reorder', [App\Http\Controllers\RugbySituationController::class, 'reorder'])->name('situations.reorder');
-
         // Gestión de Equipos Rivales
         Route::resource('rival-teams', RivalTeamController::class);
 
