@@ -116,16 +116,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('api/upload/bunny/complete', [BunnyUploadController::class, 'complete'])->name('api.upload.bunny.complete');
     Route::get('api/upload/bunny/{video}/status', [BunnyUploadController::class, 'status'])->name('api.upload.bunny.status');
 
-    // Direct Upload to Spaces (pre-signed URLs)
-    Route::post('api/upload/presigned-url', [DirectUploadController::class, 'getPresignedUrl'])->name('api.upload.presigned');
-    Route::post('api/upload/confirm', [DirectUploadController::class, 'confirmUpload'])->name('api.upload.confirm');
-
-    // Multipart Upload for large files
-    Route::post('api/upload/multipart/initiate', [DirectUploadController::class, 'initiateMultipartUpload'])->name('api.upload.multipart.initiate');
-    Route::post('api/upload/multipart/part-urls', [DirectUploadController::class, 'getPartUploadUrls'])->name('api.upload.multipart.part-urls');
-    Route::post('api/upload/multipart/complete', [DirectUploadController::class, 'completeMultipartUpload'])->name('api.upload.multipart.complete');
-    Route::post('api/upload/multipart/abort', [DirectUploadController::class, 'abortMultipartUpload'])->name('api.upload.multipart.abort');
-
     // LongoMatch XML validation
     Route::post('api/xml/validate', [DirectUploadController::class, 'validateXml'])->name('api.xml.validate');
     Route::delete('comments/{comment}', [VideoCommentController::class, 'destroy'])->name('comments.destroy');

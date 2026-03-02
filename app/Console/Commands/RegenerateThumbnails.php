@@ -145,10 +145,6 @@ class RegenerateThumbnails extends Command
      */
     protected function getDiskForVideo(Video $video): string
     {
-        if (Storage::disk('spaces')->exists($video->file_path)) {
-            return 'spaces';
-        }
-
         if (Storage::disk('public')->exists($video->file_path)) {
             return 'public';
         }
@@ -231,13 +227,7 @@ class RegenerateThumbnails extends Command
 
             $this->line('  📤 Uploading thumbnail...');
 
-            // Upload to storage
-            try {
-                Storage::disk('spaces')->put($storagePath, file_get_contents($tempThumbnailPath), 'public');
-            } catch (\Exception $e) {
-                // Fallback to local storage
-                Storage::disk('public')->put($storagePath, file_get_contents($tempThumbnailPath));
-            }
+            Storage::disk('public')->put($storagePath, file_get_contents($tempThumbnailPath));
 
             // Cleanup temp thumbnail
             @unlink($tempThumbnailPath);

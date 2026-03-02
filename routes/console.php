@@ -29,14 +29,6 @@ Schedule::command('videos:cleanup-temp --hours=24')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cleanup-temp.log'));
 
-// Limpiar archivos de video huérfanos en DigitalOcean Spaces (sin registro en BD)
-// Se ejecuta diariamente a las 3:30 AM
-// Solo elimina archivos con más de 6 horas de antigüedad
-Schedule::command('videos:cleanup-orphaned --hours=6')
-    ->dailyAt('03:30')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/cleanup-orphaned.log'));
-
 // Compresión automática de videos (horario nocturno por organización)
 // Se ejecuta cada hora y respeta el timezone y horario de cada organización
 // Procesa 1 video pendiente por organización que esté en su ventana de compresión

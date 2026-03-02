@@ -230,17 +230,10 @@ class CompressVideoJob implements ShouldBeUnique, ShouldQueue
      */
     protected function getDiskForVideo(Video $video): string
     {
-        // Check if file exists on Spaces
-        if (Storage::disk('spaces')->exists($video->file_path)) {
-            return 'spaces';
-        }
-
-        // Check if file exists on public disk
         if (Storage::disk('public')->exists($video->file_path)) {
             return 'public';
         }
 
-        // Default to local/private
         return 'local';
     }
 
@@ -370,44 +363,15 @@ class CompressVideoJob implements ShouldBeUnique, ShouldQueue
         $orgSlug = $video->organization ? $video->organization->slug : 'default';
         $uploadPath = "videos/{$orgSlug}";
 
-        // Production: upload to Spaces with fallback to local
-        // Local/Development: use local storage directly (faster, no network delays)
-        if (app()->environment('production')) {
-            try {
-                $path = Storage::disk('spaces')->putFileAs(
-                    $uploadPath,
-                    new \Illuminate\Http\File($compressedPath),
-                    $filename,
-                    'public'
-                );
+        $path = Storage::disk('public')->putFileAs(
+            $uploadPath,
+            new \Illuminate\Http\File($compressedPath),
+            $filename
+        );
 
-                Log::info('CompressVideoJob: Uploaded to DigitalOcean Spaces');
+        Log::info('CompressVideoJob: Uploaded to local storage');
 
-                return $path;
-
-            } catch (Exception $e) {
-                Log::warning('CompressVideoJob: Failed to upload to Spaces, using local storage: '.$e->getMessage());
-
-                $path = Storage::disk('public')->putFileAs(
-                    $uploadPath,
-                    new \Illuminate\Http\File($compressedPath),
-                    $filename
-                );
-
-                return $path;
-            }
-        } else {
-            // Local environment: use local storage directly
-            $path = Storage::disk('public')->putFileAs(
-                $uploadPath,
-                new \Illuminate\Http\File($compressedPath),
-                $filename
-            );
-
-            Log::info('CompressVideoJob: Uploaded to local storage (development environment)');
-
-            return $path;
-        }
+        return $path;
     }
 
     /**
@@ -451,15 +415,8 @@ class CompressVideoJob implements ShouldBeUnique, ShouldQueue
             $orgSlug = $video->organization ? $video->organization->slug : 'default';
             $storagePath = "thumbnails/{$orgSlug}/{$thumbnailFilename}";
 
-            // Upload to storage
-            try {
-                Storage::disk('spaces')->put($storagePath, file_get_contents($this->tempThumbnailPath), 'public');
-                Log::info('CompressVideoJob: Thumbnail uploaded to Spaces');
-            } catch (Exception $e) {
-                // Fallback to local storage
-                Storage::disk('public')->put($storagePath, file_get_contents($this->tempThumbnailPath));
-                Log::info('CompressVideoJob: Thumbnail uploaded to local storage');
-            }
+            Storage::disk('public')->put($storagePath, file_get_contents($this->tempThumbnailPath));
+            Log::info('CompressVideoJob: Thumbnail uploaded to local storage');
 
             // Cleanup temp file (also tracked for finally block)
             @unlink($this->tempThumbnailPath);

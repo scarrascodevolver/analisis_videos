@@ -340,17 +340,7 @@ class VideoController extends Controller
             $sanitizedName = preg_replace('/_+/', '_', $sanitizedName);
             $filename = time().'_'.$sanitizedName;
 
-            if (app()->environment('production')) {
-                try {
-                    $path = $file->storeAs("videos/{$orgSlug}", $filename, 'spaces');
-                    Storage::disk('spaces')->setVisibility($path, 'public');
-                } catch (Exception $e) {
-                    \Log::warning('DigitalOcean Spaces upload failed, using local storage: '.$e->getMessage());
-                    $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
-                }
-            } else {
-                $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
-            }
+            $path = $file->storeAs("videos/{$orgSlug}", $filename, 'public');
 
             $thumbnailPath = $this->generateVideoThumbnail($filename);
 
@@ -554,58 +544,6 @@ class VideoController extends Controller
 
         $videoTitle = $video->title;
 
-        // Delete video file from storage - try Spaces first, then local
-        if ($video->file_path) {
-            try {
-                if (Storage::disk('spaces')->exists($video->file_path)) {
-                    Storage::disk('spaces')->delete($video->file_path);
-                }
-            } catch (Exception $e) {
-                \Log::warning('DigitalOcean Spaces delete failed: '.$e->getMessage());
-            }
-
-            // Also try deleting from local storage (for old files or fallback)
-            try {
-                Storage::disk('public')->delete($video->file_path);
-            } catch (Exception $e) {
-                \Log::warning('Local storage delete failed: '.$e->getMessage());
-            }
-        }
-
-        // Delete thumbnail if exists
-        if ($video->thumbnail_path) {
-            try {
-                if (Storage::disk('spaces')->exists($video->thumbnail_path)) {
-                    Storage::disk('spaces')->delete($video->thumbnail_path);
-                }
-            } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from Spaces failed: '.$e->getMessage());
-            }
-
-            try {
-                Storage::disk('public')->delete($video->thumbnail_path);
-            } catch (Exception $e) {
-                \Log::warning('Thumbnail delete from local storage failed: '.$e->getMessage());
-            }
-        }
-
-        // Delete original file if exists (uncompressed video)
-        if ($video->original_file_path && $video->original_file_path !== $video->file_path) {
-            try {
-                if (Storage::disk('spaces')->exists($video->original_file_path)) {
-                    Storage::disk('spaces')->delete($video->original_file_path);
-                }
-            } catch (Exception $e) {
-                \Log::warning('Original file delete from Spaces failed: '.$e->getMessage());
-            }
-
-            try {
-                Storage::disk('public')->delete($video->original_file_path);
-            } catch (Exception $e) {
-                \Log::warning('Original file delete from local storage failed: '.$e->getMessage());
-            }
-        }
-
         // Eliminar video de Bunny Stream si existe
         if ($video->bunny_video_id) {
             try {
@@ -729,20 +667,7 @@ class VideoController extends Controller
         $orgSlug = $currentOrg ? $currentOrg->slug : 'default';
         $organizationName = $currentOrg ? $currentOrg->name : 'Mi Equipo';
 
-        // En producción: usar Spaces con fallback a local
-        // En desarrollo: usar storage local directamente (más rápido)
-        if (app()->environment('production')) {
-            try {
-                $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'spaces');
-                Storage::disk('spaces')->setVisibility($path, 'public');
-            } catch (Exception $e) {
-                \Log::warning('DigitalOcean Spaces player upload failed, using local storage: '.$e->getMessage());
-                $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
-            }
-        } else {
-            // Desarrollo/local: storage local directo
-            $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
-        }
+        $path = $file->storeAs("videos/{$orgSlug}/player-uploads", $filename, 'public');
 
         // Generate thumbnail placeholder
         $thumbnailPath = $this->generateVideoThumbnail($filename);
