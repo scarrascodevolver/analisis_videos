@@ -513,10 +513,23 @@ export function useMultiCamera(options: UseMultiCameraOptions) {
                         if (offset > 0 && master.currentTime < offset) {
                             // Slave should not be active yet - keep paused
                             slave.pause();
-                        } else {
-                            // Slave should be active - play it
-                            slave.play().catch(() => {});
+                            return;
                         }
+
+                        // Slave metadata not loaded yet (e.g., new slave after master swap).
+                        // Calling play() on readyState=0 fails silently — instead, wait for
+                        // loadedmetadata and sync+play then.
+                        if (isNaN(slave.duration)) {
+                            slave.addEventListener('loadedmetadata', () => {
+                                if (!master.paused) {
+                                    syncSlaveToMaster(slaveId);
+                                }
+                            }, { once: true });
+                            return;
+                        }
+
+                        // Slave should be active - play it
+                        slave.play().catch(() => {});
                     });
                 }
 

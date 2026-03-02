@@ -162,6 +162,10 @@ watch(slaveVideos, (newValue) => {
 
 const masterVideoRef = computed(() => videoStore.videoRef);
 
+// Track the current master's metadata so demoted masters get the right title/angle
+const currentMasterTitle = ref(props.video.title);
+const currentMasterCameraAngle = ref('');
+
 // Debug logging
 console.log('🎬 Video Multi-Camera Setup:', {
     videoId: props.video.id,
@@ -387,9 +391,9 @@ function onSwapMaster(slaveId: number) {
     //   Since both were at the same real-world moment: newSlaveOffset = -slaveOffset
     const demotedMaster: SlaveVideo = {
         id:               currentMasterId.value,
-        title:            props.video.title,
+        title:            currentMasterTitle.value,     // tracked title (correct after multiple swaps)
         stream_url:       oldMasterStreamUrl,
-        camera_angle:     incomingSlave.camera_angle,
+        camera_angle:     currentMasterCameraAngle.value, // tracked angle (correct after multiple swaps)
         sync_offset:      -(incomingSlave.sync_offset ?? 0),
         is_synced:        true,
         bunny_hls_url:    oldMasterHlsUrl,
@@ -399,8 +403,10 @@ function onSwapMaster(slaveId: number) {
         youtube_video_id: oldYoutubeId,
     };
 
-    // Update currentMasterId to the promoted slave's real ID
-    currentMasterId.value = incomingSlave.id;
+    // Update currentMasterId + metadata to the promoted slave
+    currentMasterId.value       = incomingSlave.id;
+    currentMasterTitle.value    = incomingSlave.title;
+    currentMasterCameraAngle.value = incomingSlave.camera_angle;
 
     // Build a new array replacing the slave slot with the demoted master
     const newSlaves = slaveVideos.value.map((s, i) =>
