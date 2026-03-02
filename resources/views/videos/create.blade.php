@@ -657,10 +657,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     initDropZone();
+    initCategoryListener();
     if (isClub) {
         initSelect2();
         initVisibility();
-        initCategoryListener();
     }
 });
 
@@ -827,10 +827,9 @@ function initCategoryListener() {
             document.getElementById('divisionCol').style.display = showDiv ? '' : 'none';
         }
     });
-}
 
-// ─── Crear categoría inline ───────────────────────────────────
-document.getElementById('saveCategoryInlineBtn').addEventListener('click', function () {
+    // ─── Crear categoría inline ───────────────────────────────────
+    document.getElementById('saveCategoryInlineBtn').addEventListener('click', function () {
     const name = document.getElementById('newCategoryInput').value.trim();
     const errEl = document.getElementById('newCategoryError');
     if (!name) { errEl.textContent = 'Ingresá un nombre.'; errEl.classList.remove('d-none'); return; }
@@ -865,9 +864,10 @@ document.getElementById('saveCategoryInlineBtn').addEventListener('click', funct
     });
 });
 
-document.getElementById('newCategoryInput').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') document.getElementById('saveCategoryInlineBtn').click();
-});
+    document.getElementById('newCategoryInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('saveCategoryInlineBtn').click();
+    });
+}
 
 // ─── Gestión de archivos ─────────────────────────────────────
 const MAX_FILES = 4;
