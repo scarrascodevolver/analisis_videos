@@ -181,13 +181,19 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     : $anglesCount . ' ángulos';
             @endphp
             <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
-                {{-- Botón editar flotante --}}
+                {{-- Botones flotantes --}}
                 @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
                     <a href="{{ route('videos.edit', $video) }}"
                        class="match-edit-btn" title="Editar"
                        onclick="event.stopPropagation()">
                         <i class="fas fa-pencil-alt"></i>
                     </a>
+                    <button type="button"
+                            class="match-delete-btn" title="Eliminar"
+                            data-toggle="modal" data-target="#deleteModal-{{ $video->id }}"
+                            onclick="event.stopPropagation()">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 @endif
 
                 {{-- Thumbnail 16:9 --}}
@@ -245,6 +251,34 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
             </div>
         @endforeach
     </div>
+
+    {{-- Modales de eliminación --}}
+    @foreach($matches as $video)
+        @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
+        <div class="modal fade" id="deleteModal-{{ $video->id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header modal-header-rugby text-white">
+                        <h5 class="modal-title"><i class="fas fa-trash mr-2"></i>Confirmar eliminación</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center mb-3">¿Eliminar <strong>{{ $video->title }}</strong>?</p>
+                        <p class="text-muted text-center small mb-0">Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-delete btn-sm btn-delete-video"
+                                data-video-id="{{ $video->id }}"
+                                data-url="{{ route('videos.destroy', $video) }}">
+                            <i class="fas fa-trash mr-1"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+    @endforeach
 @endif
 
 {{-- ═══════════════════════════════════════════════════════════
@@ -730,10 +764,10 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
     text-decoration: none;
 }
 .match-edit-btn:hover { background: #b8860b; color: #fff; text-decoration: none; }
-/* Botón eliminar flotante (club view) */
+/* Botón eliminar flotante — apilado bajo el botón editar (derecha) */
 .match-delete-btn {
     position: absolute;
-    top: 8px; left: 8px;
+    top: 42px; right: 8px;
     z-index: 10;
     width: 28px; height: 28px;
     background: rgba(0,0,0,.65);
@@ -908,7 +942,42 @@ document.getElementById('newTournamentName').addEventListener('keydown', functio
         }
     });
 
-    // Eliminar
+    // Eliminar video desde modal de confirmación
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-delete-video');
+        if (!btn) return;
+
+        const url     = btn.dataset.url;
+        const videoId = btn.dataset.videoId;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'No se pudo eliminar.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+            }
+        })
+        .catch(() => {
+            alert('Error de red. Intente nuevamente.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+        });
+    });
+
+    // Eliminar carpeta (contexto derecho)
     document.getElementById('ctx-delete').addEventListener('click', async function () {
         if (!activeEl) return;
 
