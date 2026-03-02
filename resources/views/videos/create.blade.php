@@ -232,9 +232,9 @@
                 @else
                 <div class="col-md-4">
                     <div class="form-group mb-2">
-                        <label class="small font-weight-bold"><i class="fas fa-shield-alt mr-1"></i>Equipo <span class="text-danger">*</span></label>
+                        <label class="small font-weight-bold"><i class="fas fa-tag mr-1"></i>Categoría <span class="text-danger">*</span></label>
                         <select id="category_id" name="category_id" class="form-control form-control-sm" required>
-                            <option value="">Seleccionar equipo...</option>
+                            <option value="">Seleccionar categoría...</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach

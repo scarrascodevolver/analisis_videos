@@ -30,8 +30,11 @@ class CategoryManagementController extends Controller
      */
     public function store(Request $request)
     {
+        $orgId = auth()->user()->currentOrganization()->id;
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => ['required', 'string', 'max:255',
+                \Illuminate\Validation\Rule::unique('categories')->where('organization_id', $orgId)],
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -57,8 +60,11 @@ class CategoryManagementController extends Controller
      */
     public function update(Request $request, Category $category)
     {
+        $orgId = auth()->user()->currentOrganization()->id;
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,'.$category->id,
+            'name' => ['required', 'string', 'max:255',
+                \Illuminate\Validation\Rule::unique('categories')->where('organization_id', $orgId)->ignore($category->id)],
             'description' => 'nullable|string|max:500',
         ]);
 
