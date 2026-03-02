@@ -191,7 +191,7 @@ class MultiCameraController extends Controller
             }
         }
 
-        // Check if slave is already in THIS group
+        // Check if slave is already in THIS group (before acquiring lock)
         if ($slaveVideo->isInGroup($group->id)) {
             Log::warning("Slave video {$slaveVideo->id} is already in group {$group->id}");
 
@@ -201,26 +201,43 @@ class MultiCameraController extends Controller
             ], 400);
         }
 
-        // Check maximum angles limit (3 slaves max for performance)
-        $currentSlaveCount = $group->getSlaveVideos()->count();
-        if ($currentSlaveCount >= 3) {
-            Log::warning("Group {$group->id} already has {$currentSlaveCount} slaves (limit: 3)");
+        // Wrap check + insert in a transaction with a pessimistic lock to prevent
+        // race conditions (e.g. two simultaneous requests bypassing the limit of 3).
+        $result = \DB::transaction(function () use ($group, $slaveVideo, $masterVideo, $request) {
+            // Lock the group's pivot rows so concurrent requests wait here.
+            $currentSlaveCount = \DB::table('video_group_video')
+                ->where('video_group_id', $group->id)
+                ->where('is_master', false)
+                ->lockForUpdate()
+                ->count();
 
+            if ($currentSlaveCount >= 3) {
+                Log::warning("Group {$group->id} already has {$currentSlaveCount} slaves (limit: 3)");
+
+                return ['limited' => true, 'count' => $currentSlaveCount];
+            }
+
+            // Associate slave to master in the group
+            Log::info("Calling associateToMaster with group_id: {$group->id}, camera_angle: {$request->camera_angle}");
+            $success = $slaveVideo->associateToMaster($masterVideo, $request->camera_angle, $group->id);
+
+            if ($success) {
+                // Force is_master = false on the videos table (bypasses $fillable restriction)
+                \DB::table('videos')->where('id', $slaveVideo->id)->update(['is_master' => false]);
+            }
+
+            return ['limited' => false, 'success' => $success];
+        });
+
+        if ($result['limited']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Máximo 3 ángulos permitidos por razones de rendimiento. Con más de 3 videos sincronizados, el rendimiento se degrada significativamente.',
             ], 400);
         }
 
-        // Associate slave to master in the group
-        Log::info("Calling associateToMaster with group_id: {$group->id}, camera_angle: {$request->camera_angle}");
-        $success = $slaveVideo->associateToMaster($masterVideo, $request->camera_angle, $group->id);
-
-        if ($success) {
+        if ($result['success']) {
             Log::info("Video {$slaveVideo->id} associated to master {$masterVideo->id} in group {$group->id}");
-
-            // Force is_master = false on the videos table (bypasses $fillable restriction)
-            \DB::table('videos')->where('id', $slaveVideo->id)->update(['is_master' => false]);
             Log::info("Slave video {$slaveVideo->id} forced is_master=false on videos table");
 
             // Get all angles in this group
