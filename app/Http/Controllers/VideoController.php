@@ -162,18 +162,18 @@ class VideoController extends Controller
                 // Shares recibidos agrupados por torneo → división
                 $receivedShares = VideoOrgShare::where('target_organization_id', $org->id)
                     ->where('status', 'active')
-                    ->whereNotNull('division_id')
                     ->with([
                         'division.tournament:id,name',
                         'sourceOrganization:id,name,logo_path',
-                        'video:id,title',
+                        'video:id,title,tournament_id',
+                        'video.tournament:id,name',
                     ])
                     ->get()
-                    ->filter(fn ($s) => $s->video !== null && $s->division !== null);
+                    ->filter(fn ($s) => $s->video !== null);
 
-                // Group by tournament_id, then by division_id
+                // Group by tournament_id (from division if set, else from video), then by division_id
                 $receivedByTournament = $receivedShares
-                    ->groupBy(fn ($s) => $s->division->tournament_id)
+                    ->groupBy(fn ($s) => $s->division?->tournament_id ?? $s->video?->tournament_id ?? 0)
                     ->map(fn ($shares) => $shares->groupBy('division_id'));
 
                 return view('videos.index', compact('categories', 'receivedByTournament'))->with('view', 'club_categories');

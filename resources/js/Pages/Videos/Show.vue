@@ -101,23 +101,19 @@ async function openShareModal() {
     shareClubs.value     = [];
     shareDivisions.value = [];
 
-    const r    = await fetch(`/api/tournaments/${props.video.tournament_id}/divisions`);
-    const data = await r.json();
-    shareDivisions.value = data.divisions ?? [];
-}
-
-async function onShareDivisionChange() {
-    selectedClubId.value = '';
-    shareClubs.value     = [];
-    if (!selectedDivId.value) return;
-    const r    = await fetch(`/api/divisions/${selectedDivId.value}/registered-clubs`);
-    const data = await r.json();
-    shareClubs.value = data.clubs ?? [];
+    // Load clubs and divisions in parallel — clubs are all active registrations (no division filter)
+    const [rClubs, rDivs] = await Promise.all([
+        fetch(`/api/tournaments/${props.video.tournament_id}/registered-clubs`),
+        fetch(`/api/tournaments/${props.video.tournament_id}/divisions`),
+    ]);
+    const [dataClubs, dataDivs] = await Promise.all([rClubs.json(), rDivs.json()]);
+    shareClubs.value     = dataClubs.clubs     ?? [];
+    shareDivisions.value = dataDivs.divisions  ?? [];
 }
 
 async function submitShare() {
-    if (!selectedDivId.value || !selectedClubId.value) {
-        shareFeedback.value = { type: 'warning', message: 'Seleccioná división y club.' };
+    if (!selectedClubId.value) {
+        shareFeedback.value = { type: 'warning', message: 'Seleccioná un club.' };
         return;
     }
     shareLoading.value  = true;
@@ -716,31 +712,28 @@ function onSyncSaved(offsets: Record<number, number>) {
                             Video: <strong style="color:#fff;">{{ video.title }}</strong>
                         </p>
 
-                        <!-- División -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
-                                <i class="fas fa-layer-group mr-1"></i> División *
-                            </label>
-                            <select v-model="selectedDivId"
-                                    @change="onShareDivisionChange"
-                                    style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.9rem;">
-                                <option value="">— Seleccioná la división —</option>
-                                <option v-for="div in shareDivisions" :key="div.id" :value="div.id">{{ div.name }}</option>
-                                <option v-if="shareDivisions.length === 0" disabled>Sin divisiones en este torneo</option>
-                            </select>
-                        </div>
-
                         <!-- Club -->
                         <div style="margin-bottom:12px;">
                             <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
                                 <i class="fas fa-building mr-1"></i> Club *
                             </label>
                             <select v-model="selectedClubId"
-                                    :disabled="!selectedDivId"
                                     style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.9rem;">
-                                <option value="">{{ selectedDivId ? '— Seleccioná un club —' : 'Primero elegí una división' }}</option>
+                                <option value="">— Seleccioná un club —</option>
                                 <option v-for="club in shareClubs" :key="club.id" :value="club.id">{{ club.name }}</option>
-                                <option v-if="selectedDivId && shareClubs.length === 0" disabled>Sin clubes inscriptos en esta división</option>
+                                <option v-if="shareClubs.length === 0" disabled>Sin clubes inscriptos en este torneo</option>
+                            </select>
+                        </div>
+
+                        <!-- División (opcional) -->
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
+                                <i class="fas fa-layer-group mr-1"></i> División (opcional)
+                            </label>
+                            <select v-model="selectedDivId"
+                                    style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.9rem;">
+                                <option value="">— Sin especificar —</option>
+                                <option v-for="div in shareDivisions" :key="div.id" :value="div.id">{{ div.name }}</option>
                             </select>
                         </div>
 

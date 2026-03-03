@@ -101,89 +101,50 @@
         </div>
     </div>
 
-    {{-- Enrolled clubs per division --}}
-    @if($tournament->divisions->isNotEmpty())
-        <div class="card card-rugby">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-users mr-2"></i>Clubes Inscriptos
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                @php
-                    $hasAny = false;
-                    foreach($tournament->divisions as $div) {
-                        if($div->registrations->isNotEmpty()) { $hasAny = true; break; }
-                    }
-                @endphp
-
-                @if(!$hasAny)
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-user-plus fa-2x mb-2" style="opacity:.3;"></i>
-                        <p class="mb-0">Ningún club inscripto todavía.</p>
-                        <small>Los clubes verán este torneo en "Torneos Disponibles" si está marcado como <strong>Público</strong>.</small>
-                    </div>
-                @else
-                    @foreach($tournament->divisions as $div)
-                        @if($div->registrations->isNotEmpty())
-                            <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.07);">
-                                <h6 class="mb-2 mt-1" style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;">
-                                    <i class="fas fa-layer-group mr-1"></i>{{ $div->name }}
-                                </h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm mb-0">
-                                        <tbody>
-                                            @foreach($div->registrations as $reg)
-                                                <tr id="reg-row-{{ $reg->id }}">
-                                                    <td style="width:36px;">
-                                                        @if($reg->clubOrganization->logo_path)
-                                                            <img src="{{ asset('storage/' . $reg->clubOrganization->logo_path) }}"
-                                                                 style="width:28px;height:28px;object-fit:contain;border-radius:4px;">
-                                                        @else
-                                                            <i class="fas fa-shield-alt text-muted"></i>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $reg->clubOrganization->name }}</td>
-                                                    <td>
-                                                        @if($reg->status === 'pending')
-                                                            <span class="badge badge-warning">Pendiente</span>
-                                                        @else
-                                                            <span class="badge badge-success">Activo</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-muted small">
-                                                        {{ $reg->registered_at->diffForHumans() }}
-                                                    </td>
-                                                    <td class="text-right">
-                                                        @if($reg->status === 'pending')
-                                                            <button class="btn btn-xs btn-success btn-approve-reg"
-                                                                    data-reg-id="{{ $reg->id }}">
-                                                                <i class="fas fa-check"></i> Aprobar
-                                                            </button>
-                                                            <button class="btn btn-xs btn-outline-danger btn-reject-reg"
-                                                                    data-reg-id="{{ $reg->id }}">
-                                                                <i class="fas fa-times"></i>
-                                                            </button>
-                                                        @else
-                                                            <button class="btn btn-xs btn-outline-secondary btn-revoke-reg"
-                                                                    data-reg-id="{{ $reg->id }}"
-                                                                    title="Dar de baja">
-                                                                <i class="fas fa-user-minus"></i>
-                                                            </button>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endif
-                    @endforeach
-                @endif
-            </div>
+    {{-- Enrolled clubs --}}
+    @php
+        $hasAnyDivided   = $tournament->divisions->some(fn($d) => $d->registrations->isNotEmpty());
+        $hasUndivided    = $undividedRegistrations->isNotEmpty();
+        $hasAnyEnrolled  = $hasAnyDivided || $hasUndivided;
+    @endphp
+    <div class="card card-rugby">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-users mr-2"></i>Clubes Inscriptos
+            </h3>
         </div>
-    @endif
+        <div class="card-body p-0">
+            @if(!$hasAnyEnrolled)
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-user-plus fa-2x mb-2" style="opacity:.3;"></i>
+                    <p class="mb-0">Ningún club inscripto todavía.</p>
+                    <small>Los clubes verán este torneo en "Torneos Disponibles" si está marcado como <strong>Público</strong>.</small>
+                </div>
+            @else
+                {{-- Clubs grouped by division --}}
+                @foreach($tournament->divisions as $div)
+                    @if($div->registrations->isNotEmpty())
+                        <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.07);">
+                            <h6 class="mb-2 mt-1" style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;">
+                                <i class="fas fa-layer-group mr-1"></i>{{ $div->name }}
+                            </h6>
+                            @include('tournaments.partials.reg-table', ['registrations' => $div->registrations])
+                        </div>
+                    @endif
+                @endforeach
+
+                {{-- Clubs without a division --}}
+                @if($hasUndivided)
+                    <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.07);">
+                        <h6 class="mb-2 mt-1" style="color:#888;font-size:.85rem;font-weight:600;letter-spacing:.05em;">
+                            <i class="fas fa-question-circle mr-1"></i>Sin división asignada
+                        </h6>
+                        @include('tournaments.partials.reg-table', ['registrations' => $undividedRegistrations])
+                    </div>
+                @endif
+            @endif
+        </div>
+    </div>
 
 </div>
 </div>

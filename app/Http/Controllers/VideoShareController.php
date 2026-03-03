@@ -22,7 +22,7 @@ class VideoShareController extends Controller
     {
         $request->validate([
             'target_organization_id' => 'required|exists:organizations,id',
-            'division_id'            => 'required|exists:tournament_divisions,id',
+            'division_id'            => 'nullable|exists:tournament_divisions,id',
             'notes'                  => 'nullable|string|max:500',
         ]);
 
@@ -43,26 +43,27 @@ class VideoShareController extends Controller
             return response()->json(['error' => 'El destino debe ser un club.'], 422);
         }
 
-        // Verificar que el club está registrado a la división del torneo del video
+        // Verificar que el club está registrado al torneo del video (cualquier división)
         if ($video->tournament_id) {
-            $division = TournamentDivision::where('id', $request->division_id)
-                ->where('tournament_id', $video->tournament_id)
-                ->first();
-
-            if (! $division) {
-                return response()->json(['error' => 'La división no pertenece al torneo de este video.'], 422);
-            }
-
             $isRegistered = TournamentRegistration::where('tournament_id', $video->tournament_id)
-                ->where('division_id', $division->id)
                 ->where('club_organization_id', $targetOrg->id)
                 ->where('status', 'active')
                 ->exists();
 
             if (! $isRegistered) {
                 return response()->json([
-                    'error' => "El club '{$targetOrg->name}' no está inscripto en la división '{$division->name}'.",
+                    'error' => "El club '{$targetOrg->name}' no está inscripto en este torneo.",
                 ], 422);
+            }
+
+            // Si se especificó división, verificar que pertenece al torneo
+            if ($request->division_id) {
+                $divisionExists = TournamentDivision::where('id', $request->division_id)
+                    ->where('tournament_id', $video->tournament_id)
+                    ->exists();
+                if (! $divisionExists) {
+                    return response()->json(['error' => 'La división no pertenece al torneo de este video.'], 422);
+                }
             }
         }
 

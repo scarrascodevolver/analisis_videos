@@ -29,6 +29,13 @@ class TournamentController extends Controller
                 ->with('clubOrganization:id,name,logo_path'),
         ]);
 
+        // Registrations not assigned to any division
+        $undividedRegistrations = \App\Models\TournamentRegistration::where('tournament_id', $tournament->id)
+            ->whereNull('division_id')
+            ->whereIn('status', ['active', 'pending'])
+            ->with('clubOrganization:id,name,logo_path')
+            ->get();
+
         // Mark tournament_join_request notifications for this tournament as read
         auth()->user()->unreadNotifications()
             ->where('type', TournamentJoinRequest::class)
@@ -40,7 +47,7 @@ class TournamentController extends Controller
         $existingNames = $tournament->divisions->pluck('name')->map(fn($n) => strtolower($n))->toArray();
         $remainingSuggestions = array_values(array_filter($suggestions, fn($s) => !in_array(strtolower($s), $existingNames)));
 
-        return view('tournaments.show', compact('tournament', 'remainingSuggestions'));
+        return view('tournaments.show', compact('tournament', 'remainingSuggestions', 'undividedRegistrations'));
     }
 
     /**
