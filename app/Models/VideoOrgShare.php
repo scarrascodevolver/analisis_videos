@@ -31,7 +31,8 @@ class VideoOrgShare extends Model
 
     public function video(): BelongsTo
     {
-        return $this->belongsTo(Video::class);
+        // Cross-org: the video belongs to the source org, not the target's org
+        return $this->belongsTo(Video::class)->withoutGlobalScopes();
     }
 
     public function sourceOrganization(): BelongsTo

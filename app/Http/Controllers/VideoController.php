@@ -126,11 +126,14 @@ class VideoController extends Controller
 
                     $sharedVideos = $query
                         ->with([
-                            'video.rivalTeam',
-                            'video.videoGroups.videos',
-                            'video.tournament:id,name',
                             'sourceOrganization:id,name',
                             'division.tournament:id,name',
+                            // video is cross-org — bypass global scopes
+                            'video' => fn ($q) => $q->withoutGlobalScopes()->with([
+                                'rivalTeam',
+                                'videoGroups.videos',
+                                'tournament' => fn ($qt) => $qt->withoutGlobalScopes()->select('id', 'name'),
+                            ]),
                         ])
                         ->get()
                         ->filter(fn ($s) => $s->video !== null)
@@ -165,8 +168,10 @@ class VideoController extends Controller
                     ->with([
                         'division.tournament:id,name',
                         'sourceOrganization:id,name,logo_path',
-                        'video:id,title,tournament_id',
-                        'video.tournament:id,name',
+                        // video & tournament are cross-org — bypass global scopes
+                        'video' => fn ($q) => $q->withoutGlobalScopes()
+                            ->with(['tournament' => fn ($qt) => $qt->withoutGlobalScopes()->select('id', 'name')])
+                            ->select('id', 'title', 'tournament_id'),
                     ])
                     ->get()
                     ->filter(fn ($s) => $s->video !== null);
