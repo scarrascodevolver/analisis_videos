@@ -242,19 +242,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                             onclick="event.stopPropagation()">
                         <i class="fas fa-trash"></i>
                     </button>
-                    {{-- Enviar a club (solo asociaciones con torneo) --}}
-                    @if(auth()->user()->currentOrganization()?->isAsociacion() && $video->tournament_id)
-                        <button type="button"
-                                class="btn-share-video"
-                                style="position:absolute;top:8px;left:8px;z-index:10;background:rgba(0,183,181,.85);border:none;border-radius:4px;color:#fff;padding:3px 7px;font-size:.7rem;cursor:pointer;"
-                                data-video-id="{{ $video->id }}"
-                                data-tournament-id="{{ $video->tournament_id }}"
-                                data-video-title="{{ $video->title }}"
-                                title="Enviar a club"
-                                onclick="event.stopPropagation()">
-                            <i class="fas fa-share-alt mr-1"></i>Enviar
-                        </button>
-                    @endif
+                    {{-- Enviar a club: disponible desde dentro del video (botón en VideoHeader) --}}
                 @endif
 
                 {{-- Thumbnail 16:9 --}}

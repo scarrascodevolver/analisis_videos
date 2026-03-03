@@ -17,6 +17,7 @@ const props = defineProps<{
     allUsers: Pick<User, 'id' | 'name' | 'role'>[];
     user: User;
     hasSlaves?: boolean;
+    canShare?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -25,6 +26,7 @@ const emit = defineEmits<{
     uploadAngle: [];
     toggleTimelines: [];
     showLineup: [];
+    shareVideo: [];
 }>();
 
 const videoStore = useVideoStore();
@@ -218,6 +220,7 @@ function movePanelDown(panelName: PanelName) {
                     :video="video"
                     :user="user"
                     :is-theater-mode="isTheaterMode"
+                    :can-share="canShare"
                     @show-stats="$emit('showStats')"
                     @upload-angle="$emit('uploadAngle')"
                     @toggle-comments="toggleComments"
@@ -225,6 +228,7 @@ function movePanelDown(panelName: PanelName) {
                     @delete-video="$emit('deleteVideo')"
                     @toggle-theater="toggleTheaterMode"
                     @show-lineup="$emit('showLineup')"
+                    @share-video="$emit('shareVideo')"
                 />
 
                 <div class="card-body p-0">

@@ -6,6 +6,7 @@ const props = defineProps<{
     video: Video;
     user: User;
     isTheaterMode?: boolean;
+    canShare?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -16,6 +17,7 @@ const emit = defineEmits<{
     toggleTimelines: [];
     toggleTheater: [];
     showLineup: [];
+    shareVideo: [];
 }>();
 
 const isAnalystOrCoach = computed(() =>
@@ -70,6 +72,15 @@ const canDelete = computed(() => isAnalystOrCoach.value);
                 @click="$emit('showLineup')"
             >
                 <i class="fas fa-users"></i> Jugadores
+            </button>
+            <button
+                v-if="canShare"
+                class="btn btn-sm mr-2"
+                style="background:#00B7B5;border-color:#00B7B5;color:#fff;"
+                @click="$emit('shareVideo')"
+                title="Enviar este video a un club inscripto en el torneo"
+            >
+                <i class="fas fa-share-alt"></i> Enviar a club
             </button>
             <button
                 v-if="isAnalystOrCoach"
