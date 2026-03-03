@@ -1,5 +1,5 @@
 /**
- * Test de Velocidad de Conexión para RugbyHub
+ * Test de Velocidad de Conexión para Rugby Key Performance
  * Mide la velocidad real de upload del usuario
  */
 

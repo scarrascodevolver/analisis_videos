@@ -550,17 +550,30 @@
                         <div class="dropdown-divider"></div>
 
                         @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                            <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
-                                class="dropdown-item">
-                                <i class="fas fa-at mr-2 text-primary"></i>
-                                <strong>{{ $notification->data['mentioned_by_name'] }}</strong> te mencionó
-                                <span class="float-right text-muted text-sm">
-                                    {{ $notification->created_at->diffForHumans() }}
-                                </span>
-                                <p class="text-sm text-muted mb-0 mt-1">
-                                    {{ Str::limit($notification->data['comment_text'], 50) }}
-                                </p>
-                            </a>
+                            @if(($notification->data['type'] ?? '') === 'tournament_join_request')
+                                <a href="{{ route('tournaments.index') }}#pane-solicitudes"
+                                   class="dropdown-item"
+                                   onclick="markNotificationRead('{{ $notification->id }}')">
+                                    <i class="fas fa-user-clock mr-2 text-warning"></i>
+                                    <strong>{{ $notification->data['club_org_name'] }}</strong> quiere unirse a
+                                    <em>{{ $notification->data['tournament_name'] }}</em>
+                                    <span class="float-right text-muted text-sm">
+                                        {{ $notification->created_at->diffForHumans() }}
+                                    </span>
+                                </a>
+                            @else
+                                <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
+                                    class="dropdown-item">
+                                    <i class="fas fa-at mr-2 text-primary"></i>
+                                    <strong>{{ $notification->data['mentioned_by_name'] }}</strong> te mencionó
+                                    <span class="float-right text-muted text-sm">
+                                        {{ $notification->created_at->diffForHumans() }}
+                                    </span>
+                                    <p class="text-sm text-muted mb-0 mt-1">
+                                        {{ Str::limit($notification->data['comment_text'], 50) }}
+                                    </p>
+                                </a>
+                            @endif
                             <div class="dropdown-divider"></div>
                         @empty
                             <div class="dropdown-item text-center text-muted">
@@ -720,6 +733,36 @@
                             </li>
                         @endif
 
+                        {{-- Torneos: gestión para asociaciones --}}
+                        @if (in_array(Auth::user()->role, ['analista', 'entrenador']) && auth()->user()->currentOrganization()?->isAsociacion())
+                            <li class="nav-item">
+                                <a href="{{ route('tournaments.index') }}"
+                                    class="nav-link {{ request()->routeIs('tournaments.index') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-trophy"></i>
+                                    <p>
+                                        Torneos
+                                        @php
+                                            $pendingCount = \App\Models\TournamentRegistration::whereHas('tournament', fn($q) => $q->where('organization_id', auth()->user()->currentOrganization()->id))->where('status','pending')->count();
+                                        @endphp
+                                        @if($pendingCount > 0)
+                                            <span class="badge badge-danger right">{{ $pendingCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+                        @endif
+
+                        {{-- Torneos disponibles: solo para clubs (buscar torneos de asociaciones) --}}
+                        @if (in_array(Auth::user()->role, ['analista', 'entrenador']) && auth()->user()->currentOrganization()?->isClub())
+                            <li class="nav-item">
+                                <a href="{{ route('tournaments.explore') }}"
+                                    class="nav-link {{ request()->routeIs('tournaments.explore') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-globe"></i>
+                                    <p>Torneos Disponibles</p>
+                                </a>
+                            </li>
+                        @endif
+
                         @if (in_array(Auth::user()->role, ['analista', 'entrenador']))
                             <li class="nav-header">ADMINISTRACIÓN</li>
                             <li class="nav-item">
@@ -732,8 +775,8 @@
                             <li class="nav-item">
                                 <a href="{{ route('admin.organization') }}"
                                     class="nav-link {{ request()->routeIs('admin.organization') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-ticket-alt"></i>
-                                    <p>Código de Registro</p>
+                                    <i class="nav-icon fas fa-building"></i>
+                                    <p>Mi Organización</p>
                                 </a>
                             </li>
                             <!-- Editor de Jugadas -->
@@ -998,6 +1041,17 @@
             $('#featureDescription').text(featureDescriptions[featureName] ||
                 'Esta funcionalidad está en desarrollo y estará disponible próximamente.');
         });
+
+        // Marcar una notificación individual como leída
+        function markNotificationRead(id) {
+            $.ajax({
+                url: '/notifications/' + id + '/mark-read',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+            });
+        }
 
         // Marcar todas las notificaciones como leídas
         function markAllNotificationsRead() {

@@ -160,6 +160,22 @@ class Organization extends Model
     }
 
     /**
+     * Registros de torneos de asociaciones (cuando esta org es un club)
+     */
+    public function tournamentRegistrations(): HasMany
+    {
+        return $this->hasMany(TournamentRegistration::class, 'club_organization_id');
+    }
+
+    /**
+     * Videos compartidos recibidos de otras organizaciones
+     */
+    public function videoSharesReceived(): HasMany
+    {
+        return $this->hasMany(VideoOrgShare::class, 'target_organization_id');
+    }
+
+    /**
      * Suscripciones de esta organización
      */
     public function subscriptions(): HasMany

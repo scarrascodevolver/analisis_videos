@@ -50,7 +50,7 @@ class ProfileController extends Controller
             'weight' => 'nullable|integer|min:30|max:200',
             'height' => 'nullable|integer|min:100|max:230',
             'date_of_birth' => 'nullable|date',
-            'user_category_id' => 'required|exists:categories,id',
+            'user_category_id' => 'nullable|exists:categories,id',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,heic|max:25600',
         ]);
 

@@ -230,20 +230,8 @@
                         </select>
                     </div>
                 </div>
-                @else
-                <div class="col-md-4">
-                    <div class="form-group mb-2">
-                        <label class="small font-weight-bold"><i class="fas fa-tag mr-1"></i>Categoría <small class="text-muted font-weight-normal">(opcional)</small></label>
-                        <select id="category_id" name="category_id" class="form-control form-control-sm">
-                            <option value="">Sin categoría</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                            <option value="__new__" style="color:#b8860b;font-weight:600">＋ Nueva categoría...</option>
-                        </select>
-                    </div>
-                </div>
                 @endif
+                {{-- Asociaciones no usan categoría: organizan por torneo → división --}}
 
                 {{-- Modal inline: Nueva categoría --}}
                 <div class="modal fade" id="newCategoryModal" tabindex="-1">

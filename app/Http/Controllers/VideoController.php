@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\RugbySituation;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Models\Video;
-use Exception;
+use App\Models\VideoOrgShare;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -22,8 +20,8 @@ class VideoController extends Controller
 
         // Jugadores: vista adaptativa según tipo de organización
         if (! $isStaff) {
-            $org            = $user->currentOrganization();
-            $orgType        = $org?->type ?? 'club';
+            $org = $user->currentOrganization();
+            $orgType = $org?->type ?? 'club';
             $userCategoryId = $user->profile?->user_category_id;
 
             // ── ASOCIACIÓN: Torneo → Videos de su equipo ────────────────────────
@@ -35,11 +33,11 @@ class VideoController extends Controller
                     $tournaments = Tournament::whereHas('videos', function ($q) use ($userCategoryId) {
                         $q->where('is_master', true)->where('category_id', $userCategoryId);
                     })
-                    ->withCount(['videos as videos_count' => function ($q) use ($userCategoryId) {
-                        $q->where('is_master', true)->where('category_id', $userCategoryId);
-                    }])
-                    ->orderByDesc('updated_at')
-                    ->get();
+                        ->withCount(['videos as videos_count' => function ($q) use ($userCategoryId) {
+                            $q->where('is_master', true)->where('category_id', $userCategoryId);
+                        }])
+                        ->orderByDesc('updated_at')
+                        ->get();
 
                     return view('videos.index', compact('tournaments'))->with('view', 'player_tournaments');
                 }
@@ -58,10 +56,10 @@ class VideoController extends Controller
                 $videos->each(function ($video) {
                     $group = $video->videoGroups->first();
                     if ($group && $group->videos->isNotEmpty()) {
-                        $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                        $video->total_size = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
                         $video->angles_count = $group->videos->count();
                     } else {
-                        $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                        $video->total_size = $video->compressed_file_size ?? $video->file_size ?? 0;
                         $video->angles_count = 1;
                     }
                 });
@@ -79,8 +77,8 @@ class VideoController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('analyzed_team_name', 'like', "%{$search}%")
-                      ->orWhere('rival_name', 'like', "%{$search}%");
+                        ->orWhere('analyzed_team_name', 'like', "%{$search}%")
+                        ->orWhere('rival_name', 'like', "%{$search}%");
                 });
             }
 
@@ -89,10 +87,10 @@ class VideoController extends Controller
             $videos->each(function ($video) {
                 $group = $video->videoGroups->first();
                 if ($group && $group->videos->isNotEmpty()) {
-                    $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->total_size = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
                     $video->angles_count = $group->videos->count();
                 } else {
-                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->total_size = $video->compressed_file_size ?? $video->file_size ?? 0;
                     $video->angles_count = 1;
                 }
             });
@@ -110,11 +108,75 @@ class VideoController extends Controller
 
             // Nivel 1: carpetas de categorías
             if (! $categoryParam) {
+                // Check for division drill-down (received_from + division params)
+                $receivedFromOrgId = $request->get('received_from');
+                $divisionId        = $request->get('division');
+
+                if ($receivedFromOrgId || $divisionId) {
+                    $query = VideoOrgShare::where('target_organization_id', $org->id)
+                        ->where('status', 'active');
+
+                    if ($receivedFromOrgId) {
+                        $query->where('source_organization_id', $receivedFromOrgId);
+                    }
+
+                    if ($divisionId) {
+                        $query->where('division_id', $divisionId);
+                    }
+
+                    $sharedVideos = $query
+                        ->with([
+                            'video.rivalTeam',
+                            'video.videoGroups.videos',
+                            'video.tournament:id,name',
+                            'sourceOrganization:id,name',
+                            'division.tournament:id,name',
+                        ])
+                        ->get()
+                        ->filter(fn ($s) => $s->video !== null)
+                        ->values();
+
+                    // Calculate sizes
+                    $sharedVideos->each(function ($share) {
+                        $sv    = $share->video;
+                        $group = $sv->videoGroups->first();
+                        $sv->total_size   = $group && $group->videos->isNotEmpty()
+                            ? $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0)
+                            : ($sv->compressed_file_size ?? $sv->file_size ?? 0);
+                        $sv->angles_count = $group ? $group->videos->count() : 1;
+                    });
+
+                    $sourceOrg = $sharedVideos->first()?->sourceOrganization
+                        ?? (\App\Models\Organization::withoutGlobalScope('organization')->find($receivedFromOrgId));
+                    $division  = $divisionId
+                        ? \App\Models\TournamentDivision::with('tournament:id,name')->find($divisionId)
+                        : null;
+
+                    return view('videos.index', compact('sharedVideos', 'sourceOrg', 'division'))->with('view', 'received_videos');
+                }
+
                 $categories = Category::withCount('videos')
                     ->orderBy('name')
                     ->get();
 
-                return view('videos.index', compact('categories'))->with('view', 'club_categories');
+                // Shares recibidos agrupados por torneo → división
+                $receivedShares = VideoOrgShare::where('target_organization_id', $org->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('division_id')
+                    ->with([
+                        'division.tournament:id,name',
+                        'sourceOrganization:id,name,logo_path',
+                        'video:id,title',
+                    ])
+                    ->get()
+                    ->filter(fn ($s) => $s->video !== null && $s->division !== null);
+
+                // Group by tournament_id, then by division_id
+                $receivedByTournament = $receivedShares
+                    ->groupBy(fn ($s) => $s->division->tournament_id)
+                    ->map(fn ($shares) => $shares->groupBy('division_id'));
+
+                return view('videos.index', compact('categories', 'receivedByTournament'))->with('view', 'club_categories');
             }
 
             // Nivel 2: videos de la categoría
@@ -132,15 +194,23 @@ class VideoController extends Controller
             $videos->each(function ($video) {
                 $group = $video->videoGroups->first();
                 if ($group && $group->videos->isNotEmpty()) {
-                    $video->total_size   = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
+                    $video->total_size = $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0);
                     $video->angles_count = $group->videos->count();
                 } else {
-                    $video->total_size   = $video->compressed_file_size ?? $video->file_size ?? 0;
+                    $video->total_size = $video->compressed_file_size ?? $video->file_size ?? 0;
                     $video->angles_count = 1;
                 }
             });
 
-            return view('videos.index', compact('category', 'videos'))->with('view', 'matches');
+            // Videos compartidos por asociaciones a esta categoría del club
+            $sharedVideos = VideoOrgShare::where('target_organization_id', $org->id)
+                ->where('target_category_id', $categoryParam)
+                ->where('status', 'active')
+                ->with(['video.rivalTeam', 'video.videoGroups.videos', 'sourceOrganization:id,name'])
+                ->get()
+                ->filter(fn ($s) => $s->video !== null);
+
+            return view('videos.index', compact('category', 'videos', 'sharedVideos'))->with('view', 'matches');
         }
 
         // ── ASOCIACIÓN: Torneo → Partidos ─────────────────────────────────
@@ -457,9 +527,9 @@ class VideoController extends Controller
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
 
         $videoData = array_merge($video->toArray(), [
-            'stream_url'   => $video->is_youtube_video ? null : route('videos.stream', $video),
+            'stream_url' => $video->is_youtube_video ? null : route('videos.stream', $video),
             'download_url' => $video->is_youtube_video ? null : route('videos.download', $video),
-            'edit_url'     => route('videos.edit', $video),
+            'edit_url' => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
             'bunny_library_id' => $video->organization?->bunny_library_id,
             'bunny_hls_url' => $video->bunny_video_id && $video->bunny_status === 'ready'

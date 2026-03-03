@@ -111,6 +111,54 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
 @endpush
 @endif
 
+{{-- Sección: Recibidos de Torneos (agrupado por torneo → división) --}}
+@if(isset($receivedByTournament) && $receivedByTournament->isNotEmpty())
+    <div class="mt-4 mb-3" style="border-top:1px solid rgba(255,255,255,.08);padding-top:1.5rem;">
+        <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-share-alt mr-2" style="color:#00B7B5;"></i>
+            <h6 class="mb-0 font-weight-bold" style="color:#00B7B5;letter-spacing:.05em;font-size:.85rem;">
+                RECIBIDOS DE TORNEOS
+            </h6>
+        </div>
+        @foreach($receivedByTournament as $tournamentId => $divisionGroups)
+            @php
+                $firstShare = $divisionGroups->first()->first();
+                $tournamentName = $firstShare->division->tournament->name ?? 'Sin torneo';
+                $sourceOrgName = $firstShare->sourceOrganization->name ?? '';
+            @endphp
+            <div class="mb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-trophy mr-2" style="color:#b8860b;font-size:.85rem;"></i>
+                    <span style="font-weight:600;font-size:.9rem;">{{ $tournamentName }}</span>
+                    <small class="ml-2 text-muted" style="font-size:.75rem;">por {{ $sourceOrgName }}</small>
+                </div>
+                <div class="folder-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px,1fr));">
+                    @foreach($divisionGroups as $divisionId => $shares)
+                        @php
+                            $divName = $shares->first()->division->name ?? 'Sin división';
+                            $count = $shares->count();
+                        @endphp
+                        <div class="folder-card-wrap">
+                            <a href="{{ route('videos.index', ['received_from' => $shares->first()->source_organization_id, 'division' => $divisionId]) }}"
+                               class="folder-card text-decoration-none"
+                               style="border-color:rgba(0,183,181,.35);">
+                                <div class="folder-icon-wrap">
+                                    <i class="fas fa-layer-group" style="color:#00B7B5;font-size:1.8rem;"></i>
+                                </div>
+                                <div class="folder-name" style="font-size:.85rem;">{{ $divName }}</div>
+                                <div class="folder-meta">
+                                    <span style="color:#00B7B5;">{{ $count }}</span>
+                                    {{ $count === 1 ? 'video' : 'videos' }}
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    </div>
+@endif
+
 {{-- ═══════════════════════════════════════════════════════════
      ASOCIACIÓN — Nivel 1: Carpetas de torneos
 ═══════════════════════════════════════════════════════════ --}}
@@ -194,6 +242,19 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                             onclick="event.stopPropagation()">
                         <i class="fas fa-trash"></i>
                     </button>
+                    {{-- Enviar a club (solo asociaciones con torneo) --}}
+                    @if(auth()->user()->currentOrganization()?->isAsociacion() && $video->tournament_id)
+                        <button type="button"
+                                class="btn-share-video"
+                                style="position:absolute;top:8px;left:8px;z-index:10;background:rgba(0,183,181,.85);border:none;border-radius:4px;color:#fff;padding:3px 7px;font-size:.7rem;cursor:pointer;"
+                                data-video-id="{{ $video->id }}"
+                                data-tournament-id="{{ $video->tournament_id }}"
+                                data-video-title="{{ $video->title }}"
+                                title="Enviar a club"
+                                onclick="event.stopPropagation()">
+                            <i class="fas fa-share-alt mr-1"></i>Enviar
+                        </button>
+                    @endif
                 @endif
 
                 {{-- Thumbnail 16:9 --}}
@@ -279,6 +340,9 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         </div>
         @endif
     @endforeach
+
+    {{-- Modal para compartir video con club --}}
+    @include('videos.partials.share-modal')
 @endif
 
 {{-- ═══════════════════════════════════════════════════════════
@@ -421,8 +485,123 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
     <div class="d-flex justify-content-center mt-3">
         {{ $videos->appends(request()->query())->links('custom.pagination') }}
     </div>
+
+    {{-- Videos compartidos por asociaciones (solo si existen) --}}
+    @if(isset($sharedVideos) && $sharedVideos->isNotEmpty())
+        <div class="mt-4 mb-2">
+            <h6 style="color:#00B7B5; font-size:0.85rem; font-weight:600; letter-spacing:.05em;">
+                <i class="fas fa-share-alt mr-2"></i>RECIBIDOS DE ASOCIACIONES
+            </h6>
+        </div>
+        <div class="match-grid">
+            @foreach($sharedVideos as $share)
+                @php
+                    $sv = $share->video;
+                    $svGroup = $sv->videoGroups->first();
+                    $sv->total_size = $svGroup && $svGroup->videos->isNotEmpty()
+                        ? $svGroup->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0)
+                        : ($sv->compressed_file_size ?? $sv->file_size ?? 0);
+                    $sv->angles_count = $svGroup ? $svGroup->videos->count() : 1;
+                    $svSize = $sv->total_size > 0
+                        ? ($sv->total_size >= 1073741824
+                            ? number_format($sv->total_size / 1073741824, 1) . ' GB'
+                            : number_format($sv->total_size / 1048576, 0) . ' MB')
+                        : '';
+                @endphp
+                <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
+                    {{-- Thumbnail --}}
+                    <div class="match-card-thumb">
+                        @if($sv->bunny_thumbnail)
+                            <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
+                        @else
+                            <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
+                        @endif
+                        <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
+                        {{-- Badge de origen --}}
+                        <div style="position:absolute;bottom:6px;left:6px;">
+                            @include('videos.partials.shared-badge', ['share' => $share])
+                        </div>
+                    </div>
+                    {{-- Info --}}
+                    <div class="match-card-body">
+                        <div class="match-fixture">
+                            <span class="fixture-team fixture-local">{{ $sv->analyzed_team_name ?? 'Local' }}</span>
+                            <span class="fixture-vs">VS</span>
+                            <span class="fixture-team fixture-rival">{{ $sv->rivalTeam?->name ?? $sv->rival_name ?? 'Rival' }}</span>
+                        </div>
+                        <div class="match-card-meta">
+                            <i class="fas fa-calendar mr-1"></i>{{ $sv->match_date?->format('d/m/Y') ?? '—' }}
+                            @if($svSize)
+                                <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $svSize }}
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 @endif
 
+
+{{-- ═══════════════════════════════════════════════════════════
+     CLUB — Videos recibidos de una asociación específica
+═══════════════════════════════════════════════════════════ --}}
+@elseif($view === 'received_videos')
+@include('videos.partials.folder-header', [
+    'title' => isset($division)
+        ? 'División ' . $division->name . ' — ' . ($division->tournament->name ?? '')
+        : 'Recibidos de ' . ($sourceOrg->name ?? ''),
+    'icon' => 'share-alt',
+    'back' => route('videos.index')
+])
+
+@if($sharedVideos->isEmpty())
+    @include('videos.partials.empty-folder', ['msg' => 'No hay videos compartidos de esta asociación.'])
+@else
+    <div class="match-grid">
+        @foreach($sharedVideos as $share)
+            @php
+                $sv = $share->video;
+                $totalSize = $sv->total_size ?? 0;
+                $sizeLabel = '';
+                if ($totalSize > 0) {
+                    $gb = $totalSize / 1073741824;
+                    $sizeLabel = $gb >= 1
+                        ? number_format($gb, 1) . ' GB'
+                        : number_format($totalSize / 1048576, 0) . ' MB';
+                }
+            @endphp
+            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
+                <div class="match-card-thumb">
+                    @if($sv->bunny_thumbnail)
+                        <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
+                    @else
+                        <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
+                    @endif
+                    <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
+                    {{-- Badge origen --}}
+                    <div style="position:absolute;bottom:6px;left:6px;">
+                        @include('videos.partials.shared-badge', ['share' => $share])
+                    </div>
+                    @if($sv->tournament)
+                        <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border-radius:4px;padding:2px 6px;font-size:.65rem;color:#fff;">
+                            {{ $sv->tournament->name }}
+                        </div>
+                    @endif
+                </div>
+                <div class="match-card-body">
+                    <div class="match-fixture">{{ $sv->title }}</div>
+                    @if($sv->match_date ?? null)
+                        <div class="match-meta">{{ \Carbon\Carbon::parse($sv->match_date)->format('d/m/Y') }}</div>
+                    @endif
+                    @if($sizeLabel)
+                        <div class="match-meta text-muted">{{ $sizeLabel }}</div>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 {{-- ═══════════════════════════════════════════════════════════
      JUGADOR (ASOCIACIÓN) — Nivel 1: Torneos de su equipo

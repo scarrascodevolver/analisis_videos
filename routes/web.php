@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnotationController;
+use App\Http\Controllers\Auth\OrganizationRegisterController;
 use App\Http\Controllers\BunnyUploadController;
 use App\Http\Controllers\BunnyWebhookController;
 use App\Http\Controllers\CategoryManagementController;
@@ -16,6 +17,9 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PlayerApiController;
 use App\Http\Controllers\RivalTeamController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\TournamentDivisionController;
+use App\Http\Controllers\TournamentRegistrationController;
+use App\Http\Controllers\VideoShareController;
 use App\Http\Controllers\LineupController;
 use App\Http\Controllers\VideoClipController;
 use App\Http\Controllers\VideoCommentController;
@@ -27,6 +31,12 @@ use Inertia\Inertia;
 
 // Landing Page (público)
 Route::view('/', 'landing')->name('landing');
+
+// Auto-registro de organizaciones (clubes / asociaciones)
+Route::middleware(['guest'])->group(function () {
+    Route::get('/register/organization', [OrganizationRegisterController::class, 'showForm'])->name('register.organization');
+    Route::post('/register/organization', [OrganizationRegisterController::class, 'store'])->name('register.organization.store');
+});
 
 // Authentication Routes
 Auth::routes();
@@ -126,6 +136,36 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
     Route::put('/tournaments/{tournament}', [TournamentController::class, 'update'])->name('tournaments.update');
     Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy'])->name('tournaments.destroy');
+
+    // Torneos públicos / exploración (clubes)
+    Route::get('/tournaments/explore', [TournamentRegistrationController::class, 'explore'])->name('tournaments.explore');
+    // Tournament detail (must be AFTER /explore to avoid conflict)
+    Route::get('tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+    Route::get('api/tournaments/public', [TournamentRegistrationController::class, 'publicIndex'])->name('api.tournaments.public');
+    Route::patch('api/tournaments/{tournament}/toggle-public', [TournamentController::class, 'togglePublic'])->name('api.tournaments.toggle-public');
+
+    // Registro de clubes a torneos
+    Route::post('tournament-registrations', [TournamentRegistrationController::class, 'store'])->name('tournament-registrations.store');
+    // destroy uses Tournament ID (the explore view knows the tournament, not the registration)
+    Route::delete('tournament-registrations/by-tournament/{tournamentId}', [TournamentRegistrationController::class, 'destroy'])->name('tournament-registrations.destroy');
+    // Approve/reject by associations
+    Route::post('tournament-registrations/{registrationId}/approve', [TournamentRegistrationController::class, 'approve'])->name('tournament-registrations.approve');
+    Route::post('tournament-registrations/{registrationId}/reject', [TournamentRegistrationController::class, 'reject'])->name('tournament-registrations.reject');
+
+    // Compartir videos entre organizaciones
+    Route::post('videos/{video}/share', [VideoShareController::class, 'store'])->name('videos.share.store');
+    Route::get('videos/{video}/shares', [VideoShareController::class, 'index'])->name('videos.shares.index');
+    Route::delete('shares/{shareId}', [VideoShareController::class, 'destroy'])->name('shares.destroy');
+    Route::get('api/tournaments/{tournament}/registered-clubs', [VideoShareController::class, 'registeredClubs'])->name('api.tournaments.registered-clubs');
+    Route::get('api/organizations/{org}/categories', [VideoShareController::class, 'organizationCategories'])->name('api.organizations.categories');
+
+    // Tournament divisions
+    Route::get('api/tournaments/{tournament}/divisions', [TournamentDivisionController::class, 'index'])->name('api.tournaments.divisions');
+    Route::post('api/tournaments/{tournament}/divisions', [TournamentDivisionController::class, 'store'])->name('api.tournaments.divisions.store');
+    Route::delete('api/divisions/{division}', [TournamentDivisionController::class, 'destroy'])->name('api.divisions.destroy');
+
+    // Registered clubs by division (for share modal)
+    Route::get('api/divisions/{division}/registered-clubs', [VideoShareController::class, 'registeredClubsByDivision'])->name('api.divisions.registered-clubs');
 
     // Clubs (asociaciones)
     Route::post('api/clubs', [ClubController::class, 'store'])->name('api.clubs.store');
@@ -258,8 +298,9 @@ Route::middleware(['auth'])->group(function () {
         // Gestión de Usuarios
         Route::resource('users', App\Http\Controllers\UserManagementController::class);
 
-        // Gestión de Organización (código de invitación)
+        // Gestión de Organización (código de invitación + branding)
         Route::get('organization', [AdminController::class, 'organization'])->name('organization');
+        Route::post('organization/branding', [AdminController::class, 'updateBranding'])->name('organization.update-branding');
         Route::put('organization/invitation-code', [AdminController::class, 'updateInvitationCode'])->name('organization.update-code');
         Route::post('organization/regenerate-code', [AdminController::class, 'regenerateInvitationCode'])->name('organization.regenerate-code');
     });

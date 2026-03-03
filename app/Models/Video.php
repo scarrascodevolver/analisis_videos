@@ -85,6 +85,39 @@ class Video extends Model
     }
 
     /**
+     * Resolves route model binding.
+     * Falls back to cross-org share lookup for GET requests so clubs can view
+     * videos shared by associations without modifying the BelongsToOrganization scope.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $video = parent::resolveRouteBinding($value, $field);
+
+        if ($video !== null) {
+            return $video;
+        }
+
+        // Only apply share fallback for read-only (GET) requests
+        if (! request()->isMethod('GET') || ! auth()->check()) {
+            return null;
+        }
+
+        $orgId = auth()->user()->currentOrganization()?->id;
+        if (! $orgId) {
+            return null;
+        }
+
+        $hasShare = VideoOrgShare::where('video_id', $value)
+            ->where('target_organization_id', $orgId)
+            ->where('status', 'active')
+            ->exists();
+
+        return $hasShare
+            ? static::withoutGlobalScope('organization')->find($value)
+            : null;
+    }
+
+    /**
      * Boot method to cancel compression jobs when video is deleted
      */
     protected static function booted()
@@ -172,6 +205,11 @@ class Video extends Model
     public function clips()
     {
         return $this->hasMany(VideoClip::class);
+    }
+
+    public function orgShares()
+    {
+        return $this->hasMany(VideoOrgShare::class);
     }
 
     public function lineups()

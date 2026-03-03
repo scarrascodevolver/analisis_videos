@@ -209,11 +209,12 @@
                                 @enderror
                             </div>
                         </div>
+                        @if($user->role === 'jugador')
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="user_category_id">Categoría <span class="text-danger">*</span></label>
+                                <label for="user_category_id">Categoría</label>
                                 <select class="form-control @error('user_category_id') is-invalid @enderror"
-                                        id="user_category_id" name="user_category_id" required>
+                                        id="user_category_id" name="user_category_id">
                                     <option value="">Seleccionar categoría</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}"
@@ -227,6 +228,7 @@
                                 @enderror
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>

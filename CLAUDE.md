@@ -1,4 +1,4 @@
-# CLAUDE.md - RugbyHub (Sistema Multi-Tenant)
+# CLAUDE.md - Rugby Key Performance (Sistema Multi-Tenant)
 
 ## Ultima actualizacion: 2026-01-27
 
@@ -8,7 +8,7 @@
 
 ### Sistema Multi-Tenant COMPLETADO (Enero 2026)
 
-El sistema evolucion de "Los Troncos" a **RugbyHub** - plataforma multi-tenant para clubes de rugby.
+El sistema evolucion de "Los Troncos" a **Rugby Key Performance** - plataforma multi-tenant para clubes  y asocioaciones de rugby.
 
 #### Fases Implementadas:
 - **Fase 1**: Super Admin panel (`bbd8d7e5`)

@@ -11,6 +11,78 @@
 @section('main_content')
 <div class="row">
     <div class="col-lg-8">
+        <!-- Branding de la Organización -->
+        <div class="card card-rugby">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-paint-brush mr-2"></i>
+                    Nombre y Logo de la Organización
+                </h3>
+            </div>
+            <div class="card-body">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('admin.organization.update-branding') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="form-group">
+                        <label for="org_name">Nombre de la Organización <span class="text-danger">*</span></label>
+                        <input type="text"
+                               class="form-control @error('org_name') is-invalid @enderror"
+                               id="org_name"
+                               name="org_name"
+                               value="{{ old('org_name', $organization->name) }}"
+                               maxlength="100"
+                               required>
+                        @error('org_name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="logo">Logo <small class="text-muted">(JPG, PNG, SVG — máx. 10MB)</small></label>
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            @if($organization->logo_path)
+                                <img src="{{ asset('storage/' . $organization->logo_path) }}"
+                                     alt="Logo actual"
+                                     id="logo-preview"
+                                     style="height:60px; width:60px; object-fit:contain; border-radius:8px; background:#1a1a1a; padding:4px;">
+                            @else
+                                <div id="logo-preview-placeholder"
+                                     style="height:60px; width:60px; display:flex; align-items:center; justify-content:center; background:#1a1a1a; border-radius:8px;">
+                                    <i class="fas fa-building fa-2x text-muted"></i>
+                                </div>
+                            @endif
+                            <input type="file"
+                                   class="form-control-file @error('logo') is-invalid @enderror"
+                                   id="logo"
+                                   name="logo"
+                                   accept="image/*">
+                        </div>
+                        @error('logo')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">Dejá el campo vacío para mantener el logo actual.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-rugby">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- Código de Invitación -->
         <div class="card card-rugby">
             <div class="card-header">
@@ -240,6 +312,25 @@ function copyToClipboard(elementId, message) {
 // Convertir a mayúsculas mientras escribe
 document.getElementById('custom_code').addEventListener('input', function() {
     this.value = this.value.toUpperCase();
+});
+
+// Preview del logo antes de subir
+document.getElementById('logo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        let preview = document.getElementById('logo-preview');
+        if (!preview) {
+            const placeholder = document.getElementById('logo-preview-placeholder');
+            if (placeholder) {
+                placeholder.outerHTML = '<img id="logo-preview" style="height:60px;width:60px;object-fit:contain;border-radius:8px;background:#1a1a1a;padding:4px;">';
+                preview = document.getElementById('logo-preview');
+            }
+        }
+        if (preview) preview.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
 });
 </script>
 @endpush

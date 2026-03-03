@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\ClipCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -91,6 +92,41 @@ class AdminController extends Controller
         $newCode = $organization->regenerateInvitationCode();
 
         return back()->with('success', "Nuevo código generado: {$newCode}");
+    }
+
+    /**
+     * Actualizar nombre y logo de la organización
+     */
+    public function updateBranding(Request $request)
+    {
+        $organization = auth()->user()->currentOrganization();
+
+        if (! $organization) {
+            return back()->with('error', 'No tienes una organización asignada.');
+        }
+
+        $request->validate([
+            'org_name' => 'required|string|max:100',
+            'logo'     => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
+        ], [
+            'org_name.required' => 'El nombre de la organización es obligatorio.',
+            'org_name.max'      => 'El nombre no puede superar los 100 caracteres.',
+            'logo.image'        => 'El logo debe ser una imagen.',
+            'logo.max'          => 'El logo no puede pesar más de 10MB.',
+        ]);
+
+        $organization->name = $request->org_name;
+
+        if ($request->hasFile('logo')) {
+            if ($organization->logo_path) {
+                Storage::disk('public')->delete($organization->logo_path);
+            }
+            $organization->logo_path = $request->file('logo')->store('organizations/logos', 'public');
+        }
+
+        $organization->save();
+
+        return back()->with('success', 'Datos de la organización actualizados correctamente.');
     }
 
     public function renameCategory(Request $request, Category $category)

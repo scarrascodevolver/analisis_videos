@@ -63,7 +63,7 @@
                 <p class="text-muted small">
                     ¿Tienes preguntas sobre tu suscripción?
                     <br>
-                    Contáctanos a <a href="mailto:soporte@rugbyhub.cl">soporte@rugbyhub.cl</a>
+                    Contáctanos a <a href="mailto:soporte@rugbykp.cl">soporte@rugbykp.cl</a>
                 </p>
             </div>
         </div>

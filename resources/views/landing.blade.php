@@ -1230,7 +1230,7 @@
 
             <div class="nav-buttons">
                 <a href="{{ route('login') }}" class="btn btn-ghost">Iniciar Sesion</a>
-                <a href="#contacto" class="btn btn-primary">Contactar</a>
+                <a href="{{ route('register.organization') }}" class="btn btn-primary">Comenzar gratis</a>
             </div>
 
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -1249,7 +1249,7 @@
         <a href="#contacto" onclick="toggleMobileMenu()">Contacto</a>
         <a href="#faq" onclick="toggleMobileMenu()">FAQ</a>
         <a href="{{ route('login') }}" class="btn btn-ghost">Iniciar Sesion</a>
-        <a href="#contacto" class="btn btn-primary">Contactar</a>
+        <a href="{{ route('register.organization') }}" class="btn btn-primary">Comenzar gratis</a>
     </div>
 
     <!-- Hero Section -->
@@ -1278,12 +1278,13 @@
                 </p>
 
                 <div class="hero-buttons">
-                    <a href="#contacto" class="btn btn-primary btn-large">
-                        <i class="fas fa-comments"></i>
-                        Solicitar Demo
+                    <a href="{{ route('register.organization') }}" class="btn btn-primary btn-large">
+                        <i class="fas fa-rocket"></i>
+                        Comenzar gratis
                     </a>
-                    <a href="#features" class="btn btn-outline btn-large">
-                        Ver funciones
+                    <a href="{{ route('login') }}" class="btn btn-outline btn-large">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Iniciar sesion
                     </a>
                 </div>
 

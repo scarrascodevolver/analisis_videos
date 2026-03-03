@@ -3,19 +3,76 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tournament;
+use App\Models\TournamentRegistration;
+use App\Notifications\TournamentJoinRequest;
 use Illuminate\Http\Request;
 
 class TournamentController extends Controller
 {
+    /**
+     * Tournament detail page — divisions, enrolled clubs, pending requests.
+     * GET /tournaments/{tournament}
+     */
+    public function show(Tournament $tournament): \Illuminate\View\View
+    {
+        $org = auth()->user()->currentOrganization();
+
+        // Only the owning association can see this page
+        if (!$org || $tournament->organization_id !== $org->id) {
+            abort(403);
+        }
+
+        // Eager-load divisions with their registrations
+        $tournament->load([
+            'divisions' => fn($q) => $q->orderBy('order')->orderBy('name'),
+            'divisions.registrations' => fn($q) => $q->whereIn('status', ['active', 'pending'])
+                ->with('clubOrganization:id,name,logo_path'),
+        ]);
+
+        // Mark tournament_join_request notifications for this tournament as read
+        auth()->user()->unreadNotifications()
+            ->where('type', TournamentJoinRequest::class)
+            ->get()
+            ->filter(fn($n) => ($n->data['tournament_id'] ?? null) == $tournament->id)
+            ->each(fn($n) => $n->markAsRead());
+
+        $suggestions = ['M8','M10','M12','M14','M16','M18','M20','Adulta','Femenino','Seven'];
+        $existingNames = $tournament->divisions->pluck('name')->map(fn($n) => strtolower($n))->toArray();
+        $remainingSuggestions = array_values(array_filter($suggestions, fn($s) => !in_array(strtolower($s), $existingNames)));
+
+        return view('tournaments.show', compact('tournament', 'remainingSuggestions'));
+    }
+
     /**
      * Show the tournament management index.
      * GET /tournaments
      */
     public function index(): \Illuminate\View\View
     {
-        $tournaments = Tournament::withCount('videos')->orderBy('name')->get();
+        $tournaments = Tournament::withCount('videos')
+            ->with(['divisions.registrations' => fn ($q) => $q->whereIn('status', ['active', 'pending'])])
+            ->orderBy('name')
+            ->get();
 
-        return view('tournaments.index', compact('tournaments'));
+        $pendingRegistrations = collect();
+        $org = auth()->user()->currentOrganization();
+        if ($org && $org->isAsociacion()) {
+            // Load all pending registrations for tournaments of this association
+            $tournamentIds = $tournaments->pluck('id');
+            $pendingRegistrations = TournamentRegistration::whereIn('tournament_id', $tournamentIds)
+                ->where('status', 'pending')
+                ->with(['clubOrganization:id,name,logo_path', 'tournament:id,name'])
+                ->orderBy('registered_at')
+                ->get();
+
+            // Marcar notificaciones de solicitudes de torneos como leídas al visitar la página
+            auth()->user()->unreadNotifications()
+                ->where('type', \App\Notifications\TournamentJoinRequest::class)
+                ->get()
+                ->markAsRead();
+        }
+
+        return view('tournaments.index', compact('tournaments', 'pendingRegistrations'));
     }
 
     /**
@@ -78,7 +135,7 @@ class TournamentController extends Controller
                     \App\Services\BunnyStreamService::forOrganization($video->organization)
                         ->deleteVideo($video->bunny_video_id);
                 } catch (\Exception $e) {
-                    \Log::warning("Tournament delete — Bunny delete failed for video {$video->id}: " . $e->getMessage());
+                    \Log::warning("Tournament delete — Bunny delete failed for video {$video->id}: ".$e->getMessage());
                 }
             }
 
@@ -96,6 +153,33 @@ class TournamentController extends Controller
                 ? "Torneo eliminado con {$deletedCount} video(s) borrados del servidor."
                 : 'Torneo eliminado.',
             'videos_deleted' => $deletedCount,
+        ]);
+    }
+
+    /**
+     * Alternar visibilidad pública de un torneo (solo asociaciones).
+     * PATCH /api/tournaments/{tournament}/toggle-public
+     */
+    public function togglePublic(Tournament $tournament): \Illuminate\Http\JsonResponse
+    {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || $tournament->organization_id !== $org->id) {
+            return response()->json(['error' => 'No autorizado.'], 403);
+        }
+
+        if (! $org->isAsociacion()) {
+            return response()->json(['error' => 'Solo las asociaciones pueden publicar torneos.'], 403);
+        }
+
+        $tournament->update(['is_public' => ! $tournament->is_public]);
+
+        return response()->json([
+            'ok' => true,
+            'is_public' => $tournament->is_public,
+            'message' => $tournament->is_public
+                ? 'Torneo publicado. Los clubes pueden inscribirse.'
+                : 'Torneo ocultado. Los clubes no pueden inscribirse.',
         ]);
     }
 

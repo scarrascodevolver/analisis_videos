@@ -4,7 +4,7 @@
  * Purpose: Intercepta requests al CDN de videos y agrega headers CORS
  * sin hacer proxy completo (solo modifica headers en el edge)
  *
- * Deployed at: https://videos.rugbyhub.cl/*
+ * Deployed at: https://videos.rugbykp.cl/*
  * Proxies to: https://analisis-videos-storage.sfo3.cdn.digitaloceanspaces.com/*
  *
  * Performance:
