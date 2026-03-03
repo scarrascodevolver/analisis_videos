@@ -561,6 +561,18 @@
                                         {{ $notification->created_at->diffForHumans() }}
                                     </span>
                                 </a>
+                            @elseif(($notification->data['type'] ?? '') === 'video_shared')
+                                <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
+                                   class="dropdown-item">
+                                    <i class="fas fa-share-alt mr-2" style="color:#00B7B5;"></i>
+                                    <strong>{{ $notification->data['source_org_name'] }}</strong> te envió un video
+                                    <span class="float-right text-muted text-sm">
+                                        {{ $notification->created_at->diffForHumans() }}
+                                    </span>
+                                    <p class="text-sm text-muted mb-0 mt-1">
+                                        {{ Str::limit($notification->data['video_title'], 50) }}
+                                    </p>
+                                </a>
                             @else
                                 <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
                                     class="dropdown-item">

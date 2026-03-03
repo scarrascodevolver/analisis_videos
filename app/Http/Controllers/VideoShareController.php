@@ -7,8 +7,10 @@ use App\Models\Organization;
 use App\Models\Tournament;
 use App\Models\TournamentDivision;
 use App\Models\TournamentRegistration;
+use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoOrgShare;
+use App\Notifications\VideoShared;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 
@@ -83,6 +85,12 @@ class VideoShareController extends Controller
                 'error' => "Este video ya fue enviado al club '{$targetOrg->name}'.",
             ], 422);
         }
+
+        // Notify all analysts/coaches of the target club
+        User::whereHas('organizations', fn ($q) => $q->where('organizations.id', $targetOrg->id))
+            ->whereIn('role', ['analista', 'entrenador'])
+            ->get()
+            ->each(fn ($u) => $u->notify(new VideoShared($video, $sourceOrg)));
 
         return response()->json([
             'ok'      => true,

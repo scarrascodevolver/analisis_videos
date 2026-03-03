@@ -123,7 +123,9 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         @foreach($receivedByTournament as $tournamentId => $divisionGroups)
             @php
                 $firstShare = $divisionGroups->first()->first();
-                $tournamentName = $firstShare->division->tournament->name ?? 'Sin torneo';
+                $tournamentName = $firstShare->division?->tournament?->name
+                    ?? $firstShare->video?->tournament?->name
+                    ?? 'Sin torneo';
                 $sourceOrgName = $firstShare->sourceOrganization->name ?? '';
             @endphp
             <div class="mb-3">
@@ -135,11 +137,15 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                 <div class="folder-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px,1fr));">
                     @foreach($divisionGroups as $divisionId => $shares)
                         @php
-                            $divName = $shares->first()->division->name ?? 'Sin división';
+                            $divName = $shares->first()->division?->name ?? 'Sin división';
                             $count = $shares->count();
                         @endphp
                         <div class="folder-card-wrap">
-                            <a href="{{ route('videos.index', ['received_from' => $shares->first()->source_organization_id, 'division' => $divisionId]) }}"
+                            @php
+                                $folderParams = ['received_from' => $shares->first()->source_organization_id];
+                                if ($divisionId) $folderParams['division'] = $divisionId;
+                            @endphp
+                            <a href="{{ route('videos.index', $folderParams) }}"
                                class="folder-card text-decoration-none"
                                style="border-color:rgba(0,183,181,.35);">
                                 <div class="folder-icon-wrap">
