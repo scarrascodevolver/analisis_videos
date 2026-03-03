@@ -529,9 +529,13 @@ class VideoController extends Controller
             ->whereHas('organizations', fn ($q) => $q->where('organizations.id', $video->organization_id))
             ->get();
 
+        $userOrgId = auth()->user()->currentOrganization()?->id;
+        $isSharedVideo = $video->organization_id !== $userOrgId;
+
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
 
         $videoData = array_merge($video->toArray(), [
+            'is_shared_video' => $isSharedVideo,
             'stream_url' => $video->is_youtube_video ? null : route('videos.stream', $video),
             'download_url' => $video->is_youtube_video ? null : route('videos.download', $video),
             'edit_url' => route('videos.edit', $video),
@@ -592,6 +596,9 @@ class VideoController extends Controller
         $this->authorize('update', $video);
 
         $currentOrg = auth()->user()->currentOrganization();
+        if (! $currentOrg || $video->organization_id !== $currentOrg->id) {
+            abort(403, 'No tenés permisos para editar este video.');
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -619,6 +626,11 @@ class VideoController extends Controller
     public function destroy(Request $request, Video $video)
     {
         $this->authorize('delete', $video);
+
+        $org = auth()->user()->currentOrganization();
+        if (! $org || $video->organization_id !== $org->id) {
+            abort(403, 'No tenés permisos para eliminar este video.');
+        }
 
         $videoTitle = $video->title;
 

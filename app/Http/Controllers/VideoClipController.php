@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ClipCategory;
 use App\Models\Video;
 use App\Models\VideoClip;
+use App\Models\VideoOrgShare;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class VideoClipController extends Controller
 {
@@ -28,13 +30,43 @@ class VideoClipController extends Controller
 
     // API: Lista clips para el player
     // Visibilidad: mis clips + clips compartidos + clips de XML (scope='video')
+    // Para videos compartidos entre orgs: se usan queries cross-org explícitas
     public function apiIndex(Video $video)
     {
-        $clips = $video->clips()
-            ->with('category:id,name,slug,color,scope', 'creator:id,name')
-            ->visibleTo(auth()->user())
-            ->ordered()
-            ->get();
+        $user    = auth()->user();
+        $userOrg = $user->currentOrganization();
+        $userOrgId = $userOrg?->id;
+
+        $isSharedVideo = $userOrgId && $video->organization_id !== $userOrgId;
+
+        if (! $isSharedVideo) {
+            // Caso normal: video propio de la org — usar el scope habitual
+            $clips = $video->clips()
+                ->with('category:id,name,slug,color,scope', 'creator:id,name')
+                ->visibleTo($user)
+                ->ordered()
+                ->get();
+        } else {
+            // Caso cross-org: video compartido por una asociación
+            // Mostrar:
+            //   1. Clips de la asociación con is_shared = true
+            //   2. Clips creados por el usuario actual en este video
+            //   3. Clips de la org del usuario (club) en este video
+            $clips = VideoClip::withoutGlobalScope('organization')
+                ->with('category:id,name,slug,color,scope', 'creator:id,name')
+                ->where('video_id', $video->id)
+                ->where(function ($q) use ($user, $userOrgId) {
+                    $q->where(function ($inner) {
+                            // Clips de la org dueña del video que están compartidos
+                            $inner->where('is_shared', true);
+                        })
+                        ->orWhere('created_by', $user->id)
+                        ->orWhere('organization_id', $userOrgId)
+                        ->orWhereHas('category', fn ($cat) => $cat->where('scope', 'video'));
+                })
+                ->orderBy('start_time')
+                ->get();
+        }
 
         return response()->json($clips);
     }
@@ -225,6 +257,89 @@ class VideoClipController extends Controller
             ->get();
 
         return response()->json($clips);
+    }
+
+    // Generar o reutilizar link público de compartir para un clip
+    // POST /api/clips/{clip}/share-link  (auth required)
+    public function generateShareLink(VideoClip $clip): \Illuminate\Http\JsonResponse
+    {
+        $user      = auth()->user();
+        $userOrg   = $user->currentOrganization();
+        $userOrgId = $userOrg?->id;
+
+        // Verificar que el usuario puede acceder al clip:
+        //   - Es clip propio, o
+        //   - El clip pertenece a su org, o
+        //   - Tiene un VideoOrgShare activo para el video del clip
+        $canAccess = $clip->created_by === $user->id
+            || $clip->organization_id === $userOrgId
+            || VideoOrgShare::where('video_id', $clip->video_id)
+                ->where('target_organization_id', $userOrgId)
+                ->where('status', 'active')
+                ->exists();
+
+        if (! $canAccess) {
+            return response()->json(['error' => 'No tenés acceso a este clip.'], 403);
+        }
+
+        // Generar token si aún no existe
+        if (! $clip->share_token) {
+            $clip->update(['share_token' => (string) Str::uuid()]);
+        }
+
+        return response()->json([
+            'url' => route('clips.public', $clip->share_token),
+        ]);
+    }
+
+    // Vista pública de clip por token (no requiere auth)
+    // GET /clips/{token}
+    public function publicView(string $token): \Illuminate\Http\JsonResponse|\Illuminate\Contracts\View\View
+    {
+        $clip = VideoClip::withoutGlobalScopes()
+            ->with([
+                'category:id,name,color,scope',
+                'creator:id,name',
+                'video' => fn ($q) => $q->withoutGlobalScopes()->with('organization'),
+            ])
+            ->where('share_token', $token)
+            ->firstOrFail();
+
+        $video = $clip->video;
+
+        if (! $video) {
+            abort(404);
+        }
+
+        $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
+
+        $clipData = [
+            'id'          => $clip->id,
+            'start_time'  => $clip->start_time,
+            'end_time'    => $clip->end_time,
+            'title'       => $clip->title,
+            'notes'       => $clip->notes,
+            'category'    => $clip->category,
+            'creator'     => $clip->creator,
+            'video'       => [
+                'id'            => $video->id,
+                'title'         => $video->title,
+                'bunny_hls_url' => $video->bunny_video_id && $video->bunny_status === 'ready'
+                    ? $bunnyService->getHlsUrl($video->bunny_video_id)
+                    : ($video->bunny_hls_url ?? null),
+                'bunny_mp4_url' => $video->bunny_mp4_url,
+                'stream_url'    => route('videos.stream', $video),
+                'organization'  => [
+                    'name' => $video->organization?->name,
+                ],
+            ],
+        ];
+
+        if (request()->wantsJson() || request()->is('api/*')) {
+            return response()->json($clipData);
+        }
+
+        return view('clips.public', compact('clip', 'video', 'clipData'));
     }
 
     // Actualizar offset global de timeline para sincronización

@@ -23,6 +23,7 @@ class VideoClip extends Model
         'rating',
         'is_highlight',
         'is_shared',
+        'share_token',
     ];
 
     protected function casts(): array

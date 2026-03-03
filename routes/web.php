@@ -86,6 +86,9 @@ Route::get('stream/videos/{filename}', [VideoStreamController::class, 'streamByP
 // Clip Share (PUBLIC - no login required)
 Route::get('clips/{clipId}/share', [\App\Http\Controllers\ClipShareController::class, 'show'])->name('clips.share');
 
+// Clip public view by share_token (PUBLIC - no login required)
+Route::get('clips/{token}', [\App\Http\Controllers\VideoClipController::class, 'publicView'])->name('clips.public');
+
 // CDN Health Status (for monitoring - protected)
 Route::get('api/cdn-status', [VideoStreamController::class, 'cdnStatus'])->middleware('auth')->name('api.cdn.status');
 
@@ -237,6 +240,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('api/clips/{clip}/toggle-highlight', [VideoClipController::class, 'toggleHighlight'])->name('api.clips.toggle-highlight');
     // Clip share toggle (compartir/privatizar)
     Route::post('api/clips/{clip}/toggle-share', [VideoClipController::class, 'toggleShare'])->name('api.clips.toggle-share');
+    // Clip share link by token (genera URL pública para compartir un clip)
+    Route::post('api/clips/{clip}/share-link', [VideoClipController::class, 'generateShareLink'])->name('api.clips.share-link');
 
     // Video View Tracking API Routes
     Route::prefix('api/videos')->name('api.videos.')->group(function () {

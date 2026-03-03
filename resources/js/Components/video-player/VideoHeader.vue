@@ -7,6 +7,7 @@ const props = defineProps<{
     user: User;
     isTheaterMode?: boolean;
     canShare?: boolean;
+    isSharedVideo?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -28,11 +29,15 @@ const canViewStats = computed(() =>
     ['analista', 'entrenador', 'jugador'].includes(props.user.role)
 );
 
+// Shared videos cannot be edited or deleted by the club viewing them
 const canEdit = computed(() =>
-    isAnalystOrCoach.value || props.user.id === props.video.uploaded_by
+    (isAnalystOrCoach.value || props.user.id === props.video.uploaded_by) &&
+    !props.isSharedVideo
 );
 
-const canDelete = computed(() => isAnalystOrCoach.value);
+const canDelete = computed(() =>
+    isAnalystOrCoach.value && !props.isSharedVideo
+);
 </script>
 
 <template>
@@ -57,14 +62,16 @@ const canDelete = computed(() => isAnalystOrCoach.value);
             >
                 <i class="fas fa-eye"></i> Visualizaciones
             </button>
+            <!-- Subir ángulo: solo el dueño del video puede agregar ángulos -->
             <button
-                v-if="isAnalystOrCoach"
+                v-if="isAnalystOrCoach && !isSharedVideo"
                 class="btn btn-sm btn-rugby-outline mr-2"
                 title="Subir un nuevo video como ángulo adicional de este partido"
                 @click="$emit('uploadAngle')"
             >
                 <i class="fas fa-cloud-upload-alt"></i> Subir ángulo
             </button>
+            <!-- Jugadores: visible para analistas/entrenadores incluso en videos compartidos -->
             <button
                 v-if="isAnalystOrCoach"
                 class="btn btn-sm btn-rugby-outline mr-2"
@@ -82,8 +89,9 @@ const canDelete = computed(() => isAnalystOrCoach.value);
             >
                 <i class="fas fa-share-alt"></i> Enviar a club
             </button>
+            <!-- Sincronizar: solo disponible para el dueño del video -->
             <button
-                v-if="isAnalystOrCoach"
+                v-if="isAnalystOrCoach && !isSharedVideo"
                 class="btn btn-sm btn-rugby-outline mr-2"
                 @click="$emit('toggleTimelines')"
                 title="Sincronizar ángulos de cámara y clips XML"

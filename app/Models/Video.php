@@ -97,8 +97,8 @@ class Video extends Model
             return $video;
         }
 
-        // Only apply share fallback for read-only (GET) requests
-        if (! request()->isMethod('GET') || ! auth()->check()) {
+        // Require authentication for cross-org share fallback
+        if (! auth()->check()) {
             return null;
         }
 

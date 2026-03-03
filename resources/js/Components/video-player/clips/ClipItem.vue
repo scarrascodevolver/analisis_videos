@@ -28,7 +28,12 @@ const isXmlClip = computed(() => props.clip.category?.scope === 'video');
 const formattedStartTime = computed(() => formatTime(props.clip.start_time));
 const formattedEndTime = computed(() => formatTime(props.clip.end_time));
 
-const shareUrl = computed(() => `${window.location.origin}/clips/${props.clip.id}/share`);
+// Use token-based URL when available (share_token from server), otherwise fall back to legacy ID-based URL
+const shareUrl = computed(() =>
+    (props.clip as any).share_token
+        ? `${window.location.origin}/clips/${(props.clip as any).share_token}`
+        : `${window.location.origin}/clips/${props.clip.id}/share`
+);
 
 function handleSeek() {
     videoStore.playClip(props.clip.start_time, props.clip.end_time);
@@ -55,8 +60,32 @@ function playClip(event: MouseEvent) {
 async function copyLink(event: MouseEvent) {
     event.stopPropagation();
     showMenu.value = false;
+
+    let urlToCopy = shareUrl.value;
+
+    // If no token yet, generate one via the API
+    if (!(props.clip as any).share_token) {
+        try {
+            const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+            const res = await fetch(`/api/clips/${props.clip.id}/share-link`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.url) {
+                    // Persist the token on the clip object so subsequent calls skip the API
+                    (props.clip as any).share_token = data.url.split('/').pop();
+                    urlToCopy = data.url;
+                }
+            }
+        } catch {
+            // Fall back to legacy URL if API fails
+        }
+    }
+
     try {
-        await navigator.clipboard.writeText(shareUrl.value);
+        await navigator.clipboard.writeText(urlToCopy);
         toast?.success('¡Link copiado!');
     } catch {
         toast?.error('No se pudo copiar el link');

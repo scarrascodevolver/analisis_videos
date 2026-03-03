@@ -60,6 +60,14 @@ const isAnalystOrCoach = computed(() =>
     ['analista', 'entrenador'].includes(user.value.role)
 );
 
+// Cross-org shared video flags
+const isSharedVideo = computed(() => !!(props.video as any).is_shared_video);
+const isJugador = computed(() => user.value.role === 'jugador');
+const canCreateClips = computed(() => isAnalystOrCoach.value);
+const canSeeClips = computed(() => true);
+const canAnnotate = computed(() => isAnalystOrCoach.value);
+const canMultiCamera = computed(() => isAnalystOrCoach.value && !isSharedVideo.value);
+
 // Timelines sync panel visibility (expanded by default)
 const showTimelinesSyncPanel = ref(true);
 
@@ -558,6 +566,10 @@ function onSyncSaved(offsets: Record<number, number>) {
             :user="user"
             :has-slaves="slaveVideos.length > 0"
             :can-share="canShare"
+            :is-shared-video="isSharedVideo"
+            :can-create-clips="canCreateClips"
+            :can-see-clips="canSeeClips"
+            :can-multi-camera="canMultiCamera"
             @show-stats="showStatsModal = true"
             @delete-video="showDeleteModal = true"
             @upload-angle="onUploadAngle"
@@ -629,8 +641,8 @@ function onSyncSaved(offsets: Record<number, number>) {
                 </SidebarPanel>
             </template>
 
-            <!-- Multi-camera layout -->
-            <template v-if="video.is_part_of_group && isAnalystOrCoach && slaveVideos.length > 0" #multi-camera>
+            <!-- Multi-camera layout (never shown for jugadores or shared videos) -->
+            <template v-if="video.is_part_of_group && canMultiCamera && slaveVideos.length > 0" #multi-camera>
                 <MultiCameraLayout
                     :slaves="slaveVideos"
                     @swap-master="onSwapMaster"

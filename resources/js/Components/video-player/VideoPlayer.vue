@@ -18,6 +18,10 @@ const props = defineProps<{
     user: User;
     hasSlaves?: boolean;
     canShare?: boolean;
+    isSharedVideo?: boolean;
+    canCreateClips?: boolean;
+    canSeeClips?: boolean;
+    canMultiCamera?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -44,7 +48,10 @@ const isAnalystOrCoach = computed(() =>
 );
 
 const hasMultiCamera = computed(() =>
-    !!props.video.is_part_of_group && isAnalystOrCoach.value && !!props.hasSlaves
+    !!props.video.is_part_of_group &&
+    isAnalystOrCoach.value &&
+    !!props.hasSlaves &&
+    (props.canMultiCamera !== false)
 );
 
 const showComments = ref(true);
@@ -221,6 +228,7 @@ function movePanelDown(panelName: PanelName) {
                     :user="user"
                     :is-theater-mode="isTheaterMode"
                     :can-share="canShare"
+                    :is-shared-video="isSharedVideo"
                     @show-stats="$emit('showStats')"
                     @upload-angle="$emit('uploadAngle')"
                     @toggle-comments="toggleComments"
