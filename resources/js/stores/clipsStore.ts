@@ -44,6 +44,13 @@ export const useClipsStore = defineStore('clips', () => {
         return categories.value;
     });
 
+    // Categorías que tienen al menos un clip — usada tanto en el tab como en el timeline
+    const categoriesWithClips = computed(() => {
+        return [...categories.value]
+            .filter((cat) => !!clipsByCategory.value[cat.id]?.length)
+            .sort((a, b) => a.sort_order - b.sort_order);
+    });
+
     const recordingCategory = computed(() => {
         if (!recordingCategoryId.value) return null;
         return categories.value.find((cat) => cat.id === recordingCategoryId.value) || null;
@@ -287,6 +294,7 @@ export const useClipsStore = defineStore('clips', () => {
         // Computed
         clipsByCategory,
         activeCategories,
+        categoriesWithClips,
         recordingCategory,
         // Actions
         loadClips,

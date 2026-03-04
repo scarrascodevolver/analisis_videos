@@ -125,7 +125,7 @@ const isCollapsed = ref(false);
 const timelineContainerRef = ref<HTMLElement | null>(null);
 
 // ─── Basic computed ───────────────────────────────────────────────────────────
-const activeCategories = computed(() => clipsStore.activeCategories);
+const activeCategories = computed(() => clipsStore.categoriesWithClips);
 const currentTime      = computed(() => videoStore.currentTime);
 const duration         = computed(() => videoStore.duration || 1);
 const formattedDuration = computed(() => videoStore.formattedDuration);

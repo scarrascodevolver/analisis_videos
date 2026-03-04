@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
 import ClipItem from './ClipItem.vue';
@@ -45,12 +45,22 @@ const filteredClipsByCategory = computed(() => {
     return filtered;
 });
 
+// Usar el computed del store (fuente única de verdad, compartida con el timeline)
 const categoriesWithClips = computed(() => {
-    const safeCategories = Array.isArray(clipsStore.categories) ? clipsStore.categories : [];
-    return safeCategories
-        .filter((cat) => filteredClipsByCategory.value[cat.id]?.length > 0)
-        .sort((a, b) => a.sort_order - b.sort_order);
+    const query = searchQuery.value.toLowerCase().trim();
+    if (!query) return clipsStore.categoriesWithClips;
+    // Con búsqueda activa, filtrar adicionalmente
+    return clipsStore.categoriesWithClips.filter(
+        (cat) => !!filteredClipsByCategory.value[cat.id]?.length
+    );
 });
+
+// Auto-expandir categorías cuando aparecen clips (carga async o reorden)
+watch(
+    () => clipsStore.categoriesWithClips,
+    (cats) => { cats.forEach((cat) => expandedCategories.value.add(cat.id)); },
+    { immediate: true }
+);
 
 // ── Actions ─────────────────────────────────────────────────
 
@@ -70,13 +80,6 @@ function getCategoryClipsCount(category: ClipCategory) {
     return filteredClipsByCategory.value[category.id]?.length || 0;
 }
 
-// Expand all categories by default
-const safeCategories = Array.isArray(clipsStore.categories) ? clipsStore.categories : [];
-safeCategories.forEach((cat) => {
-    if (clipsStore.clipsByCategory[cat.id]?.length > 0) {
-        expandedCategories.value.add(cat.id);
-    }
-});
 
 // ── Drag & Drop ──────────────────────────────────────────────
 
