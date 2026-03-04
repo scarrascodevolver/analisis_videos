@@ -250,10 +250,11 @@ export const useClipsStore = defineStore('clips', () => {
     }
 
     async function reorderClips(videoId: number, categoryId: number, newOrderedClips: VideoClip[]) {
-        // Optimistic UI: update sort_order in local state immediately
-        newOrderedClips.forEach((clip, idx) => {
-            const local = clips.value.find((c) => c.id === clip.id);
-            if (local) local.sort_order = idx + 1;
+        // Reemplazar el array completo con nuevos sort_order para garantizar reactividad
+        const updatedIds = new Map(newOrderedClips.map((c, idx) => [c.id, idx + 1]));
+        clips.value = clips.value.map((c) => {
+            const newOrder = updatedIds.get(c.id);
+            return newOrder !== undefined ? { ...c, sort_order: newOrder } : c;
         });
 
         try {

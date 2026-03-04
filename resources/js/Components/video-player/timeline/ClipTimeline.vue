@@ -372,7 +372,10 @@ const clipBlockStyles = computed(() => {
             const rowIdx = rowMap?.get(clip.id) ?? 0;
             const heightPx = ROW_HEIGHT - 4;
             const isDragged = dragState.value?.clip.id === clip.id;
-            const zIdx      = isDragged ? 200 : (5 + (clip.id % 50));
+            // Clips con menor sort_order quedan encima (mayor z-index)
+            // Si sort_order es 0 (sin orden manual), usamos clip.id como fallback
+            const order = clip.sort_order ?? 0;
+            const zIdx  = isDragged ? 200 : (order > 0 ? Math.max(5, 100 - order) : 5 + (clip.id % 50));
 
             styleMap.set(clip.id, {
                 left:            `${Math.max(0, Math.min(startPercent, 100))}%`,
