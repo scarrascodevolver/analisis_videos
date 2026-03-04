@@ -261,7 +261,8 @@ class TournamentRegistrationController extends Controller
         ]);
 
         // Revocar todos los VideoOrgShare del torneo para este club
-        $videoIds = Tournament::find($tournamentId)
+        // withoutGlobalScopes() porque el torneo pertenece a la asociación, no al club
+        $videoIds = Tournament::withoutGlobalScopes()->find($tournamentId)
             ?->videos()->withoutGlobalScopes()->pluck('id');
 
         if ($videoIds && $videoIds->isNotEmpty()) {
