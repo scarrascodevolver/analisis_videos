@@ -226,6 +226,15 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     <div class="folder-icon-wrap"><i class="fas fa-trophy"></i></div>
                     <div class="folder-name">{{ $t->name }}</div>
                     <div class="folder-meta">{{ $t->videos_count }} videos</div>
+                    @if($t->is_public)
+                        <span style="margin-top:5px;font-size:.65rem;padding:2px 8px;border-radius:10px;background:rgba(0,183,181,.15);border:1px solid rgba(0,183,181,.35);color:#00B7B5;">
+                            <i class="fas fa-globe mr-1"></i>Público
+                        </span>
+                    @else
+                        <span style="margin-top:5px;font-size:.65rem;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#666;">
+                            <i class="fas fa-lock mr-1"></i>Privado
+                        </span>
+                    @endif
                 </a>
             </div>
         @endforeach
