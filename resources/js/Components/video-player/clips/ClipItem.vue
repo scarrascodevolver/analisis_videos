@@ -126,23 +126,13 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             {{ formattedStartTime }} - {{ formattedEndTime }}
         </div>
 
-        <!-- Indicador de visibilidad -->
-        <!-- Clip propio: muestra 🔒 privado o 👥 compartido -->
+        <!-- Creador del clip (si no es el usuario actual) -->
         <span
-            v-if="isOwner && !isXmlClip"
-            class="clip-visibility-badge"
-            :class="clip.is_shared ? 'badge-shared' : 'badge-private'"
-            :title="clip.is_shared ? 'Compartido con el equipo' : 'Solo vos lo ves'"
+            v-if="!isOwner"
+            class="clip-creator-badge"
+            :title="'Creado por: ' + (clip.creator?.name ?? 'Otro analista')"
         >
-            <i :class="clip.is_shared ? 'fas fa-users' : 'fas fa-lock'"></i>
-        </span>
-        <!-- Clip de otro analista compartido: muestra quién lo creó -->
-        <span
-            v-else-if="!isOwner && !isXmlClip"
-            class="clip-visibility-badge badge-shared"
-            :title="clip.creator?.name ? 'Creado por: ' + clip.creator.name : 'Compartido'"
-        >
-            <i class="fas fa-users"></i>
+            <i class="fas fa-user"></i>
         </span>
 
         <!-- ⋯ button -->
@@ -217,20 +207,17 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     flex: 1;
 }
 
-/* Indicador de visibilidad del clip */
-.clip-visibility-badge {
+/* Creador del clip */
+.clip-creator-badge {
     font-size: 8px;
     flex-shrink: 0;
-    opacity: 0.6;
-    transition: opacity 0.15s;
+    opacity: 0.5;
+    color: #888;
 }
 
-.clip-item:hover .clip-visibility-badge {
-    opacity: 1;
+.clip-item:hover .clip-creator-badge {
+    opacity: 0.8;
 }
-
-.badge-private i  { color: #888; }
-.badge-shared i   { color: var(--color-accent); }
 
 /* ⋯ button */
 .btn-clip-menu {

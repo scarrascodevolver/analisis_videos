@@ -89,18 +89,14 @@ class VideoClip extends Model
     // Scopes
 
     /**
-     * Clips visibles para un usuario:
-     * - Sus propios clips (created_by = user)
-     * - Clips compartidos por otros (is_shared = true)
-     * - Clips de XML / LongoMatch (categoría con scope='video') — siempre visibles
+     * Todos los miembros de la organización ven todos los clips.
+     * El filtrado por is_shared fue eliminado: la visibilidad es intra-org
+     * y no tiene sentido restringirla dentro del mismo tenant.
      */
     public function scopeVisibleTo($query, $user)
     {
-        return $query->where(function ($q) use ($user) {
-            $q->where('created_by', $user->id)
-              ->orWhere('is_shared', true)
-              ->orWhereHas('category', fn ($cat) => $cat->where('scope', 'video'));
-        });
+        // Todos los miembros de la org ven todos los clips
+        return $query;
     }
 
     public function scopeForVideo($query, $videoId)

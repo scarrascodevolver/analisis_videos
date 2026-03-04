@@ -63,7 +63,7 @@ const isAnalystOrCoach = computed(() =>
 // Cross-org shared video flags
 const isSharedVideo = computed(() => !!(props.video as any).is_shared_video);
 const isJugador = computed(() => user.value.role === 'jugador');
-const canCreateClips = computed(() => isAnalystOrCoach.value);
+const canCreateClips = computed(() => ['analista', 'entrenador', 'org_manager'].includes(user.value.role));
 const canSeeClips = computed(() => true);
 const canAnnotate = computed(() => isAnalystOrCoach.value);
 const canMultiCamera = computed(() => isAnalystOrCoach.value && !isSharedVideo.value);
@@ -307,6 +307,17 @@ onMounted(async () => {
         navigator.mediaSession.setActionHandler('nexttrack', () => videoStore.seekRelative(10));
     }
 
+    // Cargar clips y categorías para todos (jugadores también los ven)
+    try {
+        await Promise.all([
+            clipsStore.loadClips(props.video.id),
+            clipsStore.loadCategories(props.video.id),
+        ]);
+    } catch (e) {
+        console.error('Error loading clips/categories:', e);
+    }
+
+    // Lineups, annotations y hotkey de grabación solo para staff
     if (isAnalystOrCoach.value) {
         // Load lineups in background — no await, non-blocking
         lineupStore.loadLineups(props.video.id);
@@ -320,21 +331,17 @@ onMounted(async () => {
 
         try {
             const api = useVideoApi(props.video.id);
-            const [,, loadedAnnotations] = await Promise.all([
-                clipsStore.loadClips(props.video.id),
-                clipsStore.loadCategories(props.video.id),
-                api.getAnnotations(),
-            ]);
+            const loadedAnnotations = await api.getAnnotations();
             annotationsStore.loadAnnotations(loadedAnnotations);
         } catch (e) {
-            console.error('Error loading clips/categories:', e);
+            console.error('Error loading annotations:', e);
         }
     }
 });
 
 // Reactive hotkey registration — runs whenever categories load or change
 // (handles initial load, edits, deletes, reorders)
-if (isAnalystOrCoach.value) {
+if (canCreateClips.value) {
     watch(
         () => clipsStore.activeCategories,
         (categories) => {
@@ -587,8 +594,8 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <AnnotationToolbar :video-id="video.id" />
             </template>
 
-            <!-- Clip Panel -->
-            <template v-if="isAnalystOrCoach" #clip-panel>
+            <!-- Clip Panel (panel de grabación — solo para quienes pueden crear clips) -->
+            <template v-if="canCreateClips" #clip-panel>
                 <ClipPanel
                     :video-id="video.id"
                     @create-category="onCreateCategory"
@@ -597,7 +604,7 @@ function onSyncSaved(offsets: Record<number, number>) {
             </template>
 
             <!-- Clip Timeline (visual timeline with clips) -->
-            <template v-if="isAnalystOrCoach" #clip-timeline>
+            <template v-if="canCreateClips" #clip-timeline>
                 <ClipTimeline :video-id="video.id" />
             </template>
 
@@ -620,7 +627,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                 <SidebarPanel
                     :comment-count="commentsStore.commentCount"
                     :clip-count="clipsStore.clips.length"
-                    :can-create-clips="isAnalystOrCoach"
+                    :can-create-clips="canCreateClips"
                 >
                     <template #comments>
                         <CommentForm
