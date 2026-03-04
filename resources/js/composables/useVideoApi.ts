@@ -184,6 +184,13 @@ export function useVideoApi(videoId: number) {
         });
     }
 
+    async function reorderClips(orderedIds: number[]): Promise<{ ok: boolean }> {
+        return request(`/api/videos/${videoId}/clips/reorder`, {
+            method: 'POST',
+            body: JSON.stringify({ clips: orderedIds }),
+        });
+    }
+
     // ====== Clip Categories ======
     // Route: GET /api/clip-categories?video_id=X
     // Route: POST /admin/clip-categories (resource route)
@@ -307,6 +314,7 @@ export function useVideoApi(videoId: number) {
         toggleShare,
         toggleCategoryShare,
         setTimelineOffset,
+        reorderClips,
         // Clip Categories
         getClipCategories,
         createCategory,

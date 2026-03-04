@@ -26,11 +26,14 @@ export const useClipsStore = defineStore('clips', () => {
             grouped[clip.clip_category_id].push(clip);
         });
 
-        // Sort clips within each category: más reciente primero
+        // Sort clips within each category by sort_order ASC, then created_at as tiebreaker
         Object.keys(grouped).forEach((catId) => {
-            grouped[Number(catId)].sort((a, b) =>
-                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            );
+            grouped[Number(catId)].sort((a, b) => {
+                const orderA = a.sort_order ?? 0;
+                const orderB = b.sort_order ?? 0;
+                if (orderA !== orderB) return orderA - orderB;
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            });
         });
 
         return grouped;
@@ -234,6 +237,22 @@ export const useClipsStore = defineStore('clips', () => {
         }
     }
 
+    async function reorderClips(videoId: number, categoryId: number, newOrderedClips: VideoClip[]) {
+        // Optimistic UI: update sort_order in local state immediately
+        newOrderedClips.forEach((clip, idx) => {
+            const local = clips.value.find((c) => c.id === clip.id);
+            if (local) local.sort_order = idx + 1;
+        });
+
+        try {
+            const api = useVideoApi(videoId);
+            await api.reorderClips(newOrderedClips.map((c) => c.id));
+        } catch (error) {
+            console.error('Error reordering clips:', error);
+            throw error;
+        }
+    }
+
     function reset() {
         clips.value = [];
         categories.value = [];
@@ -266,6 +285,7 @@ export const useClipsStore = defineStore('clips', () => {
         toggleCategoryShare,
         removeClip,
         updateClip,
+        reorderClips,
         reset,
     };
 });

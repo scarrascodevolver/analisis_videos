@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
+import { useVideoStore } from '@/stores/videoStore';
 import ClipItem from './ClipItem.vue';
-import type { ClipCategory } from '@/types/video-player';
+import type { ClipCategory, VideoClip } from '@/types/video-player';
 
 const clipsStore = useClipsStore();
+const videoStore = useVideoStore();
 const searchQuery = ref('');
 const expandedCategories = ref<Set<number>>(new Set());
+
+// ── Drag & Drop state ────────────────────────────────────────
+// Each category has its own dragging context tracked by category ID
+const draggingClipId = ref<number | null>(null);
+const dragOverClipId = ref<number | null>(null);
+const draggingCategoryId = ref<number | null>(null);
 
 // ── Computed ────────────────────────────────────────────────
 
@@ -66,6 +74,62 @@ safeCategories.forEach((cat) => {
         expandedCategories.value.add(cat.id);
     }
 });
+
+// ── Drag & Drop ──────────────────────────────────────────────
+
+function onClipDragStart(clipId: number, categoryId: number) {
+    draggingClipId.value = clipId;
+    draggingCategoryId.value = categoryId;
+}
+
+function onClipDragOver(clipId: number) {
+    if (draggingClipId.value !== null && draggingClipId.value !== clipId) {
+        dragOverClipId.value = clipId;
+    }
+}
+
+function onClipDrop(targetClipId: number, categoryId: number) {
+    if (
+        draggingClipId.value === null ||
+        draggingClipId.value === targetClipId ||
+        draggingCategoryId.value !== categoryId
+    ) {
+        onClipDragEnd();
+        return;
+    }
+
+    // Only reorder within the same category (no search active — search can distort indices)
+    const currentList = filteredClipsByCategory.value[categoryId];
+    if (!currentList) {
+        onClipDragEnd();
+        return;
+    }
+
+    const items = [...currentList];
+    const fromIdx = items.findIndex((c) => c.id === draggingClipId.value);
+    const toIdx   = items.findIndex((c) => c.id === targetClipId);
+
+    if (fromIdx === -1 || toIdx === -1) {
+        onClipDragEnd();
+        return;
+    }
+
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+
+    onClipDragEnd();
+
+    if (!videoStore.video) return;
+    clipsStore.reorderClips(videoStore.video.id, categoryId, items).catch(() => {
+        // Error is logged inside the store action; nothing extra needed here
+    });
+}
+
+function onClipDragEnd() {
+    draggingClipId.value = null;
+    dragOverClipId.value = null;
+    draggingCategoryId.value = null;
+}
 </script>
 
 <template>
@@ -121,11 +185,30 @@ safeCategories.forEach((cat) => {
                 </div>
 
                 <div v-show="isCategoryExpanded(category.id)" class="category-clips">
-                    <ClipItem
+                    <div
                         v-for="clip in filteredClipsByCategory[category.id]"
                         :key="clip.id"
-                        :clip="clip"
-                    />
+                        class="clip-row-wrapper"
+                        :class="{
+                            'drag-over-clip': dragOverClipId === clip.id && draggingCategoryId === category.id,
+                            'dragging-clip': draggingClipId === clip.id,
+                        }"
+                        @dragover.prevent="onClipDragOver(clip.id)"
+                        @drop="onClipDrop(clip.id, category.id)"
+                        @dragend="onClipDragEnd"
+                    >
+                        <!-- Drag handle (only this element is draggable, not the whole row) -->
+                        <span
+                            class="clip-drag-handle"
+                            title="Arrastrar para reordenar"
+                            draggable="true"
+                            @dragstart="onClipDragStart(clip.id, category.id)"
+                        >
+                            <i class="fas fa-grip-vertical"></i>
+                        </span>
+
+                        <ClipItem :clip="clip" class="clip-item-flex" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -286,6 +369,58 @@ safeCategories.forEach((cat) => {
 
 .category-clips {
     padding: 0.25rem 0.35rem 0.15rem;
+}
+
+/* ── Clip row wrapper with drag handle ── */
+
+.clip-row-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.2rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    transition: border-color 0.15s, background-color 0.15s;
+    margin-bottom: 0.15rem;
+}
+
+.clip-row-wrapper:hover .clip-drag-handle {
+    opacity: 1;
+}
+
+.clip-row-wrapper.drag-over-clip {
+    border-color: var(--color-accent, #00B7B5);
+    background-color: rgba(0, 183, 181, 0.07);
+}
+
+.clip-row-wrapper.dragging-clip {
+    opacity: 0.4;
+}
+
+.clip-drag-handle {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.15rem;
+    color: #444;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    user-select: none;
+    margin-top: 2px;
+}
+
+.clip-drag-handle:hover {
+    color: #888;
+}
+
+.clip-drag-handle:active {
+    cursor: grabbing;
+}
+
+.clip-item-flex {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Scrollbar styling */

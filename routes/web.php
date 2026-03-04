@@ -208,6 +208,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('api/videos/{video}/clips')->name('api.clips.')->group(function () {
         Route::get('/', [VideoClipController::class, 'apiIndex'])->name('index');
         Route::post('/quick', [VideoClipController::class, 'quickStore'])->name('quick-store');
+        Route::post('/reorder', [VideoClipController::class, 'reorder'])->name('reorder');
         Route::post('/timeline-offset', [VideoClipController::class, 'updateTimelineOffset'])->name('timeline-offset');
         Route::post('/share-category', [VideoClipController::class, 'toggleCategoryShare'])->name('share-category');
     });

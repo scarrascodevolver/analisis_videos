@@ -336,6 +336,25 @@ class VideoClipController extends Controller
         return view('clips.public', compact('clip', 'video', 'clipData'));
     }
 
+    // Reordenar clips dentro de un video (drag & drop)
+    // POST /api/videos/{video}/clips/reorder
+    // Payload: { clips: [id1, id2, id3, ...] } — IDs en el nuevo orden
+    public function reorder(Request $request, Video $video): \Illuminate\Http\JsonResponse
+    {
+        $ids = $request->validate([
+            'clips'   => 'required|array',
+            'clips.*' => 'integer',
+        ])['clips'];
+
+        foreach ($ids as $idx => $id) {
+            VideoClip::where('id', $id)
+                ->where('video_id', $video->id)
+                ->update(['sort_order' => $idx + 1]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     // Actualizar offset global de timeline para sincronización
     public function updateTimelineOffset(Request $request, Video $video)
     {

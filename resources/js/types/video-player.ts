@@ -109,6 +109,7 @@ export interface VideoClip {
     created_by: number;
     start_time: number;
     end_time: number;
+    sort_order?: number;
     title: string | null;
     notes: string | null;
     players: string[] | null;

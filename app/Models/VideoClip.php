@@ -16,6 +16,7 @@ class VideoClip extends Model
         'created_by',
         'start_time',
         'end_time',
+        'sort_order',
         'title',
         'notes',
         'players',
@@ -116,6 +117,6 @@ class VideoClip extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('start_time');
+        return $query->orderBy('sort_order')->orderBy('start_time');
     }
 }
