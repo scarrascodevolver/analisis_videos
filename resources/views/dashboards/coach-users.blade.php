@@ -32,12 +32,26 @@
     </div>
 
     <!-- Tabs de categoría -->
-    <ul class="nav nav-tabs mb-4" id="category-tabs" style="border-bottom:2px solid #005461;">
+    <ul class="nav nav-tabs mb-3" id="category-tabs" style="border-bottom:2px solid #005461;">
         <li class="nav-item">
             <a class="nav-link active" href="#" data-category="all">Todas</a>
         </li>
         <!-- Tabs dinámicas por JS -->
     </ul>
+
+    <!-- Pills de unidad táctica -->
+    <div class="d-flex align-items-center mb-4" id="unit-pills">
+        <small class="text-muted mr-3" style="white-space:nowrap;">Unidad:</small>
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-unit active" data-unit="all">Todos</button>
+            <button type="button" class="btn btn-unit" data-unit="forwards">
+                <i class="fas fa-fist-raised mr-1"></i>Forwards
+            </button>
+            <button type="button" class="btn btn-unit" data-unit="backs">
+                <i class="fas fa-running mr-1"></i>Backs
+            </button>
+        </div>
+    </div>
 
     <!-- Loading -->
     <div id="loading-state" class="text-center py-5">
@@ -135,6 +149,24 @@
 }
 .player-videos span { color: #00B7B5; font-weight: 700; }
 
+/* Pills de unidad */
+.btn-unit {
+    background: transparent;
+    border: 1.5px solid #1a3a3a;
+    color: #888;
+    border-radius: 20px !important;
+    padding: 4px 16px;
+    margin-right: 6px;
+    transition: all .2s;
+}
+.btn-unit:hover { border-color: #00B7B5; color: #00B7B5; }
+.btn-unit.active {
+    background: #005461 !important;
+    border-color: #00B7B5 !important;
+    color: #00B7B5 !important;
+    font-weight: 700;
+}
+
 /* Search highlight */
 #player-search:focus {
     border-color: #00B7B5;
@@ -159,6 +191,7 @@ function unitOf(position) {
 
 let allPlayers = [];
 let activeCategory = 'all';
+let activeUnit = 'all';
 let searchQuery = '';
 
 // Cargar todos los jugadores al iniciar
@@ -202,12 +235,14 @@ function filteredPlayers() {
     return allPlayers.filter(p => {
         const matchCat = activeCategory === 'all'
             || String(p.profile?.category?.id) === String(activeCategory);
+        const matchUnit = activeUnit === 'all'
+            || unitOf(p.profile?.position) === activeUnit;
         const q = searchQuery.toLowerCase();
         const matchSearch = !q
             || p.name.toLowerCase().includes(q)
             || (p.profile?.position || '').toLowerCase().includes(q)
             || (p.profile?.category?.name || '').toLowerCase().includes(q);
-        return matchCat && matchSearch;
+        return matchCat && matchUnit && matchSearch;
     });
 }
 
@@ -228,30 +263,29 @@ function render() {
     }
     noResults.style.display = 'none';
 
-    // Agrupar por unidad
-    const groups = { forwards: [], backs: [], 'sin clasificar': [] };
-    players.forEach(p => {
-        const unit = unitOf(p.profile?.position);
-        groups[unit].push(p);
-    });
-
-    const unitLabels = {
-        forwards: '<i class="fas fa-fist-raised mr-1"></i> Forwards',
-        backs: '<i class="fas fa-running mr-1"></i> Backs',
-        'sin clasificar': '<i class="fas fa-user mr-1"></i> Sin clasificar',
-    };
-
     let html = '';
-    ['forwards', 'backs', 'sin clasificar'].forEach(unit => {
-        if (!groups[unit].length) return;
-        html += `<div class="unit-section">
-            <div class="unit-title">${unitLabels[unit]} <span class="font-weight-normal">(${groups[unit].length})</span></div>
-            <div class="row">`;
-        groups[unit].forEach(p => {
-            html += playerCard(p);
+
+    if (activeUnit !== 'all') {
+        // Grid plano — unidad ya filtrada
+        html = `<div class="row">${players.map(playerCard).join('')}</div>`;
+    } else {
+        // Agrupado por unidad
+        const groups = { forwards: [], backs: [], 'sin clasificar': [] };
+        players.forEach(p => groups[unitOf(p.profile?.position)].push(p));
+
+        const unitLabels = {
+            forwards: '<i class="fas fa-fist-raised mr-1"></i> Forwards',
+            backs: '<i class="fas fa-running mr-1"></i> Backs',
+            'sin clasificar': '<i class="fas fa-user mr-1"></i> Sin clasificar',
+        };
+        ['forwards', 'backs', 'sin clasificar'].forEach(unit => {
+            if (!groups[unit].length) return;
+            html += `<div class="unit-section">
+                <div class="unit-title">${unitLabels[unit]} <span class="font-weight-normal">(${groups[unit].length})</span></div>
+                <div class="row">${groups[unit].map(playerCard).join('')}</div>
+            </div>`;
         });
-        html += `</div></div>`;
-    });
+    }
 
     container.innerHTML = html;
 }
@@ -278,6 +312,16 @@ function playerCard(p) {
             </div>
         </div>`;
 }
+
+// Pills de unidad
+document.getElementById('unit-pills').addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-unit]');
+    if (!btn) return;
+    document.querySelectorAll('.btn-unit').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeUnit = btn.dataset.unit;
+    render();
+});
 
 // Búsqueda
 let searchTimeout;
