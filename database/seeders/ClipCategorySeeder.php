@@ -8,44 +8,82 @@ use Illuminate\Database\Seeder;
 
 class ClipCategorySeeder extends Seeder
 {
+    /**
+     * Las 4 categorías de análisis estándar para rugby.
+     * Siempre relativas al equipo analizado (equipo local/propio).
+     */
+    public static array $defaults = [
+        [
+            'name'         => 'Ataque',
+            'slug'         => 'ataque',
+            'color'        => '#1a6b2d',  // verde
+            'hotkey'       => 'a',
+            'lead_seconds' => 5,
+            'lag_seconds'  => 5,
+            'sort_order'   => 1,
+        ],
+        [
+            'name'         => 'Defensa',
+            'slug'         => 'defensa',
+            'color'        => '#922b2b',  // rojo
+            'hotkey'       => 'd',
+            'lead_seconds' => 5,
+            'lag_seconds'  => 5,
+            'sort_order'   => 2,
+        ],
+        [
+            'name'         => 'Scrum Propio',
+            'slug'         => 'scrum-propio',
+            'color'        => '#005461',  // teal primario del sistema
+            'hotkey'       => 's',
+            'lead_seconds' => 5,
+            'lag_seconds'  => 8,
+            'sort_order'   => 3,
+        ],
+        [
+            'name'         => 'Scrum Rival',
+            'slug'         => 'scrum-rival',
+            'color'        => '#7d4e00',  // naranja oscuro
+            'hotkey'       => 'r',
+            'lead_seconds' => 5,
+            'lag_seconds'  => 8,
+            'sort_order'   => 4,
+        ],
+    ];
+
     public function run(): void
     {
-        // 4 categorías genéricas de rugby
-        $categories = [
-            ['name' => 'Try', 'slug' => 'try', 'color' => '#1a6b2d', 'hotkey' => 't', 'lead_seconds' => 5, 'lag_seconds' => 3, 'sort_order' => 1],
-            ['name' => 'Penal', 'slug' => 'penal', 'color' => '#922b2b', 'hotkey' => 'p', 'lead_seconds' => 2, 'lag_seconds' => 5, 'sort_order' => 2],
-            ['name' => 'Scrum', 'slug' => 'scrum', 'color' => '#0056b3', 'hotkey' => 's', 'lead_seconds' => 3, 'lag_seconds' => 5, 'sort_order' => 3],
-            ['name' => 'Tackle', 'slug' => 'tackle', 'color' => '#4a2d82', 'hotkey' => 'k', 'lead_seconds' => 2, 'lag_seconds' => 2, 'sort_order' => 4],
-        ];
+        foreach (Organization::all() as $org) {
+            static::seedForOrganization($org);
+        }
+    }
 
-        // Crear categorías para cada organización existente
-        $organizations = Organization::all();
+    /**
+     * Crea las categorías por defecto para una organización.
+     * Usa firstOrCreate → no duplica si ya existen.
+     */
+    public static function seedForOrganization(Organization $org): void
+    {
+        $firstUser = $org->users()->first();
 
-        foreach ($organizations as $org) {
-            // Obtener el primer usuario de la org como creador
-            $firstUser = $org->users()->first();
-            if (! $firstUser) {
-                continue;
-            }
-
-            foreach ($categories as $cat) {
-                ClipCategory::firstOrCreate(
-                    [
-                        'organization_id' => $org->id,
-                        'slug' => $cat['slug'],
-                    ],
-                    [
-                        'name' => $cat['name'],
-                        'color' => $cat['color'],
-                        'hotkey' => $cat['hotkey'],
-                        'lead_seconds' => $cat['lead_seconds'],
-                        'lag_seconds' => $cat['lag_seconds'],
-                        'sort_order' => $cat['sort_order'],
-                        'is_active' => true,
-                        'created_by' => $firstUser->id,
-                    ]
-                );
-            }
+        foreach (static::$defaults as $cat) {
+            ClipCategory::firstOrCreate(
+                [
+                    'organization_id' => $org->id,
+                    'slug'            => $cat['slug'],
+                ],
+                [
+                    'name'         => $cat['name'],
+                    'color'        => $cat['color'],
+                    'hotkey'       => $cat['hotkey'],
+                    'lead_seconds' => $cat['lead_seconds'],
+                    'lag_seconds'  => $cat['lag_seconds'],
+                    'sort_order'   => $cat['sort_order'],
+                    'scope'        => ClipCategory::SCOPE_ORGANIZATION,
+                    'is_active'    => true,
+                    'created_by'   => $firstUser?->id,
+                ]
+            );
         }
     }
 }

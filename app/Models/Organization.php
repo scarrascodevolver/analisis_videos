@@ -56,6 +56,11 @@ class Organization extends Model
                 $organization->invitation_code = self::generateUniqueInvitationCode();
             }
         });
+
+        // Sembrar categorías de clips por defecto al crear organización
+        static::created(function ($organization) {
+            \Database\Seeders\ClipCategorySeeder::seedForOrganization($organization);
+        });
     }
 
     /**
