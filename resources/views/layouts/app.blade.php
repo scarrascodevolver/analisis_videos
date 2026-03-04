@@ -1080,7 +1080,7 @@
                 @if($__code && in_array(Auth::user()->role, ['analista', 'entrenador']))
                 <div class="modal-footer" style="border-top:1px solid #333;padding:.6rem 1rem;">
                     <a href="{{ route('admin.organization') }}" class="btn btn-sm"
-                        style="background:#333;color:#aaa;font-size:.78rem;" data-dismiss="modal">
+                        style="background:#333;color:#aaa;font-size:.78rem;">
                         <i class="fas fa-cog mr-1"></i> Gestionar código
                     </a>
                 </div>
