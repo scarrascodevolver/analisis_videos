@@ -170,6 +170,11 @@
             color: #00B7B5 !important;
         }
 
+        .nav-sidebar .nav-link.active p,
+        .nav-sidebar .nav-link.active > p {
+            color: #fff !important;
+        }
+
         .nav-sidebar .nav-link:hover {
             background-color: var(--color-secondary);
             color: #00d4d2 !important;
