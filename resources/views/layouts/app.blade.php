@@ -322,6 +322,104 @@
             border-top: 3px solid var(--color-primary);
         }
 
+        /* ── Notification dropdown ───────────────────────────── */
+        .notif-dropdown {
+            min-width: 300px;
+            max-width: 320px;
+            padding: 0;
+            background: #1a1a2e;
+            border: 1px solid rgba(0,183,181,.25);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.5);
+            overflow: hidden;
+        }
+        .notif-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            background: rgba(0,84,97,.2);
+            border-bottom: 1px solid rgba(0,183,181,.15);
+        }
+        .notif-count-badge {
+            margin-left: auto;
+            background: #e74c3c;
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+        .notif-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 12px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: .78rem;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+            transition: background .15s;
+        }
+        .notif-item:hover {
+            background: rgba(0,183,181,.08);
+            color: #fff;
+            text-decoration: none;
+        }
+        .notif-icon {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            margin-top: 1px;
+        }
+        .notif-body {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .notif-text {
+            line-height: 1.3;
+            color: #ddd;
+        }
+        .notif-text strong { color: #fff; }
+        .notif-text em { color: #00B7B5; font-style: normal; }
+        .notif-time {
+            font-size: .68rem;
+            color: #666;
+        }
+        .notif-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 14px 12px;
+            font-size: .78rem;
+            color: #666;
+        }
+        .notif-footer {
+            padding: 7px 12px;
+            background: rgba(0,84,97,.15);
+            border-top: 1px solid rgba(0,183,181,.12);
+            text-align: center;
+        }
+        .notif-footer a {
+            font-size: .72rem;
+            color: #00B7B5;
+            text-decoration: none;
+        }
+        .notif-footer a:hover { color: #fff; }
+
         .small-box .icon {
             font-size: 70px;
             top: 10px;
@@ -543,63 +641,68 @@
                             </span>
                         @endif
                     </a>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        <span class="dropdown-item dropdown-header">
-                            {{ auth()->user()->unreadNotifications->count() }} Notificaciones no leídas
-                        </span>
-                        <div class="dropdown-divider"></div>
+                    <div class="dropdown-menu dropdown-menu-right notif-dropdown">
+                        {{-- Header --}}
+                        <div class="notif-header">
+                            <i class="far fa-bell mr-1" style="color:#00B7B5;"></i>
+                            <span>Notificaciones</span>
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                                <span class="notif-count-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                            @endif
+                        </div>
 
                         @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                            @if(($notification->data['type'] ?? '') === 'tournament_join_request')
+                            @php
+                                $type = $notification->data['type'] ?? '';
+                            @endphp
+                            @if($type === 'tournament_join_request')
                                 <a href="{{ route('tournaments.index') }}#pane-solicitudes"
-                                   class="dropdown-item"
+                                   class="notif-item"
                                    onclick="markNotificationRead('{{ $notification->id }}')">
-                                    <i class="fas fa-user-clock mr-2 text-warning"></i>
-                                    <strong>{{ $notification->data['club_org_name'] }}</strong> quiere unirse a
-                                    <em>{{ $notification->data['tournament_name'] }}</em>
-                                    <span class="float-right text-muted text-sm">
-                                        {{ $notification->created_at->diffForHumans() }}
+                                    <span class="notif-icon" style="background:rgba(255,193,7,.15);color:#ffc107;">
+                                        <i class="fas fa-user-clock"></i>
+                                    </span>
+                                    <span class="notif-body">
+                                        <span class="notif-text"><strong>{{ Str::limit($notification->data['club_org_name'], 20) }}</strong> quiere unirse a <em>{{ Str::limit($notification->data['tournament_name'], 22) }}</em></span>
+                                        <span class="notif-time">{{ $notification->created_at->diffForHumans() }}</span>
                                     </span>
                                 </a>
-                            @elseif(($notification->data['type'] ?? '') === 'video_shared')
+                            @elseif($type === 'video_shared')
                                 <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
-                                   class="dropdown-item">
-                                    <i class="fas fa-share-alt mr-2" style="color:#00B7B5;"></i>
-                                    <strong>{{ $notification->data['source_org_name'] }}</strong> te envió un video
-                                    <span class="float-right text-muted text-sm">
-                                        {{ $notification->created_at->diffForHumans() }}
+                                   class="notif-item">
+                                    <span class="notif-icon" style="background:rgba(0,183,181,.15);color:#00B7B5;">
+                                        <i class="fas fa-share-alt"></i>
                                     </span>
-                                    <p class="text-sm text-muted mb-0 mt-1">
-                                        {{ Str::limit($notification->data['video_title'], 50) }}
-                                    </p>
+                                    <span class="notif-body">
+                                        <span class="notif-text"><strong>{{ Str::limit($notification->data['source_org_name'], 20) }}</strong> te envió: <em>{{ Str::limit($notification->data['video_title'], 25) }}</em></span>
+                                        <span class="notif-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                    </span>
                                 </a>
                             @else
                                 <a href="{{ route('videos.show', $notification->data['video_id']) }}?notification_id={{ $notification->id }}"
-                                    class="dropdown-item">
-                                    <i class="fas fa-at mr-2 text-primary"></i>
-                                    <strong>{{ $notification->data['mentioned_by_name'] }}</strong> te mencionó
-                                    <span class="float-right text-muted text-sm">
-                                        {{ $notification->created_at->diffForHumans() }}
+                                   class="notif-item">
+                                    <span class="notif-icon" style="background:rgba(0,84,97,.3);color:#00B7B5;">
+                                        <i class="fas fa-at"></i>
                                     </span>
-                                    <p class="text-sm text-muted mb-0 mt-1">
-                                        {{ Str::limit($notification->data['comment_text'], 50) }}
-                                    </p>
+                                    <span class="notif-body">
+                                        <span class="notif-text"><strong>{{ Str::limit($notification->data['mentioned_by_name'], 20) }}</strong> te mencionó: <em>{{ Str::limit($notification->data['comment_text'], 30) }}</em></span>
+                                        <span class="notif-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                    </span>
                                 </a>
                             @endif
-                            <div class="dropdown-divider"></div>
                         @empty
-                            <div class="dropdown-item text-center text-muted">
-                                <i class="fas fa-check-circle mr-1"></i>
-                                No tienes notificaciones nuevas
+                            <div class="notif-empty">
+                                <i class="fas fa-check-circle" style="color:#00B7B5;opacity:.6;"></i>
+                                <span>Todo al día</span>
                             </div>
-                            <div class="dropdown-divider"></div>
                         @endforelse
 
-                        @if (auth()->user()->unreadNotifications->count() > 0)
-                            <a href="#" class="dropdown-item dropdown-footer"
-                                onclick="event.preventDefault(); markAllNotificationsRead();">
-                                Marcar todas como leídas
-                            </a>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <div class="notif-footer">
+                                <a href="#" onclick="event.preventDefault();markAllNotificationsRead();">
+                                    <i class="fas fa-check-double mr-1"></i>Marcar todas como leídas
+                                </a>
+                            </div>
                         @endif
                     </div>
                 </li>
