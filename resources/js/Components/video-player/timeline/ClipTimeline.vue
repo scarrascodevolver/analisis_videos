@@ -529,7 +529,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
 .timeline-lane {
     display: flex;
     align-items: stretch;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1px;
 }
 
 /* ── Lane label ───────────────────────────────────────────────────────────── */
