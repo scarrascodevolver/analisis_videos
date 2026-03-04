@@ -35,16 +35,9 @@ class TournamentController extends Controller
         // Eager-load divisions with their registrations
         $tournament->load([
             'divisions' => fn($q) => $q->orderBy('order')->orderBy('name'),
-            'divisions.registrations' => fn($q) => $q->whereIn('status', ['active', 'pending'])
+            'registrations' => fn($q) => $q->whereIn('status', ['active', 'pending'])
                 ->with('clubOrganization:id,name,logo_path'),
         ]);
-
-        // Registrations not assigned to any division
-        $undividedRegistrations = \App\Models\TournamentRegistration::where('tournament_id', $tournament->id)
-            ->whereNull('division_id')
-            ->whereIn('status', ['active', 'pending'])
-            ->with('clubOrganization:id,name,logo_path')
-            ->get();
 
         // Mark tournament_join_request notifications for this tournament as read
         auth()->user()->unreadNotifications()
@@ -57,7 +50,7 @@ class TournamentController extends Controller
         $existingNames = $tournament->divisions->pluck('name')->map(fn($n) => strtolower($n))->toArray();
         $remainingSuggestions = array_values(array_filter($suggestions, fn($s) => !in_array(strtolower($s), $existingNames)));
 
-        return view('tournaments.show', compact('tournament', 'remainingSuggestions', 'undividedRegistrations'));
+        return view('tournaments.show', compact('tournament', 'remainingSuggestions'));
     }
 
     /**
@@ -78,7 +71,10 @@ class TournamentController extends Controller
         }
 
         $tournaments = Tournament::withCount('videos')
-            ->with(['divisions.registrations' => fn ($q) => $q->whereIn('status', ['active', 'pending'])])
+            ->with([
+                'divisions',
+                'registrations' => fn ($q) => $q->whereIn('status', ['active', 'pending']),
+            ])
             ->orderBy('name')
             ->get();
 

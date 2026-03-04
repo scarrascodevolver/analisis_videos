@@ -102,11 +102,6 @@
     </div>
 
     {{-- Enrolled clubs --}}
-    @php
-        $hasAnyDivided   = $tournament->divisions->some(fn($d) => $d->registrations->isNotEmpty());
-        $hasUndivided    = $undividedRegistrations->isNotEmpty();
-        $hasAnyEnrolled  = $hasAnyDivided || $hasUndivided;
-    @endphp
     <div class="card card-rugby">
         <div class="card-header">
             <h3 class="card-title">
@@ -114,34 +109,16 @@
             </h3>
         </div>
         <div class="card-body p-0">
-            @if(!$hasAnyEnrolled)
+            @if($tournament->registrations->isEmpty())
                 <div class="text-center py-4 text-muted">
                     <i class="fas fa-user-plus fa-2x mb-2" style="opacity:.3;"></i>
                     <p class="mb-0">Ningún club inscripto todavía.</p>
                     <small>Los clubes verán este torneo en "Torneos Disponibles" si está marcado como <strong>Público</strong>.</small>
                 </div>
             @else
-                {{-- Clubs grouped by division --}}
-                @foreach($tournament->divisions as $div)
-                    @if($div->registrations->isNotEmpty())
-                        <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.07);">
-                            <h6 class="mb-2 mt-1" style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;">
-                                <i class="fas fa-layer-group mr-1"></i>{{ $div->name }}
-                            </h6>
-                            @include('tournaments.partials.reg-table', ['registrations' => $div->registrations])
-                        </div>
-                    @endif
-                @endforeach
-
-                {{-- Clubs without a division --}}
-                @if($hasUndivided)
-                    <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.07);">
-                        <h6 class="mb-2 mt-1" style="color:#888;font-size:.85rem;font-weight:600;letter-spacing:.05em;">
-                            <i class="fas fa-question-circle mr-1"></i>Sin división asignada
-                        </h6>
-                        @include('tournaments.partials.reg-table', ['registrations' => $undividedRegistrations])
-                    </div>
-                @endif
+                <div class="px-3 py-2">
+                    @include('tournaments.partials.reg-table', ['registrations' => $tournament->registrations])
+                </div>
             @endif
         </div>
     </div>

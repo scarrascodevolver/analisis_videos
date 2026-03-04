@@ -15,11 +15,6 @@ class TournamentDivision extends Model
         return $this->belongsTo(Tournament::class);
     }
 
-    public function registrations(): HasMany
-    {
-        return $this->hasMany(TournamentRegistration::class, 'division_id');
-    }
-
     public function videoShares(): HasMany
     {
         return $this->hasMany(VideoOrgShare::class, 'division_id');

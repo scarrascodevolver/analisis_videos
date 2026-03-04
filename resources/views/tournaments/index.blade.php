@@ -182,7 +182,7 @@
 
                                         {{-- Ver inscriptos --}}
                                         @php
-                                            $regCount = $tournament->divisions->sum(fn($d) => $d->registrations->count());
+                                            $regCount = $tournament->registrations->count();
                                         @endphp
                                         <a href="{{ route('tournaments.show', $tournament) }}"
                                            class="ml-auto"
