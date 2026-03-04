@@ -316,6 +316,20 @@ function markAllNotificationsAsRead() {
                                     <p>Jugadores</p>
                                 </a>
                             </li>
+                            <!-- Torneos: solo para asociaciones -->
+                            <li v-if="organization?.type === 'asociacion'" class="nav-item">
+                                <a href="/tournaments" class="nav-link" :class="{ active: isActive('/tournaments') }">
+                                    <i class="nav-icon fas fa-trophy"></i>
+                                    <p>Torneos</p>
+                                </a>
+                            </li>
+                            <!-- Torneos disponibles: solo para clubs -->
+                            <li v-if="organization?.type === 'club'" class="nav-item">
+                                <a href="/tournaments/explore" class="nav-link" :class="{ active: isActive('/tournaments/explore') }">
+                                    <i class="nav-icon fas fa-globe"></i>
+                                    <p>Torneos Disponibles</p>
+                                </a>
+                            </li>
                             <li class="nav-header">ADMINISTRACIÓN</li>
                             <li class="nav-item">
                                 <a href="/admin" class="nav-link" :class="{ active: isActive('/admin') && !isActive('/admin/organization') }">
@@ -335,20 +349,6 @@ function markAllNotificationsAsRead() {
                                     <p>
                                         Crear Jugadas <span class="badge badge-info" style="font-size: 0.55rem; padding: 1px 4px; margin-left: 2px; vertical-align: middle;">β</span>
                                     </p>
-                                </a>
-                            </li>
-                            <!-- Torneos: solo para asociaciones -->
-                            <li v-if="organization?.type === 'asociacion'" class="nav-item">
-                                <a href="/tournaments" class="nav-link" :class="{ active: isActive('/tournaments') }">
-                                    <i class="nav-icon fas fa-trophy"></i>
-                                    <p>Torneos</p>
-                                </a>
-                            </li>
-                            <!-- Torneos disponibles: solo para clubs -->
-                            <li v-if="organization?.type === 'club'" class="nav-item">
-                                <a href="/tournaments/explore" class="nav-link" :class="{ active: isActive('/tournaments/explore') }">
-                                    <i class="nav-icon fas fa-globe"></i>
-                                    <p>Torneos Disponibles</p>
                                 </a>
                             </li>
                         </template>
