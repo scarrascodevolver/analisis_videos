@@ -260,6 +260,35 @@ function ctxOutsideClick(e: MouseEvent) {
 onMounted(()      => document.addEventListener('click', ctxOutsideClick, true));
 onBeforeUnmount(() => document.removeEventListener('click', ctxOutsideClick, true));
 
+function copyToClipboard(text: string): boolean {
+    // Intenta clipboard API moderna primero
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(
+            () => toast?.success('¡Link copiado!'),
+            () => {
+                // Fallback si clipboard API falla (HTTP, sin foco, etc.)
+                fallbackCopy(text);
+            }
+        );
+        return true;
+    }
+    return fallbackCopy(text);
+}
+
+function fallbackCopy(text: string): boolean {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) toast?.success('¡Link copiado!');
+    else    toast?.error('No se pudo copiar el link');
+    return ok;
+}
+
 async function ctxCopyLink(clip: VideoClip) {
     closeCtxMenu();
     const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
@@ -280,17 +309,11 @@ async function ctxCopyLink(clip: VideoClip) {
                     url = data.url;
                 }
             }
-        } catch { /* fallback */ }
+        } catch { /* fallback a URL legacy */ }
     }
 
     url = url ?? `${window.location.origin}/clips/${clip.id}/share`;
-
-    try {
-        await navigator.clipboard.writeText(url);
-        toast?.success('¡Link copiado!');
-    } catch {
-        toast?.error('No se pudo copiar el link');
-    }
+    copyToClipboard(url);
 }
 
 async function ctxDelete(clip: VideoClip) {

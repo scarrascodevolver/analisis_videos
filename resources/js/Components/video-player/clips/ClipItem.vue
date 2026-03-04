@@ -84,12 +84,28 @@ async function copyLink(event: MouseEvent) {
         }
     }
 
-    try {
-        await navigator.clipboard.writeText(urlToCopy);
-        toast?.success('¡Link copiado!');
-    } catch {
-        toast?.error('No se pudo copiar el link');
+    // Clipboard API moderna con fallback a execCommand
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(urlToCopy).then(
+            () => toast?.success('¡Link copiado!'),
+            () => fallbackCopy(urlToCopy)
+        );
+    } else {
+        fallbackCopy(urlToCopy);
     }
+}
+
+function fallbackCopy(text: string) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) toast?.success('¡Link copiado!');
+    else    toast?.error('No se pudo copiar el link');
 }
 
 async function handleDelete(event: MouseEvent) {
