@@ -570,16 +570,17 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     display: flex;
     align-items: center;
     overflow: visible;
-    /* Include transform so hover fan animates smoothly */
-    transition: filter 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease, transform 0.18s ease;
+    /* transform NOT included — fan is instant (no jarring drop animation) */
+    transition: filter 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
+    transform: translateY(0); /* explicit base */
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
     min-width: 8px !important;
     opacity: 0.85;
 }
 
-/* On lane hover: fan overlapping clips downward by their stagger row index */
+/* On lane hover: fan overlapping clips slightly to the right by stagger row index */
 .lane-track:hover .clip-block {
-    transform: translateY(calc(var(--row-idx, 0) * 8px));
+    transform: translateX(calc(var(--row-idx, 0) * 3px));
 }
 
 .clip-block:hover {
