@@ -7,7 +7,7 @@ interface ShortcutHandler {
     description?: string;
 }
 
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(options?: { isModalOpen?: () => boolean }) {
     const shortcuts: Map<string, ShortcutHandler> = new Map();
 
     function isInputFocused(): boolean {
@@ -44,6 +44,9 @@ export function useKeyboardShortcuts() {
 
         // Ignore if user is typing in an input field
         if (isInputFocused()) return;
+
+        // Ignore if any modal is open
+        if (options?.isModalOpen?.()) return;
 
         // Blur defensivo: si hay algún elemento UI con foco (ej. botón de timeline)
         // lo desfocalizamos para evitar que intercepte la tecla como acción propia.

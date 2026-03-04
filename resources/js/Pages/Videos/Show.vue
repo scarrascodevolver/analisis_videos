@@ -317,7 +317,17 @@ provide('toast', toast);
 const viewTracking = useViewTracking(props.video.id);
 
 // Keyboard shortcuts
-const shortcuts = useKeyboardShortcuts();
+const isAnyModalOpen = computed(() =>
+    showShareModal.value ||
+    showLineupModal.value ||
+    showCategoryModal.value ||
+    showManageCategoriesModal.value ||
+    showDeleteModal.value ||
+    showStatsModal.value ||
+    showUploadAngleModal.value ||
+    showSyncModal.value
+);
+const shortcuts = useKeyboardShortcuts({ isModalOpen: () => isAnyModalOpen.value });
 
 onMounted(async () => {
     // Set current video (avoid resetting videoRef after children mounted)
