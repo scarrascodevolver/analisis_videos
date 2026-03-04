@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
 import ClipItem from './ClipItem.vue';
@@ -55,12 +55,6 @@ const categoriesWithClips = computed(() => {
     );
 });
 
-// Auto-expandir categorías cuando aparecen clips (carga async o reorden)
-watch(
-    () => clipsStore.categoriesWithClips,
-    (cats) => { cats.forEach((cat) => expandedCategories.value.add(cat.id)); },
-    { immediate: true }
-);
 
 // ── Actions ─────────────────────────────────────────────────
 
@@ -242,7 +236,7 @@ function onCatDragEnd() {
                     </div>
                 </div>
 
-                <div v-show="isCategoryExpanded(category.id)" class="category-clips">
+                <div v-if="isCategoryExpanded(category.id)" class="category-clips">
                     <div
                         v-for="clip in filteredClipsByCategory[category.id]"
                         :key="clip.id"
