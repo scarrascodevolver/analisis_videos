@@ -14,12 +14,21 @@ class TournamentController extends Controller
      * Tournament detail page — divisions, enrolled clubs, pending requests.
      * GET /tournaments/{tournament}
      */
-    public function show(Tournament $tournament): \Illuminate\View\View
+    public function show(Tournament $tournament)
     {
         $org = auth()->user()->currentOrganization();
 
-        // Only the owning association can see this page
-        if (!$org || $tournament->organization_id !== $org->id) {
+        if (! $org) {
+            abort(403);
+        }
+
+        // Clubs should use the explore page
+        if (! $org->isAsociacion()) {
+            return redirect()->route('tournaments.explore');
+        }
+
+        // Only the owning association can see this tournament
+        if ($tournament->organization_id !== $org->id) {
             abort(403);
         }
 
@@ -55,12 +64,17 @@ class TournamentController extends Controller
      * Show the tournament management index.
      * GET /tournaments
      */
-    public function index(): \Illuminate\View\View
+    public function index()
     {
         $org = auth()->user()->currentOrganization();
 
-        if (! $org || ! $org->isAsociacion()) {
-            abort(403, 'Solo las asociaciones pueden gestionar torneos.');
+        if (! $org) {
+            abort(403);
+        }
+
+        // Clubs should use the explore page
+        if (! $org->isAsociacion()) {
+            return redirect()->route('tournaments.explore');
         }
 
         $tournaments = Tournament::withCount('videos')
