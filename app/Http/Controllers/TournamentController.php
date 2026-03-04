@@ -57,13 +57,18 @@ class TournamentController extends Controller
      */
     public function index(): \Illuminate\View\View
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion()) {
+            abort(403, 'Solo las asociaciones pueden gestionar torneos.');
+        }
+
         $tournaments = Tournament::withCount('videos')
             ->with(['divisions.registrations' => fn ($q) => $q->whereIn('status', ['active', 'pending'])])
             ->orderBy('name')
             ->get();
 
         $pendingRegistrations = collect();
-        $org = auth()->user()->currentOrganization();
         if ($org && $org->isAsociacion()) {
             // Load all pending registrations for tournaments of this association
             $tournamentIds = $tournaments->pluck('id');
@@ -89,6 +94,12 @@ class TournamentController extends Controller
      */
     public function rename(Request $request, Tournament $tournament): \Illuminate\Http\JsonResponse
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion() || $tournament->organization_id !== $org->id) {
+            return response()->json(['error' => 'No autorizado.'], 403);
+        }
+
         $request->validate(['name' => 'required|string|max:255']);
         $tournament->update(['name' => $request->name]);
 
@@ -97,6 +108,12 @@ class TournamentController extends Controller
 
     public function update(Request $request, Tournament $tournament): \Illuminate\Http\JsonResponse
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion() || $tournament->organization_id !== $org->id) {
+            return response()->json(['error' => 'No autorizado.'], 403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'season' => 'nullable|string|max:20',
@@ -114,6 +131,12 @@ class TournamentController extends Controller
      */
     public function destroy(Tournament $tournament): \Illuminate\Http\RedirectResponse
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion() || $tournament->organization_id !== $org->id) {
+            abort(403);
+        }
+
         if ($tournament->videos()->exists()) {
             return back()->with('error', 'No se puede eliminar: el torneo tiene videos asociados.');
         }
@@ -131,6 +154,12 @@ class TournamentController extends Controller
      */
     public function apiDestroy(Tournament $tournament): \Illuminate\Http\JsonResponse
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion() || $tournament->organization_id !== $org->id) {
+            return response()->json(['error' => 'No autorizado.'], 403);
+        }
+
         set_time_limit(120);
 
         $videos = $tournament->videos()->with('organization')->get();
@@ -236,12 +265,16 @@ class TournamentController extends Controller
      */
     public function store(Request $request)
     {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || ! $org->isAsociacion()) {
+            return response()->json(['error' => 'Solo las asociaciones pueden crear torneos.'], 403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'season' => 'nullable|string|max:20',
         ]);
-
-        $org = auth()->user()->currentOrganization();
 
         $tournament = Tournament::firstOrCreate(
             [
