@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tournament_registrations', function (Blueprint $table) {
+            $table->dropForeign(['division_id']);
             $table->dropColumn('division_id');
         });
     }
