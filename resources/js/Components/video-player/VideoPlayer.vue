@@ -57,6 +57,10 @@ const hasMultiCamera = computed(() =>
 const showComments = ref(true);
 const isTheaterMode = ref(false);
 
+// Trigger para que SidebarPanel cambie al tab de comentarios
+const commentTabTrigger = ref(0);
+provide('commentTabTrigger', commentTabTrigger);
+
 // Colapsar el sidebar IZQUIERDO de AdminLTE al primer play.
 // Una vez colapsado, no vuelve automáticamente (el usuario lo expande manualmente).
 let sidebarCollapsedByVideo = false;
@@ -157,6 +161,7 @@ function toggleComments() {
 }
 
 function handleAddComment() {
+    commentTabTrigger.value++;
     const sidebar = document.getElementById('sidebarSection');
     if (sidebar) {
         sidebar.scrollIntoView({ behavior: 'smooth' });

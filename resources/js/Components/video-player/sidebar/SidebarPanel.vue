@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, inject, watch, type Ref } from 'vue';
 import SidebarTabs from './SidebarTabs.vue';
 
 type TabType = 'comments' | 'clips';
@@ -23,6 +23,14 @@ const activeTab = ref<TabType>(initialActiveTab);
 
 function handleTabChange(tab: TabType) {
     activeTab.value = tab;
+}
+
+// Cambiar al tab de comentarios cuando VideoPlayer lo solicite
+const commentTabTrigger = inject<Ref<number>>('commentTabTrigger');
+if (commentTabTrigger) {
+    watch(commentTabTrigger, () => {
+        activeTab.value = 'comments';
+    });
 }
 </script>
 
