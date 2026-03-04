@@ -653,17 +653,9 @@ class VideoController extends Controller
 
         $videoTitle = $video->title;
 
-        // Eliminar video de Bunny Stream si existe
+        // Despachar eliminación en Bunny de forma asíncrona (no bloquea la respuesta)
         if ($video->bunny_video_id) {
-            try {
-                \App\Services\BunnyStreamService::forOrganization($video->organization)
-                    ->deleteVideo($video->bunny_video_id);
-            } catch (\Exception $e) {
-                \Log::warning('Bunny Stream delete failed: '.$e->getMessage(), [
-                    'video_id' => $video->id,
-                    'bunny_video_id' => $video->bunny_video_id,
-                ]);
-            }
+            \App\Jobs\DeleteBunnyVideoJob::dispatch($video->bunny_video_id, $video->organization_id);
         }
 
         $video->delete();

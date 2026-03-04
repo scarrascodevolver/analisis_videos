@@ -270,7 +270,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     ? implode(' · ', $angleNames)
                     : $anglesCount . ' ángulos';
             @endphp
-            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
+            <div class="match-card" data-video-id="{{ $video->id }}" onclick="window.location.href='{{ route('videos.show', $video) }}'">
                 {{-- Botones flotantes --}}
                 @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
                     <a href="{{ route('videos.edit', $video) }}"
@@ -412,7 +412,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     ? implode(' · ', $angleNames)
                     : $anglesCount . ' ángulos';
             @endphp
-            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $video) }}'">
+            <div class="match-card" data-video-id="{{ $video->id }}" onclick="window.location.href='{{ route('videos.show', $video) }}'">
                 {{-- Botones flotantes --}}
                 @if(in_array(auth()->user()->role, ['analista', 'entrenador']) || auth()->id() === $video->uploaded_by)
                     <a href="{{ route('videos.edit', $video) }}"
@@ -1339,7 +1339,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         }
     });
 
-    // Eliminar video desde modal de confirmación
+    // Eliminar video — optimistic UI (quita la card al instante, sin recargar)
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.btn-delete-video');
         if (!btn) return;
@@ -1347,8 +1347,15 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         const url     = btn.dataset.url;
         const videoId = btn.dataset.videoId;
 
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+        // Cerrar modal y quitar card del DOM de inmediato
+        const modal = document.getElementById('deleteModal-' + videoId);
+        $(modal).modal('hide');
+        const card = document.querySelector('.match-card[data-video-id="' + videoId + '"]');
+        if (card) {
+            card.style.transition = 'opacity .2s';
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 200);
+        }
 
         fetch(url, {
             method: 'DELETE',
@@ -1360,18 +1367,14 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         })
         .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
+            if (!data.success) {
                 alert(data.message || 'No se pudo eliminar.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+                window.location.reload();
             }
         })
         .catch(() => {
             alert('Error de red. Intente nuevamente.');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+            window.location.reload();
         });
     });
 
