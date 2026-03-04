@@ -245,8 +245,9 @@ export const useClipsStore = defineStore('clips', () => {
             return found ? { ...cat, sort_order: found.sort_order } : cat;
         });
 
+        // Usar el endpoint dedicado de reorder (no el update general que requiere name)
         const api = useVideoApi(videoId);
-        await Promise.all(updated.map((cat) => api.updateCategory(cat.id, { sort_order: cat.sort_order })));
+        await api.reorderCategories(newOrderedCategories.map((c) => c.id));
     }
 
     async function reorderClips(videoId: number, categoryId: number, newOrderedClips: VideoClip[]) {

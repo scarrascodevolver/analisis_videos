@@ -231,6 +231,13 @@ export function useVideoApi(videoId: number) {
         });
     }
 
+    async function reorderCategories(orderedIds: number[]): Promise<{ success: boolean }> {
+        return request('/admin/clip-categories/reorder', {
+            method: 'POST',
+            body: JSON.stringify({ order: orderedIds }),
+        });
+    }
+
     async function deleteCategory(categoryId: number): Promise<{ success: boolean }> {
         return request(`/admin/clip-categories/${categoryId}`, {
             method: 'DELETE',
@@ -319,6 +326,7 @@ export function useVideoApi(videoId: number) {
         getClipCategories,
         createCategory,
         updateCategory,
+        reorderCategories,
         deleteCategory,
         // Annotations
         getAnnotations,
