@@ -11,14 +11,22 @@
 <div class="container-fluid">
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="mb-0" style="color:#00B7B5;">
-                <i class="fas fa-users mr-2"></i>Plantilla
-            </h4>
-            <small class="text-muted" id="player-counter">Cargando...</small>
-        </div>
-        <div style="width:260px;">
+    <div class="mb-3">
+        <h4 class="mb-0" style="color:#00B7B5;">
+            <i class="fas fa-users mr-2"></i>Plantilla
+            <small class="text-muted ml-2" id="player-counter" style="font-size:.75rem; font-weight:400;"></small>
+        </h4>
+    </div>
+
+    <!-- Tabs de categoría + buscador -->
+    <div class="d-flex justify-content-between align-items-center mb-3" style="border-bottom:2px solid #005461;">
+        <ul class="nav nav-tabs border-0 flex-grow-1" id="category-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-category="all">Todas</a>
+            </li>
+            <!-- Tabs dinámicas por JS -->
+        </ul>
+        <div style="width:220px; padding-bottom:6px;">
             <div class="input-group input-group-sm">
                 <div class="input-group-prepend">
                     <span class="input-group-text" style="background:#005461; border-color:#005461;">
@@ -30,14 +38,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Tabs de categoría -->
-    <ul class="nav nav-tabs mb-3" id="category-tabs" style="border-bottom:2px solid #005461;">
-        <li class="nav-item">
-            <a class="nav-link active" href="#" data-category="all">Todas</a>
-        </li>
-        <!-- Tabs dinámicas por JS -->
-    </ul>
 
     <!-- Pills de unidad táctica -->
     <div class="d-flex align-items-center mb-4" id="unit-pills">
