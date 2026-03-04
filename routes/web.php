@@ -157,6 +157,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Compartir videos entre organizaciones
     Route::post('videos/{video}/share', [VideoShareController::class, 'store'])->name('videos.share.store');
+    Route::post('videos/{video}/share-multiple', [VideoShareController::class, 'shareMultiple'])->name('videos.share.multiple');
     Route::get('videos/{video}/shares', [VideoShareController::class, 'index'])->name('videos.shares.index');
     Route::delete('shares/{shareId}', [VideoShareController::class, 'destroy'])->name('shares.destroy');
     Route::get('api/tournaments/{tournament}/registered-clubs', [VideoShareController::class, 'registeredClubs'])->name('api.tournaments.registered-clubs');

@@ -93,54 +93,90 @@ const canShare = computed(() =>
 
 const showShareModal  = ref(false);
 const shareDivisions  = ref<{ id: number; name: string }[]>([]);
-const shareClubs      = ref<{ id: number; name: string }[]>([]);
-const selectedDivId   = ref('');
-const selectedClubId  = ref('');
+const shareAllClubs   = ref<{ id: number; name: string; division_id: number | null; division_name: string | null }[]>([]);
+const shareDivFilter  = ref<number | null>(null);
+const selectedClubIds = ref<Set<number>>(new Set());
 const shareNotes      = ref('');
 const shareLoading    = ref(false);
 const shareFeedback   = ref<{ type: string; message: string } | null>(null);
 
-async function openShareModal() {
-    showShareModal.value = true;
-    selectedDivId.value  = '';
-    selectedClubId.value = '';
-    shareNotes.value     = '';
-    shareFeedback.value  = null;
-    shareClubs.value     = [];
-    shareDivisions.value = [];
+const shareFilteredClubs = computed(() =>
+    shareDivFilter.value
+        ? shareAllClubs.value.filter(c => c.division_id === shareDivFilter.value)
+        : shareAllClubs.value
+);
 
-    // Load clubs and divisions in parallel — clubs are all active registrations (no division filter)
+const shareSelectAllState = computed<'none' | 'some' | 'all'>(() => {
+    const visible = shareFilteredClubs.value;
+    if (visible.length === 0) return 'none';
+    const checked = visible.filter(c => selectedClubIds.value.has(c.id)).length;
+    if (checked === 0) return 'none';
+    if (checked === visible.length) return 'all';
+    return 'some';
+});
+
+function shareToggleSelectAll() {
+    const visible = shareFilteredClubs.value;
+    if (shareSelectAllState.value === 'all') {
+        visible.forEach(c => selectedClubIds.value.delete(c.id));
+    } else {
+        visible.forEach(c => selectedClubIds.value.add(c.id));
+    }
+    selectedClubIds.value = new Set(selectedClubIds.value); // trigger reactivity
+}
+
+function shareToggleClub(clubId: number) {
+    const next = new Set(selectedClubIds.value);
+    if (next.has(clubId)) next.delete(clubId);
+    else next.add(clubId);
+    selectedClubIds.value = next;
+}
+
+function shareSetDivFilter(e: Event) {
+    const val = (e.target as HTMLSelectElement).value;
+    shareDivFilter.value  = val ? Number(val) : null;
+    selectedClubIds.value = new Set<number>();
+}
+
+async function openShareModal() {
+    showShareModal.value  = true;
+    shareDivFilter.value  = null;
+    selectedClubIds.value = new Set();
+    shareNotes.value      = '';
+    shareFeedback.value   = null;
+    shareAllClubs.value   = [];
+    shareDivisions.value  = [];
+
     const [rClubs, rDivs] = await Promise.all([
         fetch(`/api/tournaments/${props.video.tournament_id}/registered-clubs`),
         fetch(`/api/tournaments/${props.video.tournament_id}/divisions`),
     ]);
     const [dataClubs, dataDivs] = await Promise.all([rClubs.json(), rDivs.json()]);
-    shareClubs.value     = dataClubs.clubs     ?? [];
-    shareDivisions.value = dataDivs.divisions  ?? [];
+    shareAllClubs.value  = dataClubs.clubs    ?? [];
+    shareDivisions.value = dataDivs.divisions ?? [];
 }
 
 async function submitShare() {
-    if (!selectedClubId.value) {
-        shareFeedback.value = { type: 'warning', message: 'Seleccioná un club.' };
+    if (selectedClubIds.value.size === 0) {
+        shareFeedback.value = { type: 'warning', message: 'Seleccioná al menos un club.' };
         return;
     }
     shareLoading.value  = true;
     shareFeedback.value = null;
     const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
-    const r = await fetch(`/videos/${props.video.id}/share`, {
+    const r = await fetch(`/videos/${props.video.id}/share-multiple`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
         body:    JSON.stringify({
-            target_organization_id: selectedClubId.value,
-            division_id:            selectedDivId.value,
-            notes:                  shareNotes.value || null,
+            target_organization_ids: Array.from(selectedClubIds.value),
+            notes:                   shareNotes.value || null,
         }),
     });
     const data = await r.json();
     shareLoading.value = false;
     if (data.ok) {
         shareFeedback.value = { type: 'success', message: data.message };
-        setTimeout(() => { showShareModal.value = false; }, 1800);
+        setTimeout(() => { showShareModal.value = false; }, 2000);
     } else {
         shareFeedback.value = { type: 'danger', message: data.error ?? 'Error al enviar.' };
     }
@@ -714,12 +750,12 @@ function onSyncSaved(offsets: Record<number, number>) {
             <div v-if="showShareModal"
                  style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;"
                  @click.self="showShareModal = false">
-                <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);border-radius:8px;width:100%;max-width:440px;padding:0;overflow:hidden;">
+                <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);border-radius:8px;width:100%;max-width:520px;padding:0;overflow:hidden;">
                     <!-- Header -->
                     <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;">
                         <h6 style="margin:0;color:#fff;">
                             <i class="fas fa-share-alt mr-2" style="color:#00B7B5;"></i>
-                            Enviar video a club
+                            Enviar video a club(es)
                         </h6>
                         <button @click="showShareModal = false"
                                 style="background:none;border:none;color:#aaa;font-size:1.2rem;cursor:pointer;line-height:1;">&times;</button>
@@ -727,38 +763,65 @@ function onSyncSaved(offsets: Record<number, number>) {
 
                     <!-- Body -->
                     <div style="padding:18px;">
-                        <p style="font-size:.85rem;color:#aaa;margin-bottom:16px;">
+                        <p style="font-size:.85rem;color:#aaa;margin-bottom:14px;">
                             Video: <strong style="color:#fff;">{{ video.title }}</strong>
                         </p>
 
-                        <!-- Club -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
-                                <i class="fas fa-building mr-1"></i> Club *
+                        <!-- Filtro por división -->
+                        <div style="margin-bottom:12px;" v-if="shareDivisions.length > 0">
+                            <label style="font-size:.78rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
+                                <i class="fas fa-filter" style="margin-right:4px;"></i> Filtrar por división (opcional)
                             </label>
-                            <select v-model="selectedClubId"
-                                    style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.9rem;">
-                                <option value="">— Seleccioná un club —</option>
-                                <option v-for="club in shareClubs" :key="club.id" :value="club.id">{{ club.name }}</option>
-                                <option v-if="shareClubs.length === 0" disabled>Sin clubes inscriptos en este torneo</option>
-                            </select>
-                        </div>
-
-                        <!-- División (opcional) -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
-                                <i class="fas fa-layer-group mr-1"></i> División (opcional)
-                            </label>
-                            <select v-model="selectedDivId"
-                                    style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.9rem;">
-                                <option value="">— Sin especificar —</option>
+                            <select :value="shareDivFilter"
+                                    @change="shareSetDivFilter"
+                                    style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:5px 10px;font-size:.85rem;">
+                                <option :value="null">— Todas las divisiones —</option>
                                 <option v-for="div in shareDivisions" :key="div.id" :value="div.id">{{ div.name }}</option>
                             </select>
                         </div>
 
+                        <!-- Encabezado lista: select all + contador -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 2px;">
+                            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem;color:#ddd;margin:0;">
+                                <input type="checkbox"
+                                       :checked="shareSelectAllState === 'all'"
+                                       :indeterminate="shareSelectAllState === 'some'"
+                                       @change="shareToggleSelectAll"
+                                       style="width:15px;height:15px;accent-color:#00B7B5;cursor:pointer;">
+                                <strong>Seleccionar todos</strong>
+                            </label>
+                            <span style="font-size:.78rem;color:#888;">
+                                {{ selectedClubIds.size }} seleccionado{{ selectedClubIds.size !== 1 ? 's' : '' }}
+                            </span>
+                        </div>
+
+                        <!-- Lista de clubes con checkboxes -->
+                        <div style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px 10px;background:#111;">
+                            <div v-if="shareAllClubs.length === 0"
+                                 style="text-align:center;color:#666;font-size:.82rem;padding:20px 0;">
+                                <i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Cargando clubes...
+                            </div>
+                            <div v-else-if="shareFilteredClubs.length === 0"
+                                 style="text-align:center;color:#666;font-size:.82rem;padding:20px 0;">
+                                No hay clubes inscriptos en esta división.
+                            </div>
+                            <label v-for="club in shareFilteredClubs" :key="club.id"
+                                   style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;margin:0;">
+                                <input type="checkbox"
+                                       :checked="selectedClubIds.has(club.id)"
+                                       @change="shareToggleClub(club.id)"
+                                       style="width:15px;height:15px;accent-color:#00B7B5;flex-shrink:0;cursor:pointer;">
+                                <span style="color:#fff;font-size:.88rem;flex:1;">{{ club.name }}</span>
+                                <span v-if="club.division_name"
+                                      style="font-size:.72rem;padding:1px 7px;border-radius:10px;background:rgba(0,183,181,.18);color:#00B7B5;white-space:nowrap;">
+                                    {{ club.division_name }}
+                                </span>
+                            </label>
+                        </div>
+
                         <!-- Notas -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:.8rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">Notas (opcional)</label>
+                        <div style="margin-top:12px;margin-bottom:4px;">
+                            <label style="font-size:.78rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">Notas (opcional)</label>
                             <textarea v-model="shareNotes" rows="2" maxlength="500"
                                       placeholder="Ej: Para el preparador físico"
                                       style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:6px 10px;font-size:.85rem;resize:none;"></textarea>
@@ -766,7 +829,7 @@ function onSyncSaved(offsets: Record<number, number>) {
 
                         <!-- Feedback -->
                         <div v-if="shareFeedback"
-                             :style="`padding:8px 12px;border-radius:4px;font-size:.85rem;background:${shareFeedback.type === 'success' ? 'rgba(40,167,69,.2)' : shareFeedback.type === 'warning' ? 'rgba(255,193,7,.2)' : 'rgba(220,53,69,.2)'};color:${shareFeedback.type === 'success' ? '#4caf50' : shareFeedback.type === 'warning' ? '#ffc107' : '#dc3545'};margin-bottom:4px;`">
+                             :style="`margin-top:10px;padding:8px 12px;border-radius:4px;font-size:.85rem;background:${shareFeedback.type === 'success' ? 'rgba(40,167,69,.2)' : shareFeedback.type === 'warning' ? 'rgba(255,193,7,.2)' : 'rgba(220,53,69,.2)'};color:${shareFeedback.type === 'success' ? '#4caf50' : shareFeedback.type === 'warning' ? '#ffc107' : '#dc3545'};`">
                             {{ shareFeedback.message }}
                         </div>
                     </div>
@@ -778,10 +841,10 @@ function onSyncSaved(offsets: Record<number, number>) {
                             Cancelar
                         </button>
                         <button @click="submitShare"
-                                :disabled="shareLoading"
-                                style="background:#00B7B5;border:none;color:#fff;border-radius:4px;padding:6px 16px;cursor:pointer;font-weight:500;">
-                            <i class="fas fa-paper-plane mr-1"></i>
-                            {{ shareLoading ? 'Enviando...' : 'Enviar' }}
+                                :disabled="shareLoading || selectedClubIds.size === 0"
+                                :style="`background:#00B7B5;border:none;color:#fff;border-radius:4px;padding:6px 16px;font-weight:500;transition:opacity .2s;${selectedClubIds.size === 0 ? 'opacity:.45;cursor:not-allowed;' : 'cursor:pointer;'}`">
+                            <i class="fas fa-paper-plane" style="margin-right:4px;"></i>
+                            {{ shareLoading ? 'Enviando...' : selectedClubIds.size > 0 ? `Enviar a ${selectedClubIds.size} club${selectedClubIds.size !== 1 ? 'es' : ''}` : 'Seleccioná al menos un club' }}
                         </button>
                     </div>
                 </div>

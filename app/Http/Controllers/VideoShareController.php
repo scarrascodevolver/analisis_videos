@@ -117,6 +117,110 @@ class VideoShareController extends Controller
     }
 
     /**
+     * Compartir un video con múltiples clubes a la vez.
+     * POST /videos/{video}/share-multiple
+     */
+    public function shareMultiple(Request $request, Video $video)
+    {
+        $request->validate([
+            'target_organization_ids'   => 'required|array|min:1',
+            'target_organization_ids.*' => 'exists:organizations,id',
+            'notes'                     => 'nullable|string|max:500',
+        ]);
+
+        $sourceOrg = auth()->user()->currentOrganization();
+
+        if (! $sourceOrg || ! $sourceOrg->isAsociacion()) {
+            return response()->json(['error' => 'Solo las asociaciones pueden compartir videos.'], 403);
+        }
+
+        if ($video->organization_id !== $sourceOrg->id) {
+            return response()->json(['error' => 'No tenés permiso para compartir este video.'], 403);
+        }
+
+        $shared   = 0;
+        $skipped  = 0;
+        $notified = collect();
+
+        foreach ($request->target_organization_ids as $targetOrgId) {
+            $targetOrg = Organization::find($targetOrgId);
+
+            if (! $targetOrg || ! $targetOrg->isClub()) {
+                $skipped++;
+                continue;
+            }
+
+            // Verificar que el club está registrado al torneo del video
+            if ($video->tournament_id) {
+                $isRegistered = TournamentRegistration::where('tournament_id', $video->tournament_id)
+                    ->where('club_organization_id', $targetOrg->id)
+                    ->where('status', 'active')
+                    ->exists();
+
+                if (! $isRegistered) {
+                    $skipped++;
+                    continue;
+                }
+            }
+
+            $existing = VideoOrgShare::where('video_id', $video->id)
+                ->where('target_organization_id', $targetOrg->id)
+                ->first();
+
+            if ($existing) {
+                if ($existing->status === 'active') {
+                    $skipped++;
+                    continue;
+                }
+                $existing->update([
+                    'status'     => 'active',
+                    'shared_by'  => auth()->id(),
+                    'notes'      => $request->notes,
+                    'shared_at'  => now(),
+                    'revoked_at' => null,
+                    'revoked_by' => null,
+                ]);
+            } else {
+                VideoOrgShare::create([
+                    'video_id'               => $video->id,
+                    'source_organization_id' => $sourceOrg->id,
+                    'target_organization_id' => $targetOrg->id,
+                    'shared_by'              => auth()->id(),
+                    'status'                 => 'active',
+                    'notes'                  => $request->notes,
+                    'shared_at'              => now(),
+                ]);
+            }
+
+            $shared++;
+            $notified->push($targetOrg->id);
+        }
+
+        // Notificar analistas/entrenadores de los clubes que recibieron el video
+        if ($notified->isNotEmpty()) {
+            User::whereHas('organizations', fn ($q) => $q->whereIn('organizations.id', $notified->toArray()))
+                ->whereIn('role', ['analista', 'entrenador'])
+                ->get()
+                ->each(fn ($u) => $u->notify(new VideoShared($video, $sourceOrg)));
+        }
+
+        if ($shared === 0) {
+            return response()->json([
+                'ok'      => false,
+                'error'   => 'El video ya estaba compartido con todos los clubes seleccionados.',
+            ], 422);
+        }
+
+        $plural = $shared > 1 ? 'es' : '';
+        $msg    = "Video enviado a {$shared} club{$plural} exitosamente.";
+        if ($skipped > 0) {
+            $msg .= " ({$skipped} ya tenía" . ($skipped > 1 ? 'n' : '') . ' acceso.)';
+        }
+
+        return response()->json(['ok' => true, 'message' => $msg]);
+    }
+
+    /**
      * Lista shares activos de un video (para la asociación).
      * GET /videos/{video}/shares
      */
@@ -175,14 +279,16 @@ class VideoShareController extends Controller
 
         $clubs = TournamentRegistration::where('tournament_id', $tournament->id)
             ->where('status', 'active')
-            ->with('clubOrganization:id,name,logo_path')
+            ->with(['clubOrganization:id,name,logo_path', 'division:id,name'])
             ->get()
             ->map(fn ($reg) => [
-                'id'       => $reg->clubOrganization->id,
-                'name'     => $reg->clubOrganization->name,
-                'logo_url' => $reg->clubOrganization->logo_path
+                'id'           => $reg->clubOrganization->id,
+                'name'         => $reg->clubOrganization->name,
+                'logo_url'     => $reg->clubOrganization->logo_path
                     ? asset('storage/' . $reg->clubOrganization->logo_path)
                     : null,
+                'division_id'  => $reg->division_id,
+                'division_name'=> $reg->division?->name,
             ]);
 
         return response()->json(['clubs' => $clubs]);
