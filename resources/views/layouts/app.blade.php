@@ -178,7 +178,6 @@
         .nav-sidebar .nav-icon {
             font-size: 0.85rem;
             margin-right: 0.5rem;
-            color: #00B7B5 !important;
         }
 
         .nav-header {
@@ -186,8 +185,6 @@
             padding: 0.35rem 0.7rem;
             font-weight: 600;
             letter-spacing: 0.5px;
-            color: #00B7B5 !important;
-            opacity: 0.6;
         }
 
         .brand-link {

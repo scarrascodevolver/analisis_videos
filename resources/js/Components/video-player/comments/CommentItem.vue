@@ -195,7 +195,7 @@ function renderComment(text: string): string {
 }
 
 .comment-text {
-    color: #ddd;
+    color: #00B7B5;
     font-size: 13px;
     word-break: break-word;
 }

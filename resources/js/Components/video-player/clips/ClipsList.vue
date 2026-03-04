@@ -313,7 +313,7 @@ function onCatDragEnd() {
 }
 
 .category-name {
-    color: #fff;
+    color: #00B7B5;
     font-weight: 600;
     font-size: 0.7rem;
     white-space: nowrap;

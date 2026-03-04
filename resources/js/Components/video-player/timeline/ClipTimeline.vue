@@ -844,7 +844,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     padding: 0.4rem 0.65rem;
     background: transparent;
     border: none;
-    color: #ccc;
+    color: #00B7B5;
     font-size: 10.5px;
     cursor: pointer;
     text-align: left;

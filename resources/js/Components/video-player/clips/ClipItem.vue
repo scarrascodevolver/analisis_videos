@@ -213,7 +213,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
 }
 
 .clip-time {
-    color: #ccc;
+    color: #00B7B5;
     font-size: 10px;
     font-weight: 500;
     white-space: nowrap;
@@ -285,7 +285,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
     padding: 0.4rem 0.65rem;
     background: transparent;
     border: none;
-    color: #ccc;
+    color: #00B7B5;
     font-size: 10.5px;
     cursor: pointer;
     text-align: left;
