@@ -65,6 +65,7 @@ class ClipCategorySeeder extends Seeder
     public static function seedForOrganization(Organization $org): void
     {
         $firstUser = $org->users()->first();
+        $createdBy = $firstUser?->id ?? auth()->id();
 
         foreach (static::$defaults as $cat) {
             ClipCategory::firstOrCreate(
@@ -81,7 +82,7 @@ class ClipCategorySeeder extends Seeder
                     'sort_order'   => $cat['sort_order'],
                     'scope'        => ClipCategory::SCOPE_ORGANIZATION,
                     'is_active'    => true,
-                    'created_by'   => $firstUser?->id,
+                    'created_by'   => $createdBy,
                 ]
             );
         }
