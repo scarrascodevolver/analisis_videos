@@ -156,9 +156,6 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             :style="dropdownStyle"
             @click.stop
         >
-            <button class="clip-dropdown-item" @click="playClip">
-                <i class="fas fa-play"></i> Reproducir
-            </button>
             <button class="clip-dropdown-item" @click="copyLink">
                 <i class="fas fa-link"></i> Copiar link
             </button>

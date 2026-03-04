@@ -3,17 +3,12 @@ import { ref, computed } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
 import ClipItem from './ClipItem.vue';
-import type { ClipCategory, VideoClip } from '@/types/video-player';
+import type { ClipCategory } from '@/types/video-player';
 
 const clipsStore = useClipsStore();
 const videoStore = useVideoStore();
 const searchQuery = ref('');
 const expandedCategories = ref<Set<number>>(new Set());
-
-// ── Drag & Drop state — clips ────────────────────────────────
-const draggingClipId = ref<number | null>(null);
-const dragOverClipId = ref<number | null>(null);
-const draggingCategoryId = ref<number | null>(null);
 
 // ── Drag & Drop state — categorías ──────────────────────────
 const draggingCatIndex = ref<number | null>(null);
@@ -45,16 +40,14 @@ const filteredClipsByCategory = computed(() => {
     return filtered;
 });
 
-// Usar el computed del store (fuente única de verdad, compartida con el timeline)
+// Fuente única de verdad compartida con el timeline
 const categoriesWithClips = computed(() => {
     const query = searchQuery.value.toLowerCase().trim();
     if (!query) return clipsStore.categoriesWithClips;
-    // Con búsqueda activa, filtrar adicionalmente
     return clipsStore.categoriesWithClips.filter(
         (cat) => !!filteredClipsByCategory.value[cat.id]?.length
     );
 });
-
 
 // ── Actions ─────────────────────────────────────────────────
 
@@ -74,67 +67,11 @@ function getCategoryClipsCount(category: ClipCategory) {
     return filteredClipsByCategory.value[category.id]?.length || 0;
 }
 
-
-// ── Drag & Drop ──────────────────────────────────────────────
-
-function onClipDragStart(clipId: number, categoryId: number) {
-    draggingClipId.value = clipId;
-    draggingCategoryId.value = categoryId;
-}
-
-function onClipDragOver(clipId: number) {
-    if (draggingClipId.value !== null && draggingClipId.value !== clipId) {
-        dragOverClipId.value = clipId;
-    }
-}
-
-function onClipDrop(targetClipId: number, categoryId: number) {
-    if (
-        draggingClipId.value === null ||
-        draggingClipId.value === targetClipId ||
-        draggingCategoryId.value !== categoryId
-    ) {
-        onClipDragEnd();
-        return;
-    }
-
-    // Only reorder within the same category (no search active — search can distort indices)
-    const currentList = filteredClipsByCategory.value[categoryId];
-    if (!currentList) {
-        onClipDragEnd();
-        return;
-    }
-
-    const items = [...currentList];
-    const fromIdx = items.findIndex((c) => c.id === draggingClipId.value);
-    const toIdx   = items.findIndex((c) => c.id === targetClipId);
-
-    if (fromIdx === -1 || toIdx === -1) {
-        onClipDragEnd();
-        return;
-    }
-
-    const [moved] = items.splice(fromIdx, 1);
-    items.splice(toIdx, 0, moved);
-
-    onClipDragEnd();
-
-    if (!videoStore.video) return;
-    clipsStore.reorderClips(videoStore.video.id, categoryId, items).catch(() => {
-        // Error is logged inside the store action; nothing extra needed here
-    });
-}
-
-function onClipDragEnd() {
-    draggingClipId.value = null;
-    dragOverClipId.value = null;
-    draggingCategoryId.value = null;
-}
-
 // ── Drag & Drop categorías ───────────────────────────────────
 
-function onCatDragStart(index: number) {
+function onCatDragStart(event: DragEvent, index: number) {
     draggingCatIndex.value = index;
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
 }
 
 function onCatDragOver(index: number) {
@@ -206,22 +143,14 @@ function onCatDragEnd() {
                 @drop="onCatDrop(catIndex)"
                 @dragend="onCatDragEnd"
             >
+                <!-- Header completo draggable — click = toggle, drag = reordenar -->
                 <div
                     class="category-header"
                     :style="{ '--category-color': category.color }"
+                    draggable="true"
+                    @dragstart="onCatDragStart($event, catIndex)"
                     @click="toggleCategory(category.id)"
                 >
-                    <!-- Drag handle para reordenar categorías -->
-                    <span
-                        class="cat-drag-handle"
-                        title="Arrastrar para reordenar categoría"
-                        draggable="true"
-                        @dragstart.stop="onCatDragStart(catIndex)"
-                        @click.stop
-                    >
-                        <i class="fas fa-grip-vertical"></i>
-                    </span>
-
                     <div class="category-info">
                         <i v-if="category.icon" :class="category.icon" class="category-icon"></i>
                         <span class="category-name">{{ category.name }}</span>
@@ -237,30 +166,11 @@ function onCatDragEnd() {
                 </div>
 
                 <div v-if="isCategoryExpanded(category.id)" class="category-clips">
-                    <div
+                    <ClipItem
                         v-for="clip in filteredClipsByCategory[category.id]"
                         :key="clip.id"
-                        class="clip-row-wrapper"
-                        :class="{
-                            'drag-over-clip': dragOverClipId === clip.id && draggingCategoryId === category.id,
-                            'dragging-clip': draggingClipId === clip.id,
-                        }"
-                        @dragover.prevent="onClipDragOver(clip.id)"
-                        @drop="onClipDrop(clip.id, category.id)"
-                        @dragend="onClipDragEnd"
-                    >
-                        <!-- Drag handle (only this element is draggable, not the whole row) -->
-                        <span
-                            class="clip-drag-handle"
-                            title="Arrastrar para reordenar"
-                            draggable="true"
-                            @dragstart="onClipDragStart(clip.id, category.id)"
-                        >
-                            <i class="fas fa-grip-vertical"></i>
-                        </span>
-
-                        <ClipItem :clip="clip" class="clip-item-flex" />
-                    </div>
+                        :clip="clip"
+                    />
                 </div>
             </div>
         </div>
@@ -362,27 +272,6 @@ function onCatDragEnd() {
     opacity: 0.4;
 }
 
-.cat-drag-handle {
-    display: flex;
-    align-items: center;
-    padding: 0 0.3rem 0 0.1rem;
-    color: #555;
-    font-size: 0.65rem;
-    flex-shrink: 0;
-    cursor: grab;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s;
-    user-select: none;
-}
-
-.category-header:hover .cat-drag-handle {
-    opacity: 1;
-}
-
-.cat-drag-handle:hover {
-    color: #999;
-}
-
 .category-header {
     display: flex;
     justify-content: space-between;
@@ -390,13 +279,17 @@ function onCatDragEnd() {
     padding: 0.38rem 0.45rem;
     background-color: #252525;
     border-left: 3px solid var(--category-color, var(--color-accent));
-    cursor: pointer;
+    cursor: grab;
     user-select: none;
     transition: background-color 0.2s;
 }
 
 .category-header:hover {
     background-color: #2a2a2a;
+}
+
+.category-header:active {
+    cursor: grabbing;
 }
 
 .category-info {
@@ -451,58 +344,6 @@ function onCatDragEnd() {
 
 .category-clips {
     padding: 0.25rem 0.35rem 0.15rem;
-}
-
-/* ── Clip row wrapper with drag handle ── */
-
-.clip-row-wrapper {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.2rem;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    transition: border-color 0.15s, background-color 0.15s;
-    margin-bottom: 0.15rem;
-}
-
-.clip-row-wrapper:hover .clip-drag-handle {
-    opacity: 1;
-}
-
-.clip-row-wrapper.drag-over-clip {
-    border-color: var(--color-accent, #00B7B5);
-    background-color: rgba(0, 183, 181, 0.07);
-}
-
-.clip-row-wrapper.dragging-clip {
-    opacity: 0.4;
-}
-
-.clip-drag-handle {
-    display: flex;
-    align-items: center;
-    padding: 0.25rem 0.15rem;
-    color: #444;
-    font-size: 0.7rem;
-    flex-shrink: 0;
-    cursor: grab;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s;
-    user-select: none;
-    margin-top: 2px;
-}
-
-.clip-drag-handle:hover {
-    color: #888;
-}
-
-.clip-drag-handle:active {
-    cursor: grabbing;
-}
-
-.clip-item-flex {
-    flex: 1;
-    min-width: 0;
 }
 
 /* Scrollbar styling */
