@@ -48,21 +48,15 @@ class VideoClipController extends Controller
                 ->get();
         } else {
             // Caso cross-org: video compartido por una asociación
-            // Mostrar:
-            //   1. Clips de la asociación con is_shared = true
-            //   2. Clips creados por el usuario actual en este video
-            //   3. Clips de la org del usuario (club) en este video
+            // Mostrar TODOS los clips de la org dueña del video +
+            // clips propios del club en este video.
+            // Si el video fue compartido, sus clips se comparten completos.
             $clips = VideoClip::withoutGlobalScope('organization')
                 ->with('category:id,name,slug,color,scope', 'creator:id,name')
                 ->where('video_id', $video->id)
-                ->where(function ($q) use ($user, $userOrgId) {
-                    $q->where(function ($inner) {
-                            // Clips de la org dueña del video que están compartidos
-                            $inner->where('is_shared', true);
-                        })
-                        ->orWhere('created_by', $user->id)
-                        ->orWhere('organization_id', $userOrgId)
-                        ->orWhereHas('category', fn ($cat) => $cat->where('scope', 'video'));
+                ->where(function ($q) use ($userOrgId, $video) {
+                    $q->where('organization_id', $video->organization_id) // todos los de la asoc
+                      ->orWhere('organization_id', $userOrgId);           // propios del club
                 })
                 ->orderBy('start_time')
                 ->get();
