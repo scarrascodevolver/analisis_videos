@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
-import { useVideoApi } from '@/composables/useVideoApi';
 import ClipItem from './ClipItem.vue';
 import type { ClipCategory, VideoClip } from '@/types/video-player';
 
@@ -160,16 +159,7 @@ function onCatDrop(toIndex: number) {
     onCatDragEnd();
 
     if (!videoStore.video) return;
-    const api = useVideoApi(videoStore.video.id);
-
-    // Optimistic: update sort_order en el store local
-    items.forEach((cat, idx) => {
-        const storecat = clipsStore.categories.find(c => c.id === cat.id);
-        if (storecat) storecat.sort_order = idx + 1;
-    });
-
-    // Persistir en backend (igual que ManageCategoriesModal)
-    Promise.all(items.map((cat, idx) => api.updateCategory(cat.id, { sort_order: idx + 1 })))
+    clipsStore.reorderCategories(videoStore.video.id, items)
         .catch(() => console.error('Error guardando orden de categorías'));
 }
 

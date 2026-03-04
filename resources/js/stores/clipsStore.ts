@@ -237,6 +237,18 @@ export const useClipsStore = defineStore('clips', () => {
         }
     }
 
+    async function reorderCategories(videoId: number, newOrderedCategories: ClipCategory[]) {
+        // Reemplazar el array completo con nuevos sort_order para garantizar reactividad
+        const updated = newOrderedCategories.map((cat, idx) => ({ ...cat, sort_order: idx + 1 }));
+        categories.value = categories.value.map((cat) => {
+            const found = updated.find((u) => u.id === cat.id);
+            return found ? { ...cat, sort_order: found.sort_order } : cat;
+        });
+
+        const api = useVideoApi(videoId);
+        await Promise.all(updated.map((cat) => api.updateCategory(cat.id, { sort_order: cat.sort_order })));
+    }
+
     async function reorderClips(videoId: number, categoryId: number, newOrderedClips: VideoClip[]) {
         // Optimistic UI: update sort_order in local state immediately
         newOrderedClips.forEach((clip, idx) => {
@@ -285,6 +297,7 @@ export const useClipsStore = defineStore('clips', () => {
         toggleCategoryShare,
         removeClip,
         updateClip,
+        reorderCategories,
         reorderClips,
         reset,
     };
