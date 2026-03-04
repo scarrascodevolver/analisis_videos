@@ -55,6 +55,16 @@
                                     </p>
                                 @endif
 
+                                @if($tournament->divisions->isNotEmpty())
+                                <div class="mb-2" style="display:flex;flex-wrap:wrap;gap:5px;">
+                                    @foreach($tournament->divisions as $division)
+                                    <span style="background:rgba(0,183,181,.12);border:1px solid rgba(0,183,181,.35);color:#00B7B5;border-radius:20px;padding:2px 10px;font-size:.75rem;">
+                                        {{ $division->name }}
+                                    </span>
+                                    @endforeach
+                                </div>
+                                @endif
+
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-video mr-1"></i>
                                     {{ $tournament->videos_count }} video(s)
@@ -191,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             if (data.ok) {
                 const cardEl = document.getElementById('tournament-card-' + tournamentId);
-                cardEl.querySelectorAll('.badge-success').forEach(b => b.remove());
+                cardEl.querySelectorAll('.badge-success, .badge-warning').forEach(b => b.remove());
 
                 card.className = 'btn btn-rugby btn-sm btn-block register-btn';
                 card.innerHTML = '<i class="fas fa-sign-in-alt mr-1"></i> Inscribirse';

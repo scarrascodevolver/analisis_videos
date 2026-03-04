@@ -789,19 +789,20 @@ document.querySelectorAll('.btn-approve-reg, .btn-reject-reg').forEach(function 
         .then(function (data) {
             if (data.id) {
                 currentTournamentId = data.id;
-                // Close first modal, open divisions modal
-                $('#modalNuevoTorneo').modal('hide');
+                // Prepare divisions modal content
                 document.getElementById('nd-tournament-name').textContent = '— ' + name;
-                // Reset divisions modal state
                 document.getElementById('nd-added-pills').innerHTML = '';
                 document.getElementById('nd-custom-input').value = '';
                 document.getElementById('nd-div-error').classList.add('d-none');
-                // Re-enable all chips
                 document.querySelectorAll('.nd-chip-btn').forEach(function (c) {
                     c.disabled = false;
                     c.style.opacity = '1';
                 });
-                $('#modalNuevoTorneoDivisiones').modal('show');
+                // Open divisions modal AFTER first modal fully hides (avoids Bootstrap animation conflict)
+                $('#modalNuevoTorneo').one('hidden.bs.modal', function () {
+                    $('#modalNuevoTorneoDivisiones').modal('show');
+                });
+                $('#modalNuevoTorneo').modal('hide');
             } else {
                 errEl.textContent = data.message || 'Error al crear el torneo.';
                 errEl.classList.remove('d-none');
