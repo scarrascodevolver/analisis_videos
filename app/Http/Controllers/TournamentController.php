@@ -222,16 +222,26 @@ class TournamentController extends Controller
         $becomingPrivate = $tournament->is_public; // antes de actualizar
         $tournament->update(['is_public' => ! $tournament->is_public]);
 
-        // Al privatizar: revocar todos los VideoOrgShare de videos de este torneo
-        if ($becomingPrivate) {
-            $videoIds = $tournament->videos()->withoutGlobalScopes()->pluck('id');
-            if ($videoIds->isNotEmpty()) {
+        $videoIds = $tournament->videos()->withoutGlobalScopes()->pluck('id');
+
+        if ($videoIds->isNotEmpty()) {
+            if ($becomingPrivate) {
+                // Al privatizar: revocar todos los shares activos
                 VideoOrgShare::whereIn('video_id', $videoIds)
                     ->where('status', 'active')
                     ->update([
                         'status'     => 'revoked',
                         'revoked_at' => now(),
                         'revoked_by' => auth()->id(),
+                    ]);
+            } else {
+                // Al volver a publicar: re-activar los shares que fueron revocados
+                VideoOrgShare::whereIn('video_id', $videoIds)
+                    ->where('status', 'revoked')
+                    ->update([
+                        'status'     => 'active',
+                        'revoked_at' => null,
+                        'revoked_by' => null,
                     ]);
             }
         }
