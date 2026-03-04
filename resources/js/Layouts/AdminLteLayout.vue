@@ -482,6 +482,45 @@ function markAllNotificationsAsRead() {
 </template>
 
 <style>
+/* ── Sidebar nav links — mismo estilo que app.blade.php ─────────────────── */
+.nav-sidebar .nav-link,
+.sidebar-dark-primary .nav-sidebar .nav-link,
+.sidebar-dark-primary .nav-sidebar .nav-treeview .nav-link {
+    color: #00B7B5 !important;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.7rem;
+}
+.nav-sidebar .nav-link p,
+.nav-sidebar .nav-link > p,
+.sidebar-dark-primary .nav-sidebar .nav-link p,
+.sidebar-dark-primary .nav-sidebar .nav-treeview .nav-link p {
+    color: #00B7B5 !important;
+}
+.nav-sidebar .nav-link.active p,
+.nav-sidebar .nav-link.active > p,
+.sidebar-dark-primary .nav-sidebar .nav-link.active p {
+    color: #fff !important;
+}
+.nav-sidebar .nav-link:hover,
+.sidebar-dark-primary .nav-sidebar .nav-link:hover {
+    background-color: #4A6274;
+    color: #00d4d2 !important;
+}
+.nav-sidebar .nav-link:hover p,
+.sidebar-dark-primary .nav-sidebar .nav-link:hover p {
+    color: #00d4d2 !important;
+}
+.nav-sidebar .nav-link.active,
+.sidebar-dark-primary .nav-sidebar .nav-link.active {
+    background-color: #005461 !important;
+    color: white !important;
+}
+.nav-sidebar .nav-icon {
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    color: #00B7B5 !important;
+}
+
 /* Logo miniatura: oculto por defecto, visible cuando sidebar está colapsado */
 .brand-logo-mini {
     display: none;
