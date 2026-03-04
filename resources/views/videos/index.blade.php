@@ -121,72 +121,81 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
             </h6>
         </div>
 
-        @foreach($receivedByTournament as $tournamentGroup)
-            @php
-                $tName = $tournamentGroup['tournament']?->name ?? 'Sin torneo';
-            @endphp
-            <div class="mb-4">
+        @foreach($receivedByTournament as $tIdx => $tournamentGroup)
+            @php $tName = $tournamentGroup['tournament']?->name ?? 'Sin torneo'; @endphp
+            <div class="mb-3">
                 {{-- Torneo header --}}
                 <div class="d-flex align-items-center mb-2" style="gap:8px;">
                     <i class="fas fa-trophy" style="color:#b8860b;font-size:.9rem;"></i>
                     <span style="font-weight:700;font-size:.95rem;color:#f0f0f0;">{{ $tName }}</span>
                 </div>
 
-                @foreach($tournamentGroup['divisions'] as $divisionGroup)
+                {{-- Carpetas por división (colapsables) --}}
+                <div style="padding-left:16px;display:flex;flex-direction:column;gap:6px;">
+                @foreach($tournamentGroup['divisions'] as $dIdx => $divisionGroup)
                     @php
                         $dName  = $divisionGroup['division']?->name ?? 'Sin división';
                         $videos = $divisionGroup['videos'];
                         $dCount = $videos->count();
+                        $folderId = 'div-folder-' . $tIdx . '-' . $dIdx;
                     @endphp
-                    {{-- División sub-header --}}
-                    <div class="d-flex align-items-center mb-2" style="gap:6px;padding-left:18px;">
-                        <i class="fas fa-layer-group" style="color:#00B7B5;font-size:.8rem;"></i>
-                        <span style="font-size:.85rem;color:#00B7B5;font-weight:600;">{{ $dName }}</span>
-                        <span style="font-size:.75rem;color:#666;">({{ $dCount }} {{ $dCount === 1 ? 'video' : 'videos' }})</span>
-                    </div>
 
-                    {{-- Video cards for this division --}}
-                    <div class="match-grid mb-3" style="padding-left:18px;">
-                        @foreach($videos as $sv)
-                            @php
-                                $svSize = '';
-                                $svTotal = $sv->total_size ?? 0;
-                                if ($svTotal > 0) {
-                                    $svSize = $svTotal >= 1073741824
-                                        ? number_format($svTotal / 1073741824, 1) . ' GB'
-                                        : number_format($svTotal / 1048576, 0) . ' MB';
-                                }
-                            @endphp
-                            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
-                                <div class="match-card-thumb">
-                                    @if($sv->bunny_thumbnail)
-                                        <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
-                                    @else
-                                        <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
-                                    @endif
-                                    <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
-                                    {{-- Shared badge --}}
-                                    <div style="position:absolute;bottom:6px;left:6px;background:rgba(0,183,181,.2);border:1px solid rgba(0,183,181,.5);border-radius:4px;padding:2px 7px;font-size:.65rem;color:#00B7B5;">
-                                        <i class="fas fa-share-alt mr-1"></i>{{ $tName }}
+                    {{-- Carpeta colapsable --}}
+                    <div>
+                        <div class="div-folder-header" onclick="toggleDivFolder('{{ $folderId }}')"
+                             style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;cursor:pointer;transition:background .15s;user-select:none;"
+                             onmouseover="this.style.background='rgba(0,183,181,.07)'"
+                             onmouseout="this.style.background='rgba(255,255,255,.04)'">
+                            <i class="fas fa-folder" id="{{ $folderId }}-icon"
+                               style="color:#00B7B5;font-size:.95rem;transition:transform .2s;"></i>
+                            <span style="font-weight:600;font-size:.88rem;color:#e0e0e0;flex-grow:1;">{{ $dName }}</span>
+                            <span style="font-size:.75rem;background:rgba(0,183,181,.15);color:#00B7B5;border:1px solid rgba(0,183,181,.3);border-radius:10px;padding:1px 8px;">
+                                {{ $dCount }} {{ $dCount === 1 ? 'video' : 'videos' }}
+                            </span>
+                            <i class="fas fa-chevron-right" id="{{ $folderId }}-chevron"
+                               style="color:rgba(255,255,255,.3);font-size:.75rem;transition:transform .2s;"></i>
+                        </div>
+
+                        {{-- Videos (ocultos por defecto) --}}
+                        <div id="{{ $folderId }}" style="display:none;padding:12px 4px 4px;">
+                            <div class="match-grid">
+                                @foreach($videos as $sv)
+                                    @php
+                                        $svSize = '';
+                                        $svTotal = $sv->total_size ?? 0;
+                                        if ($svTotal > 0) {
+                                            $svSize = $svTotal >= 1073741824
+                                                ? number_format($svTotal / 1073741824, 1) . ' GB'
+                                                : number_format($svTotal / 1048576, 0) . ' MB';
+                                        }
+                                    @endphp
+                                    <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
+                                        <div class="match-card-thumb">
+                                            @if($sv->bunny_thumbnail)
+                                                <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
+                                            @else
+                                                <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
+                                            @endif
+                                            <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
+                                        </div>
+                                        <div class="match-card-body">
+                                            <div class="match-fixture">
+                                                <span class="fixture-team fixture-local">{{ $sv->analyzed_team_name ?? 'Local' }}</span>
+                                                <span class="fixture-vs">VS</span>
+                                                <span class="fixture-team fixture-rival">{{ $sv->rivalTeam?->name ?? $sv->rival_name ?? 'Rival' }}</span>
+                                            </div>
+                                            <div class="match-card-meta">
+                                                <i class="fas fa-calendar mr-1"></i>{{ $sv->match_date?->format('d/m/Y') ?? '—' }}
+                                                @if($svSize)<span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $svSize }}@endif
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="match-card-body">
-                                    <div class="match-fixture">
-                                        <span class="fixture-team fixture-local">{{ $sv->analyzed_team_name ?? 'Local' }}</span>
-                                        <span class="fixture-vs">VS</span>
-                                        <span class="fixture-team fixture-rival">{{ $sv->rivalTeam?->name ?? $sv->rival_name ?? 'Rival' }}</span>
-                                    </div>
-                                    <div class="match-card-meta">
-                                        <i class="fas fa-calendar mr-1"></i>{{ $sv->match_date?->format('d/m/Y') ?? '—' }}
-                                        @if($svSize)
-                                            <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $svSize }}
-                                        @endif
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
-                        @endforeach
+                        </div>
                     </div>
                 @endforeach
+                </div>
             </div>
         @endforeach
     </div>
@@ -1433,5 +1442,21 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         }
     });
 })();
+</script>
+@endpush
+
+@push('scripts')
+<script>
+function toggleDivFolder(id) {
+    var content = document.getElementById(id);
+    var icon    = document.getElementById(id + '-icon');
+    var chevron = document.getElementById(id + '-chevron');
+    var isOpen  = content.style.display !== 'none';
+
+    content.style.display   = isOpen ? 'none' : 'block';
+    icon.className           = isOpen ? 'fas fa-folder' : 'fas fa-folder-open';
+    icon.style.color         = isOpen ? '#00B7B5' : '#00d4d1';
+    chevron.style.transform  = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
 </script>
 @endpush
