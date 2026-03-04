@@ -181,7 +181,7 @@
         }
 
         .nav-sidebar .nav-link.active {
-            background-color: var(--color-accent) !important;
+            background-color: var(--color-primary) !important;
             color: white !important;
         }
 

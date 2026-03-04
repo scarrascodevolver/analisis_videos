@@ -52,7 +52,10 @@ class VideoClipController extends Controller
             // clips propios del club en este video.
             // Si el video fue compartido, sus clips se comparten completos.
             $clips = VideoClip::withoutGlobalScope('organization')
-                ->with('category:id,name,slug,color,scope', 'creator:id,name')
+                ->with([
+                    'category' => fn ($q) => $q->withoutGlobalScopes()->select('id', 'name', 'slug', 'color', 'scope'),
+                    'creator'  => fn ($q) => $q->select('id', 'name'),
+                ])
                 ->where('video_id', $video->id)
                 ->where(function ($q) use ($userOrgId, $video) {
                     $q->where('organization_id', $video->organization_id) // todos los de la asoc
