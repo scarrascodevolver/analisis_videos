@@ -7,6 +7,27 @@ const page = usePage();
 const auth = computed(() => page.props.auth as any);
 const user = computed(() => auth.value?.user);
 const organization = computed(() => page.props.organization as any);
+const userOrganizations = computed(() => (page.props.user_organizations as any[]) ?? []);
+const canSwitchOrg = computed(() =>
+    userOrganizations.value.length > 1 || user.value?.is_super_admin || user.value?.is_org_manager
+);
+
+const orgDropdownOpen = ref(false);
+
+function switchOrganization(orgId: number) {
+    orgDropdownOpen.value = false;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/set-organization/${orgId}`;
+    const csrf = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = '_token';
+    input.value = csrf?.content ?? '';
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
 const flash = computed(() => page.props.flash as any);
 const notifications = computed(() => page.props.notifications as any);
 
@@ -42,6 +63,7 @@ function toggleUserDropdown() {
 function closeDropdowns() {
     notificationsDropdownOpen.value = false;
     userDropdownOpen.value = false;
+    orgDropdownOpen.value = false;
 }
 
 onMounted(() => {
@@ -92,10 +114,34 @@ function markAllNotificationsAsRead() {
             </ul>
 
             <ul class="navbar-nav ml-auto">
-                <!-- Organization display -->
-                <li v-if="organization" class="nav-item">
+                <!-- Organization switcher dropdown -->
+                <li v-if="organization && canSwitchOrg" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#"
+                       @click.prevent="orgDropdownOpen = !orgDropdownOpen; notificationsDropdownOpen = false; userDropdownOpen = false;">
+                        <i class="fas fa-building mr-1"></i>
+                        <span class="d-none d-md-inline">{{ organization.name.substring(0, 15) }}</span>
+                        <span class="d-inline d-md-none">{{ organization.name.substring(0, 10) }}</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" :class="{ show: orgDropdownOpen }"
+                         style="max-height:350px;overflow-y:auto;min-width:200px;">
+                        <span v-if="user?.is_super_admin" class="dropdown-header text-danger">
+                            <i class="fas fa-shield-alt mr-1"></i> Super Admin
+                        </span>
+                        <div v-if="user?.is_super_admin" class="dropdown-divider"></div>
+                        <button v-for="org in userOrganizations" :key="org.id"
+                                type="button"
+                                class="dropdown-item"
+                                :class="{ 'active bg-success': org.is_current }"
+                                @click="switchOrganization(org.id)">
+                            <i :class="org.is_current ? 'fas fa-check mr-2' : 'fas fa-building mr-2'"></i>
+                            {{ org.name }}
+                        </button>
+                    </div>
+                </li>
+                <!-- Solo nombre si no puede cambiar -->
+                <li v-else-if="organization" class="nav-item">
                     <span class="nav-link text-light">
-                        <i class="fas fa-football-ball mr-1"></i>
+                        <i class="fas fa-building mr-1"></i>
                         <span class="d-none d-md-inline">{{ organization.name }}</span>
                         <span class="d-inline d-md-none">{{ organization.name.substring(0, 15) }}</span>
                     </span>

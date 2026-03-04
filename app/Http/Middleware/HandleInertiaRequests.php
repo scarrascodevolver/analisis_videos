@@ -25,23 +25,50 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        $user         = $request->user();
         $organization = $user?->currentOrganization();
+
+        // Orgs disponibles para el switcher (misma lógica que app.blade.php)
+        $userOrganizations = null;
+        if ($user) {
+            if ($user->isSuperAdmin()) {
+                $userOrganizations = \App\Models\Organization::where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'type', 'logo_path']);
+            } elseif ($user->isOrgManager()) {
+                $userOrganizations = \App\Models\Organization::where('is_active', true)
+                    ->where('created_by', $user->id)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'type', 'logo_path']);
+            } else {
+                $userOrganizations = $user->organizations()
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['organizations.id', 'organizations.name', 'organizations.type', 'organizations.logo_path']);
+            }
+        }
 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
+                    'id'             => $user->id,
+                    'name'           => $user->name,
+                    'email'          => $user->email,
+                    'role'           => $user->role,
                     'is_super_admin' => $user->isSuperAdmin(),
-                    'avatar' => $user->profile?->avatar
+                    'is_org_manager' => $user->isOrgManager(),
+                    'avatar'         => $user->profile?->avatar
                         ? asset('storage/' . $user->profile->avatar)
                         : null,
                 ] : null,
             ],
+            'user_organizations' => $userOrganizations?->map(fn ($o) => [
+                'id'         => $o->id,
+                'name'       => $o->name,
+                'type'       => $o->type,
+                'is_current' => $organization?->id === $o->id,
+            ]),
             'organization' => $organization ? [
                 'id' => $organization->id,
                 'name' => $organization->name,
