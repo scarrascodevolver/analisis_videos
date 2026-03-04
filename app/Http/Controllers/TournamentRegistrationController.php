@@ -6,6 +6,7 @@ use App\Models\Tournament;
 use App\Models\TournamentDivision;
 use App\Models\TournamentRegistration;
 use App\Models\User;
+use App\Models\VideoOrgShare;
 use App\Notifications\TournamentJoinRequest;
 use Illuminate\Http\Request;
 
@@ -258,6 +259,21 @@ class TournamentRegistrationController extends Controller
             'status' => 'withdrawn',
             'withdrawn_at' => now(),
         ]);
+
+        // Revocar todos los VideoOrgShare del torneo para este club
+        $videoIds = Tournament::find($tournamentId)
+            ?->videos()->withoutGlobalScopes()->pluck('id');
+
+        if ($videoIds && $videoIds->isNotEmpty()) {
+            VideoOrgShare::whereIn('video_id', $videoIds)
+                ->where('target_organization_id', $org->id)
+                ->where('status', 'active')
+                ->update([
+                    'status'     => 'revoked',
+                    'revoked_at' => now(),
+                    'revoked_by' => auth()->id(),
+                ]);
+        }
 
         return response()->json(['ok' => true, 'message' => 'Te diste de baja del torneo.']);
     }
