@@ -159,28 +159,40 @@
             height: 100vh;
         }
 
-        .nav-sidebar .nav-link {
+        .nav-sidebar .nav-link,
+        .sidebar-dark-primary .nav-sidebar .nav-link,
+        .sidebar-dark-primary .nav-sidebar .nav-treeview .nav-link {
             color: #00B7B5 !important;
             font-size: 0.78rem;
             padding: 0.4rem 0.7rem;
         }
 
         .nav-sidebar .nav-link p,
-        .nav-sidebar .nav-link > p {
+        .nav-sidebar .nav-link > p,
+        .sidebar-dark-primary .nav-sidebar .nav-link p,
+        .sidebar-dark-primary .nav-sidebar .nav-treeview .nav-link p {
             color: #00B7B5 !important;
         }
 
         .nav-sidebar .nav-link.active p,
-        .nav-sidebar .nav-link.active > p {
+        .nav-sidebar .nav-link.active > p,
+        .sidebar-dark-primary .nav-sidebar .nav-link.active p {
             color: #fff !important;
         }
 
-        .nav-sidebar .nav-link:hover {
+        .nav-sidebar .nav-link:hover,
+        .sidebar-dark-primary .nav-sidebar .nav-link:hover {
             background-color: var(--color-secondary);
             color: #00d4d2 !important;
         }
 
-        .nav-sidebar .nav-link.active {
+        .nav-sidebar .nav-link:hover p,
+        .sidebar-dark-primary .nav-sidebar .nav-link:hover p {
+            color: #00d4d2 !important;
+        }
+
+        .nav-sidebar .nav-link.active,
+        .sidebar-dark-primary .nav-sidebar .nav-link.active {
             background-color: var(--color-primary) !important;
             color: white !important;
         }
