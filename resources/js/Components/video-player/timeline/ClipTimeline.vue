@@ -578,10 +578,6 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     opacity: 0.85;
 }
 
-/* On lane hover: fan overlapping clips slightly to the right by stagger row index */
-.lane-track:hover .clip-block {
-    transform: translateX(calc(var(--row-idx, 0) * 3px));
-}
 
 .clip-block:hover {
     filter: brightness(1.25);
