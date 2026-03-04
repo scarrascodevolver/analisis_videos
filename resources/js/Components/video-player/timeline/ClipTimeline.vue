@@ -111,6 +111,7 @@ import { ref, computed } from 'vue';
 import { useVideoStore, formatTime } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import type { VideoClip } from '@/types/video-player';
+import { COLOR_ACCENT } from '@/config/colors.js';
 // No external deps needed — rAF throttle inline for drag
 
 const props = defineProps<{

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue';
+import { COLOR_ACCENT } from '@/config/colors.js';
 import { useVideoStore, formatTime } from '@/stores/videoStore';
 import { useCommentsStore } from '@/stores/commentsStore';
 import type { VideoComment } from '@/types/video-player';

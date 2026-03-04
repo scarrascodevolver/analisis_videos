@@ -166,6 +166,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { COLOR_ACCENT } from '@/config/colors.js';
 import { useVideoStore } from '@/stores/videoStore';
 import { useVideoApi } from '@/composables/useVideoApi';
 import type { ClipCategory } from '@/types/video-player';

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToast } from '@/composables/useToast';
+import { COLOR_ACCENT } from '@/config/colors.js';
 
 const { toasts, removeToast } = useToast();
 
