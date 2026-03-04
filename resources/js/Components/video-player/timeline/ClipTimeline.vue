@@ -50,6 +50,7 @@
                                 :title="getClipTooltip(clip)"
                                 @mousedown.stop="onClipMousedown(clip, 'move', $event, category.id)"
                                 @click.stop="handleClipClick(clip)"
+                                @contextmenu.prevent.stop="onClipContextMenu($event, clip)"
                             >
                                 <!-- Left resize handle -->
                                 <div
@@ -80,6 +81,27 @@
                     </span>
                 </div>
 
+                <!-- Context menu (right-click on clip) -->
+                <Teleport to="body">
+                    <div
+                        v-if="ctxMenu"
+                        class="timeline-clip-ctx-menu"
+                        :style="{ top: ctxMenu.top, left: ctxMenu.left }"
+                        @click.stop
+                    >
+                        <button class="ctx-item" @click="ctxCopyLink(ctxMenu.clip)">
+                            <i class="fas fa-link"></i> Copiar link
+                        </button>
+                        <button
+                            v-if="ctxMenu.clip.created_by === currentUserId"
+                            class="ctx-item ctx-item--danger"
+                            @click="ctxDelete(ctxMenu.clip)"
+                        >
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </Teleport>
+
                 <!-- Time Scale -->
                 <div class="time-scale">
                     <div class="time-scale-label"></div>
@@ -107,12 +129,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { useVideoStore, formatTime } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import type { VideoClip } from '@/types/video-player';
 import { COLOR_ACCENT } from '@/config/colors.js';
-// No external deps needed — rAF throttle inline for drag
+
+const toast        = inject<any>('toast');
+const currentUserId = inject<number>('currentUserId', 0);
 
 const props = defineProps<{
     videoId: number;
@@ -200,6 +224,86 @@ function setTrackRef(el: HTMLElement | null, categoryId: number) {
     else     trackRefs.delete(categoryId);
 }
 
+// ─── Context menu ─────────────────────────────────────────────────────────────
+
+interface CtxMenu {
+    clip:    VideoClip;
+    top:     string;
+    left:    string;
+}
+
+const ctxMenu = ref<CtxMenu | null>(null);
+
+function onClipContextMenu(event: MouseEvent, clip: VideoClip) {
+    event.preventDefault();
+    event.stopPropagation();
+    const x = event.clientX;
+    const y = event.clientY;
+    // Ajustar para que no salga de la pantalla
+    const menuW = 160;
+    const menuH = 80;
+    ctxMenu.value = {
+        clip,
+        top:  `${Math.min(y, window.innerHeight - menuH - 8)}px`,
+        left: `${Math.min(x, window.innerWidth  - menuW - 8)}px`,
+    };
+}
+
+function closeCtxMenu() {
+    ctxMenu.value = null;
+}
+
+function ctxOutsideClick(e: MouseEvent) {
+    if (ctxMenu.value) closeCtxMenu();
+}
+
+onMounted(()      => document.addEventListener('click', ctxOutsideClick, true));
+onBeforeUnmount(() => document.removeEventListener('click', ctxOutsideClick, true));
+
+async function ctxCopyLink(clip: VideoClip) {
+    closeCtxMenu();
+    const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+    let url = (clip as any).share_token
+        ? `${window.location.origin}/clips/${(clip as any).share_token}`
+        : null;
+
+    if (!url) {
+        try {
+            const res = await fetch(`/api/clips/${clip.id}/share-link`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.url) {
+                    (clip as any).share_token = data.url.split('/').pop();
+                    url = data.url;
+                }
+            }
+        } catch { /* fallback */ }
+    }
+
+    url = url ?? `${window.location.origin}/clips/${clip.id}/share`;
+
+    try {
+        await navigator.clipboard.writeText(url);
+        toast?.success('¡Link copiado!');
+    } catch {
+        toast?.error('No se pudo copiar el link');
+    }
+}
+
+async function ctxDelete(clip: VideoClip) {
+    closeCtxMenu();
+    if (!confirm('¿Eliminar este clip?')) return;
+    try {
+        await clipsStore.removeClip(clip.video_id, clip.id);
+        toast?.success('Clip eliminado');
+    } catch {
+        toast?.error('Error al eliminar el clip');
+    }
+}
+
 // ─── Drag state ───────────────────────────────────────────────────────────────
 type DragType = 'move' | 'resize-left' | 'resize-right';
 
@@ -228,6 +332,8 @@ function onClipMousedown(
     event:      MouseEvent,
     categoryId: number,
 ) {
+    // Ignorar click derecho (se maneja como contextmenu)
+    if (event.button !== 0) return;
     // Avoid triggering 'move' drag when user clicked a resize handle
     if (
         type === 'move' &&
@@ -699,6 +805,54 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
 .help-message strong { color: #fff; }
 
 /* ── Slide transition ─────────────────────────────────────────────────────── */
+</style>
+
+<!-- Context menu global (no scoped — teleported to body) -->
+<style>
+.timeline-clip-ctx-menu {
+    position: fixed;
+    background: #2c2c2c;
+    border: 1px solid #444;
+    border-radius: 4px;
+    min-width: 160px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,.6);
+    overflow: hidden;
+    padding: 2px 0;
+}
+.timeline-clip-ctx-menu .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.4rem 0.65rem;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 10.5px;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s;
+    white-space: nowrap;
+}
+.timeline-clip-ctx-menu .ctx-item i {
+    width: 12px;
+    text-align: center;
+    color: #888;
+    flex-shrink: 0;
+}
+.timeline-clip-ctx-menu .ctx-item:hover {
+    background: rgba(255,255,255,.07);
+    color: #fff;
+}
+.timeline-clip-ctx-menu .ctx-item:hover i { color: var(--color-accent, #00B7B5); }
+.timeline-clip-ctx-menu .ctx-item--danger { color: #e06c75; }
+.timeline-clip-ctx-menu .ctx-item--danger i { color: #e06c75; }
+.timeline-clip-ctx-menu .ctx-item--danger:hover { background: rgba(220,53,69,.1); color: #ff6b6b; }
+.timeline-clip-ctx-menu .ctx-item--danger:hover i { color: #ff6b6b; }
+</style>
+<style scoped>
+/* placeholder to close the non-scoped block above — real scoped styles follow */
 .slide-down-enter-active,
 .slide-down-leave-active {
     transition: all 0.3s ease;
