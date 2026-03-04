@@ -280,8 +280,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     </a>
                     <button type="button"
                             class="match-delete-btn" title="Eliminar"
-                            data-toggle="modal" data-target="#deleteModal-{{ $video->id }}"
-                            onclick="event.stopPropagation()">
+                            onclick="event.stopPropagation();$('#deleteModal-{{ $video->id }}').modal('show')">
                         <i class="fas fa-trash"></i>
                     </button>
                     {{-- Enviar a club: disponible desde dentro del video (botón en VideoHeader) --}}
@@ -423,8 +422,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     </a>
                     <button type="button"
                             class="match-delete-btn" title="Eliminar"
-                            data-toggle="modal" data-target="#deleteModal-{{ $video->id }}"
-                            onclick="event.stopPropagation()">
+                            onclick="event.stopPropagation();$('#deleteModal-{{ $video->id }}').modal('show')">
                         <i class="fas fa-trash"></i>
                     </button>
                 @endif
