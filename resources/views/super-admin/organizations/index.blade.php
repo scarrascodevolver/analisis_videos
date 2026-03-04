@@ -38,6 +38,32 @@
         </div>
     @endif
 
+    @if(session('generated_password'))
+        <div class="alert alert-info alert-dismissible fade show">
+            <h6 class="alert-heading"><i class="fas fa-key mr-2"></i>Credenciales del administrador creado</h6>
+            @if(session('generated_email'))
+                <div class="mb-2">
+                    <strong>Email:</strong>
+                    <code class="ml-1">{{ session('generated_email') }}</code>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2 btn-copy"
+                            data-copy="{{ session('generated_email') }}" title="Copiar email">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            @endif
+            <div>
+                <strong>Contraseña generada:</strong>
+                <code class="ml-1 font-weight-bold" id="generated-password-text">{{ session('generated_password') }}</code>
+                <button type="button" class="btn btn-sm btn-outline-secondary ml-2 btn-copy"
+                        data-copy="{{ session('generated_password') }}" title="Copiar contraseña">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+            </div>
+            <small class="d-block mt-2 text-muted">Guardá esta contraseña, no se volverá a mostrar.</small>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
@@ -171,14 +197,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <form id="delete-org-form" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="confirm_name" id="confirm-name-hidden">
-                    <button type="submit" class="btn btn-danger" id="btn-confirm-delete" disabled>
-                        <i class="fas fa-trash mr-1"></i> Eliminar definitivamente
-                    </button>
-                </form>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete" disabled>
+                    <i class="fas fa-trash mr-1"></i> Eliminar definitivamente
+                </button>
             </div>
         </div>
     </div>
@@ -186,31 +207,73 @@
 
 @push('scripts')
 <script>
+var currentDeleteAction = null;
+var currentDeleteRow    = null;
+
 document.querySelectorAll('.btn-delete-org').forEach(function(btn) {
     btn.addEventListener('click', function() {
-        var name   = this.dataset.orgName;
-        var users  = this.dataset.users;
-        var videos = this.dataset.videos;
-        var action = this.dataset.action;
+        currentDeleteAction = this.dataset.action;
+        currentDeleteRow    = this.closest('tr');
 
-        document.getElementById('modal-org-name').textContent    = name;
-        document.getElementById('modal-users-count').textContent = users;
-        document.getElementById('modal-videos-count').textContent= videos;
-        document.getElementById('delete-org-form').action        = action;
-        document.getElementById('confirm-name-input').value      = '';
-        document.getElementById('btn-confirm-delete').disabled   = true;
+        document.getElementById('modal-org-name').textContent     = this.dataset.orgName;
+        document.getElementById('modal-users-count').textContent  = this.dataset.users;
+        document.getElementById('modal-videos-count').textContent = this.dataset.videos;
+        document.getElementById('confirm-name-input').value       = '';
+        document.getElementById('btn-confirm-delete').disabled    = true;
 
         $('#deleteOrgModal').modal('show');
     });
 });
 
 document.getElementById('confirm-name-input').addEventListener('input', function() {
-    var orgName  = document.getElementById('modal-org-name').textContent;
-    var btnConfirm = document.getElementById('btn-confirm-delete');
-    var hiddenInput = document.getElementById('confirm-name-hidden');
+    var orgName = document.getElementById('modal-org-name').textContent;
+    document.getElementById('btn-confirm-delete').disabled = (this.value !== orgName);
+});
 
-    hiddenInput.value = this.value;
-    btnConfirm.disabled = (this.value !== orgName);
+document.getElementById('btn-confirm-delete').addEventListener('click', function() {
+    var btn = this;
+    var confirmName = document.getElementById('confirm-name-input').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+
+    fetch(currentDeleteAction, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ confirm_name: confirmName }),
+    })
+    .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Error al eliminar'); });
+        return res.json();
+    })
+    .then(function() {
+        $('#deleteOrgModal').modal('hide');
+        if (currentDeleteRow) {
+            currentDeleteRow.style.transition = 'opacity 0.3s';
+            currentDeleteRow.style.opacity    = '0';
+            setTimeout(function() { currentDeleteRow.remove(); }, 300);
+        }
+    })
+    .catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar definitivamente';
+        alert('Error: ' + err.message);
+    });
+});
+
+// Botones copiar
+document.querySelectorAll('.btn-copy').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var text = this.dataset.copy;
+        navigator.clipboard.writeText(text).then(function() {
+            btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
+            setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i> Copiar'; }, 2000);
+        });
+    });
 });
 </script>
 @endpush

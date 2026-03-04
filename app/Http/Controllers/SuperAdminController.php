@@ -201,13 +201,15 @@ class SuperAdminController extends Controller
                 'is_org_admin' => true,
             ]);
 
-            $message .= " Admin '{$admin->name}' creado.";
-            if ($generatedPassword) {
-                $message .= " Contraseña generada: {$generatedPassword}";
-            }
+            $message .= " Admin '{$admin->name}' ({$validated['admin_email']}) creado.";
         }
 
         $redirect = redirect()->route('super-admin.organizations')->with('success', $message);
+
+        if ($generatedPassword) {
+            $redirect = $redirect->with('generated_password', $generatedPassword)
+                                 ->with('generated_email', $validated['admin_email'] ?? null);
+        }
 
         if ($bunnyWarning) {
             $redirect = $redirect->with('warning', $bunnyWarning);
@@ -270,6 +272,9 @@ class SuperAdminController extends Controller
         $this->authorizeOrgAccess($organization);
         // Confirmación de seguridad: el nombre debe coincidir exactamente
         if ($request->input('confirm_name') !== $organization->name) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'El nombre ingresado no coincide.'], 422);
+            }
             return back()->with('error', 'El nombre ingresado no coincide. La organización NO fue eliminada.');
         }
 
@@ -324,6 +329,10 @@ class SuperAdminController extends Controller
             'videos_count' => $videosCount,
             'deleted_by' => auth()->id(),
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'message' => "Organización '{$name}' eliminada."]);
+        }
 
         return redirect()->route('super-admin.organizations')
             ->with('success', "Organización '{$name}' eliminada. Se eliminaron {$videosCount} videos y se desasociaron {$usersCount} usuarios.");
