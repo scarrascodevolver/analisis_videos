@@ -277,8 +277,8 @@ class TournamentController extends Controller
     {
         $org = auth()->user()->currentOrganization();
 
-        if (! $org || ! $org->isAsociacion()) {
-            return response()->json(['error' => 'Solo las asociaciones pueden crear torneos.'], 403);
+        if (! $org) {
+            return response()->json(['error' => 'No autorizado.'], 403);
         }
 
         $request->validate([

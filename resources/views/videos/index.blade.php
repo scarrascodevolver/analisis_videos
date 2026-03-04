@@ -479,6 +479,13 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                             <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $sizeLabel }}
                         @endif
                     </div>
+                    @if($video->tournament)
+                        <div class="mt-1">
+                            <span style="background:rgba(0,183,181,.12);border:1px solid rgba(0,183,181,.3);color:#00B7B5;border-radius:10px;padding:1px 8px;font-size:.7rem;">
+                                <i class="fas fa-trophy mr-1" style="font-size:.65rem;"></i>{{ $video->tournament->name }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endforeach
@@ -1349,6 +1356,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
         })

@@ -1074,7 +1074,6 @@ function handleXml(id, input) {
 
 // ─── Subida principal ────────────────────────────────────────
 async function startUpload() {
-    document.getElementById('uploadBtn').disabled = true;
     if (uploadState.isUploading) return;
 
     const matchDate = document.getElementById('match_date').value;
