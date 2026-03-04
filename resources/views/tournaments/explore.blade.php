@@ -65,9 +65,6 @@
                                         <div class="mb-2">
                                             <span class="badge badge-success">
                                                 <i class="fas fa-check-circle mr-1"></i>Inscripto
-                                                @if($tournament->registered_division_id)
-                                                    — {{ $tournament->divisions->firstWhere('id', $tournament->registered_division_id)?->name }}
-                                                @endif
                                             </span>
                                         </div>
                                         <button type="button"
@@ -87,33 +84,12 @@
                                             Cancelar solicitud
                                         </button>
                                     @else
-                                        {{-- Show division selector if tournament has divisions --}}
-                                        @if($tournament->divisions->isEmpty())
-                                            <button type="button"
-                                                    class="btn btn-rugby btn-sm btn-block register-btn"
-                                                    data-tournament-id="{{ $tournament->id }}"
-                                                    data-tournament-name="{{ $tournament->name }}"
-                                                    data-division-id="">
-                                                <i class="fas fa-sign-in-alt mr-1"></i> Inscribirse
-                                            </button>
-                                        @else
-                                            <div class="form-group mb-2">
-                                                <select class="form-control form-control-sm div-select-{{ $tournament->id }}"
-                                                        style="background:#1a1a1a;color:#fff;border-color:#444;">
-                                                    <option value="">Elegí tu división...</option>
-                                                    @foreach($tournament->divisions as $div)
-                                                        <option value="{{ $div->id }}">{{ $div->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <button type="button"
-                                                    class="btn btn-rugby btn-sm btn-block register-btn"
-                                                    data-tournament-id="{{ $tournament->id }}"
-                                                    data-tournament-name="{{ $tournament->name }}"
-                                                    data-division-selector=".div-select-{{ $tournament->id }}">
-                                                <i class="fas fa-sign-in-alt mr-1"></i> Inscribirse
-                                            </button>
-                                        @endif
+                                        <button type="button"
+                                                class="btn btn-rugby btn-sm btn-block register-btn"
+                                                data-tournament-id="{{ $tournament->id }}"
+                                                data-tournament-name="{{ $tournament->name }}">
+                                            <i class="fas fa-sign-in-alt mr-1"></i> Inscribirse
+                                        </button>
                                     @endif
                                 </div>
                             </div>
@@ -142,22 +118,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const tournamentName = this.dataset.tournamentName;
             const card           = this;
 
-            // Get division_id — either from data-division-id or from a selector
-            const divSelector = this.dataset.divisionSelector;
-            let divisionId = this.dataset.divisionId !== undefined ? this.dataset.divisionId : '';
-            if (divSelector) {
-                divisionId = document.querySelector(divSelector)?.value ?? '';
-                if (!divisionId) {
-                    showToast('error', 'Por favor elegí una división antes de inscribirte.');
-                    return;
-                }
-            }
-
             card.disabled = true;
             card.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Inscribiendo...';
 
             const payload = { tournament_id: tournamentId };
-            if (divisionId) payload.division_id = divisionId;
 
             fetch('{{ route("tournament-registrations.store") }}', {
                 method: 'POST',

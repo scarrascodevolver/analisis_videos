@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tournament;
-use App\Models\TournamentDivision;
 use App\Models\TournamentRegistration;
 use App\Models\User;
 use App\Models\VideoOrgShare;
@@ -24,10 +23,10 @@ class TournamentRegistrationController extends Controller
             abort(403, 'Solo los clubes pueden explorar torneos.');
         }
 
-        // Registrations del club: keyed by tournament_id => registration (with division_id)
+        // Registrations del club: keyed by tournament_id => status
         $myRegistrations = TournamentRegistration::where('club_organization_id', $org->id)
             ->whereIn('status', ['active', 'pending'])
-            ->get(['tournament_id', 'division_id', 'status'])
+            ->get(['tournament_id', 'status'])
             ->keyBy('tournament_id');
 
         // Torneos públicos de cualquier asociación (cross-org)
@@ -40,7 +39,6 @@ class TournamentRegistrationController extends Controller
             ->map(function ($tournament) use ($myRegistrations) {
                 $myReg = $myRegistrations[$tournament->id] ?? null;
                 $tournament->registration_status = $myReg?->status ?? null;
-                $tournament->registered_division_id = $myReg?->division_id ?? null;
 
                 return $tournament;
             });
@@ -87,7 +85,6 @@ class TournamentRegistrationController extends Controller
     {
         $request->validate([
             'tournament_id' => 'required|exists:tournaments,id',
-            'division_id'   => 'nullable|exists:tournament_divisions,id',
         ]);
 
         $org = auth()->user()->currentOrganization();
@@ -101,20 +98,6 @@ class TournamentRegistrationController extends Controller
 
         if (! $tournament->is_public) {
             return response()->json(['error' => 'Este torneo no está disponible públicamente.'], 403);
-        }
-
-        // If division_id provided, verify it belongs to this tournament
-        $divisionId = null;
-        if ($request->filled('division_id')) {
-            $division = TournamentDivision::where('id', $request->division_id)
-                ->where('tournament_id', $tournament->id)
-                ->first();
-
-            if (! $division) {
-                return response()->json(['error' => 'La división no pertenece a este torneo.'], 422);
-            }
-
-            $divisionId = $division->id;
         }
 
         // Check existing registration
@@ -139,7 +122,6 @@ class TournamentRegistrationController extends Controller
 
             // Status is 'withdrawn' or 'rejected' — allow re-request
             $existing->update([
-                'division_id'   => $divisionId,
                 'status'        => 'pending',
                 'registered_at' => now(),
                 'withdrawn_at'  => null,
@@ -148,11 +130,10 @@ class TournamentRegistrationController extends Controller
             $registration = $existing;
         } else {
             $registration = TournamentRegistration::create([
-                'tournament_id'       => $tournament->id,
-                'division_id'         => $divisionId,
+                'tournament_id'        => $tournament->id,
                 'club_organization_id' => $org->id,
-                'status'              => 'pending',
-                'registered_at'       => now(),
+                'status'               => 'pending',
+                'registered_at'        => now(),
             ]);
         }
 

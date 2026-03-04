@@ -162,24 +162,43 @@ class VideoController extends Controller
                     ->orderBy('name')
                     ->get();
 
-                // Shares recibidos agrupados por torneo → división
-                $receivedShares = VideoOrgShare::where('target_organization_id', $org->id)
+                // Shares recibidos agrupados por torneo → división (con videos completos)
+                $sharedVideos = VideoOrgShare::where('target_organization_id', $org->id)
                     ->where('status', 'active')
                     ->with([
-                        'division.tournament:id,name',
-                        'sourceOrganization:id,name,logo_path',
-                        // video & tournament are cross-org — bypass global scopes
-                        'video' => fn ($q) => $q->withoutGlobalScopes()
-                            ->with(['tournament' => fn ($qt) => $qt->withoutGlobalScopes()->select('id', 'name')])
-                            ->select('id', 'title', 'tournament_id'),
+                        'division',
+                        // video is cross-org — bypass global scopes
+                        'video' => fn ($q) => $q->withoutGlobalScopes()->with([
+                            'rivalTeam',
+                            'videoGroups.videos',
+                            'tournament' => fn ($qt) => $qt->withoutGlobalScopes()->select('id', 'name'),
+                        ]),
                     ])
                     ->get()
                     ->filter(fn ($s) => $s->video !== null);
 
-                // Group by tournament_id (from division if set, else from video), then by division_id
-                $receivedByTournament = $receivedShares
-                    ->groupBy(fn ($s) => $s->division?->tournament_id ?? $s->video?->tournament_id ?? 0)
-                    ->map(fn ($shares) => $shares->groupBy('division_id'));
+                // Calculate sizes for each shared video
+                $sharedVideos->each(function ($share) {
+                    $sv    = $share->video;
+                    $group = $sv->videoGroups->first();
+                    $sv->total_size   = $group && $group->videos->isNotEmpty()
+                        ? $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0)
+                        : ($sv->compressed_file_size ?? $sv->file_size ?? 0);
+                    $sv->angles_count = $group ? $group->videos->count() : 1;
+                });
+
+                // Group by tournament_id then by division_id
+                $receivedByTournament = $sharedVideos
+                    ->groupBy(fn ($s) => $s->video?->tournament_id ?? 0)
+                    ->map(fn ($tournamentShares) => [
+                        'tournament' => $tournamentShares->first()->video?->tournament,
+                        'divisions'  => $tournamentShares
+                            ->groupBy(fn ($s) => $s->division_id ?? 0)
+                            ->map(fn ($divShares) => [
+                                'division' => $divShares->first()->division,
+                                'videos'   => $divShares->map(fn ($s) => $s->video),
+                            ])->values(),
+                    ])->values();
 
                 return view('videos.index', compact('categories', 'receivedByTournament'))->with('view', 'club_categories');
             }

@@ -125,6 +125,7 @@ class VideoShareController extends Controller
         $request->validate([
             'target_organization_ids'   => 'required|array|min:1',
             'target_organization_ids.*' => 'exists:organizations,id',
+            'division_id'               => 'nullable|exists:tournament_divisions,id',
             'notes'                     => 'nullable|string|max:500',
         ]);
 
@@ -173,18 +174,20 @@ class VideoShareController extends Controller
                     continue;
                 }
                 $existing->update([
-                    'status'     => 'active',
-                    'shared_by'  => auth()->id(),
-                    'notes'      => $request->notes,
-                    'shared_at'  => now(),
-                    'revoked_at' => null,
-                    'revoked_by' => null,
+                    'status'      => 'active',
+                    'shared_by'   => auth()->id(),
+                    'division_id' => $request->division_id,
+                    'notes'       => $request->notes,
+                    'shared_at'   => now(),
+                    'revoked_at'  => null,
+                    'revoked_by'  => null,
                 ]);
             } else {
                 VideoOrgShare::create([
                     'video_id'               => $video->id,
                     'source_organization_id' => $sourceOrg->id,
                     'target_organization_id' => $targetOrg->id,
+                    'division_id'            => $request->division_id,
                     'shared_by'              => auth()->id(),
                     'status'                 => 'active',
                     'notes'                  => $request->notes,
@@ -279,7 +282,7 @@ class VideoShareController extends Controller
 
         $clubs = TournamentRegistration::where('tournament_id', $tournament->id)
             ->where('status', 'active')
-            ->with(['clubOrganization:id,name,logo_path', 'division:id,name'])
+            ->with('clubOrganization:id,name,logo_path')
             ->get()
             ->map(fn ($reg) => [
                 'id'           => $reg->clubOrganization->id,
@@ -287,8 +290,8 @@ class VideoShareController extends Controller
                 'logo_url'     => $reg->clubOrganization->logo_path
                     ? asset('storage/' . $reg->clubOrganization->logo_path)
                     : null,
-                'division_id'  => $reg->division_id,
-                'division_name'=> $reg->division?->name,
+                'division_id'   => null,
+                'division_name' => null,
             ]);
 
         return response()->json(['clubs' => $clubs]);
@@ -307,8 +310,9 @@ class VideoShareController extends Controller
             return response()->json(['error' => 'No autorizado.'], 403);
         }
 
+        // Since division_id was removed from tournament_registrations,
+        // return all clubs registered to this tournament (no division filter on registrations).
         $clubs = TournamentRegistration::where('tournament_id', $division->tournament_id)
-            ->where('division_id', $division->id)
             ->where('status', 'active')
             ->with('clubOrganization:id,name,logo_path')
             ->get()

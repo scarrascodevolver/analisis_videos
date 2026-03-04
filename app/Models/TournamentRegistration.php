@@ -9,7 +9,6 @@ class TournamentRegistration extends Model
 {
     protected $fillable = [
         'tournament_id',
-        'division_id',
         'club_organization_id',
         'status',
         'registered_at',
@@ -29,11 +28,6 @@ class TournamentRegistration extends Model
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
-    }
-
-    public function division(): BelongsTo
-    {
-        return $this->belongsTo(TournamentDivision::class, 'division_id');
     }
 
     public function clubOrganization(): BelongsTo

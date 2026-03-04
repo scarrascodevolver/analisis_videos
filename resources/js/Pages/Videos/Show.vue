@@ -91,36 +91,30 @@ const canShare = computed(() =>
     !!props.video.tournament_id
 );
 
-const showShareModal  = ref(false);
-const shareDivisions  = ref<{ id: number; name: string }[]>([]);
-const shareAllClubs   = ref<{ id: number; name: string; division_id: number | null; division_name: string | null }[]>([]);
-const shareDivFilter  = ref<number | null>(null);
-const selectedClubIds = ref<Set<number>>(new Set());
-const shareNotes      = ref('');
-const shareLoading    = ref(false);
-const shareFeedback   = ref<{ type: string; message: string } | null>(null);
-
-const shareFilteredClubs = computed(() =>
-    shareDivFilter.value
-        ? shareAllClubs.value.filter(c => c.division_id === shareDivFilter.value)
-        : shareAllClubs.value
-);
+const showShareModal      = ref(false);
+const shareDivisions      = ref<{ id: number; name: string }[]>([]);
+const shareAllClubs       = ref<{ id: number; name: string; division_id: number | null; division_name: string | null }[]>([]);
+const shareDivisionId     = ref<number | null>(null); // required division metadata for the share
+const selectedClubIds     = ref<Set<number>>(new Set());
+const shareNotes          = ref('');
+const shareLoading        = ref(false);
+const shareFeedback       = ref<{ type: string; message: string } | null>(null);
 
 const shareSelectAllState = computed<'none' | 'some' | 'all'>(() => {
-    const visible = shareFilteredClubs.value;
-    if (visible.length === 0) return 'none';
-    const checked = visible.filter(c => selectedClubIds.value.has(c.id)).length;
+    const all = shareAllClubs.value;
+    if (all.length === 0) return 'none';
+    const checked = all.filter(c => selectedClubIds.value.has(c.id)).length;
     if (checked === 0) return 'none';
-    if (checked === visible.length) return 'all';
+    if (checked === all.length) return 'all';
     return 'some';
 });
 
 function shareToggleSelectAll() {
-    const visible = shareFilteredClubs.value;
+    const all = shareAllClubs.value;
     if (shareSelectAllState.value === 'all') {
-        visible.forEach(c => selectedClubIds.value.delete(c.id));
+        all.forEach(c => selectedClubIds.value.delete(c.id));
     } else {
-        visible.forEach(c => selectedClubIds.value.add(c.id));
+        all.forEach(c => selectedClubIds.value.add(c.id));
     }
     selectedClubIds.value = new Set(selectedClubIds.value); // trigger reactivity
 }
@@ -132,15 +126,9 @@ function shareToggleClub(clubId: number) {
     selectedClubIds.value = next;
 }
 
-function shareSetDivFilter(e: Event) {
-    const val = (e.target as HTMLSelectElement).value;
-    shareDivFilter.value  = val ? Number(val) : null;
-    selectedClubIds.value = new Set<number>();
-}
-
 async function openShareModal() {
     showShareModal.value  = true;
-    shareDivFilter.value  = null;
+    shareDivisionId.value = null;
     selectedClubIds.value = new Set();
     shareNotes.value      = '';
     shareFeedback.value   = null;
@@ -157,6 +145,10 @@ async function openShareModal() {
 }
 
 async function submitShare() {
+    if (shareDivisions.value.length > 0 && !shareDivisionId.value) {
+        shareFeedback.value = { type: 'warning', message: 'Seleccioná la división del video antes de enviar.' };
+        return;
+    }
     if (selectedClubIds.value.size === 0) {
         shareFeedback.value = { type: 'warning', message: 'Seleccioná al menos un club.' };
         return;
@@ -169,6 +161,7 @@ async function submitShare() {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
         body:    JSON.stringify({
             target_organization_ids: Array.from(selectedClubIds.value),
+            division_id:             shareDivisionId.value ?? null,
             notes:                   shareNotes.value || null,
         }),
     });
@@ -777,15 +770,15 @@ function onSyncSaved(offsets: Record<number, number>) {
                             Video: <strong style="color:#fff;">{{ video.title }}</strong>
                         </p>
 
-                        <!-- Filtro por división -->
+                        <!-- División del video (requerida si el torneo tiene divisiones) -->
                         <div style="margin-bottom:12px;" v-if="shareDivisions.length > 0">
                             <label style="font-size:.78rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
-                                <i class="fas fa-filter" style="margin-right:4px;"></i> Filtrar por división (opcional)
+                                <i class="fas fa-layer-group" style="margin-right:4px;color:#00B7B5;"></i>
+                                División del video <span style="color:#dc3545;">*</span>
                             </label>
-                            <select :value="shareDivFilter"
-                                    @change="shareSetDivFilter"
+                            <select v-model="shareDivisionId"
                                     style="width:100%;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:5px 10px;font-size:.85rem;">
-                                <option :value="null">— Todas las divisiones —</option>
+                                <option :value="null">— Seleccioná la división —</option>
                                 <option v-for="div in shareDivisions" :key="div.id" :value="div.id">{{ div.name }}</option>
                             </select>
                         </div>
@@ -811,21 +804,17 @@ function onSyncSaved(offsets: Record<number, number>) {
                                  style="text-align:center;color:#666;font-size:.82rem;padding:20px 0;">
                                 <i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Cargando clubes...
                             </div>
-                            <div v-else-if="shareFilteredClubs.length === 0"
+                            <div v-else-if="shareAllClubs.length === 0"
                                  style="text-align:center;color:#666;font-size:.82rem;padding:20px 0;">
-                                No hay clubes inscriptos en esta división.
+                                No hay clubes inscriptos en este torneo.
                             </div>
-                            <label v-for="club in shareFilteredClubs" :key="club.id"
+                            <label v-for="club in shareAllClubs" :key="club.id"
                                    style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;margin:0;">
                                 <input type="checkbox"
                                        :checked="selectedClubIds.has(club.id)"
                                        @change="shareToggleClub(club.id)"
                                        style="width:15px;height:15px;accent-color:#00B7B5;flex-shrink:0;cursor:pointer;">
                                 <span style="color:#fff;font-size:.88rem;flex:1;">{{ club.name }}</span>
-                                <span v-if="club.division_name"
-                                      style="font-size:.72rem;padding:1px 7px;border-radius:10px;background:rgba(0,183,181,.18);color:#00B7B5;white-space:nowrap;">
-                                    {{ club.division_name }}
-                                </span>
                             </label>
                         </div>
 
@@ -856,6 +845,7 @@ function onSyncSaved(offsets: Record<number, number>) {
                             <i class="fas fa-paper-plane" style="margin-right:4px;"></i>
                             {{ shareLoading ? 'Enviando...' : selectedClubIds.size > 0 ? `Enviar a ${selectedClubIds.size} club${selectedClubIds.size !== 1 ? 'es' : ''}` : 'Seleccioná al menos un club' }}
                         </button>
+
                     </div>
                 </div>
             </div>

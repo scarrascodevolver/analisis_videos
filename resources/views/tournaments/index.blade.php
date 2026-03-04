@@ -14,7 +14,14 @@
     <div class="card card-rugby">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title"><i class="fas fa-trophy mr-2"></i>Torneos</h3>
-            <small class="text-muted">Doble clic en Nombre o Temporada para editar</small>
+            <div class="d-flex align-items-center" style="gap:12px;">
+                <small class="text-muted d-none d-md-inline">Doble clic en Nombre o Temporada para editar</small>
+                @if(auth()->user()->currentOrganization()?->isAsociacion())
+                    <button type="button" class="btn btn-rugby btn-sm" data-toggle="modal" data-target="#modalNuevoTorneo">
+                        <i class="fas fa-plus mr-1"></i> Nuevo Torneo
+                    </button>
+                @endif
+            </div>
         </div>
         <div class="card-body p-0">
 
@@ -258,6 +265,108 @@
 </div>
 </div>
 @endsection
+
+{{-- ── Modal: Nuevo Torneo ──────────────────────────────────────────── --}}
+@if(auth()->user()->currentOrganization()?->isAsociacion())
+<div class="modal fade" id="modalNuevoTorneo" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content" style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,.1);padding:12px 18px;">
+                <h6 class="modal-title" style="color:#fff;">
+                    <i class="fas fa-trophy mr-2" style="color:#b8860b;"></i> Nuevo Torneo
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:18px;">
+                <div class="form-group mb-3">
+                    <label style="font-size:.78rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
+                        Nombre del torneo <span style="color:#dc3545;">*</span>
+                    </label>
+                    <input type="text" id="nt-name"
+                           class="form-control form-control-sm"
+                           style="background:#111;border:1px solid #444;color:#fff;"
+                           placeholder="Ej: URBA 2026" maxlength="255">
+                </div>
+                <div class="form-group mb-0">
+                    <label style="font-size:.78rem;color:#aaa;font-weight:600;display:block;margin-bottom:4px;">
+                        Temporada (opcional)
+                    </label>
+                    <input type="text" id="nt-season"
+                           class="form-control form-control-sm"
+                           style="background:#111;border:1px solid #444;color:#fff;"
+                           placeholder="Ej: 2026" maxlength="20">
+                </div>
+                <div id="nt-error" class="text-danger small mt-2 d-none"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,.1);padding:10px 18px;">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-rugby btn-sm" id="nt-save-btn">
+                    <i class="fas fa-save mr-1"></i> Crear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Modal: Agregar Divisiones (post-creación) ─────────────────────── --}}
+<div class="modal fade" id="modalNuevoTorneoDivisiones" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document" style="max-width:500px;">
+        <div class="modal-content" style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,.1);padding:12px 18px;">
+                <h6 class="modal-title" style="color:#fff;">
+                    <i class="fas fa-layer-group mr-2" style="color:#00B7B5;"></i>
+                    Agregar divisiones al torneo
+                </h6>
+                <small id="nd-tournament-name" style="color:#aaa;margin-left:8px;"></small>
+            </div>
+            <div class="modal-body" style="padding:18px;">
+                <p style="font-size:.83rem;color:#aaa;margin-bottom:14px;">
+                    Agregá las divisiones del torneo. Podés saltear este paso si no aplica.
+                </p>
+
+                {{-- Sugerencias rápidas --}}
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:.78rem;color:#aaa;font-weight:600;margin-bottom:8px;">Sugerencias rápidas:</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:7px;" id="nd-chips">
+                        @foreach(['Adulta','M18','M16','M14','M12','M10','M8','Seven','Femenino'] as $suggestion)
+                        <button type="button" class="nd-chip-btn"
+                                data-name="{{ $suggestion }}"
+                                style="background:transparent;border:1px solid rgba(0,183,181,.45);color:rgba(0,183,181,.8);border-radius:20px;padding:4px 14px;font-size:.82rem;cursor:pointer;transition:all .15s;">
+                            {{ $suggestion }}
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Input nombre personalizado --}}
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <input type="text" id="nd-custom-input"
+                           style="flex:1;background:#111;border:1px solid #444;color:#fff;border-radius:4px;padding:5px 12px;font-size:.85rem;outline:none;"
+                           placeholder="Otra división...">
+                    <button type="button" id="nd-add-btn"
+                            style="background:rgba(0,183,181,.15);border:1px solid #00B7B5;color:#00B7B5;border-radius:4px;padding:5px 14px;font-size:.82rem;cursor:pointer;white-space:nowrap;">
+                        <i class="fas fa-plus mr-1"></i> Agregar
+                    </button>
+                </div>
+
+                {{-- Divisiones agregadas --}}
+                <div id="nd-added-pills" style="display:flex;flex-wrap:wrap;gap:7px;min-height:28px;"></div>
+                <div id="nd-div-error" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,.1);padding:10px 18px;justify-content:space-between;align-items:center;">
+                <a href="#" id="nd-skip-link"
+                   style="font-size:.8rem;color:rgba(255,255,255,.4);text-decoration:none;">
+                    Continuar sin divisiones
+                </a>
+                <button type="button" id="nd-continue-btn"
+                        class="btn btn-rugby btn-sm">
+                    <i class="fas fa-check mr-1"></i> Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 @push('styles')
 <style>
@@ -647,6 +756,151 @@ document.querySelectorAll('.btn-approve-reg, .btn-reject-reg').forEach(function 
         .catch(() => { self.disabled = false; });
     });
 });
+
+// ── Nuevo Torneo modal ────────────────────────────────────────────────
+(function () {
+    var currentTournamentId = null;
+
+    var ntSaveBtn = document.getElementById('nt-save-btn');
+    if (!ntSaveBtn) return;
+
+    ntSaveBtn.addEventListener('click', function () {
+        var name   = (document.getElementById('nt-name').value || '').trim();
+        var season = (document.getElementById('nt-season').value || '').trim();
+        var errEl  = document.getElementById('nt-error');
+
+        if (!name) {
+            errEl.textContent = 'El nombre es obligatorio.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        errEl.classList.add('d-none');
+        ntSaveBtn.disabled = true;
+
+        fetch('/api/tournaments', {
+            method: 'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'X-CSRF-TOKEN':  document.querySelector('meta[name=csrf-token]').content,
+            },
+            body: JSON.stringify({ name: name, season: season || null }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.id) {
+                currentTournamentId = data.id;
+                // Close first modal, open divisions modal
+                $('#modalNuevoTorneo').modal('hide');
+                document.getElementById('nd-tournament-name').textContent = '— ' + name;
+                // Reset divisions modal state
+                document.getElementById('nd-added-pills').innerHTML = '';
+                document.getElementById('nd-custom-input').value = '';
+                document.getElementById('nd-div-error').classList.add('d-none');
+                // Re-enable all chips
+                document.querySelectorAll('.nd-chip-btn').forEach(function (c) {
+                    c.disabled = false;
+                    c.style.opacity = '1';
+                });
+                $('#modalNuevoTorneoDivisiones').modal('show');
+            } else {
+                errEl.textContent = data.message || 'Error al crear el torneo.';
+                errEl.classList.remove('d-none');
+                ntSaveBtn.disabled = false;
+            }
+        })
+        .catch(function () {
+            errEl.textContent = 'Error de red.';
+            errEl.classList.remove('d-none');
+            ntSaveBtn.disabled = false;
+        });
+    });
+
+    document.getElementById('nt-name').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('nt-save-btn').click();
+    });
+
+    // Reset modal when hidden
+    $('#modalNuevoTorneo').on('hidden.bs.modal', function () {
+        document.getElementById('nt-name').value    = '';
+        document.getElementById('nt-season').value  = '';
+        document.getElementById('nt-error').classList.add('d-none');
+        ntSaveBtn.disabled = false;
+    });
+
+    // ── Divisiones modal logic ───────────────────────────────────────
+    var csrf = document.querySelector('meta[name=csrf-token]').content;
+
+    function addDivisionPill(divId, divName) {
+        var pill = document.createElement('span');
+        pill.className  = 'div-pill';
+        pill.dataset.divId = divId;
+        pill.innerHTML  = '<i class="fas fa-layer-group" style="font-size:.75rem;opacity:.7;"></i> ' +
+            divName +
+            ' <a href="#" class="div-pill-remove" onclick="(function(e,id){e.preventDefault();' +
+            'e.currentTarget.closest(\'.div-pill\').remove();' +
+            'var chipName=\'' + divName.replace(/'/g, "\\'") + '\';' +
+            'document.querySelectorAll(\'.nd-chip-btn\').forEach(function(b){if(b.dataset.name===chipName){b.disabled=false;b.style.opacity=\'1\';}});' +
+            '})(event,' + divId + ')">&times;</a>';
+        document.getElementById('nd-added-pills').appendChild(pill);
+    }
+
+    function submitNewDivision(name, chipBtn) {
+        if (!name || !currentTournamentId) return;
+
+        fetch('/api/tournaments/' + currentTournamentId + '/divisions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ name: name }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.ok) {
+                addDivisionPill(data.division.id, data.division.name);
+                if (chipBtn) {
+                    chipBtn.disabled = true;
+                    chipBtn.style.opacity = '0.4';
+                }
+                document.getElementById('nd-custom-input').value = '';
+                document.getElementById('nd-div-error').classList.add('d-none');
+            } else {
+                var errEl = document.getElementById('nd-div-error');
+                errEl.textContent = data.error || 'Error al crear la división.';
+                errEl.classList.remove('d-none');
+            }
+        });
+    }
+
+    // Chip click
+    document.querySelectorAll('.nd-chip-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (this.disabled) return;
+            submitNewDivision(this.dataset.name, this);
+        });
+    });
+
+    // Add custom division
+    document.getElementById('nd-add-btn').addEventListener('click', function () {
+        var val = (document.getElementById('nd-custom-input').value || '').trim();
+        if (!val) return;
+        submitNewDivision(val, null);
+    });
+
+    document.getElementById('nd-custom-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nd-add-btn').click(); }
+    });
+
+    // Continue / Skip
+    function finishDivisions() {
+        $('#modalNuevoTorneoDivisiones').modal('hide');
+        window.location.reload();
+    }
+
+    document.getElementById('nd-continue-btn').addEventListener('click', finishDivisions);
+    document.getElementById('nd-skip-link').addEventListener('click', function (e) {
+        e.preventDefault();
+        finishDivisions();
+    });
+})();
 
 // Toggle público/privado para asociaciones
 document.querySelectorAll('.btn-toggle-public').forEach(function (btn) {

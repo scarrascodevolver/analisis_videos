@@ -111,7 +111,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
 @endpush
 @endif
 
-{{-- Sección: Recibidos de Torneos (agrupado por torneo → división) --}}
+{{-- Sección: Recibidos de Torneos (árbol Torneo → División → Videos) --}}
 @if(isset($receivedByTournament) && $receivedByTournament->isNotEmpty())
     <div class="mt-4 mb-3" style="border-top:1px solid rgba(255,255,255,.08);padding-top:1.5rem;">
         <div class="d-flex align-items-center mb-3">
@@ -120,46 +120,73 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                 RECIBIDOS DE TORNEOS
             </h6>
         </div>
-        @foreach($receivedByTournament as $tournamentId => $divisionGroups)
+
+        @foreach($receivedByTournament as $tournamentGroup)
             @php
-                $firstShare = $divisionGroups->first()->first();
-                $tournamentName = $firstShare->division?->tournament?->name
-                    ?? $firstShare->video?->tournament?->name
-                    ?? 'Sin torneo';
-                $sourceOrgName = $firstShare->sourceOrganization->name ?? '';
+                $tName = $tournamentGroup['tournament']?->name ?? 'Sin torneo';
             @endphp
-            <div class="mb-3">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="fas fa-trophy mr-2" style="color:#b8860b;font-size:.85rem;"></i>
-                    <span style="font-weight:600;font-size:.9rem;">{{ $tournamentName }}</span>
-                    <small class="ml-2 text-muted" style="font-size:.75rem;">por {{ $sourceOrgName }}</small>
+            <div class="mb-4">
+                {{-- Torneo header --}}
+                <div class="d-flex align-items-center mb-2" style="gap:8px;">
+                    <i class="fas fa-trophy" style="color:#b8860b;font-size:.9rem;"></i>
+                    <span style="font-weight:700;font-size:.95rem;color:#f0f0f0;">{{ $tName }}</span>
                 </div>
-                <div class="folder-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px,1fr));">
-                    @foreach($divisionGroups as $divisionId => $shares)
-                        @php
-                            $divName = $shares->first()->division?->name ?? 'Sin división';
-                            $count = $shares->count();
-                        @endphp
-                        <div class="folder-card-wrap">
+
+                @foreach($tournamentGroup['divisions'] as $divisionGroup)
+                    @php
+                        $dName  = $divisionGroup['division']?->name ?? 'Sin división';
+                        $videos = $divisionGroup['videos'];
+                        $dCount = $videos->count();
+                    @endphp
+                    {{-- División sub-header --}}
+                    <div class="d-flex align-items-center mb-2" style="gap:6px;padding-left:18px;">
+                        <i class="fas fa-layer-group" style="color:#00B7B5;font-size:.8rem;"></i>
+                        <span style="font-size:.85rem;color:#00B7B5;font-weight:600;">{{ $dName }}</span>
+                        <span style="font-size:.75rem;color:#666;">({{ $dCount }} {{ $dCount === 1 ? 'video' : 'videos' }})</span>
+                    </div>
+
+                    {{-- Video cards for this division --}}
+                    <div class="match-grid mb-3" style="padding-left:18px;">
+                        @foreach($videos as $sv)
                             @php
-                                $folderParams = ['received_from' => $shares->first()->source_organization_id];
-                                if ($divisionId) $folderParams['division'] = $divisionId;
+                                $svSize = '';
+                                $svTotal = $sv->total_size ?? 0;
+                                if ($svTotal > 0) {
+                                    $svSize = $svTotal >= 1073741824
+                                        ? number_format($svTotal / 1073741824, 1) . ' GB'
+                                        : number_format($svTotal / 1048576, 0) . ' MB';
+                                }
                             @endphp
-                            <a href="{{ route('videos.index', $folderParams) }}"
-                               class="folder-card text-decoration-none"
-                               style="border-color:rgba(0,183,181,.35);">
-                                <div class="folder-icon-wrap">
-                                    <i class="fas fa-layer-group" style="color:#00B7B5;font-size:1.8rem;"></i>
+                            <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
+                                <div class="match-card-thumb">
+                                    @if($sv->bunny_thumbnail)
+                                        <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
+                                    @else
+                                        <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
+                                    @endif
+                                    <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
+                                    {{-- Shared badge --}}
+                                    <div style="position:absolute;bottom:6px;left:6px;background:rgba(0,183,181,.2);border:1px solid rgba(0,183,181,.5);border-radius:4px;padding:2px 7px;font-size:.65rem;color:#00B7B5;">
+                                        <i class="fas fa-share-alt mr-1"></i>{{ $tName }}
+                                    </div>
                                 </div>
-                                <div class="folder-name" style="font-size:.85rem;">{{ $divName }}</div>
-                                <div class="folder-meta">
-                                    <span style="color:#00B7B5;">{{ $count }}</span>
-                                    {{ $count === 1 ? 'video' : 'videos' }}
+                                <div class="match-card-body">
+                                    <div class="match-fixture">
+                                        <span class="fixture-team fixture-local">{{ $sv->analyzed_team_name ?? 'Local' }}</span>
+                                        <span class="fixture-vs">VS</span>
+                                        <span class="fixture-team fixture-rival">{{ $sv->rivalTeam?->name ?? $sv->rival_name ?? 'Rival' }}</span>
+                                    </div>
+                                    <div class="match-card-meta">
+                                        <i class="fas fa-calendar mr-1"></i>{{ $sv->match_date?->format('d/m/Y') ?? '—' }}
+                                        @if($svSize)
+                                            <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $svSize }}
+                                        @endif
+                                    </div>
                                 </div>
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
             </div>
         @endforeach
     </div>
