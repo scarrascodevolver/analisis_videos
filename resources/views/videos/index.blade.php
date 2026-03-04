@@ -925,8 +925,8 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
     // ── Paso 2: Divisiones ────────────────────────────────────────────
     function addDivPill(divId, divName) {
         var pill = document.createElement('span');
-        pill.className = 'div-pill';
-        pill.innerHTML = divName + ' <a href="#" style="color:rgba(0,183,181,.6);text-decoration:none;margin-left:4px;" onclick="(function(e){e.preventDefault();e.target.closest(\'.div-pill\').remove();})(event)">&times;</a>';
+        pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:rgba(0,183,181,.15);border:1px solid rgba(0,183,181,.5);color:#00B7B5;border-radius:20px;padding:4px 12px;font-size:.85rem;font-weight:500;';
+        pill.innerHTML = divName + ' <a href="#" style="color:rgba(0,183,181,.7);text-decoration:none;font-size:1rem;line-height:1;" onclick="(function(e){e.preventDefault();e.target.closest(\'span\').remove();})(event)">&times;</a>';
         document.getElementById('ctd-added-pills').appendChild(pill);
     }
 
