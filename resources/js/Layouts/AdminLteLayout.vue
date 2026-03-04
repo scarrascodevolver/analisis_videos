@@ -123,14 +123,28 @@ function markAllNotificationsAsRead() {
                                 @click="markNotificationAsRead(notification.id)"
                                 class="dropdown-item"
                             >
-                                <i class="fas fa-at mr-2 text-primary"></i>
-                                <strong>{{ notification.data.mentioned_by_name }}</strong> te mencionó
-                                <span class="float-right text-muted text-sm">
-                                    {{ notification.created_at }}
-                                </span>
-                                <p class="text-sm text-muted mb-0 mt-1">
-                                    {{ notification.data.comment_text.substring(0, 50) }}{{ notification.data.comment_text.length > 50 ? '...' : '' }}
-                                </p>
+                                <!-- Video compartido por asociación -->
+                                <template v-if="notification.data.type === 'video_shared'">
+                                    <i class="fas fa-share-alt mr-2 text-success"></i>
+                                    <strong>{{ notification.data.source_org_name }}</strong> compartió un video
+                                    <span class="float-right text-muted text-sm">
+                                        {{ notification.created_at }}
+                                    </span>
+                                    <p class="text-sm text-muted mb-0 mt-1">
+                                        {{ notification.data.video_title }}
+                                    </p>
+                                </template>
+                                <!-- Mención en comentario (y cualquier otro tipo) -->
+                                <template v-else>
+                                    <i class="fas fa-at mr-2 text-primary"></i>
+                                    <strong>{{ notification.data.mentioned_by_name }}</strong> te mencionó
+                                    <span class="float-right text-muted text-sm">
+                                        {{ notification.created_at }}
+                                    </span>
+                                    <p class="text-sm text-muted mb-0 mt-1">
+                                        {{ (notification.data.comment_text || '').substring(0, 50) }}{{ (notification.data.comment_text || '').length > 50 ? '...' : '' }}
+                                    </p>
+                                </template>
                             </a>
                         </template>
                         <template v-else>

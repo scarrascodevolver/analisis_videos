@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Video;
 use App\Models\VideoAnnotation;
+use App\Models\VideoOrgShare;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -99,8 +100,25 @@ class AnnotationController extends Controller
     public function getByVideo($videoId): JsonResponse
     {
         try {
-            // Verificar que el usuario puede ver el video
-            $video = Video::visibleForUser(Auth::user())->findOrFail($videoId);
+            // Verificar que el usuario puede ver el video (propio org o compartido)
+            $video = Video::visibleForUser(Auth::user())->find($videoId);
+
+            if (! $video) {
+                $orgId = Auth::user()->currentOrganization()?->id;
+                $hasShare = $orgId && VideoOrgShare::where('video_id', $videoId)
+                    ->where('target_organization_id', $orgId)
+                    ->where('status', 'active')
+                    ->exists();
+
+                if (! $hasShare) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Video no accesible o no encontrado para el usuario actual',
+                    ], 404);
+                }
+
+                $video = Video::withoutGlobalScope('organization')->findOrFail($videoId);
+            }
 
             $annotations = VideoAnnotation::with('user:id,name')
                 ->where('video_id', $videoId)
