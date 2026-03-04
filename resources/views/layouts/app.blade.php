@@ -878,6 +878,20 @@
                             </li>
                         @endif
 
+                        @if (in_array(Auth::user()->role, ['analista', 'entrenador']) || Auth::user()->isSuperAdmin())
+                            @php
+                                $__inviteOrg  = Auth::user()->currentOrganization();
+                                $__inviteCode = $__inviteOrg?->invitation_code;
+                                $__inviteUrl  = $__inviteCode ? url('/register?code=' . $__inviteCode) : null;
+                            @endphp
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" data-toggle="modal" data-target="#quickInviteModal">
+                                    <i class="nav-icon fas fa-user-plus" style="color:#00B7B5;"></i>
+                                    <p style="color:#00B7B5;font-weight:600;">Invitar Jugador</p>
+                                </a>
+                            </li>
+                        @endif
+
                         @if (in_array(Auth::user()->role, ['analista', 'entrenador']))
                             <li class="nav-header">ADMINISTRACIÓN</li>
                             <li class="nav-item">
@@ -996,6 +1010,85 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
         @csrf
     </form>
+
+    <!-- Modal Invitar Jugador -->
+    @if (in_array(Auth::user()->role, ['analista', 'entrenador']) || Auth::user()->isSuperAdmin())
+    @php
+        $__org  = Auth::user()->currentOrganization();
+        $__code = $__org?->invitation_code;
+        $__url  = $__code ? url('/register?code=' . $__code) : null;
+    @endphp
+    <div class="modal fade" id="quickInviteModal" tabindex="-1" role="dialog" aria-labelledby="quickInviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:420px;">
+            <div class="modal-content" style="background:#1a1a1a;border:1px solid #333;border-radius:8px;">
+                <div class="modal-header" style="border-bottom:1px solid #333;padding:.75rem 1rem;">
+                    <h5 class="modal-title" style="color:#fff;font-size:.95rem;font-weight:600;">
+                        <i class="fas fa-user-plus mr-2" style="color:#00B7B5;"></i>Invitar Jugador
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" style="color:#aaa;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding:1rem;">
+                    @if($__code)
+                        <p style="color:#aaa;font-size:.8rem;margin-bottom:1rem;">
+                            Compartí el código o el link directo para que el jugador se registre en
+                            <strong style="color:#fff;">{{ $__org->name }}</strong>.
+                        </p>
+
+                        {{-- Código --}}
+                        <label style="color:#888;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;">Código de invitación</label>
+                        <div class="input-group mb-3">
+                            <input type="text" id="inviteCodeInput" class="form-control"
+                                value="{{ $__code }}" readonly
+                                style="background:#252525;border:1px solid #444;color:#fff;font-size:1.3rem;font-family:monospace;letter-spacing:.15em;font-weight:700;">
+                            <div class="input-group-append">
+                                <button class="btn" onclick="quickInviteCopy('inviteCodeInput','Código copiado')"
+                                    style="background:#333;border:1px solid #444;color:#00B7B5;">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Link --}}
+                        <label style="color:#888;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;">Link de registro directo</label>
+                        <div class="input-group mb-3">
+                            <input type="text" id="inviteLinkInput" class="form-control"
+                                value="{{ $__url }}" readonly
+                                style="background:#252525;border:1px solid #444;color:#ccc;font-size:.78rem;">
+                            <div class="input-group-append">
+                                <button class="btn" onclick="quickInviteCopy('inviteLinkInput','Link copiado')"
+                                    style="background:#333;border:1px solid #444;color:#00B7B5;">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="quickInviteToast" style="display:none;background:#005461;color:#fff;padding:.4rem .75rem;border-radius:4px;font-size:.8rem;text-align:center;"></div>
+                    @else
+                        <p style="color:#aaa;">No se encontró un código de invitación para tu organización.</p>
+                    @endif
+                </div>
+                @if($__code && in_array(Auth::user()->role, ['analista', 'entrenador']))
+                <div class="modal-footer" style="border-top:1px solid #333;padding:.6rem 1rem;">
+                    <a href="{{ route('admin.organization') }}" class="btn btn-sm"
+                        style="background:#333;color:#aaa;font-size:.78rem;" data-dismiss="modal">
+                        <i class="fas fa-cog mr-1"></i> Gestionar código
+                    </a>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    <script>
+    function quickInviteCopy(inputId, msg) {
+        var el = document.getElementById(inputId);
+        if (!el) return;
+        el.select(); el.setSelectionRange(0, 99999);
+        try { document.execCommand('copy'); } catch(e) {}
+        var toast = document.getElementById('quickInviteToast');
+        if (toast) { toast.textContent = '✓ ' + msg; toast.style.display = 'block'; setTimeout(function(){ toast.style.display='none'; }, 2000); }
+    }
+    </script>
+    @endif
 
     <!-- Modal de Funcionalidad Próximamente -->
     <div class="modal fade" id="upcomingFeatureModal" tabindex="-1" role="dialog"
