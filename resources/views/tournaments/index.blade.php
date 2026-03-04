@@ -85,53 +85,54 @@
                             {{-- Spacer --}}
                             <div class="flex-grow-1"></div>
 
-                            {{-- Videos count --}}
-                            <span style="font-size:.8rem;color:rgba(255,255,255,.45);" title="{{ $tournament->videos_count }} video(s)">
-                                <i class="fas fa-film mr-1"></i>{{ $tournament->videos_count }}
-                            </span>
+                            {{-- Stats: videos + inscriptos --}}
+                            <div style="display:flex;align-items:center;gap:14px;padding:3px 12px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(255,255,255,.07);">
+                                <span style="font-size:.8rem;color:rgba(255,255,255,.45);" title="{{ $tournament->videos_count }} video(s)">
+                                    <i class="fas fa-film mr-1"></i>{{ $tournament->videos_count }}
+                                </span>
+                                <span style="width:1px;height:14px;background:rgba(255,255,255,.1);"></span>
+                                <a href="{{ route('tournaments.show', $tournament) }}"
+                                   style="font-size:.8rem;text-decoration:none;white-space:nowrap;
+                                          color:{{ $regCount > 0 ? '#00B7B5' : 'rgba(255,255,255,.35)' }};"
+                                   title="Ver clubes inscriptos">
+                                    <i class="fas fa-users mr-1"></i>{{ $regCount }} inscriptos
+                                </a>
+                            </div>
 
-                            {{-- Inscriptos count --}}
-                            <a href="{{ route('tournaments.show', $tournament) }}"
-                               style="font-size:.8rem;text-decoration:none;white-space:nowrap;
-                                      color:{{ $regCount > 0 ? '#00B7B5' : 'rgba(255,255,255,.35)' }};"
-                               title="Ver clubes inscriptos">
-                                <i class="fas fa-users mr-1"></i>{{ $regCount }}
-                                {{ $regCount === 1 ? 'inscripto' : 'inscriptos' }}
-                            </a>
+                            {{-- Acciones: toggle + eliminar --}}
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                @if(auth()->user()->currentOrganization()?->isAsociacion())
+                                    <button type="button"
+                                            class="btn btn-xs {{ $tournament->is_public ? 'btn-success' : 'btn-outline-secondary' }} btn-toggle-public"
+                                            data-tournament-id="{{ $tournament->id }}"
+                                            title="{{ $tournament->is_public ? 'Público — click para ocultar' : 'Privado — click para publicar' }}"
+                                            style="min-width:82px;">
+                                        <i class="fas {{ $tournament->is_public ? 'fa-globe' : 'fa-lock' }} mr-1"></i>
+                                        {{ $tournament->is_public ? 'Público' : 'Privado' }}
+                                    </button>
+                                @endif
 
-                            {{-- Toggle público --}}
-                            @if(auth()->user()->currentOrganization()?->isAsociacion())
-                                <button type="button"
-                                        class="btn btn-xs {{ $tournament->is_public ? 'btn-success' : 'btn-outline-secondary' }} btn-toggle-public"
-                                        data-tournament-id="{{ $tournament->id }}"
-                                        title="{{ $tournament->is_public ? 'Público — click para ocultar' : 'Privado — click para publicar' }}"
-                                        style="min-width:80px;">
-                                    <i class="fas {{ $tournament->is_public ? 'fa-globe' : 'fa-lock' }} mr-1"></i>
-                                    {{ $tournament->is_public ? 'Público' : 'Privado' }}
-                                </button>
-                            @endif
-
-                            {{-- Eliminar --}}
-                            @if($tournament->videos_count > 0)
-                                <button type="button"
-                                        class="btn btn-xs btn-outline-secondary"
-                                        disabled
-                                        title="No se puede eliminar: tiene {{ $tournament->videos_count }} video(s)"
-                                        data-toggle="tooltip">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            @else
-                                <form method="POST"
-                                      action="{{ route('tournaments.destroy', $tournament) }}"
-                                      class="d-inline"
-                                      onsubmit="return confirm('¿Eliminar el torneo {{ addslashes($tournament->name) }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Eliminar torneo">
+                                @if($tournament->videos_count > 0)
+                                    <button type="button"
+                                            class="btn btn-xs btn-outline-secondary"
+                                            disabled
+                                            title="No se puede eliminar: tiene {{ $tournament->videos_count }} video(s)"
+                                            data-toggle="tooltip">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                </form>
-                            @endif
+                                @else
+                                    <form method="POST"
+                                          action="{{ route('tournaments.destroy', $tournament) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('¿Eliminar el torneo {{ addslashes($tournament->name) }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-xs btn-outline-danger" title="Eliminar torneo">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
 
                         </div>
 
