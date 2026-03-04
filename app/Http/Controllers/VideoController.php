@@ -95,7 +95,35 @@ class VideoController extends Controller
                 }
             });
 
-            return view('videos.index', compact('videos'))->with('view', 'player_matches');
+            // Videos compartidos por asociaciones a la categoría del jugador
+            $playerOrg = $user->currentOrganization();
+            $playerCategoryId = $user->profile?->user_category_id;
+
+            $sharedQuery = VideoOrgShare::where('target_organization_id', $playerOrg->id)
+                ->where('status', 'active')
+                ->with([
+                    'video' => fn ($q) => $q->with(['rivalTeam', 'videoGroups.videos'])->withoutGlobalScopes()->withCount('clips'),
+                    'sourceOrganization:id,name',
+                ]);
+
+            if ($playerCategoryId) {
+                $sharedQuery->where('target_category_id', $playerCategoryId);
+            }
+
+            $sharedVideos = $sharedQuery->get()->filter(fn ($s) => $s->video !== null);
+
+            $sharedVideos->each(function ($share) {
+                $sv = $share->video;
+                $group = $sv->videoGroups->first();
+                $sv->total_size = $group && $group->videos->isNotEmpty()
+                    ? $group->videos->sum(fn ($v) => $v->compressed_file_size ?? $v->file_size ?? 0)
+                    : ($sv->compressed_file_size ?? $sv->file_size ?? 0);
+                $sv->angles_count = $group && $group->videos->isNotEmpty()
+                    ? $group->videos->count()
+                    : 1;
+            });
+
+            return view('videos.index', compact('videos', 'sharedVideos'))->with('view', 'player_matches');
         }
 
         // Analistas/entrenadores: navegación por carpetas (adaptativa según tipo de org)

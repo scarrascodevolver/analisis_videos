@@ -773,6 +773,56 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
         </div>
     @endif
 
+    {{-- Videos compartidos por asociaciones al club del jugador --}}
+    @if(isset($sharedVideos) && $sharedVideos->isNotEmpty())
+        <div class="mt-4 mb-2" style="border-top:1px solid rgba(255,255,255,.08);padding-top:1.5rem;">
+            <h6 style="color:#00B7B5; font-size:0.85rem; font-weight:600; letter-spacing:.05em;">
+                <i class="fas fa-share-alt mr-2"></i>RECIBIDOS DE ASOCIACIONES
+            </h6>
+        </div>
+        <div class="match-grid">
+            @foreach($sharedVideos as $share)
+                @php
+                    $sv = $share->video;
+                    $svSize = $sv->total_size > 0
+                        ? ($sv->total_size >= 1073741824
+                            ? number_format($sv->total_size / 1073741824, 1) . ' GB'
+                            : number_format($sv->total_size / 1048576, 0) . ' MB')
+                        : '';
+                @endphp
+                <div class="match-card" onclick="window.location.href='{{ route('videos.show', $sv) }}'">
+                    <div class="match-card-thumb">
+                        @if($sv->bunny_thumbnail)
+                            <img src="{{ $sv->bunny_thumbnail }}" alt="Thumbnail">
+                        @else
+                            <div class="match-thumb-placeholder"><i class="fas fa-film"></i></div>
+                        @endif
+                        <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
+                        @if($sv->clips_count > 0)
+                            <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
+                        @endif
+                        <div style="position:absolute;bottom:6px;left:6px;">
+                            @include('videos.partials.shared-badge', ['share' => $share])
+                        </div>
+                    </div>
+                    <div class="match-card-body">
+                        <div class="match-fixture">
+                            <span class="fixture-team fixture-local">{{ $sv->analyzed_team_name ?? 'Local' }}</span>
+                            <span class="fixture-vs">VS</span>
+                            <span class="fixture-team fixture-rival">{{ $sv->rivalTeam?->name ?? $sv->rival_name ?? 'Rival' }}</span>
+                        </div>
+                        <div class="match-card-meta">
+                            <i class="fas fa-calendar mr-1"></i>{{ $sv->match_date?->format('d/m/Y') ?? '—' }}
+                            @if($svSize)
+                                <span class="mx-1">·</span><i class="fas fa-hdd mr-1"></i>{{ $svSize }}
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
 @endif
 
 {{-- Modal: Crear Torneo (solo asociaciones) — Paso 1: Nombre + Temporada --}}
