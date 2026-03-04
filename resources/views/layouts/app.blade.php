@@ -160,14 +160,19 @@
         }
 
         .nav-sidebar .nav-link {
-            color: #00B7B5;
+            color: #00B7B5 !important;
             font-size: 0.78rem;
             padding: 0.4rem 0.7rem;
         }
 
+        .nav-sidebar .nav-link p,
+        .nav-sidebar .nav-link > p {
+            color: #00B7B5 !important;
+        }
+
         .nav-sidebar .nav-link:hover {
             background-color: var(--color-secondary);
-            color: #00d4d2;
+            color: #00d4d2 !important;
         }
 
         .nav-sidebar .nav-link.active {
