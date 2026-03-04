@@ -70,7 +70,7 @@ const showClipsTab = computed(() => props.canCreateClips || (props.clipCount ?? 
     background-color: #252525;
     border: none;
     border-right: none;
-    color: #888;
+    color: #00B7B5;
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
@@ -85,7 +85,7 @@ const showClipsTab = computed(() => props.canCreateClips || (props.clipCount ?? 
 
 .tab-button:hover {
     background-color: #2a2a2a;
-    color: #ccc;
+    color: #00d4d2;
 }
 
 .tab-button.active {
@@ -102,7 +102,7 @@ const showClipsTab = computed(() => props.canCreateClips || (props.clipCount ?? 
 .tab-button .tab-count {
     font-size: 0.78rem;
     font-weight: 700;
-    color: #ccc;
+    color: #00B7B5;
 }
 
 @media (max-width: 1400px) {

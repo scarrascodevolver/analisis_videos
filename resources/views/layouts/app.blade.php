@@ -160,14 +160,14 @@
         }
 
         .nav-sidebar .nav-link {
-            color: #c2c7d0;
+            color: #00B7B5;
             font-size: 0.78rem;
             padding: 0.4rem 0.7rem;
         }
 
         .nav-sidebar .nav-link:hover {
             background-color: var(--color-secondary);
-            color: white;
+            color: #00d4d2;
         }
 
         .nav-sidebar .nav-link.active {
@@ -178,6 +178,7 @@
         .nav-sidebar .nav-icon {
             font-size: 0.85rem;
             margin-right: 0.5rem;
+            color: #00B7B5 !important;
         }
 
         .nav-header {
@@ -185,6 +186,8 @@
             padding: 0.35rem 0.7rem;
             font-weight: 600;
             letter-spacing: 0.5px;
+            color: #00B7B5 !important;
+            opacity: 0.6;
         }
 
         .brand-link {
@@ -886,8 +889,8 @@
                             @endphp
                             <li class="nav-item">
                                 <a href="#" class="nav-link" data-toggle="modal" data-target="#quickInviteModal">
-                                    <i class="nav-icon fas fa-user-plus" style="color:#00B7B5;"></i>
-                                    <p style="color:#00B7B5;font-weight:600;">Invitar Jugador</p>
+                                    <i class="nav-icon fas fa-user-plus"></i>
+                                    <p style="font-weight:600;">Invitar Jugador</p>
                                 </a>
                             </li>
                         @endif
