@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useClipsStore } from '@/stores/clipsStore';
 import { useVideoStore } from '@/stores/videoStore';
+import { useVideoApi } from '@/composables/useVideoApi';
 import ClipItem from './ClipItem.vue';
 import type { ClipCategory, VideoClip } from '@/types/video-player';
 
@@ -10,11 +11,14 @@ const videoStore = useVideoStore();
 const searchQuery = ref('');
 const expandedCategories = ref<Set<number>>(new Set());
 
-// ── Drag & Drop state ────────────────────────────────────────
-// Each category has its own dragging context tracked by category ID
+// ── Drag & Drop state — clips ────────────────────────────────
 const draggingClipId = ref<number | null>(null);
 const dragOverClipId = ref<number | null>(null);
 const draggingCategoryId = ref<number | null>(null);
+
+// ── Drag & Drop state — categorías ──────────────────────────
+const draggingCatIndex = ref<number | null>(null);
+const dragOverCatIndex = ref<number | null>(null);
 
 // ── Computed ────────────────────────────────────────────────
 
@@ -130,6 +134,49 @@ function onClipDragEnd() {
     dragOverClipId.value = null;
     draggingCategoryId.value = null;
 }
+
+// ── Drag & Drop categorías ───────────────────────────────────
+
+function onCatDragStart(index: number) {
+    draggingCatIndex.value = index;
+}
+
+function onCatDragOver(index: number) {
+    if (draggingCatIndex.value !== null && draggingCatIndex.value !== index) {
+        dragOverCatIndex.value = index;
+    }
+}
+
+function onCatDrop(toIndex: number) {
+    if (draggingCatIndex.value === null || draggingCatIndex.value === toIndex) {
+        onCatDragEnd();
+        return;
+    }
+
+    const items = [...categoriesWithClips.value];
+    const [moved] = items.splice(draggingCatIndex.value, 1);
+    items.splice(toIndex, 0, moved);
+
+    onCatDragEnd();
+
+    if (!videoStore.video) return;
+    const api = useVideoApi(videoStore.video.id);
+
+    // Optimistic: update sort_order en el store local
+    items.forEach((cat, idx) => {
+        const storecat = clipsStore.categories.find(c => c.id === cat.id);
+        if (storecat) storecat.sort_order = idx + 1;
+    });
+
+    // Persistir en backend (igual que ManageCategoriesModal)
+    Promise.all(items.map((cat, idx) => api.updateCategory(cat.id, { sort_order: idx + 1 })))
+        .catch(() => console.error('Error guardando orden de categorías'));
+}
+
+function onCatDragEnd() {
+    draggingCatIndex.value = null;
+    dragOverCatIndex.value = null;
+}
 </script>
 
 <template>
@@ -161,15 +208,33 @@ function onClipDragEnd() {
 
         <div v-else class="clips-accordion">
             <div
-                v-for="category in categoriesWithClips"
+                v-for="(category, catIndex) in categoriesWithClips"
                 :key="category.id"
                 class="category-group"
+                :class="{
+                    'cat-drag-over': dragOverCatIndex === catIndex,
+                    'cat-dragging': draggingCatIndex === catIndex,
+                }"
+                @dragover.prevent="onCatDragOver(catIndex)"
+                @drop="onCatDrop(catIndex)"
+                @dragend="onCatDragEnd"
             >
                 <div
                     class="category-header"
                     :style="{ '--category-color': category.color }"
                     @click="toggleCategory(category.id)"
                 >
+                    <!-- Drag handle para reordenar categorías -->
+                    <span
+                        class="cat-drag-handle"
+                        title="Arrastrar para reordenar categoría"
+                        draggable="true"
+                        @dragstart.stop="onCatDragStart(catIndex)"
+                        @click.stop
+                    >
+                        <i class="fas fa-grip-vertical"></i>
+                    </span>
+
                     <div class="category-info">
                         <i v-if="category.icon" :class="category.icon" class="category-icon"></i>
                         <span class="category-name">{{ category.name }}</span>
@@ -299,6 +364,36 @@ function onClipDragEnd() {
     background-color: #1a1a1a;
     border-radius: 3px;
     overflow: hidden;
+}
+
+.cat-drag-over {
+    outline: 1px solid var(--color-accent, #00B7B5);
+    border-radius: 3px;
+}
+
+.cat-dragging {
+    opacity: 0.4;
+}
+
+.cat-drag-handle {
+    display: flex;
+    align-items: center;
+    padding: 0 0.3rem 0 0.1rem;
+    color: #555;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.category-header:hover .cat-drag-handle {
+    opacity: 1;
+}
+
+.cat-drag-handle:hover {
+    color: #999;
 }
 
 .category-header {
