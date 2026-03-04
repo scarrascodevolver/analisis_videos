@@ -46,164 +46,137 @@
                     <div class="tab-pane fade show active" id="pane-torneos" role="tabpanel">
             @endif
 
-            {{-- Tournaments table --}}
+            {{-- Tournaments list --}}
             @if($tournaments->isEmpty())
                 <div class="text-center py-5 text-muted">
                     <i class="fas fa-trophy fa-3x mb-3" style="color:#005461;opacity:.4"></i>
                     <p>No hay torneos registrados todavía.</p>
-                    <p class="small">Los torneos se crean automáticamente al subir videos.</p>
+                    <p class="small">Creá el primer torneo con el botón "Nuevo Torneo".</p>
                 </div>
             @else
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="tournamentsTable">
-                        <thead>
-                            <tr>
-                                <th style="width:35%">Nombre</th>
-                                <th style="width:20%">Temporada</th>
-                                <th style="width:10%" class="text-center">Videos</th>
-                                @if(auth()->user()->currentOrganization()?->isAsociacion())
-                                    <th style="width:15%" class="text-center">Público</th>
-                                @endif
-                                <th class="text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($tournaments as $tournament)
-                            {{-- Fila principal --}}
-                            <tr id="tr_{{ $tournament->id }}">
-                                {{-- Nombre (editable inline) --}}
-                                <td>
-                                    <span class="editable-cell"
-                                          data-field="name"
-                                          data-id="{{ $tournament->id }}"
-                                          title="Doble clic para editar">
-                                        {{ $tournament->name }}
-                                    </span>
-                                </td>
+                <div id="tournamentsList">
+                    @foreach($tournaments as $tournament)
+                    @php $regCount = $tournament->registrations->count(); @endphp
+                    <div class="tournament-item" id="tr_{{ $tournament->id }}"
+                         style="border-bottom:1px solid rgba(255,255,255,.07);padding:14px 20px;">
 
-                                {{-- Temporada (editable inline) --}}
-                                <td>
-                                    <span class="editable-cell"
-                                          data-field="season"
-                                          data-id="{{ $tournament->id }}"
-                                          title="Doble clic para editar">
-                                        {{ $tournament->season ?: '—' }}
-                                    </span>
-                                </td>
+                        {{-- Fila superior: nombre + stats + acciones --}}
+                        <div class="d-flex align-items-center" style="gap:12px;flex-wrap:wrap;">
 
-                                {{-- Contador de videos --}}
-                                <td class="text-center">
-                                    @if($tournament->videos_count > 0)
-                                        <span class="badge badge-info">{{ $tournament->videos_count }}</span>
-                                    @else
-                                        <span class="text-muted">0</span>
-                                    @endif
-                                </td>
+                            {{-- Nombre editable --}}
+                            <i class="fas fa-trophy" style="color:#b8860b;font-size:.9rem;flex-shrink:0;"></i>
+                            <span class="editable-cell tournament-name-text"
+                                  data-field="name"
+                                  data-id="{{ $tournament->id }}"
+                                  title="Doble clic para editar"
+                                  style="font-weight:600;font-size:.95rem;cursor:default;">
+                                {{ $tournament->name }}
+                            </span>
 
-                                {{-- Toggle público (solo asociaciones) --}}
-                                @if(auth()->user()->currentOrganization()?->isAsociacion())
-                                    <td class="text-center">
-                                        <button type="button"
-                                                class="btn btn-xs {{ $tournament->is_public ? 'btn-success' : 'btn-outline-secondary' }} btn-toggle-public"
-                                                data-tournament-id="{{ $tournament->id }}"
-                                                title="{{ $tournament->is_public ? 'Público — click para ocultar' : 'Privado — click para publicar' }}">
-                                            <i class="fas {{ $tournament->is_public ? 'fa-globe' : 'fa-lock' }}"></i>
-                                        </button>
-                                    </td>
-                                @endif
+                            {{-- Temporada --}}
+                            <span class="editable-cell {{ $tournament->season ? '' : 'season-empty' }}"
+                                  data-field="season"
+                                  data-id="{{ $tournament->id }}"
+                                  title="Doble clic para {{ $tournament->season ? 'editar' : 'agregar' }} temporada"
+                                  style="font-size:.8rem;{{ $tournament->season ? 'color:rgba(255,255,255,.45);background:rgba(255,255,255,.07);padding:2px 8px;border-radius:10px;' : 'color:rgba(255,255,255,.2);border-bottom-style:dotted;' }}cursor:default;">
+                                {{ $tournament->season ?: '—' }}
+                            </span>
 
-                                {{-- Acciones --}}
-                                <td class="text-right">
-                                    @if($tournament->videos_count > 0)
-                                        <button type="button"
-                                                class="btn btn-xs btn-outline-secondary"
-                                                disabled
-                                                title="No se puede eliminar: tiene {{ $tournament->videos_count }} video(s) asociado(s)"
-                                                data-toggle="tooltip">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    @else
-                                        <form method="POST"
-                                              action="{{ route('tournaments.destroy', $tournament) }}"
-                                              class="d-inline"
-                                              onsubmit="return confirm('¿Eliminar el torneo {{ addslashes($tournament->name) }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Eliminar torneo">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </td>
-                            </tr>
+                            {{-- Spacer --}}
+                            <div class="flex-grow-1"></div>
 
-                            {{-- Fila de divisiones (solo asociaciones) --}}
+                            {{-- Videos count --}}
+                            <span style="font-size:.8rem;color:rgba(255,255,255,.45);" title="{{ $tournament->videos_count }} video(s)">
+                                <i class="fas fa-film mr-1"></i>{{ $tournament->videos_count }}
+                            </span>
+
+                            {{-- Inscriptos count --}}
+                            <a href="{{ route('tournaments.show', $tournament) }}"
+                               style="font-size:.8rem;text-decoration:none;white-space:nowrap;
+                                      color:{{ $regCount > 0 ? '#00B7B5' : 'rgba(255,255,255,.35)' }};"
+                               title="Ver clubes inscriptos">
+                                <i class="fas fa-users mr-1"></i>{{ $regCount }}
+                                {{ $regCount === 1 ? 'inscripto' : 'inscriptos' }}
+                            </a>
+
+                            {{-- Toggle público --}}
                             @if(auth()->user()->currentOrganization()?->isAsociacion())
-                            <tr class="division-row" id="divrow_{{ $tournament->id }}">
-                                <td colspan="5" class="py-2 px-4"
-                                    style="background:rgba(0,183,181,.04);border-top:none;">
-                                    <div class="d-flex flex-wrap align-items-center" style="gap:8px;"
-                                         id="divpills_{{ $tournament->id }}">
-
-                                        @foreach($tournament->divisions as $div)
-                                            <span class="div-pill" data-div-id="{{ $div->id }}">
-                                                <i class="fas fa-layer-group" style="font-size:.75rem;opacity:.7;"></i>
-                                                {{ $div->name }}
-                                                <a href="#" class="div-pill-remove"
-                                                   onclick="removeDivision(event, {{ $div->id }}, {{ $tournament->id }})">
-                                                    &times;
-                                                </a>
-                                            </span>
-                                        @endforeach
-
-                                        {{-- Botón / input agregar división --}}
-                                        <button class="btn-add-div"
-                                                id="btn-add-div-{{ $tournament->id }}"
-                                                onclick="showAddDiv({{ $tournament->id }})">
-                                            <i class="fas fa-plus" style="font-size:.75rem;"></i> División
-                                        </button>
-                                        <span class="add-div-wrap" id="add-div-wrap-{{ $tournament->id }}"
-                                              style="display:none;align-items:center;gap:6px;">
-                                            <input type="text"
-                                                   class="add-div-input"
-                                                   id="add-div-input-{{ $tournament->id }}"
-                                                   placeholder="Nombre de la división..."
-                                                   maxlength="100"
-                                                   data-tournament-id="{{ $tournament->id }}">
-                                            <button class="btn-div-ok"
-                                                    onclick="submitDivision({{ $tournament->id }})">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn-div-cancel"
-                                                    onclick="cancelAddDiv({{ $tournament->id }})">
-                                                &times;
-                                            </button>
-                                        </span>
-
-                                        {{-- Ver inscriptos --}}
-                                        @php
-                                            $regCount = $tournament->registrations->count();
-                                        @endphp
-                                        <a href="{{ route('tournaments.show', $tournament) }}"
-                                           class="ml-auto"
-                                           style="font-size:.8rem;color:rgba(255,255,255,.4);white-space:nowrap;text-decoration:none;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;transition:all .15s;"
-                                           onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,.3)'"
-                                           onmouseout="this.style.color='rgba(255,255,255,.4)';this.style.borderColor='rgba(255,255,255,.12)'">
-                                            <i class="fas fa-users mr-1"></i>
-                                            Inscriptos
-                                            @if($regCount > 0)
-                                                <span style="background:rgba(0,183,181,.3);color:#00B7B5;border-radius:8px;padding:0 5px;font-size:.75rem;">{{ $regCount }}</span>
-                                            @endif
-                                        </a>
-
-                                    </div>
-                                </td>
-                            </tr>
+                                <button type="button"
+                                        class="btn btn-xs {{ $tournament->is_public ? 'btn-success' : 'btn-outline-secondary' }} btn-toggle-public"
+                                        data-tournament-id="{{ $tournament->id }}"
+                                        title="{{ $tournament->is_public ? 'Público — click para ocultar' : 'Privado — click para publicar' }}"
+                                        style="min-width:80px;">
+                                    <i class="fas {{ $tournament->is_public ? 'fa-globe' : 'fa-lock' }} mr-1"></i>
+                                    {{ $tournament->is_public ? 'Público' : 'Privado' }}
+                                </button>
                             @endif
 
+                            {{-- Eliminar --}}
+                            @if($tournament->videos_count > 0)
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-secondary"
+                                        disabled
+                                        title="No se puede eliminar: tiene {{ $tournament->videos_count }} video(s)"
+                                        data-toggle="tooltip">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            @else
+                                <form method="POST"
+                                      action="{{ route('tournaments.destroy', $tournament) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('¿Eliminar el torneo {{ addslashes($tournament->name) }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Eliminar torneo">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
+
+                        </div>
+
+                        {{-- Fila inferior: divisiones --}}
+                        @if(auth()->user()->currentOrganization()?->isAsociacion())
+                        <div class="d-flex flex-wrap align-items-center mt-2" style="gap:6px;padding-left:22px;"
+                             id="divpills_{{ $tournament->id }}">
+
+                            @foreach($tournament->divisions as $div)
+                                <span class="div-pill" data-div-id="{{ $div->id }}">
+                                    {{ $div->name }}
+                                    <a href="#" class="div-pill-remove"
+                                       onclick="removeDivision(event, {{ $div->id }}, {{ $tournament->id }})">
+                                        &times;
+                                    </a>
+                                </span>
                             @endforeach
-                        </tbody>
-                    </table>
+
+                            {{-- Botón / input agregar división --}}
+                            <button class="btn-add-div"
+                                    id="btn-add-div-{{ $tournament->id }}"
+                                    onclick="showAddDiv({{ $tournament->id }})">
+                                <i class="fas fa-plus" style="font-size:.7rem;"></i> División
+                            </button>
+                            <span class="add-div-wrap" id="add-div-wrap-{{ $tournament->id }}"
+                                  style="display:none;align-items:center;gap:6px;">
+                                <input type="text"
+                                       class="add-div-input"
+                                       id="add-div-input-{{ $tournament->id }}"
+                                       placeholder="Nombre de la división..."
+                                       maxlength="100"
+                                       data-tournament-id="{{ $tournament->id }}">
+                                <button class="btn-div-ok" onclick="submitDivision({{ $tournament->id }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn-div-cancel" onclick="cancelAddDiv({{ $tournament->id }})">
+                                    &times;
+                                </button>
+                            </span>
+
+                        </div>
+                        @endif
+
+                    </div>
+                    @endforeach
                 </div>
             @endif
 
@@ -589,6 +562,16 @@ function startEdit(span) {
             if (data.success) {
                 span.textContent = newVal || '—';
                 span.classList.remove('editing');
+                // Update season span style when it transitions empty ↔ filled
+                if (field === 'season') {
+                    if (newVal) {
+                        span.classList.remove('season-empty');
+                        span.style.cssText = 'font-size:.8rem;color:rgba(255,255,255,.45);background:rgba(255,255,255,.07);padding:2px 8px;border-radius:10px;cursor:default;';
+                    } else {
+                        span.classList.add('season-empty');
+                        span.style.cssText = 'font-size:.8rem;color:rgba(255,255,255,.2);border-bottom-style:dotted;cursor:default;';
+                    }
+                }
                 input.remove();
                 indicator.remove();
             } else {
