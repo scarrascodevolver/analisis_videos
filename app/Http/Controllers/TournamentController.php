@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tournament;
 use App\Models\TournamentRegistration;
+use App\Models\VideoOrgShare;
 use App\Notifications\TournamentJoinRequest;
 use Illuminate\Http\Request;
 
@@ -179,14 +180,29 @@ class TournamentController extends Controller
             return response()->json(['error' => 'Solo las asociaciones pueden publicar torneos.'], 403);
         }
 
+        $becomingPrivate = $tournament->is_public; // antes de actualizar
         $tournament->update(['is_public' => ! $tournament->is_public]);
+
+        // Al privatizar: revocar todos los VideoOrgShare de videos de este torneo
+        if ($becomingPrivate) {
+            $videoIds = $tournament->videos()->withoutGlobalScopes()->pluck('id');
+            if ($videoIds->isNotEmpty()) {
+                VideoOrgShare::whereIn('video_id', $videoIds)
+                    ->where('status', 'active')
+                    ->update([
+                        'status'     => 'revoked',
+                        'revoked_at' => now(),
+                        'revoked_by' => auth()->id(),
+                    ]);
+            }
+        }
 
         return response()->json([
             'ok' => true,
             'is_public' => $tournament->is_public,
             'message' => $tournament->is_public
                 ? 'Torneo publicado. Los clubes pueden inscribirse.'
-                : 'Torneo ocultado. Los clubes no pueden inscribirse.',
+                : 'Torneo ocultado. Los clubes no pueden inscribirse ni ver sus videos.',
         ]);
     }
 
