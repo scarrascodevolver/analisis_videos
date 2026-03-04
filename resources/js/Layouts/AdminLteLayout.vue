@@ -291,6 +291,20 @@ function markAllNotificationsAsRead() {
                                     </p>
                                 </a>
                             </li>
+                            <!-- Torneos: solo para asociaciones -->
+                            <li v-if="organization?.type === 'asociacion'" class="nav-item">
+                                <a href="/tournaments" class="nav-link" :class="{ active: isActive('/tournaments') }">
+                                    <i class="nav-icon fas fa-trophy"></i>
+                                    <p>Torneos</p>
+                                </a>
+                            </li>
+                            <!-- Torneos disponibles: solo para clubs -->
+                            <li v-if="organization?.type === 'club'" class="nav-item">
+                                <a href="/tournaments/explore" class="nav-link" :class="{ active: isActive('/tournaments/explore') }">
+                                    <i class="nav-icon fas fa-globe"></i>
+                                    <p>Torneos Disponibles</p>
+                                </a>
+                            </li>
                         </template>
 
                         <!-- Analyst only items -->
