@@ -326,6 +326,29 @@
                 {{-- Divisiones agregadas --}}
                 <div id="nd-added-pills" style="display:flex;flex-wrap:wrap;gap:7px;min-height:28px;"></div>
                 <div id="nd-div-error" class="text-danger small mt-1 d-none"></div>
+
+                {{-- ¿Publicar torneo? --}}
+                <div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,.04);border-radius:6px;border:1px solid rgba(255,255,255,.08);">
+                    <div style="font-size:.78rem;color:#aaa;font-weight:600;margin-bottom:10px;">
+                        <i class="fas fa-globe mr-1"></i> ¿Los clubes pueden inscribirse?
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <label class="nd-vis-option nd-vis-active" id="nd-opt-private" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.08);flex:1;transition:all .15s;">
+                            <input type="radio" name="nd-visibility" value="private" checked style="accent-color:#00B7B5;">
+                            <span>
+                                <i class="fas fa-lock mr-1" style="color:rgba(255,255,255,.5);font-size:.8rem;"></i>
+                                <span style="font-size:.83rem;color:rgba(255,255,255,.8);">Privado por ahora</span>
+                            </span>
+                        </label>
+                        <label class="nd-vis-option" id="nd-opt-public" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;flex:1;transition:all .15s;">
+                            <input type="radio" name="nd-visibility" value="public" style="accent-color:#00B7B5;">
+                            <span>
+                                <i class="fas fa-globe mr-1" style="color:rgba(0,183,181,.7);font-size:.8rem;"></i>
+                                <span style="font-size:.83rem;color:rgba(255,255,255,.8);">Publicar ahora</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,.1);padding:10px 18px;justify-content:space-between;align-items:center;">
                 <a href="#" id="nd-skip-link"
@@ -334,7 +357,7 @@
                 </a>
                 <button type="button" id="nd-continue-btn"
                         class="btn btn-rugby btn-sm">
-                    <i class="fas fa-check mr-1"></i> Continuar
+                    <i class="fas fa-check mr-1"></i> Guardar y continuar
                 </button>
             </div>
         </div>
@@ -782,9 +805,15 @@ document.querySelectorAll('.btn-approve-reg, .btn-reject-reg').forEach(function 
                     c.disabled = false;
                     c.style.opacity = '1';
                 });
-                // Open divisions modal AFTER first modal fully hides (avoids Bootstrap animation conflict)
+                // Open divisions modal AFTER first modal fully hides + small delay for Bootstrap cleanup
                 $('#modalNuevoTorneo').one('hidden.bs.modal', function () {
-                    $('#modalNuevoTorneoDivisiones').modal('show');
+                    setTimeout(function () {
+                        // Reset visibility to "private" default
+                        document.querySelector('input[name="nd-visibility"][value="private"]').checked = true;
+                        document.getElementById('nd-opt-private').style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.08);flex:1;transition:all .15s;';
+                        document.getElementById('nd-opt-public').style.cssText  = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;flex:1;transition:all .15s;';
+                        $('#modalNuevoTorneoDivisiones').modal('show');
+                    }, 150);
                 });
                 $('#modalNuevoTorneo').modal('hide');
             } else {
@@ -874,16 +903,39 @@ document.querySelectorAll('.btn-approve-reg, .btn-reject-reg').forEach(function 
         if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nd-add-btn').click(); }
     });
 
-    // Continue / Skip
+    // Continue / Skip — optionally publish the tournament
     function finishDivisions() {
-        $('#modalNuevoTorneoDivisiones').modal('hide');
-        window.location.reload();
+        var makePublic = document.querySelector('input[name="nd-visibility"]:checked')?.value === 'public';
+
+        if (makePublic && currentTournamentId) {
+            fetch('/api/tournaments/' + currentTournamentId + '/toggle-public', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            })
+            .finally(function () {
+                $('#modalNuevoTorneoDivisiones').modal('hide');
+                window.location.reload();
+            });
+        } else {
+            $('#modalNuevoTorneoDivisiones').modal('hide');
+            window.location.reload();
+        }
     }
 
     document.getElementById('nd-continue-btn').addEventListener('click', finishDivisions);
     document.getElementById('nd-skip-link').addEventListener('click', function (e) {
         e.preventDefault();
         finishDivisions();
+    });
+
+    // Highlight selected visibility option
+    document.querySelectorAll('input[name="nd-visibility"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            document.getElementById('nd-opt-private').style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;flex:1;transition:all .15s;';
+            document.getElementById('nd-opt-public').style.cssText  = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;flex:1;transition:all .15s;';
+            var active = this.value === 'private' ? 'nd-opt-private' : 'nd-opt-public';
+            document.getElementById(active).style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.08);flex:1;transition:all .15s;';
+        });
     });
 })();
 
