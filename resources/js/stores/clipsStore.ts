@@ -44,11 +44,25 @@ export const useClipsStore = defineStore('clips', () => {
         return categories.value;
     });
 
-    // Categorías que tienen al menos un clip — usada tanto en el tab como en el timeline
+    // Categorías que tienen al menos un clip — usada tanto en el tab como en el timeline.
+    // Incluye categorías embebidas en los clips para el caso de videos cross-org compartidos,
+    // donde las categorías de la org fuente no están en categories.value del usuario.
     const categoriesWithClips = computed(() => {
-        return [...categories.value]
+        // 1. Categorías del store que tienen clips (orden controlado por sort_order)
+        const fromStore = [...categories.value]
             .filter((cat) => !!clipsByCategory.value[cat.id]?.length)
             .sort((a, b) => a.sort_order - b.sort_order);
+
+        // 2. Categorías extra: embebidas en clips pero no en el store (cross-org)
+        const coveredIds = new Set(fromStore.map((c) => c.id));
+        const extraMap = new Map<number, ClipCategory>();
+        for (const clip of clips.value) {
+            if (clip.category && !coveredIds.has(clip.category.id) && !extraMap.has(clip.category.id)) {
+                extraMap.set(clip.category.id, clip.category as ClipCategory);
+            }
+        }
+
+        return [...fromStore, ...extraMap.values()];
     });
 
     const recordingCategory = computed(() => {

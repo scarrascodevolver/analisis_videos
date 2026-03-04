@@ -643,8 +643,8 @@ function onSyncSaved(offsets: Record<number, number>) {
             </template>
 
             <!-- Clip Timeline (visual timeline with clips) -->
-            <template v-if="canCreateClips" #clip-timeline>
-                <ClipTimeline :video-id="video.id" />
+            <template v-if="canSeeClips" #clip-timeline>
+                <ClipTimeline :video-id="video.id" :can-create-clips="canCreateClips" />
             </template>
 
             <!-- Timelines Sync Panel (multi-camera + clips XML sync) -->

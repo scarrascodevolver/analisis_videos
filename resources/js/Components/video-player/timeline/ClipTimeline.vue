@@ -45,23 +45,27 @@
                                 v-for="clip in getClipsForCategory(category.id)"
                                 :key="clip.id"
                                 class="clip-block"
-                                :class="{ 'is-dragging': dragState?.clip.id === clip.id }"
+                                :class="{
+                                    'is-dragging': dragState?.clip.id === clip.id,
+                                    'read-only': canCreateClips === false,
+                                }"
                                 :style="clipBlockStyles.get(clip.id)"
                                 :title="getClipTooltip(clip)"
                                 @mousedown.stop="onClipMousedown(clip, 'move', $event, category.id)"
                                 @click.stop="handleClipClick(clip)"
                                 @contextmenu.prevent.stop="onClipContextMenu($event, clip)"
                             >
-                                <!-- Left resize handle -->
-                                <div
-                                    class="resize-handle resize-handle-left"
-                                    @mousedown.stop="onClipMousedown(clip, 'resize-left', $event, category.id)"
-                                ></div>
-                                <!-- Right resize handle -->
-                                <div
-                                    class="resize-handle resize-handle-right"
-                                    @mousedown.stop="onClipMousedown(clip, 'resize-right', $event, category.id)"
-                                ></div>
+                                <!-- Resize handles: solo para quienes pueden editar clips -->
+                                <template v-if="canCreateClips !== false">
+                                    <div
+                                        class="resize-handle resize-handle-left"
+                                        @mousedown.stop="onClipMousedown(clip, 'resize-left', $event, category.id)"
+                                    ></div>
+                                    <div
+                                        class="resize-handle resize-handle-right"
+                                        @mousedown.stop="onClipMousedown(clip, 'resize-right', $event, category.id)"
+                                    ></div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -118,11 +122,19 @@
                 <!-- Help Message -->
                 <div class="help-message">
                     <i class="fas fa-lightbulb text-warning"></i>
-                    <strong>Cómo usar:</strong><br>
-                    • <strong>Click en un clip</strong> para reproducirlo desde ese momento<br>
-                    • <strong>Arrastrá los bordes ◄ ►</strong> para ajustar inicio/fin<br>
-                    • <strong>Arrastrá el centro</strong> para mover el clip en el tiempo<br>
-                    • <strong>Click en la barra</strong> para saltar a ese momento del video
+                    <template v-if="canCreateClips !== false">
+                        <strong>Cómo usar:</strong><br>
+                        • <strong>Click en un clip</strong> para reproducirlo desde ese momento<br>
+                        • <strong>Arrastrá los bordes ◄ ►</strong> para ajustar inicio/fin<br>
+                        • <strong>Arrastrá el centro</strong> para mover el clip en el tiempo<br>
+                        • <strong>Click en la barra</strong> para saltar a ese momento del video
+                    </template>
+                    <template v-else>
+                        <strong>Cómo usar:</strong><br>
+                        • <strong>Click en un clip</strong> para reproducirlo desde ese momento<br>
+                        • <strong>Click derecho en un clip</strong> para copiar su link<br>
+                        • <strong>Click en la barra</strong> para saltar a ese momento del video
+                    </template>
                 </div>
             </div>
         </transition>
@@ -141,6 +153,7 @@ const currentUserId = inject<number>('currentUserId', 0);
 
 const props = defineProps<{
     videoId: number;
+    canCreateClips?: boolean;
 }>();
 
 const videoStore = useVideoStore();
@@ -350,6 +363,8 @@ function onClipMousedown(
 ) {
     // Ignorar click derecho (se maneja como contextmenu)
     if (event.button !== 0) return;
+    // Solo analistas/entrenadores pueden mover/redimensionar clips
+    if (props.canCreateClips === false) return;
     // Avoid triggering 'move' drag when user clicked a resize handle
     if (
         type === 'move' &&
@@ -709,6 +724,10 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     opacity: 1;
     z-index: 100 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+}
+
+.clip-block.read-only {
+    cursor: pointer;
 }
 
 .clip-block.is-dragging {
