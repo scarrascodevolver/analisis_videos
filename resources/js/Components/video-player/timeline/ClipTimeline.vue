@@ -84,18 +84,19 @@
                 <!-- Context menu (right-click on clip) -->
                 <Teleport to="body">
                     <div
-                        v-if="ctxMenu"
+                        v-if="ctxVisible && ctxClip"
+                        ref="ctxMenuEl"
                         class="timeline-clip-ctx-menu"
-                        :style="{ top: ctxMenu.top, left: ctxMenu.left }"
+                        :style="{ top: ctxTop, left: ctxLeft }"
                         @click.stop
                     >
-                        <button class="ctx-item" @click="ctxCopyLink(ctxMenu.clip)">
+                        <button class="ctx-item" @click="ctxCopyLink()">
                             <i class="fas fa-link"></i> Copiar link
                         </button>
                         <button
-                            v-if="ctxMenu.clip.created_by === currentUserId"
+                            v-if="ctxClip.created_by === currentUserId"
                             class="ctx-item ctx-item--danger"
-                            @click="ctxDelete(ctxMenu.clip)"
+                            @click="ctxDelete()"
                         >
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
@@ -226,71 +227,43 @@ function setTrackRef(el: HTMLElement | null, categoryId: number) {
 
 // ─── Context menu ─────────────────────────────────────────────────────────────
 
-interface CtxMenu {
-    clip:    VideoClip;
-    top:     string;
-    left:    string;
-}
-
-const ctxMenu = ref<CtxMenu | null>(null);
+// Estado separado: clip activo (persiste durante el click) + posición
+const ctxVisible = ref(false);
+const ctxClip    = ref<VideoClip | null>(null);
+const ctxTop     = ref('0px');
+const ctxLeft    = ref('0px');
+const ctxMenuEl  = ref<HTMLElement | null>(null);
 
 function onClipContextMenu(event: MouseEvent, clip: VideoClip) {
     event.preventDefault();
     event.stopPropagation();
-    const x = event.clientX;
-    const y = event.clientY;
-    // Ajustar para que no salga de la pantalla
     const menuW = 160;
-    const menuH = 80;
-    ctxMenu.value = {
-        clip,
-        top:  `${Math.min(y, window.innerHeight - menuH - 8)}px`,
-        left: `${Math.min(x, window.innerWidth  - menuW - 8)}px`,
-    };
+    const menuH = 72;
+    ctxClip.value    = clip;
+    ctxTop.value     = `${Math.min(event.clientY, window.innerHeight - menuH - 8)}px`;
+    ctxLeft.value    = `${Math.min(event.clientX, window.innerWidth  - menuW - 8)}px`;
+    ctxVisible.value = true;
 }
 
 function closeCtxMenu() {
-    ctxMenu.value = null;
+    ctxVisible.value = false;
 }
 
 function ctxOutsideClick(e: MouseEvent) {
-    if (ctxMenu.value) closeCtxMenu();
+    if (!ctxVisible.value) return;
+    // No cerrar si el click es dentro del menú
+    if (ctxMenuEl.value?.contains(e.target as Node)) return;
+    closeCtxMenu();
 }
 
 onMounted(()      => document.addEventListener('click', ctxOutsideClick, true));
 onBeforeUnmount(() => document.removeEventListener('click', ctxOutsideClick, true));
 
-function copyToClipboard(text: string): boolean {
-    // Intenta clipboard API moderna primero
-    if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(text).then(
-            () => toast?.success('¡Link copiado!'),
-            () => {
-                // Fallback si clipboard API falla (HTTP, sin foco, etc.)
-                fallbackCopy(text);
-            }
-        );
-        return true;
-    }
-    return fallbackCopy(text);
-}
-
-function fallbackCopy(text: string): boolean {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    if (ok) toast?.success('¡Link copiado!');
-    else    toast?.error('No se pudo copiar el link');
-    return ok;
-}
-
-async function ctxCopyLink(clip: VideoClip) {
+async function ctxCopyLink() {
+    const clip = ctxClip.value;
+    if (!clip) return;
     closeCtxMenu();
+
     const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
     let url = (clip as any).share_token
         ? `${window.location.origin}/clips/${(clip as any).share_token}`
@@ -309,14 +282,33 @@ async function ctxCopyLink(clip: VideoClip) {
                     url = data.url;
                 }
             }
-        } catch { /* fallback a URL legacy */ }
+        } catch { /* usa fallback */ }
     }
 
     url = url ?? `${window.location.origin}/clips/${clip.id}/share`;
-    copyToClipboard(url);
+
+    // Fallback robusto: textarea + execCommand, no requiere HTTPS ni foco
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        toast?.success('¡Link copiado!');
+    } catch {
+        // Último recurso: clipboard API
+        navigator.clipboard?.writeText(url)
+            .then(() => toast?.success('¡Link copiado!'))
+            .catch(() => toast?.error('No se pudo copiar el link'));
+    }
+    document.body.removeChild(ta);
 }
 
-async function ctxDelete(clip: VideoClip) {
+async function ctxDelete() {
+    const clip = ctxClip.value;
+    if (!clip) return;
     closeCtxMenu();
     if (!confirm('¿Eliminar este clip?')) return;
     try {
@@ -326,6 +318,7 @@ async function ctxDelete(clip: VideoClip) {
         toast?.error('Error al eliminar el clip');
     }
 }
+
 
 // ─── Drag state ───────────────────────────────────────────────────────────────
 type DragType = 'move' | 'resize-left' | 'resize-right';
