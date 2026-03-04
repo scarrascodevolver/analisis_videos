@@ -1,462 +1,292 @@
 @extends('layouts.app')
 
-@section('page_title', 'Gestión de Jugadores y Entrenadores')
+@section('page_title', 'Plantilla')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fas fa-home"></i></a></li>
-    <li class="breadcrumb-item active">Jugadores</li>
+    <li class="breadcrumb-item active">Plantilla</li>
 @endsection
 
 @section('main_content')
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-users"></i>
-                        Gestión de Jugadores y Entrenadores
-                    </h3>
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0" style="color:#00B7B5;">
+                <i class="fas fa-users mr-2"></i>Plantilla
+            </h4>
+            <small class="text-muted" id="player-counter">Cargando...</small>
+        </div>
+        <div style="width:260px;">
+            <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" style="background:#005461; border-color:#005461;">
+                        <i class="fas fa-search text-white"></i>
+                    </span>
                 </div>
-                <div class="card-body">
-
-                    <!-- Buscador AJAX -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="player-search">
-                                    <i class="fas fa-search"></i> Buscar Jugador
-                                </label>
-                                <input type="text"
-                                       id="player-search"
-                                       class="form-control form-control-lg"
-                                       placeholder="Escribe el nombre del jugador..."
-                                       autocomplete="off">
-                                <small class="form-text text-muted">
-                                    Busca por nombre, posición o categoría
-                                </small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div id="search-stats" class="mt-4 pt-2">
-                                <span class="text-muted">
-                                    <i class="fas fa-info-circle"></i>
-                                    Escribe para buscar jugadores y ver sus videos asignados
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Loading State -->
-                    <div id="loading-state" class="text-center py-4" style="display: none;">
-                        <div class="spinner-border text-rugby" role="status">
-                            <span class="sr-only">Buscando...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Buscando jugadores...</p>
-                    </div>
-
-                    <!-- Resultados de búsqueda -->
-                    <div id="search-results" class="row" style="display: none;">
-                        <!-- Los resultados se cargarán aquí via AJAX -->
-                    </div>
-
-                    <!-- Todos los jugadores -->
-                    <div id="all-players-section">
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <h5 class="text-rugby">
-                                    <i class="fas fa-users"></i>
-                                    Todos los Jugadores y Entrenadores
-                                </h5>
-                                <hr class="mb-4">
-                            </div>
-                        </div>
-                        <div id="all-players-grid" class="row">
-                            <!-- Los jugadores se cargarán aquí al iniciar -->
-                        </div>
-                    </div>
-
-                    <!-- Estado vacío inicial (se oculta cuando se cargan jugadores) -->
-                    <div id="empty-state" class="text-center py-5" style="display: none;">
-                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">Busca un jugador o entrenador para comenzar</h4>
-                        <p class="text-muted">
-                            Escribe en el campo de búsqueda para encontrar jugadores y entrenadores<br>
-                            y ver sus videos asignados y progreso
-                        </p>
-                    </div>
-
-                    <!-- Sin resultados -->
-                    <div id="no-results" class="text-center py-5" style="display: none;">
-                        <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">No se encontraron jugadores ni entrenadores</h4>
-                        <p class="text-muted">
-                            Intenta con otro nombre o verifica la ortografía
-                        </p>
-                    </div>
-
-
-                </div>
+                <input type="text" id="player-search" class="form-control"
+                       placeholder="Buscar jugador..." autocomplete="off">
             </div>
         </div>
     </div>
+
+    <!-- Tabs de categoría -->
+    <ul class="nav nav-tabs mb-4" id="category-tabs" style="border-bottom:2px solid #005461;">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" data-category="all">Todas</a>
+        </li>
+        <!-- Tabs dinámicas por JS -->
+    </ul>
+
+    <!-- Loading -->
+    <div id="loading-state" class="text-center py-5">
+        <div class="spinner-border" role="status" style="color:#00B7B5;"></div>
+        <p class="mt-2 text-muted">Cargando plantilla...</p>
+    </div>
+
+    <!-- Grid de jugadores -->
+    <div id="players-container" style="display:none;"></div>
+
+    <!-- Sin resultados -->
+    <div id="no-results" class="text-center py-5" style="display:none;">
+        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No se encontraron jugadores</h5>
+    </div>
+
+</div>
 @endsection
 
 @section('css')
 <style>
-.player-card {
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border: 2px solid var(--color-secondary, #4A6274);
-    border-radius: 15px;
-    background: var(--color-bg-card, #0f0f0f);
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.player-card:hover {
-    border-color: var(--color-accent, #b8860b);
-    background: var(--color-primary-hover, #003d4a);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(212, 160, 23, 0.25);
-}
-
-.player-card.selected {
-    border-color: var(--color-accent, #b8860b);
-    background: var(--color-primary-hover, #003d4a);
-    box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3);
-}
-
-/* Avatar centrado más grande */
-.player-avatar-center {
-    width: 85px;
-    height: 85px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-accent, #b8860b));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 1.8rem;
-    box-shadow: 0 4px 10px rgba(212, 160, 23, 0.4);
-}
-
-/* Nombre del jugador */
-.player-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--color-text, #ffffff);
-    margin-bottom: 15px !important;
-    line-height: 1.3;
-}
-
-/* Sección de posiciones */
-.positions-info {
-    min-height: 60px;
-}
-
-.position-primary {
-    margin-bottom: 8px;
-}
-
-.position-secondary {
-    margin-bottom: 8px;
-}
-
-.position-text {
-    color: var(--color-accent, #b8860b);
-    font-size: 0.95rem;
+/* Tabs */
+#category-tabs .nav-link {
+    color: #aaa;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 8px 18px;
     font-weight: 500;
-    margin-left: 5px;
+    transition: all .2s;
+}
+#category-tabs .nav-link:hover { color: #00B7B5; }
+#category-tabs .nav-link.active {
+    color: #00B7B5 !important;
+    border-bottom-color: #00B7B5 !important;
+    background: transparent;
+    font-weight: 700;
 }
 
-.position-text-secondary {
-    color: #aaaaaa;
-    font-size: 0.9rem;
-    font-weight: 400;
-    margin-left: 5px;
+/* Sección de unidad */
+.unit-section { margin-bottom: 2rem; }
+.unit-title {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #00B7B5;
+    border-bottom: 1px solid #1a3a3a;
+    padding-bottom: 6px;
+    margin-bottom: 1rem;
 }
 
-/* Badges nuevos */
-.category-badge-new {
-    background: linear-gradient(135deg, var(--color-accent, #b8860b), var(--color-secondary, #4A6274));
-    color: white;
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: inline-block;
-    box-shadow: 0 2px 8px rgba(212, 160, 23, 0.3);
+/* Cards */
+.player-card {
+    cursor: pointer;
+    border: 1.5px solid #1a3a3a;
+    border-radius: 12px;
+    background: #141414;
+    transition: all .25s;
+    padding: 20px 14px;
+    text-align: center;
 }
-
-.video-count-badge-new {
-    background: linear-gradient(135deg, var(--color-primary, #005461), var(--color-primary-hover, #003d4a));
-    color: white;
-    border-radius: 20px;
-    padding: 10px 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    display: inline-block;
-    min-width: 120px;
-    box-shadow: 0 3px 10px rgba(0, 84, 97, 0.3);
+.player-card:hover {
+    border-color: #00B7B5;
+    background: #0d2626;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,183,181,.2);
 }
-
-/* Iconos rugby */
-.fas.fa-football-ball,
-.fas.fa-exchange-alt {
-    font-size: 0.9rem;
-    margin-right: 5px;
-}
-
-.video-thumbnail {
-    height: 120px;
-    background: var(--color-primary, #005461);
-    border-radius: 8px;
-    position: relative;
+.player-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #005461, #00B7B5);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 1.5rem;
+    margin: 0 auto 10px;
     overflow: hidden;
 }
-
-.video-thumbnail::before {
-    content: '▶';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 2rem;
-    opacity: 0.8;
+.player-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.player-name { font-weight: 600; font-size: .95rem; color: #fff; margin-bottom: 6px; }
+.player-position { font-size: .82rem; color: #00B7B5; margin-bottom: 3px; }
+.player-position-2 { font-size: .78rem; color: #888; margin-bottom: 8px; }
+.player-category-badge {
+    display: inline-block;
+    background: #005461;
+    color: #fff;
+    border-radius: 20px;
+    padding: 2px 12px;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
-
-.video-card {
-    transition: transform 0.2s ease;
+.player-videos {
+    font-size: .8rem;
+    color: #888;
 }
+.player-videos span { color: #00B7B5; font-weight: 700; }
 
-.video-card:hover {
-    transform: translateY(-3px);
-}
-
-.spinner-border.text-rugby {
-    color: var(--color-accent, #b8860b) !important;
-}
-
-.form-control:focus {
-    border-color: var(--color-accent, #b8860b);
-    box-shadow: 0 0 0 0.2rem rgba(212, 160, 23, 0.25);
-}
-
-/* Texto de videos asignados */
-.video-count-section small.text-muted {
-    color: #aaaaaa !important;
+/* Search highlight */
+#player-search:focus {
+    border-color: #00B7B5;
+    box-shadow: 0 0 0 .15rem rgba(0,183,181,.25);
 }
 </style>
 @endsection
 
 @section('js')
 <script>
-$(document).ready(function() {
-    let searchTimeout;
+// Posiciones rugby → unidad táctica
+const FORWARDS = ['pilar','hooker','talonador','lock','segunda línea','flanker','ala','número 8','n°8','n8','no8','forward','pilar izquierdo','pilar derecho'];
+const BACKS    = ['medio scrum','medio de scrum','apertura','centro','wing','ala tres cuartos','fullback','full','tres cuartos','backs','back','volante'];
 
-    // Elementos del DOM
-    const $searchInput = $('#player-search');
-    const $loadingState = $('#loading-state');
-    const $searchResults = $('#search-results');
-    const $emptyState = $('#empty-state');
-    const $noResults = $('#no-results');
-    const $searchStats = $('#search-stats');
+function unitOf(position) {
+    if (!position) return 'sin clasificar';
+    const p = position.toLowerCase();
+    if (FORWARDS.some(f => p.includes(f))) return 'forwards';
+    if (BACKS.some(b => p.includes(b))) return 'backs';
+    return 'sin clasificar';
+}
 
-    // Búsqueda con debounce
-    $searchInput.on('input', function() {
-        const query = $(this).val().trim();
+let allPlayers = [];
+let activeCategory = 'all';
+let searchQuery = '';
 
-        clearTimeout(searchTimeout);
-
-        if (query.length === 0) {
-            showEmptyState();
-            return;
-        }
-
-        if (query.length < 2) {
-            return;
-        }
-
-        searchTimeout = setTimeout(() => {
-            searchPlayers(query);
-        }, 300);
+// Cargar todos los jugadores al iniciar
+fetch('/api/players/all')
+    .then(r => r.json())
+    .then(data => {
+        allPlayers = data.players || [];
+        buildCategoryTabs();
+        render();
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('players-container').style.display = 'block';
     });
 
-    function showEmptyState() {
-        hideAllStates();
-        $('#all-players-section').show();
-        loadAllPlayers();
-        $searchStats.html('<span class="text-muted"><i class="fas fa-info-circle"></i> Escribe para buscar jugadores específicos</span>');
+function buildCategoryTabs() {
+    const categories = {};
+    allPlayers.forEach(p => {
+        const cat = p.profile?.category;
+        if (cat && !categories[cat.id]) categories[cat.id] = cat.name;
+    });
+
+    const tabs = document.getElementById('category-tabs');
+    Object.entries(categories).forEach(([id, name]) => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        li.innerHTML = `<a class="nav-link" href="#" data-category="${id}">${name}</a>`;
+        tabs.appendChild(li);
+    });
+
+    tabs.addEventListener('click', function(e) {
+        const link = e.target.closest('[data-category]');
+        if (!link) return;
+        e.preventDefault();
+        tabs.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        activeCategory = link.dataset.category;
+        render();
+    });
+}
+
+function filteredPlayers() {
+    return allPlayers.filter(p => {
+        const matchCat = activeCategory === 'all'
+            || String(p.profile?.category?.id) === String(activeCategory);
+        const q = searchQuery.toLowerCase();
+        const matchSearch = !q
+            || p.name.toLowerCase().includes(q)
+            || (p.profile?.position || '').toLowerCase().includes(q)
+            || (p.profile?.category?.name || '').toLowerCase().includes(q);
+        return matchCat && matchSearch;
+    });
+}
+
+function render() {
+    const players = filteredPlayers();
+    const container = document.getElementById('players-container');
+    const noResults = document.getElementById('no-results');
+
+    // Contador
+    const total = players.filter(p => p.profile?.position).length; // solo jugadores con posición
+    document.getElementById('player-counter').textContent =
+        `${players.length} jugador${players.length !== 1 ? 'es' : ''}`;
+
+    if (players.length === 0) {
+        container.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
     }
+    noResults.style.display = 'none';
 
-    function showLoading() {
-        hideAllStates();
-        $loadingState.show();
-    }
+    // Agrupar por unidad
+    const groups = { forwards: [], backs: [], 'sin clasificar': [] };
+    players.forEach(p => {
+        const unit = unitOf(p.profile?.position);
+        groups[unit].push(p);
+    });
 
-    function showNoResults() {
-        hideAllStates();
-        $noResults.show();
-        $searchStats.html('<span class="text-muted"><i class="fas fa-exclamation-circle"></i> Sin resultados</span>');
-    }
+    const unitLabels = {
+        forwards: '<i class="fas fa-fist-raised mr-1"></i> Forwards',
+        backs: '<i class="fas fa-running mr-1"></i> Backs',
+        'sin clasificar': '<i class="fas fa-user mr-1"></i> Sin clasificar',
+    };
 
-    function hideAllStates() {
-        $loadingState.hide();
-        $searchResults.hide();
-        $emptyState.hide();
-        $noResults.hide();
-        $('#all-players-section').hide();
-    }
-
-    function loadAllPlayers() {
-        $.ajax({
-            url: '/api/players/all',
-            method: 'GET',
-            success: function(data) {
-                if (data.players.length === 0) {
-                    $('#all-players-grid').html(`
-                        <div class="col-12 text-center py-4">
-                            <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No hay jugadores registrados</h6>
-                        </div>
-                    `);
-                    return;
-                }
-
-                renderPlayersGrid(data.players, '#all-players-grid');
-            },
-            error: function() {
-                $('#all-players-grid').html(`
-                    <div class="col-12 text-center py-4 text-danger">
-                        <i class="fas fa-exclamation-triangle"></i> Error cargando jugadores
-                    </div>
-                `);
-            }
+    let html = '';
+    ['forwards', 'backs', 'sin clasificar'].forEach(unit => {
+        if (!groups[unit].length) return;
+        html += `<div class="unit-section">
+            <div class="unit-title">${unitLabels[unit]} <span class="font-weight-normal">(${groups[unit].length})</span></div>
+            <div class="row">`;
+        groups[unit].forEach(p => {
+            html += playerCard(p);
         });
-    }
+        html += `</div></div>`;
+    });
 
-    function searchPlayers(query) {
-        showLoading();
+    container.innerHTML = html;
+}
 
-        $.ajax({
-            url: '/api/players/search',
-            method: 'GET',
-            data: { q: query },
-            success: function(data) {
-                if (data.players.length === 0) {
-                    showNoResults();
-                    return;
-                }
+function playerCard(p) {
+    const initials = p.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    const avatarInner = p.profile?.avatar
+        ? `<img src="/storage/${p.profile.avatar}" alt="${p.name}">`
+        : initials;
+    const pos2 = p.profile?.secondary_position
+        ? `<div class="player-position-2"><i class="fas fa-exchange-alt mr-1"></i>${p.profile.secondary_position}</div>` : '';
+    const cat = p.profile?.category?.name || '';
+    const videos = p.video_count || 0;
 
-                displayPlayers(data.players);
+    return `
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2 mb-3">
+            <div class="player-card" onclick="window.location='/coach/player/${p.id}'">
+                <div class="player-avatar">${avatarInner}</div>
+                <div class="player-name">${p.name}</div>
+                <div class="player-position">${p.profile?.position || 'Sin posición'}</div>
+                ${pos2}
+                ${cat ? `<div class="player-category-badge">${cat}</div>` : ''}
+                <div class="player-videos">📺 <span>${videos}</span> videos</div>
+            </div>
+        </div>`;
+}
 
-                const count = data.players.length;
-                const plural = count !== 1 ? 's' : '';
-                $searchStats.html(`<span class="text-success"><i class="fas fa-check-circle"></i> ${count} jugador${plural} encontrado${plural}</span>`);
-            },
-            error: function() {
-                $searchStats.html('<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error en la búsqueda</span>');
-                showNoResults();
-            }
-        });
-    }
-
-    function renderPlayersGrid(players, targetContainer) {
-        let html = '';
-        players.forEach(player => {
-            const initials = player.name.split(' ').map(n => n[0]).join('').toUpperCase();
-            const position = player.profile?.position || 'Sin posición';
-            const secondaryPosition = player.profile?.secondary_position;
-            const category = player.profile?.category?.name || 'Sin categoría';
-            const videoCount = player.video_count || 0;
-            const avatar = player.profile?.avatar;
-
-            html += `
-                <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
-                    <div class="player-card text-center p-4" data-player-id="${player.id}">
-                        <!-- Avatar centrado -->
-                        <div class="player-avatar-center mx-auto mb-3">
-                            ${avatar ?
-                                `<img src="/storage/${avatar}" alt="${player.name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
-                                initials
-                            }
-                        </div>
-
-                        <!-- Nombre del jugador -->
-                        <h6 class="player-name mb-3">${player.name}</h6>
-
-                        <!-- Posiciones -->
-                        <div class="positions-info mb-3">
-                            <div class="position-primary mb-2">
-                                <i class="fas fa-football-ball text-rugby"></i>
-                                <span class="position-text">${position}</span>
-                            </div>
-                            ${secondaryPosition ? `
-                                <div class="position-secondary mb-2">
-                                    <i class="fas fa-exchange-alt text-rugby"></i>
-                                    <span class="position-text-secondary">${secondaryPosition}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- Categoría -->
-                        <div class="category-section mb-3">
-                            <span class="category-badge-new">${category}</span>
-                        </div>
-
-                        <!-- Contador de videos -->
-                        <div class="video-count-section">
-                            <div class="video-count-badge-new">
-                                📺 ${videoCount}
-                            </div>
-                            <small class="text-muted d-block">videos asignados</small>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        $(targetContainer).html(html);
-
-        // Agregar event listeners a las cards - CAMBIO: navegar en lugar de mostrar videos
-        $('.player-card').off('click').on('click', function() {
-            const playerId = $(this).data('player-id');
-
-            // Navegar al perfil del jugador
-            window.location.href = `/coach/player/${playerId}`;
-        });
-    }
-
-    function displayPlayers(players) {
-        hideAllStates();
-        renderPlayersGrid(players, '#search-results');
-        $searchResults.show();
-    }
-
-    // Inicializar vista
-    showEmptyState();
+// Búsqueda
+let searchTimeout;
+document.getElementById('player-search').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchQuery = this.value.trim();
+        render();
+    }, 250);
 });
 </script>
-
-<style>
-.text-rugby {
-    color: var(--color-primary, #005461) !important;
-}
-
-.btn-rugby {
-    background-color: var(--color-primary, #005461);
-    border-color: var(--color-primary, #005461);
-    color: white;
-}
-
-.btn-rugby:hover {
-    background-color: var(--color-primary-hover, #003d4a);
-    border-color: var(--color-primary-hover, #003d4a);
-    color: white;
-}
-</style>
 @endsection
