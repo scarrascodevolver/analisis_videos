@@ -188,11 +188,8 @@ const staggerCache = computed(() => {
     return cache;
 });
 
-function getLaneHeight(categoryId: number): number {
-    const rowMap = staggerCache.value.get(categoryId);
-    if (!rowMap || rowMap.size === 0) return 32;
-    const maxRow = Math.max(...rowMap.values());
-    return Math.max(32, (maxRow + 1) * ROW_HEIGHT + 4);
+function getLaneHeight(_categoryId: number): number {
+    return 32; // single row — clips fan out on hover via CSS transform
 }
 
 // ─── Track element refs (needed for pixel→time conversion during drag) ────────
@@ -373,7 +370,6 @@ const clipBlockStyles = computed(() => {
             const color        = clip.category?.color || COLOR_ACCENT;
             const rowMap = staggerCache.value.get(category.id);
             const rowIdx = rowMap?.get(clip.id) ?? 0;
-            const topPx    = rowIdx * ROW_HEIGHT + 2;
             const heightPx = ROW_HEIGHT - 4;
             const isDragged = dragState.value?.clip.id === clip.id;
             const zIdx      = isDragged ? 200 : (5 + (clip.id % 50));
@@ -381,11 +377,12 @@ const clipBlockStyles = computed(() => {
             styleMap.set(clip.id, {
                 left:            `${Math.max(0, Math.min(startPercent, 100))}%`,
                 width:           `${Math.max(widthPercent, 0.3)}%`,
-                top:             `${topPx}px`,
+                top:             '2px',   // always single row
                 height:          `${heightPx}px`,
                 bottom:          'auto',
                 backgroundColor: color,
                 zIndex:          zIdx,
+                '--row-idx':     rowIdx,  // used by CSS hover fan effect
             });
         }
     }
@@ -418,11 +415,9 @@ function getClipBlockStyle(clip: VideoClip, categoryId: number) {
     const widthPercent = ((adjustedEnd - adjustedStart) / duration.value) * 100;
     const color        = clip.category?.color || COLOR_ACCENT;
 
-    // Stagger: which sub-row does this clip belong to?
     const rowMap = staggerCache.value.get(categoryId);
     const rowIdx = rowMap?.get(clip.id) ?? 0;
-    const topPx    = rowIdx * ROW_HEIGHT + 2;
-    const heightPx = ROW_HEIGHT - 4; // 2px gap top + 2px gap bottom
+    const heightPx = ROW_HEIGHT - 4;
 
     const isDragged = dragState.value?.clip.id === clip.id;
     const zIndex    = isDragged ? 200 : (5 + (clip.id % 50));
@@ -430,11 +425,12 @@ function getClipBlockStyle(clip: VideoClip, categoryId: number) {
     return {
         left:            `${Math.max(0, Math.min(startPercent, 100))}%`,
         width:           `${Math.max(widthPercent, 0.3)}%`,
-        top:             `${topPx}px`,
+        top:             '2px',
         height:          `${heightPx}px`,
         bottom:          'auto',
         backgroundColor: color,
         zIndex,
+        '--row-idx':     rowIdx,
     };
 }
 
@@ -574,11 +570,16 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     display: flex;
     align-items: center;
     overflow: visible;
-    /* Only transition visual properties, NOT position/size (would lag during drag) */
-    transition: filter 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
+    /* Include transform so hover fan animates smoothly */
+    transition: filter 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease, transform 0.18s ease;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
     min-width: 8px !important;
     opacity: 0.85;
+}
+
+/* On lane hover: fan overlapping clips downward by their stagger row index */
+.lane-track:hover .clip-block {
+    transform: translateY(calc(var(--row-idx, 0) * 8px));
 }
 
 .clip-block:hover {
@@ -592,6 +593,7 @@ function handleLaneClick(event: MouseEvent, _categoryId: number) {
     transition: none;       /* instant follow during drag */
     opacity: 1;
     cursor: grabbing;
+    transform: none !important;  /* no fan during drag */
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9) !important;
     filter: brightness(1.3);
     outline: 2px solid rgba(255, 255, 255, 0.4);
