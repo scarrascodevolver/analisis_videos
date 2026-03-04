@@ -69,7 +69,28 @@ class VideoShareController extends Controller
             }
         }
 
-        try {
+        // Si ya existe un share (activo o revocado), actualizar en lugar de crear
+        $share = VideoOrgShare::where('video_id', $video->id)
+            ->where('target_organization_id', $targetOrg->id)
+            ->first();
+
+        if ($share) {
+            if ($share->status === 'active') {
+                return response()->json([
+                    'error' => "Este video ya fue enviado al club '{$targetOrg->name}'.",
+                ], 422);
+            }
+            // Reactivar share revocado
+            $share->update([
+                'status'     => 'active',
+                'shared_by'  => auth()->id(),
+                'division_id'=> $request->division_id,
+                'notes'      => $request->notes,
+                'shared_at'  => now(),
+                'revoked_at' => null,
+                'revoked_by' => null,
+            ]);
+        } else {
             $share = VideoOrgShare::create([
                 'video_id'               => $video->id,
                 'source_organization_id' => $sourceOrg->id,
@@ -80,10 +101,6 @@ class VideoShareController extends Controller
                 'notes'                  => $request->notes,
                 'shared_at'              => now(),
             ]);
-        } catch (UniqueConstraintViolationException $e) {
-            return response()->json([
-                'error' => "Este video ya fue enviado al club '{$targetOrg->name}'.",
-            ], 422);
         }
 
         // Notify all analysts/coaches of the target club
