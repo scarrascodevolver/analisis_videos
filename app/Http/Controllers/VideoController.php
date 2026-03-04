@@ -107,7 +107,11 @@ class VideoController extends Controller
                 ]);
 
             if ($playerCategoryId) {
-                $sharedQuery->where('target_category_id', $playerCategoryId);
+                // NULL = compartido a todo el club; valor = solo esa categoría
+                $sharedQuery->where(function ($q) use ($playerCategoryId) {
+                    $q->whereNull('target_category_id')
+                      ->orWhere('target_category_id', $playerCategoryId);
+                });
             }
 
             $sharedVideos = $sharedQuery->get()->filter(fn ($s) => $s->video !== null);
