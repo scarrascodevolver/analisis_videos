@@ -18,8 +18,8 @@ class ClipCategorySeeder extends Seeder
             'slug'         => 'ataque',
             'color'        => '#1a6b2d',  // verde
             'hotkey'       => 'a',
-            'lead_seconds' => 5,
-            'lag_seconds'  => 5,
+            'lead_seconds' => 1,
+            'lag_seconds'  => 1,
             'sort_order'   => 1,
         ],
         [
@@ -27,8 +27,8 @@ class ClipCategorySeeder extends Seeder
             'slug'         => 'defensa',
             'color'        => '#922b2b',  // rojo
             'hotkey'       => 'd',
-            'lead_seconds' => 5,
-            'lag_seconds'  => 5,
+            'lead_seconds' => 1,
+            'lag_seconds'  => 1,
             'sort_order'   => 2,
         ],
         [
@@ -36,8 +36,8 @@ class ClipCategorySeeder extends Seeder
             'slug'         => 'highlights-1',
             'color'        => '#005461',
             'hotkey'       => 's',
-            'lead_seconds' => 5,
-            'lag_seconds'  => 8,
+            'lead_seconds' => 1,
+            'lag_seconds'  => 1,
             'sort_order'   => 3,
         ],
         [
@@ -45,8 +45,8 @@ class ClipCategorySeeder extends Seeder
             'slug'         => 'highlights-2',
             'color'        => '#7d4e00',
             'hotkey'       => 'r',
-            'lead_seconds' => 5,
-            'lag_seconds'  => 8,
+            'lead_seconds' => 1,
+            'lag_seconds'  => 1,
             'sort_order'   => 4,
         ],
     ];
