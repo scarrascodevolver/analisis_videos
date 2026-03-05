@@ -248,6 +248,11 @@ Route::middleware(['auth'])->group(function () {
     // Clip share link by token (genera URL pública para compartir un clip)
     Route::post('api/clips/{clip}/share-link', [VideoClipController::class, 'generateShareLink'])->name('api.clips.share-link');
 
+    // Compartir clip con jugador
+    Route::post('api/clips/{clip}/share-with-player', [\App\Http\Controllers\PlayerClipShareController::class, 'store'])->name('api.clips.share-with-player');
+    Route::get('api/clips/search-players', [\App\Http\Controllers\PlayerClipShareController::class, 'searchPlayers'])->name('api.clips.search-players');
+    Route::post('api/shared-clips/{sharedClip}/read', [\App\Http\Controllers\PlayerClipShareController::class, 'markRead'])->name('api.shared-clips.read');
+
     // Video View Tracking API Routes
     Route::prefix('api/videos')->name('api.videos.')->group(function () {
         Route::post('/{video}/track-view', [VideoViewController::class, 'track'])->name('track-view');
@@ -270,6 +275,7 @@ Route::middleware(['auth'])->group(function () {
 
     // My Videos Routes
     Route::get('my-videos', [App\Http\Controllers\MyVideosController::class, 'index'])->name('my-videos');
+    Route::get('my-videos/clips', [\App\Http\Controllers\PlayerClipShareController::class, 'myClips'])->name('my-videos.clips');
     Route::patch('assignments/{assignment}/complete', [App\Http\Controllers\MyVideosController::class, 'markAsCompleted'])->name('assignments.complete');
     Route::get('assignments/{assignment}/video', [App\Http\Controllers\MyVideosController::class, 'show'])->name('assignments.show');
 

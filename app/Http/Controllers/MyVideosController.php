@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SharedClip;
 use App\Models\Video;
 use App\Models\VideoAssignment;
 use Illuminate\Http\Request;
@@ -27,7 +28,11 @@ class MyVideosController extends Controller
             'overdue' => 0, // Ya no hay fechas límite
         ];
 
-        return view('my-videos.index', compact('assignedVideos', 'stats'));
+        $unreadClips = SharedClip::where('shared_with_user_id', $user->id)
+            ->whereNull('read_at')
+            ->count();
+
+        return view('my-videos.index', compact('assignedVideos', 'stats', 'unreadClips'));
     }
 
     public function markAsCompleted(VideoAssignment $assignment)

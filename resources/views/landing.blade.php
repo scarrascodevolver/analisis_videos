@@ -1750,7 +1750,7 @@
                 <div>
                     <h4 class="footer-title">Soporte</h4>
                     <ul class="footer-links">
-                        <li><a href="mailto:support@rugby.com">support@rugby.com</a></li>
+                        <li><a href="mailto:suport@rugby.com">suport@rugby.com</a></li>
                     </ul>
                 </div>
 

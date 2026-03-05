@@ -9,6 +9,23 @@
 
 @section('main_content')
 
+    <!-- Tabs de navegación -->
+    <ul class="nav nav-tabs mb-3" style="border-bottom:1px solid #2c2c2c;">
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ route('my-videos') }}" style="color:#00B7B5;border-color:#2c2c2c #2c2c2c transparent;">
+                <i class="fas fa-video mr-1"></i> Videos Asignados
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('my-videos.clips') }}" style="color:#aaa;">
+                <i class="fas fa-film mr-1"></i> Clips Recibidos
+                @if(($unreadClips ?? 0) > 0)
+                    <span class="badge badge-pill" style="background:#00B7B5;color:#fff;font-size:10px;">{{ $unreadClips }}</span>
+                @endif
+            </a>
+        </li>
+    </ul>
+
     <!-- Assigned Videos -->
     <div class="card">
         <div class="card-header">

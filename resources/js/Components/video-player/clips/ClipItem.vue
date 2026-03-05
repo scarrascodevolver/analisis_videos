@@ -4,6 +4,7 @@ import { useVideoStore } from '@/stores/videoStore';
 import { useClipsStore } from '@/stores/clipsStore';
 import { formatTime } from '@/stores/videoStore';
 import type { VideoClip } from '@/types/video-player';
+import ShareClipModal from './ShareClipModal.vue';
 
 const props = defineProps<{
     clip: VideoClip;
@@ -13,9 +14,15 @@ const videoStore = useVideoStore();
 const clipsStore = useClipsStore();
 const toast = inject<any>('toast');
 const currentUserId = inject<number>('currentUserId', 0);
+const currentUserRole = inject<string>('currentUserRole', '');
+
+const canShareWithPlayer = computed(() =>
+    ['analista', 'entrenador'].includes(currentUserRole)
+);
 
 const isDeleting = ref(false);
 const showMenu = ref(false);
+const showShareModal = ref(false);
 const btnRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref({ top: '0px', left: '0px' });
 
@@ -108,6 +115,12 @@ function fallbackCopy(text: string) {
     else    toast?.error('No se pudo copiar el link');
 }
 
+function openShareModal(event: MouseEvent) {
+    event.stopPropagation();
+    showMenu.value = false;
+    showShareModal.value = true;
+}
+
 async function handleDelete(event: MouseEvent) {
     event.stopPropagation();
     showMenu.value = false;
@@ -176,6 +189,15 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
                 <i class="fas fa-link"></i> Copiar link
             </button>
 
+            <!-- Compartir con jugador — solo analistas/entrenadores -->
+            <button
+                v-if="canShareWithPlayer"
+                class="clip-dropdown-item"
+                @click="openShareModal"
+            >
+                <i class="fas fa-paper-plane"></i> Compartir con jugador
+            </button>
+
             <!-- Eliminar — solo el dueño del clip -->
             <button
                 v-if="isOwner"
@@ -186,6 +208,16 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
             </button>
         </div>
     </Teleport>
+
+    <!-- Modal para compartir con jugador -->
+    <ShareClipModal
+        v-if="canShareWithPlayer"
+        :clip="clip"
+        :video-id="videoStore.video?.id ?? clip.video_id"
+        :tournament-id="(videoStore.video as any)?.tournament_id ?? null"
+        :show="showShareModal"
+        @close="showShareModal = false"
+    />
 </template>
 
 <style scoped>
