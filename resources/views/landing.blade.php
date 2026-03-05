@@ -1673,11 +1673,6 @@
                     <path d="M 4 37 Q 65 8 126 37"  stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
                     <path d="M 4 37 Q 65 66 126 37" stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
 
-                    <!-- Laces: 3 spaced horizontal bars -->
-                    <line x1="57" y1="27" x2="73" y2="27" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="57" y1="37" x2="73" y2="37" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
-                    <line x1="57" y1="47" x2="73" y2="47" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
-
                     <!-- Highlight for 3D depth -->
                     <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.08" transform="rotate(-8 44 26)"/>
                 </svg>
