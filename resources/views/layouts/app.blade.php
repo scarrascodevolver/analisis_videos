@@ -626,7 +626,13 @@
                 @if ($userOrganizations->count() > 1 || $isSuperAdmin || $isOrgManager)
                     <li class="nav-item dropdown" id="navbarOrgDropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
-                            <i class="fas fa-building mr-1"></i>
+                            @if($currentOrg?->type === 'club')
+                                <i class="fas fa-shield-alt mr-1" style="color:#00B7B5;"></i>
+                            @elseif($currentOrg?->type === 'asociacion')
+                                <i class="fas fa-users mr-1" style="color:#f0a500;"></i>
+                            @else
+                                <i class="fas fa-building mr-1"></i>
+                            @endif
                             {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" style="max-height:400px;overflow-y:auto;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
@@ -646,7 +652,11 @@
                                     <button type="submit"
                                         class="dropdown-item {{ $currentOrg && $currentOrg->id === $org->id ? 'active bg-success' : '' }}">
                                         @if ($currentOrg && $currentOrg->id === $org->id)
-                                            <i class="fas fa-check mr-2"></i>
+                                            <i class="fas fa-check mr-2" style="color:#00B7B5;"></i>
+                                        @elseif($org->type === 'club')
+                                            <i class="fas fa-shield-alt mr-2" style="color:#00B7B5;"></i>
+                                        @elseif($org->type === 'asociacion')
+                                            <i class="fas fa-users mr-2" style="color:#f0a500;"></i>
                                         @else
                                             <i class="fas fa-building mr-2"></i>
                                         @endif
@@ -662,7 +672,13 @@
                 @elseif($currentOrg)
                     <li class="nav-item">
                         <span class="nav-link text-light">
-                            <i class="fas fa-building mr-1"></i>
+                            @if($currentOrg->type === 'club')
+                                <i class="fas fa-shield-alt mr-1" style="color:#00B7B5;"></i>
+                            @elseif($currentOrg->type === 'asociacion')
+                                <i class="fas fa-users mr-1" style="color:#f0a500;"></i>
+                            @else
+                                <i class="fas fa-building mr-1"></i>
+                            @endif
                             {{-- Desktop: nombre completo --}}
                             <span class="d-none d-md-inline">{{ $currentOrg->name }}</span>
                             {{-- Móvil: cortado como dropdown --}}
