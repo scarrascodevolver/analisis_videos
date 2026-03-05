@@ -1484,12 +1484,10 @@
                     <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Mauricio Vázquez</h3>
                     <p style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2rem;">Ejecutivo Comercial</p>
                     <div style="display:flex;flex-direction:column;gap:.7rem;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.7rem 1rem;">
-                            <span style="color:#ccc;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">mvazquez@rugbykp.com</span>
-                            <button onclick="copyEmail('mvazquez@rugbykp.com', this)" style="background:none;border:none;color:#00B7B5;cursor:pointer;padding:0 0 0 .5rem;flex-shrink:0;" title="Copiar email">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
+                        <button onclick="copyEmail('mvazquez@rugbykp.com', this)" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.85rem 1rem;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='#00B7B5'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'" title="Copiar email">
+                            <span style="color:#ccc;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">mvazquez@rugbykp.com</span>
+                            <i class="fas fa-copy" style="color:#00B7B5;font-size:1rem;flex-shrink:0;margin-left:.5rem;"></i>
+                        </button>
                         <a href="https://wa.me/5492236823659?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1rem;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
                             <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                         </a>
@@ -1506,12 +1504,10 @@
                     <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Jeremias Rodriguez</h3>
                     <p style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2rem;">Ejecutivo Comercial</p>
                     <div style="display:flex;flex-direction:column;gap:.7rem;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.7rem 1rem;">
-                            <span style="color:#ccc;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jrodriguez@rugbykp.com</span>
-                            <button onclick="copyEmail('jrodriguez@rugbykp.com', this)" style="background:none;border:none;color:#00B7B5;cursor:pointer;padding:0 0 0 .5rem;flex-shrink:0;" title="Copiar email">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
+                        <button onclick="copyEmail('jrodriguez@rugbykp.com', this)" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.85rem 1rem;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='#00B7B5'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'" title="Copiar email">
+                            <span style="color:#ccc;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jrodriguez@rugbykp.com</span>
+                            <i class="fas fa-copy" style="color:#00B7B5;font-size:1rem;flex-shrink:0;margin-left:.5rem;"></i>
+                        </button>
                         <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1rem;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
                             <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                         </a>
@@ -1696,10 +1692,12 @@
             navigator.clipboard.writeText(email).then(function() {
                 var icon = btn.querySelector('i');
                 icon.className = 'fas fa-check';
-                btn.style.color = '#25D366';
+                icon.style.color = '#25D366';
+                btn.style.borderColor = '#25D366';
                 setTimeout(function() {
                     icon.className = 'fas fa-copy';
-                    btn.style.color = '#00B7B5';
+                    icon.style.color = '#00B7B5';
+                    btn.style.borderColor = 'rgba(255,255,255,.08)';
                 }, 2000);
             });
         }
