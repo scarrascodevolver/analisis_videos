@@ -1666,12 +1666,26 @@
         <div class="cta-container">
             <div class="rugby-ball" id="ctaBall">
                 <svg width="130" height="74" viewBox="0 0 130 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Ball body with visible border -->
-                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461" stroke="#00B7B5" stroke-width="1.8" opacity="1"/>
+                    <defs>
+                        <clipPath id="ballClip">
+                            <ellipse cx="65" cy="37" rx="60" ry="32"/>
+                        </clipPath>
+                    </defs>
 
-                    <!-- Panel seams: tip-to-tip curving up and down -->
-                    <path d="M 4 37 Q 65 8 126 37"  stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
-                    <path d="M 4 37 Q 65 66 126 37" stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
+                    <!-- Ball body with visible border -->
+                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461" stroke="#00B7B5" stroke-width="1.8"/>
+
+                    <!-- Top swoosh: ancha en las puntas (y=30↔44), angosta en el medio (y=20↔23) -->
+                    <path d="M 4 30 C 35 11,52 19,65 20 C 78 19,105 11,126 30
+                             L 126 44
+                             C 105 27,78 24,65 23 C 52 24,35 27,4 44 Z"
+                          fill="#00B7B5" opacity="0.55" clip-path="url(#ballClip)"/>
+
+                    <!-- Bottom swoosh: espejo de la superior -->
+                    <path d="M 4 44 C 35 63,52 55,65 54 C 78 55,105 63,126 44
+                             L 126 30
+                             C 105 47,78 50,65 51 C 52 50,35 47,4 30 Z"
+                          fill="#00B7B5" opacity="0.55" clip-path="url(#ballClip)"/>
 
                     <!-- Highlight for 3D depth -->
                     <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.08" transform="rotate(-8 44 26)"/>
