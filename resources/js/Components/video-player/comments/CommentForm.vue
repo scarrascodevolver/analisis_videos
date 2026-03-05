@@ -24,7 +24,6 @@ const categories: { value: CommentCategory; label: string }[] = [
     { value: 'tecnico', label: 'Técnico' },
     { value: 'tactico', label: 'Táctico' },
     { value: 'fisico', label: 'Físico' },
-    { value: 'mental', label: 'Mental' },
 ];
 
 const priorities: { value: CommentPriority; label: string }[] = [

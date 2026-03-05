@@ -98,7 +98,7 @@ export interface VideoComment {
     mentioned_users: User[];
 }
 
-export type CommentCategory = 'tecnico' | 'tactico' | 'fisico' | 'mental';
+export type CommentCategory = 'tecnico' | 'tactico' | 'fisico';
 export type CommentPriority = 'baja' | 'media' | 'alta' | 'critica';
 
 export interface VideoClip {

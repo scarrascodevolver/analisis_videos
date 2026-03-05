@@ -17,7 +17,7 @@ class VideoCommentController extends Controller
         $request->validate([
             'comment' => 'required|string',
             'timestamp_seconds' => 'required|integer|min:0',
-            'category' => 'required|in:tecnico,tactico,fisico,mental,general',
+            'category' => 'required|in:tecnico,tactico,fisico,general',
             'priority' => 'required|in:baja,media,alta,critica',
             'parent_id' => 'nullable|exists:video_comments,id',
         ]);
@@ -60,7 +60,7 @@ class VideoCommentController extends Controller
     {
         $request->validate([
             'comment' => 'required|string',
-            'category' => 'required|in:tecnico,tactico,fisico,mental,general',
+            'category' => 'required|in:tecnico,tactico,fisico,general',
             'priority' => 'required|in:baja,media,alta,critica',
             'status' => 'required|in:pendiente,en_revision,completado',
         ]);
