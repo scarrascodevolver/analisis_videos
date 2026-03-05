@@ -705,6 +705,26 @@ class VideoController extends Controller
     }
 
     /**
+     * Download LongoMatch XML generated from current clips in DB
+     */
+    public function downloadXml(Video $video)
+    {
+        if ($video->clips()->count() === 0) {
+            return back()->with('error', 'Este video no tiene clips para exportar.');
+        }
+
+        $xmlParser = app(\App\Services\LongoMatchXmlParser::class);
+        $xml = $xmlParser->generateXml($video);
+
+        $filename = \Str::slug($video->title ?? 'video') . '-clips.xml';
+
+        return response($xml, 200, [
+            'Content-Type'        => 'application/xml',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
      * Import LongoMatch XML clips to an existing video
      */
     public function importXml(Request $request, Video $video)

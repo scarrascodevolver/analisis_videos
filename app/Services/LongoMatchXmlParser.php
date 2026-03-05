@@ -349,6 +349,68 @@ class LongoMatchXmlParser
     }
 
     /**
+     * Generate LongoMatch XML from video clips stored in DB
+     */
+    public function generateXml(Video $video): string
+    {
+        $clips = VideoClip::with('clipCategory')
+            ->where('video_id', $video->id)
+            ->orderBy('start_time')
+            ->get();
+
+        $categories = $clips->pluck('clipCategory')->unique('id')->filter();
+
+        $dom = new \DOMDocument('1.0', 'utf-8');
+        $dom->formatOutput = true;
+
+        $root = $dom->createElement('file');
+        $dom->appendChild($root);
+
+        // ROWS (categories)
+        $rows = $dom->createElement('ROWS');
+        $root->appendChild($rows);
+
+        foreach ($categories as $cat) {
+            $row = $dom->createElement('row');
+            $rows->appendChild($row);
+            $row->appendChild($dom->createElement('code', htmlspecialchars($cat->name)));
+
+            $hex = ltrim($cat->color ?? '#666666', '#');
+            $r8 = hexdec(substr($hex, 0, 2));
+            $g8 = hexdec(substr($hex, 2, 2));
+            $b8 = hexdec(substr($hex, 4, 2));
+            $row->appendChild($dom->createElement('R', $r8 * 257));
+            $row->appendChild($dom->createElement('G', $g8 * 257));
+            $row->appendChild($dom->createElement('B', $b8 * 257));
+        }
+
+        // ALL_INSTANCES (clips)
+        $allInstances = $dom->createElement('ALL_INSTANCES');
+        $root->appendChild($allInstances);
+
+        foreach ($clips as $i => $clip) {
+            $instance = $dom->createElement('instance');
+            $allInstances->appendChild($instance);
+            $instance->appendChild($dom->createElement('ID', $i + 1));
+            $instance->appendChild($dom->createElement('code', htmlspecialchars($clip->clipCategory->name ?? 'SIN CATEGORIA')));
+            $instance->appendChild($dom->createElement('start', number_format((float) $clip->start_time, 2, '.', '')));
+            $instance->appendChild($dom->createElement('end', number_format((float) $clip->end_time, 2, '.', '')));
+
+            if (!empty($clip->tags)) {
+                foreach ($clip->tags as $tag) {
+                    $parts = explode(':', $tag, 2);
+                    $label = $dom->createElement('label');
+                    $label->appendChild($dom->createElement('group', htmlspecialchars($parts[0] ?? '')));
+                    $label->appendChild($dom->createElement('text', htmlspecialchars($parts[1] ?? $tag)));
+                    $instance->appendChild($label);
+                }
+            }
+        }
+
+        return $dom->saveXML();
+    }
+
+    /**
      * Validate XML content before parsing
      *
      * @return array ['valid' => bool, 'error' => string|null, 'preview' => array|null]
