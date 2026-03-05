@@ -10,7 +10,7 @@
         $currentOrganization = auth()->check() ? auth()->user()->currentOrganization() : null;
         $orgFavicon = $currentOrganization && $currentOrganization->logo_path
             ? asset('storage/' . $currentOrganization->logo_path)
-            : asset('favicon.png');
+            : asset('favicon.ico');
     @endphp
     <link rel="icon" type="image/png" href="{{ $orgFavicon }}">
 

@@ -9,7 +9,7 @@
         $currentOrganization = auth()->check() ? auth()->user()->currentOrganization() : null;
         $orgName = $currentOrganization ? $currentOrganization->name : 'Rugby Key Performance';
         $logoV   = filemtime(public_path('logo.png'))   ?: time();
-        $faviconV = filemtime(public_path('favicon.png')) ?: time();
+        $faviconV = filemtime(public_path('favicon.ico')) ?: time();
         $orgLogo =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
@@ -17,7 +17,7 @@
         $orgFavicon =
             $currentOrganization && $currentOrganization->logo_path
                 ? asset('storage/' . $currentOrganization->logo_path)
-                : asset('favicon.png') . '?v=' . $faviconV;
+                : asset('favicon.ico') . '?v=' . $faviconV;
     @endphp
     <title>@yield('page_title', 'Dashboard') - {{ $orgName }}</title>
     <link rel="icon" type="image/png" href="{{ $orgFavicon }}">

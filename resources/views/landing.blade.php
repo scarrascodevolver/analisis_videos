@@ -6,7 +6,7 @@
     <meta name="description" content="Rugby Key Performance - Plataforma profesional de análisis de video y creación de jugadas para equipos de rugby. Mejora el rendimiento de tu equipo con herramientas avanzadas.">
     <meta name="keywords" content="rugby, análisis de video, jugadas, táctica, entrenamiento, equipo">
     <title>Rugby Key Performance - Análisis de Video y Jugadas para Rugby</title>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
