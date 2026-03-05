@@ -271,6 +271,7 @@
                            placeholder="Ej: 2026" maxlength="20">
                 </div>
                 <div id="nt-error" class="text-danger small mt-2 d-none"></div>
+                <div id="nt-warning" class="small mt-2 d-none" style="color:#f0ad4e;"><i class="fas fa-exclamation-triangle mr-1"></i><span id="nt-warning-text"></span></div>
             </div>
             <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,.1);padding:10px 18px;">
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
@@ -796,6 +797,12 @@ document.querySelectorAll('.btn-approve-reg, .btn-reject-reg').forEach(function 
         .then(function (data) {
             if (data.id) {
                 currentTournamentId = data.id;
+                if (data.already_exists) {
+                    var warnEl = document.getElementById('nt-warning');
+                    document.getElementById('nt-warning-text').textContent = 'Ya existe un torneo con ese nombre. Abriendo el existente.';
+                    warnEl.classList.remove('d-none');
+                    setTimeout(function() { warnEl.classList.add('d-none'); }, 3000);
+                }
                 // Prepare divisions modal content
                 document.getElementById('nd-tournament-name').textContent = '— ' + name;
                 document.getElementById('nd-added-pills').innerHTML = '';
