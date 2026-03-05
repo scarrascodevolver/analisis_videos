@@ -353,12 +353,12 @@ class LongoMatchXmlParser
      */
     public function generateXml(Video $video): string
     {
-        $clips = VideoClip::with('clipCategory')
+        $clips = VideoClip::with('category')
             ->where('video_id', $video->id)
             ->orderBy('start_time')
             ->get();
 
-        $categories = $clips->pluck('clipCategory')->unique('id')->filter();
+        $categories = $clips->pluck('category')->unique('id')->filter();
 
         $dom = new \DOMDocument('1.0', 'utf-8');
         $dom->formatOutput = true;
@@ -392,7 +392,7 @@ class LongoMatchXmlParser
             $instance = $dom->createElement('instance');
             $allInstances->appendChild($instance);
             $instance->appendChild($dom->createElement('ID', $i + 1));
-            $instance->appendChild($dom->createElement('code', htmlspecialchars($clip->clipCategory->name ?? 'SIN CATEGORIA')));
+            $instance->appendChild($dom->createElement('code', htmlspecialchars($clip->category->name ?? 'SIN CATEGORIA')));
             $instance->appendChild($dom->createElement('start', number_format((float) $clip->start_time, 2, '.', '')));
             $instance->appendChild($dom->createElement('end', number_format((float) $clip->end_time, 2, '.', '')));
 
