@@ -33,8 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'videos/*',
             'api/upload/*',
             'webhooks/*',
+            'logout',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->is('logout')) {
+                auth()->logout();
+                return redirect()->route('login')->with('info', 'Tu sesión expiró. Por favor iniciá sesión nuevamente.');
+            }
+        });
     })->create();
