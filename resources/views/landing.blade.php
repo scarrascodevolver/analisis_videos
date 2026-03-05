@@ -1494,14 +1494,14 @@
                     </div>
                 </div>
 
-                <!-- Jeremias Rodriguez -->
+                <!-- Jeremias Rodríguez -->
                 <div style="background:#111;border:1px solid rgba(0,84,97,.4);border-radius:24px;padding:3rem 2rem 2.5rem;text-align:center;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 50px rgba(0,84,97,.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
                     <div style="position:relative;display:inline-block;margin-bottom:1.5rem;">
-                        <img src="{{ asset('images/jere.jpg') }}" alt="Jeremias Rodriguez"
+                        <img src="{{ asset('images/jere.jpg') }}" alt="Jeremias Rodríguez"
                              style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid #005461;display:block;">
                         <span style="position:absolute;bottom:6px;right:6px;width:16px;height:16px;background:#25D366;border-radius:50%;border:2px solid #111;"></span>
                     </div>
-                    <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Jeremias Rodriguez</h3>
+                    <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Jeremias Rodríguez</h3>
                     <p style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2rem;">Ejecutivo Comercial</p>
                     <div style="display:flex;flex-direction:column;gap:.7rem;">
                         <button onclick="copyEmail('jrodriguez@rugbykp.com', this)" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.85rem 1rem;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='#00B7B5'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'" title="Copiar email">
