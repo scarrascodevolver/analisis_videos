@@ -770,7 +770,7 @@
             <a href="{{ route('videos.index') }}" class="brand-link d-flex justify-content-center py-2">
                 <img src="{{ $orgLogo }}" alt="{{ $orgName }} Logo" class="brand-logo-full"
                     style="width: 120px; height: auto; object-fit: contain; filter: drop-shadow(0 0 6px rgba(212,160,23,0.5));">
-                <img src="{{ asset('favicon.png') }}" alt="{{ $orgName }}" class="brand-logo-mini"
+                <img src="{{ $orgFavicon }}" alt="{{ $orgName }}" class="brand-logo-mini"
                     style="width: 36px; height: 36px; object-fit: contain; display: none;">
             </a>
 
