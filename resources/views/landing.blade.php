@@ -907,10 +907,17 @@
             line-height: 1.7;
         }
 
-        @keyframes ballBounce {
+        @keyframes ballDrop {
+            0%   { transform: translate(120px, -80px) rotate(-40deg); opacity: 0; }
+            55%  { transform: translate(0, 18px) rotate(10deg); opacity: 1; }
+            70%  { transform: translate(0, -14px) rotate(-4deg); }
+            82%  { transform: translate(0, 8px) rotate(2deg); }
+            91%  { transform: translate(0, -5px) rotate(-1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        }
+        @keyframes ballIdle {
             0%, 100% { transform: translateY(0) rotate(0deg); }
-            30%       { transform: translateY(-28px) rotate(15deg); }
-            60%       { transform: translateY(-10px) rotate(-8deg); }
+            50%       { transform: translateY(-8px) rotate(3deg); }
         }
         @keyframes ctaPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(0,183,181,.5); }
@@ -921,15 +928,16 @@
             50%  { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        .cta-btn-pulse {
-            animation: ctaPulse 2s ease-in-out infinite;
-        }
+        .cta-btn-pulse { animation: ctaPulse 2s ease-in-out infinite; }
         .rugby-ball {
-            font-size: 4rem;
             display: inline-block;
-            animation: ballBounce 1.8s ease-in-out infinite;
-            filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
+            opacity: 0;
             margin-bottom: 1.5rem;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));
+        }
+        .rugby-ball.dropped {
+            animation: ballDrop .9s cubic-bezier(.22,.61,.36,1) forwards,
+                       ballIdle 3s ease-in-out 1s infinite;
         }
 
         /* ========== CTA ========== */
@@ -1638,7 +1646,30 @@
     <!-- CTA Section -->
     <section class="cta">
         <div class="cta-container">
-            <div class="rugby-ball">🏉</div>
+            <div class="rugby-ball" id="ctaBall">
+                <svg width="100" height="68" viewBox="0 0 100 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ball body -->
+                    <ellipse cx="50" cy="34" rx="48" ry="30" fill="#005461"/>
+                    <!-- Shine highlight -->
+                    <ellipse cx="50" cy="34" rx="46" ry="28" fill="none" stroke="#00B7B5" stroke-width="1.5" opacity="0.6"/>
+                    <!-- Center seam (horizontal) -->
+                    <path d="M4 34 Q50 20 96 34" stroke="#00B7B5" stroke-width="1.5" fill="none" opacity="0.7"/>
+                    <path d="M4 34 Q50 48 96 34" stroke="#00B7B5" stroke-width="1.5" fill="none" opacity="0.7"/>
+                    <!-- Vertical laces band -->
+                    <path d="M50 8 L50 60" stroke="#00B7B5" stroke-width="2" opacity="0.5"/>
+                    <!-- Laces -->
+                    <rect x="44" y="20" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
+                    <rect x="44" y="27" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
+                    <rect x="44" y="34" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
+                    <rect x="44" y="41" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
+                    <rect x="44" y="48" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
+                    <!-- Top/bottom tips -->
+                    <ellipse cx="50" cy="5" rx="4" ry="3" fill="#003d4a"/>
+                    <ellipse cx="50" cy="63" rx="4" ry="3" fill="#003d4a"/>
+                    <!-- Inner glow -->
+                    <ellipse cx="38" cy="26" rx="12" ry="7" fill="white" opacity="0.06" transform="rotate(-20 38 26)"/>
+                </svg>
+            </div>
             <h2 class="cta-title">¿Listo para transformar tu equipo?</h2>
             <p class="cta-description">
                 Hablá con nuestro equipo comercial y descubrí todo lo que Rugby Key Performance puede hacer por tu club.
@@ -1776,6 +1807,19 @@
                 }
             });
         });
+
+        // Rugby ball drop animation on scroll
+        const ball = document.getElementById('ctaBall');
+        if (ball && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting && !ball.classList.contains('dropped')) {
+                        ball.classList.add('dropped');
+                    }
+                });
+            }, { threshold: 0.3 });
+            observer.observe(ball.closest('section') || ball);
+        }
     </script>
 </body>
 </html>
