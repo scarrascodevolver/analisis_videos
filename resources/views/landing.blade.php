@@ -1675,17 +1675,27 @@
                     <!-- Ball body with visible border -->
                     <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461" stroke="#00B7B5" stroke-width="1.8"/>
 
-                    <!-- Top swoosh: ancha en las puntas (y=30↔44), angosta en el medio (y=20↔23) -->
-                    <path d="M 4 30 C 35 11,52 19,65 20 C 78 19,105 11,126 30
-                             L 126 44
-                             C 105 27,78 24,65 23 C 52 24,35 27,4 44 Z"
-                          fill="#00B7B5" opacity="0.55" clip-path="url(#ballClip)"/>
+                    <!--
+                        TOP swoosh: borde exterior arriba (y=16 en puntas),
+                        borde interior sigue seam (y=37 en puntas → y≈20 al centro).
+                        En el centro: 6px de grosor. En las puntas: 21px. Separadas del centro.
+                    -->
+                    <path d="M 4 16
+                             C 25 14, 105 14, 126 16
+                             L 126 37
+                             C 105 15, 25 15, 4 37
+                             Z"
+                          fill="#00B7B5" opacity="0.65" clip-path="url(#ballClip)"/>
 
-                    <!-- Bottom swoosh: espejo de la superior -->
-                    <path d="M 4 44 C 35 63,52 55,65 54 C 78 55,105 63,126 44
-                             L 126 30
-                             C 105 47,78 50,65 51 C 52 50,35 47,4 30 Z"
-                          fill="#00B7B5" opacity="0.55" clip-path="url(#ballClip)"/>
+                    <!--
+                        BOTTOM swoosh: espejo exacto de la superior respecto a y=37
+                    -->
+                    <path d="M 4 58
+                             C 25 60, 105 60, 126 58
+                             L 126 37
+                             C 105 59, 25 59, 4 37
+                             Z"
+                          fill="#00B7B5" opacity="0.65" clip-path="url(#ballClip)"/>
 
                     <!-- Highlight for 3D depth -->
                     <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.08" transform="rotate(-8 44 26)"/>
