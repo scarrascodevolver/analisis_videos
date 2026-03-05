@@ -108,11 +108,6 @@
                         ¿Sos jugador?
                         <a href="{{ route('register') }}"><strong>Registrate con código</strong></a>
                     </p>
-                    <p class="mb-0">
-                        <a href="{{ route('register.organization') }}" style="color:#00B7B5;">
-                            <i class="fas fa-building mr-1"></i><strong>Registrar mi club / asociación</strong>
-                        </a>
-                    </p>
                 </div>
             </div>
         </div>
