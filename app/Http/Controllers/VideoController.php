@@ -611,7 +611,7 @@ class VideoController extends Controller
             'youtube_video_id' => $video->youtube_video_id,
             'youtube_url' => $video->youtube_url,
             'slave_videos' => $video->isPartOfGroup()
-                ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
+                ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService, $orgCdnHostname) {
                     return $group->videos
                         ->filter(fn ($v) => $v->id !== $video->id)
                         ->map(function ($v) use ($bunnyService, $orgCdnHostname) {
