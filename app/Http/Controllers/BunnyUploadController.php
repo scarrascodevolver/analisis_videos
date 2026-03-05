@@ -368,9 +368,22 @@ class BunnyUploadController extends Controller
             return response()->json(['success' => false, 'message' => 'Error al obtener el estado del video.'], 500);
         }
 
-        // Persistir cambios en BD (separado del response para no bloquear el frontend)
+        // URL MP4 original: construir fallback aunque no se haya persistido aún.
+        $originalUrl = $video->bunny_mp4_url;
+        if (! $originalUrl && in_array($details['status'], ['queued', 'processing', 'ready'], true)) {
+            try {
+                $originalUrl = $bunny->getOriginalUrl($video->bunny_video_id);
+            } catch (\Throwable $e) {
+                Log::warning('Bunny original URL unavailable while polling status', [
+                    'video_id' => $video->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $updates = [];
         if ($details['status'] !== $video->bunny_status) {
-            $updates = ['bunny_status' => $details['status']];
+            $updates['bunny_status'] = $details['status'];
 
             if ($details['ready']) {
                 $updates['bunny_hls_url'] = $details['hls_url'];
@@ -385,7 +398,15 @@ class BunnyUploadController extends Controller
             if ($details['status'] === 'error') {
                 $updates['processing_status'] = 'failed';
             }
+        }
 
+        // Backfill de MP4 para evitar pantalla de "procesando" cuando el original ya es reproducible.
+        if (! $video->bunny_mp4_url && $originalUrl) {
+            $updates['bunny_mp4_url'] = $originalUrl;
+        }
+
+        // Persistir cambios en BD (separado del response para no bloquear el frontend)
+        if (! empty($updates)) {
             try {
                 $video->update($updates);
             } catch (\Exception $e) {
@@ -402,6 +423,7 @@ class BunnyUploadController extends Controller
             'status' => $details['status'],
             'ready' => $details['ready'],
             'playback_url' => $details['hls_url'],
+            'original_url' => $originalUrl,
             'thumbnail' => $details['thumbnail_url'],
         ]);
     }

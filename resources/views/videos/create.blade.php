@@ -1298,6 +1298,12 @@ async function uploadToCloudflare(item, commonData, onProgress) {
     });
 
     const completeData = await completeRes.json().catch(() => ({}));
+    if (!completeRes.ok) {
+        throw new Error(completeData.message || `Complete falló (HTTP ${completeRes.status})`);
+    }
+    if (!completeData.success) {
+        throw new Error(completeData.message || 'El archivo se subió pero no pudo registrarse en Bunny.');
+    }
 
     // 4. Si el master tiene XML, importarlo
     if (item.role === 'master' && item.xmlContent) {

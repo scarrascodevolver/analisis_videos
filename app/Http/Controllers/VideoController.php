@@ -584,6 +584,15 @@ class VideoController extends Controller
         $isSharedVideo = $video->organization_id !== $userOrgId;
 
         $bunnyService = \App\Services\BunnyStreamService::forOrganization($video->organization);
+        $orgCdnHostname = $video->organization?->bunny_cdn_hostname;
+        $masterMp4Url = $video->bunny_mp4_url;
+        if (! $masterMp4Url
+            && $video->bunny_video_id
+            && in_array($video->bunny_status, ['queued', 'processing', 'ready'], true)
+            && $orgCdnHostname
+        ) {
+            $masterMp4Url = "https://{$orgCdnHostname}/{$video->bunny_video_id}/original";
+        }
 
         $videoData = array_merge($video->toArray(), [
             'is_shared_video' => $isSharedVideo,
@@ -593,10 +602,11 @@ class VideoController extends Controller
             'edit_url' => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
             'bunny_library_id' => $video->organization?->bunny_library_id,
+            'bunny_cdn_hostname' => $orgCdnHostname,
             'bunny_hls_url' => $video->bunny_video_id && $video->bunny_status === 'ready'
                                     ? $bunnyService->getHlsUrl($video->bunny_video_id)
                                     : ($video->bunny_hls_url ?? null),
-            'bunny_mp4_url' => $video->bunny_mp4_url,
+            'bunny_mp4_url' => $masterMp4Url,
             'is_youtube_video' => (bool) $video->is_youtube_video,
             'youtube_video_id' => $video->youtube_video_id,
             'youtube_url' => $video->youtube_url,
@@ -604,21 +614,32 @@ class VideoController extends Controller
                 ? $video->videoGroups->flatMap(function ($group) use ($video, $bunnyService) {
                     return $group->videos
                         ->filter(fn ($v) => $v->id !== $video->id)
-                        ->map(fn ($v) => [
-                            'id' => $v->id,
-                            'title' => $v->title,
-                            'stream_url' => $v->is_youtube_video ? null : route('videos.stream', $v),
-                            'camera_angle' => $v->pivot->camera_angle ?? null,
-                            'sync_offset' => $v->pivot->sync_offset ?? 0,
-                            'is_synced' => (bool) ($v->pivot->is_synced ?? false),
-                            'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
-                                                ? $bunnyService->getHlsUrl($v->bunny_video_id)
-                                                : ($v->bunny_hls_url ?? null),
-                            'bunny_status' => $v->bunny_status,
-                            'bunny_mp4_url' => $v->bunny_mp4_url,
-                            'is_youtube_video' => (bool) $v->is_youtube_video,
-                            'youtube_video_id' => $v->youtube_video_id,
-                        ])
+                        ->map(function ($v) use ($bunnyService, $orgCdnHostname) {
+                            $slaveMp4Url = $v->bunny_mp4_url;
+                            if (! $slaveMp4Url
+                                && $v->bunny_video_id
+                                && in_array($v->bunny_status, ['queued', 'processing', 'ready'], true)
+                                && $orgCdnHostname
+                            ) {
+                                $slaveMp4Url = "https://{$orgCdnHostname}/{$v->bunny_video_id}/original";
+                            }
+
+                            return [
+                                'id' => $v->id,
+                                'title' => $v->title,
+                                'stream_url' => $v->is_youtube_video ? null : route('videos.stream', $v),
+                                'camera_angle' => $v->pivot->camera_angle ?? null,
+                                'sync_offset' => $v->pivot->sync_offset ?? 0,
+                                'is_synced' => (bool) ($v->pivot->is_synced ?? false),
+                                'bunny_hls_url' => $v->bunny_video_id && $v->bunny_status === 'ready'
+                                                    ? $bunnyService->getHlsUrl($v->bunny_video_id)
+                                                    : ($v->bunny_hls_url ?? null),
+                                'bunny_status' => $v->bunny_status,
+                                'bunny_mp4_url' => $slaveMp4Url,
+                                'is_youtube_video' => (bool) $v->is_youtube_video,
+                                'youtube_video_id' => $v->youtube_video_id,
+                            ];
+                        })
                         ->values();
                 })->values()->all()
                 : [],

@@ -218,6 +218,9 @@ async function pollStatus() {
         if (!data.success) return;
 
         videoStatus.value = data.status;
+        if (!videoMp4Url.value && data.original_url) {
+            videoMp4Url.value = data.original_url;
+        }
 
         if (data.ready && data.playback_url) {
             stopPolling();
