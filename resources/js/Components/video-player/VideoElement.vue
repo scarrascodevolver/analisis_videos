@@ -17,6 +17,7 @@ const props = defineProps<{
     bunnyMp4Url?: string | null;
     isYoutubeVideo?: boolean;
     youtubeVideoId?: string | null;
+    downloadXmlUrl?: string | null;
 }>();
 
 // ── YouTube ────────────────────────────────────────────────────────────────────
@@ -418,6 +419,16 @@ function handleVideoClick(event: MouseEvent) {
             >
                 <i class="fas fa-download"></i>
             </button>
+
+            <a
+                v-if="downloadXmlUrl"
+                :href="downloadXmlUrl"
+                class="video-utility-btn"
+                title="Descargar XML"
+                style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;"
+            >
+                <i class="fas fa-file-code"></i>
+            </a>
 
             <SpeedControl />
         </div>

@@ -589,6 +589,7 @@ class VideoController extends Controller
             'is_shared_video' => $isSharedVideo,
             'stream_url' => $video->is_youtube_video ? null : route('videos.stream', $video),
             'download_url' => $video->is_youtube_video ? null : route('videos.download', $video),
+            'download_xml_url' => $video->clips()->exists() ? route('videos.download-xml', $video) : null,
             'edit_url' => route('videos.edit', $video),
             'is_part_of_group' => $video->isPartOfGroup(),
             'bunny_library_id' => $video->organization?->bunny_library_id,

@@ -256,6 +256,7 @@ function movePanelDown(panelName: PanelName) {
                             <VideoElement
                                 :stream-url="video.stream_url"
                                 :download-url="(video as any).download_url ?? null"
+                                :download-xml-url="(video as any).download_xml_url ?? null"
                                 :title="video.title"
                                 :can-annotate="isAnalystOrCoach"
                                 :bunny-hls-url="video.bunny_hls_url"

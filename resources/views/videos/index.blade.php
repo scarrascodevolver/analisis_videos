@@ -325,8 +325,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     @endif
                     {{-- XML --}}
                     @if($video->clips_count > 0)
-                        <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
-                        <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-download"></i></a>
+                        <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-list-ul mr-1"></i>XML <i class="fas fa-download ml-1"></i></a>
                     @endif
                     {{-- Ángulos --}}
                     @if($anglesCount > 1)
@@ -466,8 +465,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                     @endif
                     {{-- XML --}}
                     @if($video->clips_count > 0)
-                        <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
-                        <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-download"></i></a>
+                        <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-list-ul mr-1"></i>XML <i class="fas fa-download ml-1"></i></a>
                     @endif
                     {{-- Ángulos --}}
                     @if($anglesCount > 1)
@@ -744,8 +742,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                         @endif
                         {{-- XML --}}
                         @if($video->clips_count > 0)
-                            <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
-                            <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-download"></i></a>
+                            <a href="{{ route('videos.download-xml', $video) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-list-ul mr-1"></i>XML <i class="fas fa-download ml-1"></i></a>
                         @endif
                         {{-- Ángulos --}}
                         @if($anglesCount > 1)
@@ -807,8 +804,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', function(
                         @endif
                         <div class="match-play-overlay"><i class="fas fa-play-circle"></i></div>
                         @if($sv->clips_count > 0)
-                            <span class="xml-badge"><i class="fas fa-list-ul mr-1"></i>XML</span>
-                            <a href="{{ route('videos.download-xml', $sv) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-download"></i></a>
+                            <a href="{{ route('videos.download-xml', $sv) }}" class="xml-badge" title="Descargar XML" style="text-decoration:none;"><i class="fas fa-list-ul mr-1"></i>XML <i class="fas fa-download ml-1"></i></a>
                         @endif
                         <div style="position:absolute;bottom:6px;left:6px;">
                             @include('videos.partials.shared-badge', ['share' => $share])
