@@ -907,10 +907,37 @@
             line-height: 1.7;
         }
 
+        @keyframes ballBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            30%       { transform: translateY(-28px) rotate(15deg); }
+            60%       { transform: translateY(-10px) rotate(-8deg); }
+        }
+        @keyframes ctaPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0,183,181,.5); }
+            50%       { box-shadow: 0 0 0 18px rgba(0,183,181,0); }
+        }
+        @keyframes ctaGradient {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .cta-btn-pulse {
+            animation: ctaPulse 2s ease-in-out infinite;
+        }
+        .rugby-ball {
+            font-size: 4rem;
+            display: inline-block;
+            animation: ballBounce 1.8s ease-in-out infinite;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
+            margin-bottom: 1.5rem;
+        }
+
         /* ========== CTA ========== */
         .cta {
             padding: 8rem 2rem;
-            background: var(--gradient-primary);
+            background: linear-gradient(270deg, #003d4a, #005461, #00796b, #005461, #003d4a);
+            background-size: 300% 300%;
+            animation: ctaGradient 8s ease infinite;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -1611,14 +1638,15 @@
     <!-- CTA Section -->
     <section class="cta">
         <div class="cta-container">
-            <h2 class="cta-title">Listo para transformar tu equipo?</h2>
+            <div class="rugby-ball">🏉</div>
+            <h2 class="cta-title">¿Listo para transformar tu equipo?</h2>
             <p class="cta-description">
-                Solicita una demo personalizada y descubre todo lo que podemos hacer por tu club.
+                Hablá con nuestro equipo comercial y descubrí todo lo que Rugby Key Performance puede hacer por tu club.
             </p>
             <div class="cta-buttons">
-                <a href="#contacto" class="btn btn-primary btn-large">
-                    <i class="fas fa-envelope"></i>
-                    Contactar
+                <a href="#contacto" class="btn btn-primary btn-large cta-btn-pulse">
+                    <i class="fas fa-rocket"></i>
+                    Quiero una demo
                 </a>
             </div>
         </div>
