@@ -1472,36 +1472,48 @@
                 </p>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;max-width:800px;margin:4rem auto 0;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;max-width:820px;margin:4rem auto 0;">
 
-                <!-- Popu -->
-                <div style="background:#111;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:2.5rem 2rem;text-align:center;transition:transform .2s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <img src="{{ asset('images/popu.jpeg') }}" alt="Popu"
-                         style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #005461;margin-bottom:1.2rem;">
-                    <h3 style="font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.3rem;">Popu</h3>
-                    <p style="color:#aaa;font-size:.9rem;margin-bottom:1.8rem;">Ventas &amp; Comercial</p>
+                <!-- Mauricio Vázquez -->
+                <div style="background:#111;border:1px solid rgba(0,84,97,.4);border-radius:24px;padding:3rem 2rem 2.5rem;text-align:center;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 50px rgba(0,84,97,.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="position:relative;display:inline-block;margin-bottom:1.5rem;">
+                        <img src="{{ asset('images/popu.jpeg') }}" alt="Mauricio Vázquez"
+                             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid #005461;display:block;">
+                        <span style="position:absolute;bottom:6px;right:6px;width:16px;height:16px;background:#25D366;border-radius:50%;border:2px solid #111;"></span>
+                    </div>
+                    <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Mauricio Vázquez</h3>
+                    <p style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2rem;">Ejecutivo Comercial</p>
                     <div style="display:flex;flex-direction:column;gap:.7rem;">
-                        <a href="mailto:mvazquez@rugbykp.com" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1rem;background:#005461;color:#fff;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#003d4a'" onmouseout="this.style.background='#005461'">
-                            <i class="fas fa-envelope"></i> mvazquez@rugbykp.com
-                        </a>
-                        <a href="https://wa.me/5492236823659?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1rem;background:#25D366;color:#fff;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.7rem 1rem;">
+                            <span style="color:#ccc;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">mvazquez@rugbykp.com</span>
+                            <button onclick="copyEmail('mvazquez@rugbykp.com', this)" style="background:none;border:none;color:#00B7B5;cursor:pointer;padding:0 0 0 .5rem;flex-shrink:0;" title="Copiar email">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <a href="https://wa.me/5492236823659?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1rem;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
+                            <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                         </a>
                     </div>
                 </div>
 
-                <!-- Jere -->
-                <div style="background:#111;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:2.5rem 2rem;text-align:center;transition:transform .2s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <img src="{{ asset('images/jere.jpg') }}" alt="Jere"
-                         style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #005461;margin-bottom:1.2rem;">
-                    <h3 style="font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.3rem;">Jere</h3>
-                    <p style="color:#aaa;font-size:.9rem;margin-bottom:1.8rem;">Ventas &amp; Comercial</p>
+                <!-- Jeremias Rodriguez -->
+                <div style="background:#111;border:1px solid rgba(0,84,97,.4);border-radius:24px;padding:3rem 2rem 2.5rem;text-align:center;transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 50px rgba(0,84,97,.3)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="position:relative;display:inline-block;margin-bottom:1.5rem;">
+                        <img src="{{ asset('images/jere.jpg') }}" alt="Jeremias Rodriguez"
+                             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid #005461;display:block;">
+                        <span style="position:absolute;bottom:6px;right:6px;width:16px;height:16px;background:#25D366;border-radius:50%;border:2px solid #111;"></span>
+                    </div>
+                    <h3 style="font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:.25rem;">Jeremias Rodriguez</h3>
+                    <p style="color:#00B7B5;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2rem;">Ejecutivo Comercial</p>
                     <div style="display:flex;flex-direction:column;gap:.7rem;">
-                        <a href="mailto:jrodriguez@rugbykp.com" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1rem;background:#005461;color:#fff;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#003d4a'" onmouseout="this.style.background='#005461'">
-                            <i class="fas fa-envelope"></i> jrodriguez@rugbykp.com
-                        </a>
-                        <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1rem;background:#25D366;color:#fff;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.7rem 1rem;">
+                            <span style="color:#ccc;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jrodriguez@rugbykp.com</span>
+                            <button onclick="copyEmail('jrodriguez@rugbykp.com', this)" style="background:none;border:none;color:#00B7B5;cursor:pointer;padding:0 0 0 .5rem;flex-shrink:0;" title="Copiar email">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby%20Key%20Performance" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1rem;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;transition:background .2s;" onmouseover="this.style.background='#1da851'" onmouseout="this.style.background='#25D366'">
+                            <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
                         </a>
                     </div>
                 </div>
@@ -1680,6 +1692,18 @@
     </footer>
 
     <script>
+        function copyEmail(email, btn) {
+            navigator.clipboard.writeText(email).then(function() {
+                var icon = btn.querySelector('i');
+                icon.className = 'fas fa-check';
+                btn.style.color = '#25D366';
+                setTimeout(function() {
+                    icon.className = 'fas fa-copy';
+                    btn.style.color = '#00B7B5';
+                }, 2000);
+            });
+        }
+
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.getElementById('navbar');
