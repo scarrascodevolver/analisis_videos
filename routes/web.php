@@ -111,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
     // Video Routes
     Route::resource('videos', VideoController::class);
     Route::post('videos/{video}/comments', [VideoCommentController::class, 'store'])->name('video.comments.store');
+    Route::post('videos/{video}/comments/{comment}/reply', [VideoCommentController::class, 'reply'])->name('video.comments.reply');
     Route::post('videos/{video}/import-xml', [VideoController::class, 'importXml'])->name('videos.import-xml');
     Route::get('videos/{video}/download-xml', [VideoController::class, 'downloadXml'])->name('videos.download-xml');
     Route::delete('videos/{video}/delete-all-clips', [VideoController::class, 'deleteAllClips'])->name('videos.delete-all-clips');

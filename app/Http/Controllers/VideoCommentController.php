@@ -114,6 +114,35 @@ class VideoCommentController extends Controller
         return back()->with('success', 'Comentario marcado como completado');
     }
 
+    public function reply(Request $request, Video $video, VideoComment $comment)
+    {
+        $request->validate([
+            'reply_comment' => 'required|string',
+        ]);
+
+        if ($comment->video_id !== $video->id) {
+            return response()->json(['success' => false, 'error' => 'Comentario inválido'], 422);
+        }
+
+        $reply = VideoComment::create([
+            'video_id'          => $video->id,
+            'user_id'           => auth()->id(),
+            'parent_id'         => $comment->id,
+            'comment'           => $request->reply_comment,
+            'timestamp_seconds' => $comment->timestamp_seconds,
+            'category'          => $comment->category,
+            'priority'          => $comment->priority,
+            'status'            => 'pendiente',
+        ]);
+
+        $this->processMentions($reply, $video, $request->reply_comment);
+
+        return response()->json([
+            'success' => true,
+            'reply'   => $reply->load('user', 'mentionedUsers'),
+        ]);
+    }
+
     /**
      * Procesar menciones en comentarios con @
      */
