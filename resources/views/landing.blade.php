@@ -1446,7 +1446,7 @@
                 <div class="step">
                     <div class="step-number">3</div>
                     <h3 class="step-title">Analiza y marca</h3>
-                    <p class="step-description">Crea clips, agrega comentarios y dibuja sobre el video.</p>
+                    <p class="step-description">Crea clips, agrega comentarios, dibuja sobre el video y sube tu XML de LongoMatch.</p>
                 </div>
 
                 <div class="step">
