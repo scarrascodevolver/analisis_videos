@@ -907,23 +907,36 @@
             line-height: 1.7;
         }
 
+        /* Ball travels right→left bouncing with decreasing height, like a real rugby ball */
         @keyframes ballDrop {
-            0%   { transform: translate(80px, -120px) rotate(-35deg); opacity: 0; }
-            30%  { opacity: 1; }
-            45%  { transform: translate(0, 30px) rotate(12deg); }
-            57%  { transform: translate(0, -22px) rotate(-6deg); }
-            67%  { transform: translate(0, 16px) rotate(4deg); }
-            75%  { transform: translate(0, -12px) rotate(-3deg); }
-            82%  { transform: translate(0, 8px) rotate(2deg); }
-            88%  { transform: translate(0, -5px) rotate(-1deg); }
-            93%  { transform: translate(0, 3px) rotate(0.5deg); }
-            97%  { transform: translate(0, -2px) rotate(0deg); }
-            100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            /* Start: high up, far to the right */
+            0%   { transform: translate(340px, -160px) rotate(-50deg); opacity: 0; }
+            5%   { opacity: 1; }
+            /* 1st bounce — hits ground, still far right */
+            18%  { transform: translate(240px,  0px)   rotate(-20deg); }
+            /* 2nd arc — medium height */
+            28%  { transform: translate(165px, -90px)  rotate(0deg); }
+            /* 2nd bounce */
+            38%  { transform: translate(100px,  0px)   rotate(15deg); }
+            /* 3rd arc — lower */
+            46%  { transform: translate(58px,  -45px)  rotate(22deg); }
+            /* 3rd bounce */
+            54%  { transform: translate(24px,   0px)   rotate(30deg); }
+            /* 4th arc — quite low */
+            61%  { transform: translate(8px,   -18px)  rotate(34deg); }
+            /* 4th bounce */
+            68%  { transform: translate(0px,    0px)   rotate(38deg); }
+            /* 5th tiny arc */
+            74%  { transform: translate(0px,   -6px)   rotate(40deg); }
+            /* Settles */
+            80%  { transform: translate(0px,    0px)   rotate(42deg); }
+            /* Tiny wobble */
+            86%  { transform: translate(0px,   -2px)   rotate(42deg); }
+            100% { transform: translate(0px,    0px)   rotate(45deg); opacity: 1; }
         }
         @keyframes ballIdle {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            40%       { transform: translateY(-10px) rotate(4deg); }
-            60%       { transform: translateY(-8px) rotate(3deg); }
+            0%, 100% { transform: translate(0, 0) rotate(45deg); }
+            50%       { transform: translate(0, -10px) rotate(48deg); }
         }
         @keyframes ctaPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(0,183,181,.5); }
@@ -942,8 +955,8 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));
         }
         .rugby-ball.dropped {
-            animation: ballDrop 1.8s cubic-bezier(.22,.61,.36,1) forwards,
-                       ballIdle 3.5s ease-in-out 2s infinite;
+            animation: ballDrop 2.6s linear forwards,
+                       ballIdle 3.5s ease-in-out 2.7s infinite;
         }
 
         /* ========== CTA ========== */
