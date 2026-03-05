@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
+import { useToast } from '@/composables/useToast';
+import ToastContainer from '@/Components/video-player/ui/ToastContainer.vue';
 
 const page = usePage();
+const toast = useToast();
 
 const auth = computed(() => page.props.auth as any);
 const user = computed(() => auth.value?.user);
@@ -16,20 +19,36 @@ const orgDropdownOpen = ref(false);
 
 function switchOrganization(orgId: number) {
     orgDropdownOpen.value = false;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/set-organization/${orgId}`;
-    const csrf = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = '_token';
-    input.value = csrf?.content ?? '';
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
+    const selectedOrg = userOrganizations.value.find((org: any) => org.id === orgId);
+    const selectedName = selectedOrg?.name ?? 'organizacion';
+
+    if (selectedOrg?.is_current) {
+        toast.info(`Ya estas en "${selectedName}"`);
+        return;
+    }
+
+    router.post(`/set-organization/${orgId}`, {}, {
+        onStart: () => toast.info(`Cambiando a "${selectedName}"...`),
+    });
 }
 const flash = computed(() => page.props.flash as any);
 const notifications = computed(() => page.props.notifications as any);
+
+watch(() => flash.value?.success, (message) => {
+    if (message) toast.success(message);
+}, { immediate: true });
+
+watch(() => flash.value?.error, (message) => {
+    if (message) toast.error(message);
+}, { immediate: true });
+
+watch(() => flash.value?.warning, (message) => {
+    if (message) toast.warning(message);
+}, { immediate: true });
+
+watch(() => flash.value?.info, (message) => {
+    if (message) toast.info(message);
+}, { immediate: true });
 
 const props = defineProps<{
     title?: string;
@@ -447,22 +466,6 @@ function markAllNotificationsAsRead() {
                 </div>
             </div>
 
-            <!-- Flash messages -->
-            <div v-if="flash?.success || flash?.error || flash?.warning" class="container-fluid">
-                <div v-if="flash.success" class="alert alert-success alert-dismissible fade show">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    {{ flash.success }}
-                </div>
-                <div v-if="flash.error" class="alert alert-danger alert-dismissible fade show">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    {{ flash.error }}
-                </div>
-                <div v-if="flash.warning" class="alert alert-warning alert-dismissible fade show">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    {{ flash.warning }}
-                </div>
-            </div>
-
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">
@@ -478,6 +481,7 @@ function markAllNotificationsAsRead() {
                 <small>Plataforma de Análisis de Video para Rugby</small>
             </div>
         </footer>
+        <ToastContainer />
     </div>
 </template>
 

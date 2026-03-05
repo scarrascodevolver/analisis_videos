@@ -647,7 +647,7 @@
                                 <div class="dropdown-divider"></div>
                             @endif
                             @foreach ($userOrganizations as $org)
-                                <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline js-org-switch-form" data-org-name="{{ $org->name }}">
+                                <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline js-org-switch-form" data-org-name="{{ $org->name }}" data-is-current="{{ $currentOrg && $currentOrg->id === $org->id ? '1' : '0' }}">
                                     @csrf
                                     <button type="submit"
                                         class="dropdown-item {{ $currentOrg && $currentOrg->id === $org->id ? 'active bg-success' : '' }}">
@@ -1154,10 +1154,23 @@
         forms.forEach(function (form) {
             form.addEventListener('submit', function (event) {
                 const orgName = form.dataset.orgName || 'esta organización';
-                const confirmed = window.confirm(`Vas a cambiar a "${orgName}". ¿Continuar?`);
+                const isCurrent = form.dataset.isCurrent === '1';
 
-                if (!confirmed) {
+                if (isCurrent) {
                     event.preventDefault();
+                    if (typeof showToast === 'function') {
+                        showToast(`Ya estás en "${orgName}"`, 'info');
+                    }
+                    return;
+                }
+
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`Cambiando a "${orgName}"...`, 'info');
                 }
             });
         });
@@ -1392,14 +1405,19 @@
             const container = document.getElementById('toast-container');
             if (!container) return;
 
-            const bgColor = type === 'success' ? '#b8860b' : (type === 'error' ? '#dc3545' : '#ffc107');
-            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+            const bgColor = type === 'success'
+                ? '#b8860b'
+                : (type === 'error' ? '#dc3545' : (type === 'warning' ? '#ffc107' : '#005461'));
+            const textColor = type === 'warning' ? '#000' : '#fff';
+            const icon = type === 'success'
+                ? 'check-circle'
+                : (type === 'error' ? 'exclamation-circle' : (type === 'warning' ? 'exclamation-triangle' : 'info-circle'));
 
             const toast = document.createElement('div');
             toast.className = 'toast-notification';
             toast.style.cssText = `
                 background: ${bgColor};
-                color: white;
+                color: ${textColor};
                 padding: 12px 20px;
                 border-radius: 8px;
                 margin-bottom: 10px;
