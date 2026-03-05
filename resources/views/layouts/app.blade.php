@@ -647,7 +647,7 @@
                                 <div class="dropdown-divider"></div>
                             @endif
                             @foreach ($userOrganizations as $org)
-                                <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline">
+                                <form action="{{ route('set-organization', $org) }}" method="POST" class="d-inline js-org-switch-form" data-org-name="{{ $org->name }}">
                                     @csrf
                                     <button type="submit"
                                         class="dropdown-item {{ $currentOrg && $currentOrg->id === $org->id ? 'active bg-success' : '' }}">
@@ -1143,8 +1143,26 @@
         var toast = document.getElementById('quickInviteToast');
         if (toast) { toast.textContent = '✓ ' + msg; toast.style.display = 'block'; setTimeout(function(){ toast.style.display='none'; }, 2000); }
     }
+
     </script>
     @endif
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const forms = document.querySelectorAll('.js-org-switch-form');
+
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                const orgName = form.dataset.orgName || 'esta organización';
+                const confirmed = window.confirm(`Vas a cambiar a "${orgName}". ¿Continuar?`);
+
+                if (!confirmed) {
+                    event.preventDefault();
+                }
+            });
+        });
+    });
+    </script>
 
     <!-- Modal de Funcionalidad Próximamente -->
     <div class="modal fade" id="upcomingFeatureModal" tabindex="-1" role="dialog"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use Illuminate\Http\Request;
 
 class OrganizationController extends Controller
 {
@@ -28,7 +29,16 @@ class OrganizationController extends Controller
 
         // Si solo tiene una organización, seleccionarla automáticamente
         if ($organizations->count() === 1) {
-            $user->switchOrganization($organizations->first(), $user->isSuperAdmin() || $user->isOrgManager());
+            $user->switchOrganization(
+                $organizations->first(),
+                $user->isSuperAdmin() || $user->isOrgManager(),
+                [
+                    'switch_reason' => 'auto_single_org',
+                    'source_url' => request()->fullUrl(),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]
+            );
 
             return redirect()->route('home')
                 ->with('success', 'Bienvenido a '.$organizations->first()->name);
@@ -50,7 +60,7 @@ class OrganizationController extends Controller
     /**
      * Cambiar a una organización específica
      */
-    public function switch(Organization $organization)
+    public function switch(Request $request, Organization $organization)
     {
         $user = auth()->user();
 
@@ -75,7 +85,16 @@ class OrganizationController extends Controller
         }
 
         // Cambiar de organización
-        $user->switchOrganization($organization, $user->isSuperAdmin() || $user->isOrgManager());
+        $user->switchOrganization(
+            $organization,
+            $user->isSuperAdmin() || $user->isOrgManager(),
+            [
+                'switch_reason' => 'manual',
+                'source_url' => $request->headers->get('referer'),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
 
         return redirect()->route('home')
             ->with('success', 'Cambiaste a '.$organization->name);

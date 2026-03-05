@@ -52,7 +52,7 @@
                                             </span>
                                         @endif
 
-                                        <form action="{{ route('set-organization', $org) }}" method="POST">
+                                        <form action="{{ route('set-organization', $org) }}" method="POST" class="js-org-switch-form" data-org-name="{{ $org->name }}">
                                             @csrf
                                             <button type="submit"
                                                     class="btn {{ $currentOrg && $currentOrg->id === $org->id ? 'btn-outline-success' : 'btn-success' }} btn-block">

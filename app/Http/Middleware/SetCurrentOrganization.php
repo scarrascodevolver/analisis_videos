@@ -60,7 +60,16 @@ class SetCurrentOrganization
 
             // Si tiene exactamente una organización, seleccionarla automáticamente
             if ($organizations->count() === 1) {
-                $user->switchOrganization($organizations->first(), $user->isSuperAdmin() || $user->isOrgManager());
+                $user->switchOrganization(
+                    $organizations->first(),
+                    $user->isSuperAdmin() || $user->isOrgManager(),
+                    [
+                        'switch_reason' => 'auto_single_org',
+                        'source_url' => $request->fullUrl(),
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                    ]
+                );
 
                 return $next($request);
             }
@@ -88,7 +97,12 @@ class SetCurrentOrganization
             $activeOrg = $user->organizations()->where('is_active', true)->first();
 
             if ($activeOrg) {
-                $user->switchOrganization($activeOrg);
+                $user->switchOrganization($activeOrg, false, [
+                    'switch_reason' => 'auto_inactive_org',
+                    'source_url' => $request->fullUrl(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
             } else {
                 auth()->logout();
 

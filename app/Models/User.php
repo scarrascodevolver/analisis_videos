@@ -37,6 +37,7 @@ class User extends Authenticatable
         'role',
         'is_super_admin',
         'is_org_manager',
+        'default_organization_id',
     ];
 
     /**
@@ -135,6 +136,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function defaultOrganization()
+    {
+        return $this->belongsTo(Organization::class, 'default_organization_id');
+    }
+
     /**
      * Verificar si el usuario es administrador de la organización actual
      */
@@ -150,16 +156,47 @@ class User extends Authenticatable
      */
     public function currentOrganization()
     {
-        return $this->organizations()
+        // 1) Session context (primary source of truth)
+        $sessionOrgId = $this->sessionOrganizationId();
+        if ($sessionOrgId) {
+            $org = $this->organizations()->where('organizations.id', $sessionOrgId)->first();
+            if ($org) {
+                return $org;
+            }
+        }
+
+        // 2) Stable default organization (persistent preference)
+        if ($this->default_organization_id) {
+            $org = $this->organizations()->where('organizations.id', $this->default_organization_id)->first();
+            if ($org) {
+                $this->storeSessionOrganizationId($org->id);
+
+                return $org;
+            }
+        }
+
+        // 3) Legacy fallback for old records
+        $legacyOrg = $this->organizations()
             ->wherePivot('is_current', true)
             ->first();
+
+        if ($legacyOrg) {
+            $this->storeSessionOrganizationId($legacyOrg->id);
+
+            if (! $this->default_organization_id) {
+                $this->forceFill(['default_organization_id' => $legacyOrg->id])->save();
+            }
+        }
+
+        return $legacyOrg;
     }
 
     /**
      * Cambiar a una organización específica
      */
-    public function switchOrganization(Organization $organization, bool $isSuperAdmin = false): bool
+    public function switchOrganization(Organization $organization, bool $isSuperAdmin = false, array $context = []): bool
     {
+        $fromOrgId = $this->currentOrganization()?->id;
         $belongsToOrg = $this->organizations()->where('organizations.id', $organization->id)->exists();
 
         // Verificar que el usuario pertenece a esta organización (excepto super admins)
@@ -184,6 +221,34 @@ class User extends Authenticatable
             $this->organizations()->updateExistingPivot($organization->id, ['is_current' => true]);
         }
 
+        // Nuevo contexto primario: sesión
+        $this->storeSessionOrganizationId($organization->id);
+
+        // Persistir org por defecto solo cuando aún no existe
+        if (! $this->default_organization_id) {
+            $this->forceFill(['default_organization_id' => $organization->id])->save();
+        }
+
+        // Auditoría de cambios de organización
+        if ($fromOrgId !== $organization->id) {
+            $request = app()->bound('request') ? request() : null;
+
+            try {
+                OrganizationSwitchAudit::create([
+                    'user_id' => $this->id,
+                    'from_organization_id' => $fromOrgId,
+                    'to_organization_id' => $organization->id,
+                    'ip_address' => $context['ip_address'] ?? $request?->ip(),
+                    'user_agent' => $context['user_agent'] ?? $request?->userAgent(),
+                    'source_url' => $context['source_url'] ?? $request?->headers->get('referer'),
+                    'switch_reason' => $context['switch_reason'] ?? 'manual',
+                    'switched_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         return true;
     }
 
@@ -206,5 +271,30 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    private function sessionOrganizationId(): ?int
+    {
+        if (! $this->canUseSessionContext()) {
+            return null;
+        }
+
+        $value = session('current_organization_id');
+
+        return $value ? (int) $value : null;
+    }
+
+    private function storeSessionOrganizationId(int $organizationId): void
+    {
+        if (! $this->canUseSessionContext()) {
+            return;
+        }
+
+        session(['current_organization_id' => $organizationId]);
+    }
+
+    private function canUseSessionContext(): bool
+    {
+        return ! app()->runningInConsole() && app()->bound('session');
     }
 }
