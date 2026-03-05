@@ -76,6 +76,18 @@
                 right: 0;
                 left: auto;
                 min-width: 150px;
+                background: #1a1a1a;
+                border: 1px solid rgba(255,255,255,.12);
+            }
+            .user-dropdown-menu .dropdown-item {
+                color: #e0e0e0;
+            }
+            .user-dropdown-menu .dropdown-item:hover {
+                background: #005461;
+                color: #fff;
+            }
+            .user-dropdown-menu .dropdown-divider {
+                border-color: rgba(255,255,255,.12);
             }
 
             /* Ensure all navbar dropdowns stay within viewport */
