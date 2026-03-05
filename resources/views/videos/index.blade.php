@@ -94,15 +94,20 @@ document.getElementById('saveCategoryBtn').addEventListener('click', function() 
     this.disabled = true;
     fetch('{{ route("api.categories.store") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ name })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.id) { window.location.reload(); }
-        else { errEl.textContent = data.message || 'Error al crear.'; errEl.classList.remove('d-none'); this.disabled = false; }
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.id) { window.location.reload(); }
+        else {
+            const msg = data.errors?.name?.[0] || data.message || 'Error al crear la categoría.';
+            errEl.textContent = msg;
+            errEl.classList.remove('d-none');
+            this.disabled = false;
+        }
     })
-    .catch(() => { errEl.textContent = 'Error de red.'; errEl.classList.remove('d-none'); this.disabled = false; });
+    .catch(() => { errEl.textContent = 'Error al crear la categoría.'; errEl.classList.remove('d-none'); this.disabled = false; });
 });
 document.getElementById('newCategoryName').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') document.getElementById('saveCategoryBtn').click();

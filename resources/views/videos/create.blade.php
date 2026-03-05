@@ -826,12 +826,12 @@ function initCategoryListener() {
 
     fetch('{{ route("api.categories.store") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ name })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.id) {
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.id) {
             const sel = document.getElementById('category_id');
             const opt = new Option(data.name, data.id, true, true);
             // Insertar antes de la opción "+ Nueva categoría..."
@@ -840,7 +840,7 @@ function initCategoryListener() {
             sel.value = data.id;
             $('#newCategoryModal').modal('hide');
         } else {
-            errEl.textContent = data.message || 'Error al crear.';
+            errEl.textContent = data.errors?.name?.[0] || data.message || 'Error al crear la categoría.';
             errEl.classList.remove('d-none');
         }
         this.disabled = false;

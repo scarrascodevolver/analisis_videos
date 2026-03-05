@@ -309,6 +309,7 @@ class TournamentController extends Controller
             'text' => $tournament->season
                 ? "{$tournament->name} ({$tournament->season})"
                 : $tournament->name,
+            'already_exists' => ! $tournament->wasRecentlyCreated,
         ]);
     }
 }

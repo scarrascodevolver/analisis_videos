@@ -612,12 +612,18 @@
                     $currentOrg = auth()->user()->currentOrganization();
                 @endphp
                 @if ($userOrganizations->count() > 1 || $isSuperAdmin || $isOrgManager)
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="navbarOrgDropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
                             <i class="fas fa-building mr-1"></i>
                             {{ $currentOrg ? Str::limit($currentOrg->name, 15) : 'Sin org' }}
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right" style="max-height: 400px; overflow-y: auto;">
+                        <div class="dropdown-menu dropdown-menu-right" style="max-height:400px;overflow-y:auto;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
+                            <style>
+                                #navbarOrgDropdown .dropdown-item { color:rgba(255,255,255,.8) !important; }
+                                #navbarOrgDropdown .dropdown-item:hover,#navbarOrgDropdown .dropdown-item:focus { background:rgba(0,183,181,.15) !important;color:#fff !important; }
+                                #navbarOrgDropdown .dropdown-header { color:rgba(255,255,255,.4) !important; }
+                                #navbarOrgDropdown .dropdown-divider { border-color:rgba(255,255,255,.1) !important; }
+                            </style>
                             @if($isSuperAdmin)
                                 <span class="dropdown-header text-danger"><i class="fas fa-shield-alt mr-1"></i>Super Admin - Todas las Orgs</span>
                                 <div class="dropdown-divider"></div>
@@ -1407,9 +1413,9 @@
 @if($showOnboarding)
 <div class="modal fade" id="onboardingModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#005461;color:white;">
-                <h5 class="modal-title">
+        <div class="modal-content" style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
+            <div class="modal-header" style="background:#005461;border-bottom:1px solid rgba(255,255,255,.1);">
+                <h5 class="modal-title" style="color:#fff;">
                     <i class="fas fa-rocket mr-2"></i>
                     ¡Bienvenido a RugbyKP! Configurá {{ $currentOrg->name }} en 1 minuto
                 </h5>
@@ -1417,11 +1423,11 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="background:#1a1a1a;">
                 <form id="onboardingForm" action="{{ route('onboarding.complete') }}" method="POST">
                     @csrf
                     @if($currentOrg->isClub())
-                        <p class="text-muted mb-3">Seleccioná las categorías de tu club. Podés agregar más después.</p>
+                        <p style="color:rgba(255,255,255,.6);font-size:.88rem;" class="mb-3">Seleccioná las categorías de tu club. Podés agregar más después.</p>
                         <div class="row">
                             @foreach(['Adulta', 'Juveniles', 'Femenino', 'M20', 'M18', 'M16'] as $cat)
                             <div class="col-md-4 mb-3">
@@ -1431,7 +1437,7 @@
                                            name="categories[]"
                                            value="{{ $cat }}"
                                            {{ in_array($cat, ['Adulta', 'Juveniles', 'Femenino']) ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="cat_{{ Str::slug($cat) }}">
+                                    <label class="custom-control-label" style="color:rgba(255,255,255,.85);" for="cat_{{ Str::slug($cat) }}">
                                         {{ $cat }}
                                     </label>
                                 </div>
@@ -1439,34 +1445,38 @@
                             @endforeach
                         </div>
                         <div class="form-group mt-2">
-                            <label class="small text-muted">¿Otra categoría?</label>
+                            <label class="small" style="color:rgba(255,255,255,.5);">¿Otra categoría?</label>
                             <input type="text" id="extraCategory" class="form-control form-control-sm"
-                                   placeholder="Ej: M14, Seven, etc." style="max-width:250px;">
+                                   placeholder="Ej: M14, Seven, etc."
+                                   style="max-width:250px;background:#111;border:1px solid #444;color:#fff;">
                             <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addExtraCategory()">
                                 <i class="fas fa-plus mr-1"></i> Agregar
                             </button>
                             <div id="extraCategories"></div>
                         </div>
                     @else
-                        <p class="text-muted mb-3">¿Qué torneo o liga vas a analizar primero?</p>
+                        <p style="color:rgba(255,255,255,.6);font-size:.88rem;" class="mb-3">¿Qué torneo o liga vas a analizar primero?</p>
                         <div class="form-group">
-                            <label class="font-weight-bold">Nombre del torneo / liga <span class="text-danger">*</span></label>
+                            <label style="color:rgba(255,255,255,.8);font-weight:600;">Nombre del torneo / liga <span class="text-danger">*</span></label>
                             <input type="text" id="ob-nt-name" class="form-control"
                                    placeholder="Ej: Torneo de la URBA, Liga Nacional 2026..."
-                                   maxlength="255">
+                                   maxlength="255"
+                                   style="background:#111;border:1px solid #444;color:#fff;">
                         </div>
                         <div class="form-group mb-0">
-                            <label class="font-weight-bold">Temporada <small class="text-muted font-weight-normal">(opcional)</small></label>
+                            <label style="color:rgba(255,255,255,.8);font-weight:600;">Temporada <small style="color:rgba(255,255,255,.4);font-weight:400;">(opcional)</small></label>
                             <input type="text" id="ob-nt-season" class="form-control"
-                                   placeholder="Ej: 2026" maxlength="20">
+                                   placeholder="Ej: 2026" maxlength="20"
+                                   style="background:#111;border:1px solid #444;color:#fff;">
                         </div>
                         <div id="ob-nt-error" class="text-danger small mt-2 d-none"></div>
-                        <small class="text-muted d-block mt-2">Podés crear más torneos después desde el menú.</small>
+                        <div id="ob-nt-warning" class="small mt-2 d-none" style="color:#f0ad4e;"><i class="fas fa-exclamation-triangle mr-1"></i><span id="ob-nt-warning-text"></span></div>
+                        <small style="color:rgba(255,255,255,.4);" class="d-block mt-2">Podés crear más torneos después desde el menú.</small>
                     @endif
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-link text-muted" data-dismiss="modal">
+            <div class="modal-footer" style="background:#1a1a1a;border-top:1px solid rgba(255,255,255,.1);">
+                <button type="button" class="btn btn-link" style="color:rgba(255,255,255,.4);" data-dismiss="modal">
                     Ahora no
                 </button>
                 @if($currentOrg->isClub())
@@ -1487,27 +1497,27 @@
 {{-- ── Onboarding Asociación: Modal 2 – Divisiones ─────────────────────── --}}
 <div class="modal fade" id="obDivisionesModal" tabindex="-1" role="dialog" data-backdrop="static">
     <div class="modal-dialog" role="document" style="max-width:500px;">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#005461;color:white;">
-                <h5 class="modal-title">
+        <div class="modal-content" style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);">
+            <div class="modal-header" style="background:#005461;border-bottom:1px solid rgba(255,255,255,.1);">
+                <h5 class="modal-title" style="color:#fff;">
                     <i class="fas fa-layer-group mr-2"></i>
                     Agregar divisiones al torneo
                 </h5>
                 <small id="ob-nd-tournament-name" class="ml-2" style="color:rgba(255,255,255,.7);"></small>
             </div>
-            <div class="modal-body">
-                <p class="text-muted mb-3" style="font-size:.88rem;">
+            <div class="modal-body" style="background:#1a1a1a;">
+                <p style="color:rgba(255,255,255,.5);font-size:.88rem;" class="mb-3">
                     Agregá las divisiones del torneo. Podés saltear este paso si no aplica.
                 </p>
 
                 {{-- Sugerencias rápidas --}}
                 <div class="mb-3">
-                    <div class="small font-weight-bold text-muted mb-2">Sugerencias rápidas:</div>
+                    <div class="small font-weight-bold mb-2" style="color:rgba(255,255,255,.5);">Sugerencias rápidas:</div>
                     <div style="display:flex;flex-wrap:wrap;gap:7px;" id="ob-nd-chips">
                         @foreach(['Adulta','M18','M16','M14','M12','M10','M8','Seven','Femenino'] as $suggestion)
                         <button type="button" class="ob-nd-chip-btn"
                                 data-name="{{ $suggestion }}"
-                                style="background:transparent;border:1px solid rgba(0,84,97,.55);color:#005461;border-radius:20px;padding:4px 14px;font-size:.82rem;cursor:pointer;transition:all .15s;">
+                                style="background:transparent;border:1px solid rgba(0,183,181,.45);color:rgba(0,183,181,.9);border-radius:20px;padding:4px 14px;font-size:.82rem;cursor:pointer;transition:all .15s;">
                             {{ $suggestion }}
                         </button>
                         @endforeach
@@ -1518,9 +1528,10 @@
                 <div class="d-flex align-items-center mb-3" style="gap:8px;">
                     <input type="text" id="ob-nd-custom-input"
                            class="form-control form-control-sm"
-                           placeholder="Otra división...">
+                           placeholder="Otra división..."
+                           style="background:#111;border:1px solid #444;color:#fff;">
                     <button type="button" id="ob-nd-add-btn"
-                            class="btn btn-sm btn-outline-secondary text-nowrap">
+                            style="background:rgba(0,183,181,.15);border:1px solid #00B7B5;color:#00B7B5;border-radius:4px;padding:5px 14px;font-size:.82rem;cursor:pointer;white-space:nowrap;">
                         <i class="fas fa-plus mr-1"></i> Agregar
                     </button>
                 </div>
@@ -1530,30 +1541,30 @@
                 <div id="ob-nd-div-error" class="text-danger small mt-1 d-none"></div>
 
                 {{-- ¿Publicar torneo? --}}
-                <div class="mt-3 p-3 rounded border" style="background:rgba(0,84,97,.04);">
-                    <div class="small font-weight-bold text-muted mb-2">
+                <div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,.04);border-radius:6px;border:1px solid rgba(255,255,255,.08);">
+                    <div style="font-size:.78rem;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:10px;">
                         <i class="fas fa-globe mr-1"></i> ¿Los clubes pueden inscribirse?
                     </div>
-                    <div class="d-flex" style="gap:8px;">
-                        <label class="ob-nd-vis-option ob-nd-vis-active" id="ob-nd-opt-private"
-                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.06);flex:1;transition:all .15s;">
-                            <input type="radio" name="ob-nd-visibility" value="private" checked style="accent-color:#005461;">
-                            <span style="font-size:.83rem;">
-                                <i class="fas fa-lock mr-1 text-muted" style="font-size:.8rem;"></i>Privado por ahora
+                    <div style="display:flex;gap:8px;">
+                        <label id="ob-nd-opt-private"
+                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.08);flex:1;transition:all .15s;">
+                            <input type="radio" name="ob-nd-visibility" value="private" checked style="accent-color:#00B7B5;">
+                            <span style="font-size:.83rem;color:rgba(255,255,255,.8);">
+                                <i class="fas fa-lock mr-1" style="color:rgba(255,255,255,.4);font-size:.8rem;"></i>Privado por ahora
                             </span>
                         </label>
-                        <label class="ob-nd-vis-option" id="ob-nd-opt-public"
-                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #dee2e6;background:transparent;flex:1;transition:all .15s;">
-                            <input type="radio" name="ob-nd-visibility" value="public" style="accent-color:#005461;">
-                            <span style="font-size:.83rem;">
-                                <i class="fas fa-globe mr-1" style="color:#00B7B5;font-size:.8rem;"></i>Publicar ahora
+                        <label id="ob-nd-opt-public"
+                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;flex:1;transition:all .15s;">
+                            <input type="radio" name="ob-nd-visibility" value="public" style="accent-color:#00B7B5;">
+                            <span style="font-size:.83rem;color:rgba(255,255,255,.8);">
+                                <i class="fas fa-globe mr-1" style="color:rgba(0,183,181,.8);font-size:.8rem;"></i>Publicar ahora
                             </span>
                         </label>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="justify-content:space-between;align-items:center;">
-                <a href="#" id="ob-nd-skip-link" class="text-muted small">
+            <div class="modal-footer" style="background:#1a1a1a;border-top:1px solid rgba(255,255,255,.1);justify-content:space-between;align-items:center;">
+                <a href="#" id="ob-nd-skip-link" style="font-size:.8rem;color:rgba(255,255,255,.4);text-decoration:none;">
                     Continuar sin divisiones
                 </a>
                 <button type="button" id="ob-nd-continue-btn" class="btn btn-success">
@@ -1624,6 +1635,10 @@ function addExtraCategory() {
         .then(function (data) {
             if (data.id) {
                 obTournamentId = data.id;
+                if (data.already_exists) {
+                    document.getElementById('ob-nt-warning-text').textContent = 'Ya existe un torneo con ese nombre. Podés continuar igual.';
+                    document.getElementById('ob-nt-warning').classList.remove('d-none');
+                }
                 document.getElementById('ob-nd-tournament-name').textContent = '— ' + name;
                 document.getElementById('ob-nd-added-pills').innerHTML = '';
                 document.getElementById('ob-nd-custom-input').value = '';
