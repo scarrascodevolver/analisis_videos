@@ -173,13 +173,12 @@ class User extends Authenticatable
             ['is_current' => false]
         );
 
-        // Si es super admin y no pertenece a la org, agregarlo temporalmente
+        // Si es super admin/org manager y no pertenece a la org, agregar sin duplicar
         if ($isSuperAdmin && ! $belongsToOrg) {
-            $this->organizations()->attach($organization->id, [
-                'role' => $this->role ?? 'analista',
-                'is_current' => true,
-                'is_org_admin' => true,
-            ]);
+            \DB::table('organization_user')->updateOrInsert(
+                ['user_id' => $this->id, 'organization_id' => $organization->id],
+                ['role' => $this->role ?? 'analista', 'is_current' => true, 'is_org_admin' => true]
+            );
         } else {
             // Marcar la nueva organización como current
             $this->organizations()->updateExistingPivot($organization->id, ['is_current' => true]);
