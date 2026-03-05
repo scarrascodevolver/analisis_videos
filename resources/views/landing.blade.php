@@ -1665,27 +1665,33 @@
     <section class="cta">
         <div class="cta-container">
             <div class="rugby-ball" id="ctaBall">
-                <svg width="100" height="68" viewBox="0 0 100 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Ball body -->
-                    <ellipse cx="50" cy="34" rx="48" ry="30" fill="#005461"/>
-                    <!-- Shine highlight -->
-                    <ellipse cx="50" cy="34" rx="46" ry="28" fill="none" stroke="#00B7B5" stroke-width="1.5" opacity="0.6"/>
-                    <!-- Center seam (horizontal) -->
-                    <path d="M4 34 Q50 20 96 34" stroke="#00B7B5" stroke-width="1.5" fill="none" opacity="0.7"/>
-                    <path d="M4 34 Q50 48 96 34" stroke="#00B7B5" stroke-width="1.5" fill="none" opacity="0.7"/>
-                    <!-- Vertical laces band -->
-                    <path d="M50 8 L50 60" stroke="#00B7B5" stroke-width="2" opacity="0.5"/>
-                    <!-- Laces -->
-                    <rect x="44" y="20" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
-                    <rect x="44" y="27" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
-                    <rect x="44" y="34" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
-                    <rect x="44" y="41" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
-                    <rect x="44" y="48" width="12" height="2.5" rx="1" fill="#00B7B5" opacity="0.9"/>
-                    <!-- Top/bottom tips -->
-                    <ellipse cx="50" cy="5" rx="4" ry="3" fill="#003d4a"/>
-                    <ellipse cx="50" cy="63" rx="4" ry="3" fill="#003d4a"/>
-                    <!-- Inner glow -->
-                    <ellipse cx="38" cy="26" rx="12" ry="7" fill="white" opacity="0.06" transform="rotate(-20 38 26)"/>
+                <svg width="130" height="74" viewBox="0 0 130 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ball body: horizontal rugby ball, tips left & right -->
+                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461"/>
+                    <!-- Outline -->
+                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="none" stroke="#003d4a" stroke-width="1"/>
+
+                    <!-- Panel seams: tip-to-tip curving up and down (real rugby ball pattern) -->
+                    <path d="M 4 37 Q 65 8 126 37"  stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.75"/>
+                    <path d="M 4 37 Q 65 66 126 37" stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.75"/>
+
+                    <!-- Lace vertical guide -->
+                    <line x1="65" y1="18" x2="65" y2="56" stroke="#00B7B5" stroke-width="1.2" opacity="0.4"/>
+
+                    <!-- Laces: short horizontal bars crossing the vertical guide, like real laces -->
+                    <line x1="57" y1="23" x2="73" y2="23" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+                    <line x1="57" y1="29" x2="73" y2="29" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+                    <line x1="57" y1="37" x2="73" y2="37" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+                    <line x1="57" y1="45" x2="73" y2="45" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+                    <line x1="57" y1="51" x2="73" y2="51" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+
+                    <!-- Left tip cap -->
+                    <ellipse cx="5" cy="37" rx="3.5" ry="6" fill="#003d4a"/>
+                    <!-- Right tip cap -->
+                    <ellipse cx="125" cy="37" rx="3.5" ry="6" fill="#003d4a"/>
+
+                    <!-- Highlight for 3D depth -->
+                    <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.07" transform="rotate(-8 44 26)"/>
                 </svg>
             </div>
             <h2 class="cta-title">¿Listo para transformar tu equipo?</h2>
