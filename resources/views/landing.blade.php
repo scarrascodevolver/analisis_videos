@@ -1666,26 +1666,20 @@
         <div class="cta-container">
             <div class="rugby-ball" id="ctaBall">
                 <svg width="130" height="74" viewBox="0 0 130 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Ball body -->
-                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461"/>
+                    <!-- Ball body with visible border -->
+                    <ellipse cx="65" cy="37" rx="61" ry="33" fill="#005461" stroke="#00B7B5" stroke-width="1.8" opacity="1"/>
 
                     <!-- Panel seams: tip-to-tip curving up and down -->
-                    <path d="M 4 37 Q 65 8 126 37"  stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.75"/>
-                    <path d="M 4 37 Q 65 66 126 37" stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.75"/>
+                    <path d="M 4 37 Q 65 8 126 37"  stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
+                    <path d="M 4 37 Q 65 66 126 37" stroke="#00B7B5" stroke-width="1.4" fill="none" opacity="0.6"/>
 
-                    <!-- Laces: short horizontal bars -->
-                    <line x1="57" y1="23" x2="73" y2="23" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
-                    <line x1="57" y1="29" x2="73" y2="29" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
-                    <line x1="57" y1="37" x2="73" y2="37" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
-                    <line x1="57" y1="45" x2="73" y2="45" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
-                    <line x1="57" y1="51" x2="73" y2="51" stroke="#00B7B5" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
-
-                    <!-- Tip caps (same color as body to blend) -->
-                    <ellipse cx="5" cy="37" rx="3.5" ry="6" fill="#005461"/>
-                    <ellipse cx="125" cy="37" rx="3.5" ry="6" fill="#005461"/>
+                    <!-- Laces: 3 spaced horizontal bars -->
+                    <line x1="57" y1="27" x2="73" y2="27" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="57" y1="37" x2="73" y2="37" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="57" y1="47" x2="73" y2="47" stroke="#00B7B5" stroke-width="2.5" stroke-linecap="round"/>
 
                     <!-- Highlight for 3D depth -->
-                    <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.07" transform="rotate(-8 44 26)"/>
+                    <ellipse cx="44" cy="26" rx="20" ry="9" fill="white" opacity="0.08" transform="rotate(-8 44 26)"/>
                 </svg>
             </div>
             <h2 class="cta-title">¿Listo para transformar tu equipo?</h2>
