@@ -908,16 +908,22 @@
         }
 
         @keyframes ballDrop {
-            0%   { transform: translate(120px, -80px) rotate(-40deg); opacity: 0; }
-            55%  { transform: translate(0, 18px) rotate(10deg); opacity: 1; }
-            70%  { transform: translate(0, -14px) rotate(-4deg); }
+            0%   { transform: translate(80px, -120px) rotate(-35deg); opacity: 0; }
+            30%  { opacity: 1; }
+            45%  { transform: translate(0, 30px) rotate(12deg); }
+            57%  { transform: translate(0, -22px) rotate(-6deg); }
+            67%  { transform: translate(0, 16px) rotate(4deg); }
+            75%  { transform: translate(0, -12px) rotate(-3deg); }
             82%  { transform: translate(0, 8px) rotate(2deg); }
-            91%  { transform: translate(0, -5px) rotate(-1deg); }
+            88%  { transform: translate(0, -5px) rotate(-1deg); }
+            93%  { transform: translate(0, 3px) rotate(0.5deg); }
+            97%  { transform: translate(0, -2px) rotate(0deg); }
             100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
         }
         @keyframes ballIdle {
             0%, 100% { transform: translateY(0) rotate(0deg); }
-            50%       { transform: translateY(-8px) rotate(3deg); }
+            40%       { transform: translateY(-10px) rotate(4deg); }
+            60%       { transform: translateY(-8px) rotate(3deg); }
         }
         @keyframes ctaPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(0,183,181,.5); }
@@ -936,8 +942,8 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));
         }
         .rugby-ball.dropped {
-            animation: ballDrop .9s cubic-bezier(.22,.61,.36,1) forwards,
-                       ballIdle 3s ease-in-out 1s infinite;
+            animation: ballDrop 1.8s cubic-bezier(.22,.61,.36,1) forwards,
+                       ballIdle 3.5s ease-in-out 2s infinite;
         }
 
         /* ========== CTA ========== */
