@@ -156,7 +156,7 @@
 
         .btn-primary {
             background: var(--gradient-accent);
-            color: var(--dark);
+            color: #fff;
         }
 
         .btn-primary:hover {
@@ -1230,7 +1230,7 @@
 
             <div class="nav-buttons">
                 <a href="{{ route('login') }}" class="btn btn-ghost">Iniciar Sesion</a>
-                <a href="{{ route('register.organization') }}" class="btn btn-primary">Comenzar gratis</a>
+                <a href="#contacto" class="btn btn-primary">Contactar</a>
             </div>
 
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -1278,9 +1278,9 @@
                 </p>
 
                 <div class="hero-buttons">
-                    <a href="{{ route('register.organization') }}" class="btn btn-primary btn-large">
-                        <i class="fas fa-rocket"></i>
-                        Comenzar gratis
+                    <a href="#contacto" class="btn btn-primary btn-large">
+                        <i class="fas fa-envelope"></i>
+                        Contactar
                     </a>
                     <a href="{{ route('login') }}" class="btn btn-outline btn-large">
                         <i class="fas fa-sign-in-alt"></i>
@@ -1468,39 +1468,43 @@
                 </div>
                 <h2 class="section-title">Hablemos de tu proyecto</h2>
                 <p class="section-description">
-                    Contáctanos por WhatsApp y te mostraremos cómo Rugby Key Performance puede ayudar a tu club.
+                    Escribinos por email o WhatsApp y nuestro equipo te mostrará cómo Rugby Key Performance puede ayudar a tu club.
                 </p>
             </div>
 
             <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 900px; margin: 4rem auto 0;">
-                <!-- WhatsApp España -->
+                <!-- Mauricio Vázquez -->
                 <div class="pricing-card featured">
-                    <div class="feature-icon" style="background: #25D366; margin: 0 auto 1.5rem;">
-                        <i class="fab fa-whatsapp"></i>
+                    <div class="feature-icon" style="background: var(--primary); margin: 0 auto 1.5rem;">
+                        <i class="fas fa-user-tie"></i>
                     </div>
-                    <h3 class="pricing-name">España</h3>
-                    <p class="pricing-description">Atención en horario europeo</p>
-                    <div class="pricing-price">
-                        <span class="price-amount" style="font-size: 1.8rem;">+34 614 065 223</span>
+                    <h3 class="pricing-name">Mauricio Vázquez</h3>
+                    <p class="pricing-description">Ejecutivo comercial</p>
+                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                        <a href="mailto:mvazquez@rugbykp.com" class="btn btn-primary">
+                            <i class="fas fa-envelope"></i> mvazquez@rugbykp.com
+                        </a>
+                        <a href="https://wa.me/34614065223?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-outline" style="border-color:#25D366;color:#25D366;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
                     </div>
-                    <a href="https://wa.me/34614065223?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
-                        <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
-                    </a>
                 </div>
 
-                <!-- WhatsApp Chile -->
+                <!-- Jeremias Rodriguez -->
                 <div class="pricing-card featured">
-                    <div class="feature-icon" style="background: #25D366; margin: 0 auto 1.5rem;">
-                        <i class="fab fa-whatsapp"></i>
+                    <div class="feature-icon" style="background: var(--primary); margin: 0 auto 1.5rem;">
+                        <i class="fas fa-user-tie"></i>
                     </div>
-                    <h3 class="pricing-name">Chile</h3>
-                    <p class="pricing-description">Atención en horario chileno</p>
-                    <div class="pricing-price">
-                        <span class="price-amount" style="font-size: 1.8rem;">+56 9 8544 4418</span>
+                    <h3 class="pricing-name">Jeremias Rodriguez</h3>
+                    <p class="pricing-description">Ejecutivo comercial</p>
+                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                        <a href="mailto:jrodriguez@rugbykp.com" class="btn btn-primary">
+                            <i class="fas fa-envelope"></i> jrodriguez@rugbykp.com
+                        </a>
+                        <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-outline" style="border-color:#25D366;color:#25D366;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
                     </div>
-                    <a href="https://wa.me/56985444418?text=Hola,%20quiero%20información%20sobre%20Rugby Key Performance" target="_blank" class="btn btn-primary" style="background: #25D366; margin-top: 2rem;">
-                        <i class="fab fa-whatsapp"></i> Escribir por WhatsApp
-                    </a>
                 </div>
             </div>
         </div>
@@ -1604,13 +1608,9 @@
                 Solicita una demo personalizada y descubre todo lo que podemos hacer por tu club.
             </p>
             <div class="cta-buttons">
-                <a href="https://wa.me/34614065223?text=Hola,%20quiero%20una%20demo%20de%20Rugby Key Performance" target="_blank" class="btn btn-primary btn-large" style="background: #25D366;">
-                    <i class="fab fa-whatsapp"></i>
-                    WhatsApp España
-                </a>
-                <a href="https://wa.me/56985444418?text=Hola,%20quiero%20una%20demo%20de%20Rugby Key Performance" target="_blank" class="btn btn-outline btn-large">
-                    <i class="fab fa-whatsapp"></i>
-                    WhatsApp Chile
+                <a href="#contacto" class="btn btn-primary btn-large">
+                    <i class="fas fa-envelope"></i>
+                    Contactar
                 </a>
             </div>
         </div>
@@ -1645,7 +1645,14 @@
                     <ul class="footer-links">
                         <li><a href="#">Sobre nosotros</a></li>
                         <li><a href="#">Blog</a></li>
-                        <li><a href="#">Contacto</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Soporte</h4>
+                    <ul class="footer-links">
+                        <li><a href="mailto:support@rugby.com">support@rugby.com</a></li>
                     </ul>
                 </div>
 
