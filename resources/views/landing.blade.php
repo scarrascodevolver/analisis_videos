@@ -909,34 +909,33 @@
 
         /* Ball travels right→left bouncing with decreasing height, like a real rugby ball */
         @keyframes ballDrop {
-            /* Start: high up, far to the right */
-            0%   { transform: translate(340px, -160px) rotate(-50deg); opacity: 0; }
+            /* Start: high up, far to the right, nose-down */
+            0%   { transform: translate(340px, -160px) rotate(-55deg); opacity: 0; }
             5%   { opacity: 1; }
             /* 1st bounce — hits ground, still far right */
-            18%  { transform: translate(240px,  0px)   rotate(-20deg); }
-            /* 2nd arc — medium height */
-            28%  { transform: translate(165px, -90px)  rotate(0deg); }
+            18%  { transform: translate(240px,  0px)   rotate(-30deg); }
+            /* 2nd arc */
+            28%  { transform: translate(165px, -90px)  rotate(-15deg); }
             /* 2nd bounce */
-            38%  { transform: translate(100px,  0px)   rotate(15deg); }
+            38%  { transform: translate(100px,  0px)   rotate(-5deg); }
             /* 3rd arc — lower */
-            46%  { transform: translate(58px,  -45px)  rotate(22deg); }
+            46%  { transform: translate(58px,  -45px)  rotate(0deg); }
             /* 3rd bounce */
-            54%  { transform: translate(24px,   0px)   rotate(30deg); }
+            54%  { transform: translate(24px,   0px)   rotate(3deg); }
             /* 4th arc — quite low */
-            61%  { transform: translate(8px,   -18px)  rotate(34deg); }
+            61%  { transform: translate(8px,   -18px)  rotate(2deg); }
             /* 4th bounce */
-            68%  { transform: translate(0px,    0px)   rotate(38deg); }
+            68%  { transform: translate(0px,    0px)   rotate(1deg); }
             /* 5th tiny arc */
-            74%  { transform: translate(0px,   -6px)   rotate(40deg); }
-            /* Settles */
-            80%  { transform: translate(0px,    0px)   rotate(42deg); }
-            /* Tiny wobble */
-            86%  { transform: translate(0px,   -2px)   rotate(42deg); }
-            100% { transform: translate(0px,    0px)   rotate(45deg); opacity: 1; }
+            74%  { transform: translate(0px,   -6px)   rotate(0.5deg); }
+            /* Settles flat */
+            82%  { transform: translate(0px,    0px)   rotate(0deg); }
+            86%  { transform: translate(0px,   -2px)   rotate(0deg); }
+            100% { transform: translate(0px,    0px)   rotate(0deg); opacity: 1; }
         }
         @keyframes ballIdle {
-            0%, 100% { transform: translate(0, 0) rotate(45deg); }
-            50%       { transform: translate(0, -10px) rotate(48deg); }
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50%       { transform: translate(0, -10px) rotate(2deg); }
         }
         @keyframes ctaPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(0,183,181,.5); }
