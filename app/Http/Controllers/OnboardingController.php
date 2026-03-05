@@ -45,4 +45,20 @@ class OnboardingController extends Controller
 
         return redirect()->route('home')->with('success', '¡Configuración completada! Ya podés empezar a subir videos.');
     }
+
+    /**
+     * AJAX: marca onboarding completo cuando el torneo ya fue creado vía API.
+     */
+    public function markComplete()
+    {
+        $org = auth()->user()->currentOrganization();
+
+        if (! $org || $org->onboarding_completed) {
+            return response()->json(['ok' => true]);
+        }
+
+        $org->update(['onboarding_completed' => true]);
+
+        return response()->json(['ok' => true, 'redirect' => route('home')]);
+    }
 }

@@ -100,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Onboarding
     Route::post('/onboarding/complete', [App\Http\Controllers\OnboardingController::class, 'complete'])->name('onboarding.complete');
+    Route::post('/onboarding/mark-complete', [App\Http\Controllers\OnboardingController::class, 'markComplete'])->name('onboarding.mark-complete');
 
     // Vue/Inertia Test Page
     Route::get('/vue-test', fn () => Inertia::render('Test'))->name('vue.test');

@@ -1450,12 +1450,18 @@
                     @else
                         <p class="text-muted mb-3">¿Qué torneo o liga vas a analizar primero?</p>
                         <div class="form-group">
-                            <label class="font-weight-bold">Nombre del torneo / liga</label>
-                            <input type="text" name="tournament_name" class="form-control"
+                            <label class="font-weight-bold">Nombre del torneo / liga <span class="text-danger">*</span></label>
+                            <input type="text" id="ob-nt-name" class="form-control"
                                    placeholder="Ej: Torneo de la URBA, Liga Nacional 2026..."
-                                   required>
-                            <small class="text-muted">Podés crear más torneos después desde el menú.</small>
+                                   maxlength="255">
                         </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold">Temporada <small class="text-muted font-weight-normal">(opcional)</small></label>
+                            <input type="text" id="ob-nt-season" class="form-control"
+                                   placeholder="Ej: 2026" maxlength="20">
+                        </div>
+                        <div id="ob-nt-error" class="text-danger small mt-2 d-none"></div>
+                        <small class="text-muted d-block mt-2">Podés crear más torneos después desde el menú.</small>
                     @endif
                 </form>
             </div>
@@ -1463,13 +1469,101 @@
                 <button type="button" class="btn btn-link text-muted" data-dismiss="modal">
                     Ahora no
                 </button>
+                @if($currentOrg->isClub())
                 <button type="submit" form="onboardingForm" class="btn btn-success btn-lg">
                     <i class="fas fa-check mr-2"></i>Guardar y empezar
+                </button>
+                @else
+                <button type="button" class="btn btn-success btn-lg" id="ob-nt-next-btn">
+                    <i class="fas fa-arrow-right mr-2"></i>Siguiente
+                </button>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(!$currentOrg->isClub())
+{{-- ── Onboarding Asociación: Modal 2 – Divisiones ─────────────────────── --}}
+<div class="modal fade" id="obDivisionesModal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#005461;color:white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-layer-group mr-2"></i>
+                    Agregar divisiones al torneo
+                </h5>
+                <small id="ob-nd-tournament-name" class="ml-2" style="color:rgba(255,255,255,.7);"></small>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3" style="font-size:.88rem;">
+                    Agregá las divisiones del torneo. Podés saltear este paso si no aplica.
+                </p>
+
+                {{-- Sugerencias rápidas --}}
+                <div class="mb-3">
+                    <div class="small font-weight-bold text-muted mb-2">Sugerencias rápidas:</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:7px;" id="ob-nd-chips">
+                        @foreach(['Adulta','M18','M16','M14','M12','M10','M8','Seven','Femenino'] as $suggestion)
+                        <button type="button" class="ob-nd-chip-btn"
+                                data-name="{{ $suggestion }}"
+                                style="background:transparent;border:1px solid rgba(0,84,97,.55);color:#005461;border-radius:20px;padding:4px 14px;font-size:.82rem;cursor:pointer;transition:all .15s;">
+                            {{ $suggestion }}
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Input personalizado --}}
+                <div class="d-flex align-items-center mb-3" style="gap:8px;">
+                    <input type="text" id="ob-nd-custom-input"
+                           class="form-control form-control-sm"
+                           placeholder="Otra división...">
+                    <button type="button" id="ob-nd-add-btn"
+                            class="btn btn-sm btn-outline-secondary text-nowrap">
+                        <i class="fas fa-plus mr-1"></i> Agregar
+                    </button>
+                </div>
+
+                {{-- Pills divisiones agregadas --}}
+                <div id="ob-nd-added-pills" style="display:flex;flex-wrap:wrap;gap:7px;min-height:28px;"></div>
+                <div id="ob-nd-div-error" class="text-danger small mt-1 d-none"></div>
+
+                {{-- ¿Publicar torneo? --}}
+                <div class="mt-3 p-3 rounded border" style="background:rgba(0,84,97,.04);">
+                    <div class="small font-weight-bold text-muted mb-2">
+                        <i class="fas fa-globe mr-1"></i> ¿Los clubes pueden inscribirse?
+                    </div>
+                    <div class="d-flex" style="gap:8px;">
+                        <label class="ob-nd-vis-option ob-nd-vis-active" id="ob-nd-opt-private"
+                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.06);flex:1;transition:all .15s;">
+                            <input type="radio" name="ob-nd-visibility" value="private" checked style="accent-color:#005461;">
+                            <span style="font-size:.83rem;">
+                                <i class="fas fa-lock mr-1 text-muted" style="font-size:.8rem;"></i>Privado por ahora
+                            </span>
+                        </label>
+                        <label class="ob-nd-vis-option" id="ob-nd-opt-public"
+                               style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #dee2e6;background:transparent;flex:1;transition:all .15s;">
+                            <input type="radio" name="ob-nd-visibility" value="public" style="accent-color:#005461;">
+                            <span style="font-size:.83rem;">
+                                <i class="fas fa-globe mr-1" style="color:#00B7B5;font-size:.8rem;"></i>Publicar ahora
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+                <a href="#" id="ob-nd-skip-link" class="text-muted small">
+                    Continuar sin divisiones
+                </a>
+                <button type="button" id="ob-nd-continue-btn" class="btn btn-success">
+                    <i class="fas fa-check mr-1"></i> Guardar y empezar
                 </button>
             </div>
         </div>
     </div>
 </div>
+@endif
 
 <script>
 $(document).ready(function() {
@@ -1477,9 +1571,12 @@ $(document).ready(function() {
     if (!localStorage.getItem(key)) {
         $('#onboardingModal').modal('show');
     }
+    // Solo guardar dismissal si es club (asociación tiene flujo AJAX)
+    @if($currentOrg->isClub())
     $('#onboardingModal').on('hide.bs.modal', function() {
         localStorage.setItem(key, '1');
     });
+    @endif
 });
 
 function addExtraCategory() {
@@ -1493,6 +1590,171 @@ function addExtraCategory() {
     document.getElementById('extraCategories').insertAdjacentHTML('beforeend', html);
     document.getElementById('extraCategory').value = '';
 }
+
+@if(!$currentOrg->isClub())
+// ── Onboarding Asociación: flujo 2 pasos ─────────────────────────────
+(function () {
+    var obTournamentId = null;
+    var csrf = document.querySelector('meta[name=csrf-token]').content;
+
+    // Paso 1: crear torneo
+    var nextBtn = document.getElementById('ob-nt-next-btn');
+    if (!nextBtn) return;
+
+    nextBtn.addEventListener('click', function () {
+        var name   = (document.getElementById('ob-nt-name').value || '').trim();
+        var season = (document.getElementById('ob-nt-season').value || '').trim();
+        var errEl  = document.getElementById('ob-nt-error');
+
+        if (!name) {
+            errEl.textContent = 'El nombre del torneo es obligatorio.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        errEl.classList.add('d-none');
+        nextBtn.disabled = true;
+        nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creando...';
+
+        fetch('/api/tournaments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ name: name, season: season || null }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.id) {
+                obTournamentId = data.id;
+                document.getElementById('ob-nd-tournament-name').textContent = '— ' + name;
+                document.getElementById('ob-nd-added-pills').innerHTML = '';
+                document.getElementById('ob-nd-custom-input').value = '';
+                document.getElementById('ob-nd-div-error').classList.add('d-none');
+                document.querySelectorAll('.ob-nd-chip-btn').forEach(function (c) {
+                    c.disabled = false; c.style.opacity = '1';
+                });
+                $('#onboardingModal').one('hidden.bs.modal', function () {
+                    setTimeout(function () {
+                        // Reset visibility
+                        document.querySelector('input[name="ob-nd-visibility"][value="private"]').checked = true;
+                        document.getElementById('ob-nd-opt-private').style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.06);flex:1;transition:all .15s;';
+                        document.getElementById('ob-nd-opt-public').style.cssText  = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #dee2e6;background:transparent;flex:1;transition:all .15s;';
+                        $('#obDivisionesModal').modal('show');
+                    }, 150);
+                });
+                $('#onboardingModal').modal('hide');
+            } else {
+                errEl.textContent = data.message || 'Error al crear el torneo.';
+                errEl.classList.remove('d-none');
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>Siguiente';
+            }
+        })
+        .catch(function () {
+            errEl.textContent = 'Error de red. Intentá de nuevo.';
+            errEl.classList.remove('d-none');
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>Siguiente';
+        });
+    });
+
+    document.getElementById('ob-nt-name').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); nextBtn.click(); }
+    });
+
+    // Paso 2: divisiones
+    function addObDivisionPill(divId, divName) {
+        var pill = document.createElement('span');
+        pill.className = 'div-pill';
+        pill.dataset.divId = divId;
+        pill.innerHTML = '<i class="fas fa-layer-group" style="font-size:.75rem;opacity:.7;"></i> ' + divName +
+            ' <a href="#" class="div-pill-remove" onclick="(function(e,nm){e.preventDefault();' +
+            'e.currentTarget.closest(\'.div-pill\').remove();' +
+            'document.querySelectorAll(\'.ob-nd-chip-btn\').forEach(function(b){if(b.dataset.name===nm){b.disabled=false;b.style.opacity=\'1\';}});' +
+            '})(event,\'' + divName.replace(/'/g, "\\'") + '\')">&times;</a>';
+        document.getElementById('ob-nd-added-pills').appendChild(pill);
+    }
+
+    function submitObDivision(name, chipBtn) {
+        if (!name || !obTournamentId) return;
+        fetch('/api/tournaments/' + obTournamentId + '/divisions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ name: name }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.ok) {
+                addObDivisionPill(data.division.id, data.division.name);
+                if (chipBtn) { chipBtn.disabled = true; chipBtn.style.opacity = '0.4'; }
+                document.getElementById('ob-nd-custom-input').value = '';
+                document.getElementById('ob-nd-div-error').classList.add('d-none');
+            } else {
+                var errEl = document.getElementById('ob-nd-div-error');
+                errEl.textContent = data.error || 'Error al crear la división.';
+                errEl.classList.remove('d-none');
+            }
+        });
+    }
+
+    document.querySelectorAll('.ob-nd-chip-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (this.disabled) return;
+            submitObDivision(this.dataset.name, this);
+        });
+    });
+
+    document.getElementById('ob-nd-add-btn').addEventListener('click', function () {
+        var val = (document.getElementById('ob-nd-custom-input').value || '').trim();
+        if (val) submitObDivision(val, null);
+    });
+
+    document.getElementById('ob-nd-custom-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('ob-nd-add-btn').click(); }
+    });
+
+    // Highlight visibility option
+    document.querySelectorAll('input[name="ob-nd-visibility"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            document.getElementById('ob-nd-opt-private').style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #dee2e6;background:transparent;flex:1;transition:all .15s;';
+            document.getElementById('ob-nd-opt-public').style.cssText  = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid #dee2e6;background:transparent;flex:1;transition:all .15s;';
+            var activeId = this.value === 'private' ? 'ob-nd-opt-private' : 'ob-nd-opt-public';
+            document.getElementById(activeId).style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 14px;border-radius:6px;border:1px solid rgba(0,183,181,.4);background:rgba(0,183,181,.06);flex:1;transition:all .15s;';
+        });
+    });
+
+    function finishObOnboarding() {
+        var makePublic = document.querySelector('input[name="ob-nd-visibility"]:checked')?.value === 'public';
+        var continueBtn = document.getElementById('ob-nd-continue-btn');
+        if (continueBtn) { continueBtn.disabled = true; continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Guardando...'; }
+
+        var doMarkComplete = function() {
+            fetch('{{ route('onboarding.mark-complete') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                window.location.href = data.redirect || '/';
+            })
+            .catch(function () { window.location.href = '/'; });
+        };
+
+        if (makePublic && obTournamentId) {
+            fetch('/api/tournaments/' + obTournamentId + '/toggle-public', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            }).finally(doMarkComplete);
+        } else {
+            doMarkComplete();
+        }
+    }
+
+    document.getElementById('ob-nd-continue-btn').addEventListener('click', finishObOnboarding);
+    document.getElementById('ob-nd-skip-link').addEventListener('click', function (e) {
+        e.preventDefault();
+        finishObOnboarding();
+    });
+})();
+@endif
 </script>
 @endif
 @endauth
