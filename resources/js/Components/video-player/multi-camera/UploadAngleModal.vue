@@ -69,6 +69,16 @@ const canSubmit = computed(() => {
     return activeTab.value === 'file' ? canSubmitFile.value : canSubmitYoutube.value;
 });
 
+const isAngleMissing = computed(() => effectiveAngle.value.length === 0);
+
+const missingRequirements = computed(() => {
+    const missing: string[] = [];
+    if (isAngleMissing.value) missing.push('Nombre del ángulo');
+    if (activeTab.value === 'file' && selectedFile.value === null) missing.push('Archivo de video');
+    if (activeTab.value === 'youtube' && youtubeUrl.value.trim().length === 0) missing.push('URL de YouTube');
+    return missing;
+});
+
 const formattedFileSize = computed(() => {
     if (!selectedFile.value) return '';
     const bytes = selectedFile.value.size;
@@ -402,8 +412,12 @@ watch(() => props.show, (newVal) => {
                                 <label class="form-label">
                                     <i class="fas fa-video"></i>
                                     Nombre del ángulo
+                                    <span class="required-mark">*</span>
                                 </label>
-                                <div class="preset-buttons">
+                                <div
+                                    class="preset-buttons"
+                                    :class="{ 'is-invalid': isAngleMissing && !isUploading }"
+                                >
                                     <button
                                         v-for="preset in PRESET_ANGLES"
                                         :key="preset"
@@ -432,8 +446,13 @@ watch(() => props.show, (newVal) => {
                                     class="form-control mt-2"
                                     placeholder="Ej: Cámara de in-goal sur..."
                                     :disabled="isUploading"
-                                    maxlength="100"
+                                        maxlength="100"
                                 />
+                                <p class="field-hint">Seleccioná un preset o elegí "Otro..." para escribirlo manualmente.</p>
+                                <p v-if="isAngleMissing && !isUploading" class="field-required">
+                                    <i class="fas fa-info-circle"></i>
+                                    El nombre del ángulo es obligatorio.
+                                </p>
                             </div>
 
                             <!-- TAB: File upload -->
@@ -528,6 +547,10 @@ watch(() => props.show, (newVal) => {
                                     <p class="field-hint">
                                         Formatos aceptados: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
                                     </p>
+                                    <p v-if="youtubeUrl.trim().length === 0 && !isUploading" class="field-required">
+                                        <i class="fas fa-info-circle"></i>
+                                        Pegá una URL de YouTube para continuar.
+                                    </p>
                                 </div>
 
                                 <div v-if="isUploading" class="yt-loading">
@@ -540,6 +563,10 @@ watch(() => props.show, (newVal) => {
                             <div v-if="errorMessage" class="alert alert-danger">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 {{ errorMessage }}
+                            </div>
+                            <div v-else-if="missingRequirements.length > 0 && !isUploading" class="alert alert-warning">
+                                <i class="fas fa-list-check"></i>
+                                Completá para continuar: {{ missingRequirements.join(' · ') }}
                             </div>
 
                         </div>
@@ -568,7 +595,9 @@ watch(() => props.show, (newVal) => {
                                     {{ activeTab === 'file' ? `Subiendo ${uploadProgress}%...` : 'Agregando...' }}
                                 </template>
                                 <template v-else>
-                                    {{ activeTab === 'youtube' ? 'Agregar ángulo YouTube' : 'Subir ángulo' }}
+                                    {{ !canSubmit && missingRequirements.length > 0
+                                        ? 'Completá campos requeridos'
+                                        : (activeTab === 'youtube' ? 'Agregar ángulo YouTube' : 'Subir ángulo') }}
                                 </template>
                             </button>
                         </div>
@@ -757,6 +786,10 @@ watch(() => props.show, (newVal) => {
     color: var(--color-accent);
 }
 
+.required-mark {
+    color: #f0ad4e;
+}
+
 .yt-icon {
     color: #ff0000 !important;
 }
@@ -793,11 +826,27 @@ watch(() => props.show, (newVal) => {
     color: #555;
 }
 
+.field-required {
+    margin: 0.4rem 0 0 0;
+    font-size: 0.78rem;
+    color: #f0ad4e;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
 /* Preset buttons */
 .preset-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
+}
+
+.preset-buttons.is-invalid {
+    border: 1px dashed rgba(240, 173, 78, 0.45);
+    border-radius: 8px;
+    padding: 0.45rem;
+    background: rgba(240, 173, 78, 0.06);
 }
 
 .preset-btn {
@@ -1019,6 +1068,12 @@ watch(() => props.show, (newVal) => {
     background: rgba(220, 53, 69, 0.1);
     border: 1px solid rgba(220, 53, 69, 0.3);
     color: #f08080;
+}
+
+.alert-warning {
+    background: rgba(240, 173, 78, 0.1);
+    border: 1px solid rgba(240, 173, 78, 0.3);
+    color: #f0c36d;
 }
 
 /* ─── Footer ────────────────────────────────────────────── */
