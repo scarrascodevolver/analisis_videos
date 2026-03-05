@@ -32,18 +32,18 @@ class ClipCategorySeeder extends Seeder
             'sort_order'   => 2,
         ],
         [
-            'name'         => 'Scrum Propio',
-            'slug'         => 'scrum-propio',
-            'color'        => '#005461',  // teal primario del sistema
+            'name'         => 'Highlights 1',
+            'slug'         => 'highlights-1',
+            'color'        => '#005461',
             'hotkey'       => 's',
             'lead_seconds' => 5,
             'lag_seconds'  => 8,
             'sort_order'   => 3,
         ],
         [
-            'name'         => 'Scrum Rival',
-            'slug'         => 'scrum-rival',
-            'color'        => '#7d4e00',  // naranja oscuro
+            'name'         => 'Highlights 2',
+            'slug'         => 'highlights-2',
+            'color'        => '#7d4e00',
             'hotkey'       => 'r',
             'lead_seconds' => 5,
             'lag_seconds'  => 8,
